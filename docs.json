@@ -48,7 +48,8 @@
                   "guides/deep-linking",
                   "guides/deposit-address",
                   "guides/hyperliquid-support",
-                  "guides/websockets"
+                  "guides/websockets",
+                  "guides/app-fees"
                 ]
               }
             ]
