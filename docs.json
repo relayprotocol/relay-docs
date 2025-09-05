@@ -102,6 +102,7 @@
               "references/api/advanced",
               "references/api/execute",
               "references/api/swap-multi-input",
+              "references/api/fast-fill",
               {
                 "group": "Deprecated",
                 "pages": [
