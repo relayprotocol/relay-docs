@@ -135,7 +135,7 @@
         },
         {
           "group": "Advanced",
-          "pages": ["references/api/execute", "references/api/swap-multi-input"]
+          "pages": ["references/api/execute", "references/api/swap-multi-input", "references/api/fast-fill"]
         },
         {
           "group": "Deprecated",
