@@ -1,19 +1,25 @@
 ---
-title: "Fees"
+title: "Relay Fees"
 description: "Learn about Relay fees"
 ---
 
-### Fee Glossary
+In any given Relay there are three potential fees:
 
-Relay quotes include the following fees: `gas`, `relayerService`, and `relayerGas`. The two relayer fees (service and gas) are combined to make the full `relayer` fee.
+1. `Execution Fees` - fees to cover network gas costs on the origin and/or destination if executed by Relay
+2. `Exchange Fees` - fees to liquidity providers that faciliate cross-asset and cross-chain token swaps
+3. `App Fees` - fees added on top of a Relay by you, the integrator
 
-**gas**: The gas fee to be paid on the origin chain to execute the transaction. This is usually paid by the user to deposit funds to the relayer to initiate the bridge or swap.
+We return two objects from the quote API that are of interest to best understand fees:
 
-**relayer**: The sum of the relayerService and the relayerGas.
+## Fees Object
+
+The Fees object returned from the quote API reports the following fees:
 
 **relayerService**: The service fee paid to the relayer to facilitate execution.
 
 **relayerGas**: The gas fee given to the solver to pay gas fees on the destination chain.
+
+**relayer**: The sum of the relayerService and the relayerGas.
 
 **appFees**: Third party fees added on top of the existing fees, this fee is added by app developers and accrues offchain to minimize gas costs.
 
@@ -60,7 +66,7 @@ App fee payees must claim accrued fees for major currencies (ETH, USDC and USDT)
 To check your accrued off-chain fees, use the app fee balances API. Here's an example curl command:
 
 ```
-curl --location 'https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e01866650532c/balances' 
+curl --location 'https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e01866650532c/balances'
 ```
 
 The response includes the `balances.currency` field, reflecting your off-chain balance for each currency accumulated:
@@ -103,28 +109,27 @@ curl --request POST \
 }'
 ```
 
-
 ```javascript SDK
-import { getClient } from '@relayprotocol/relay-sdk'
-import { useWalletClient } from 'wagmi'
+import { getClient } from "@relayprotocol/relay-sdk";
+import { useWalletClient } from "wagmi";
 
-const { data: wallet } = useWalletClient()
+const { data: wallet } = useWalletClient();
 
 const quote = await getClient()?.actions.getQuote({
   wallet,
   chainId: 0,
   toChainId: 1,
-  amount: '1000',
-  currency: 'eth'
-})
+  amount: "1000",
+  currency: "eth",
+});
 
 await relayClient.actions.execute({
   quote,
   wallet,
   onProgress(steps) {
-    setStep(getCurrentStepDescription(steps))
+    setStep(getCurrentStepDescription(steps));
   },
-})
+});
 ```
 
 </CodeGroup>

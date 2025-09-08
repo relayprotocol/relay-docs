@@ -1,5 +1,5 @@
 ---
-title: "Deposit Address"
+title: "Deposit Addresses"
 description: "Learn how to use Relay with a deposit address for instant bridging."
 ---
 
@@ -10,13 +10,12 @@ start transacting on a new chain!
 
 ## How It Works
 
-A deposit address is linked to a single bridge request. They are generated on-demand, and they cannot be reused. To enable using a deposit address for your bridge, you will need to set the `useDepositAddress` body parameter to `true` in the quote request. 
+A deposit address is linked to a single bridge request. They are generated on-demand, and they cannot be reused. To enable using a deposit address for your bridge, you will need to set the `useDepositAddress` body parameter to `true` in the quote request.
 
-Failures via deposit addresses are extremely rare, but are still possible. If something goes wrong, we will default to manually handling refunds. If you wish to automatically receive refunds on the origin chain, specify the `refundTo` address. This will mean refunds will automatically be issued on origin in case of any filling failures. 
-
+Failures via deposit addresses are extremely rare, but are still possible. If something goes wrong, we will default to manually handling refunds. If you wish to automatically receive refunds on the origin chain, specify the `refundTo` address. This will mean refunds will automatically be issued on origin in case of any filling failures.
 
 The deposit transaction requires no calldata. You just need to send any value to the  
-address specified in the API request response data.  As long as this amount is enough to cover any gas or relay fees, it will be automatically bridged based on the route requested in the initial quote.
+address specified in the API request response data. As long as this amount is enough to cover any gas or relay fees, it will be automatically bridged based on the route requested in the initial quote.
 
 Deposit addresses are supported for most major currencies. Supported currencies can be queried via the [currencies API](https://docs.relay.link/references/api/get-currencies) by specifying the `depositAddressOnly` body parameter to `true`.
 
@@ -25,7 +24,7 @@ When using deposit addresses, there are more relayer gas fees associated with br
 
 If a deposit occurs more than 30 seconds after the quote is generated, a new quote will automatically be generated post-deposit to account for gas fluctuation. This can change the amount received to be different than the quoted value.
 
-All relay EVM deposit addresses being and end with the character `d` (not case-sensitive). This is to help us with reducing the indexing search space. 
+All relay EVM deposit addresses being and end with the character `d` (not case-sensitive). This is to help us with reducing the indexing search space.
 
 ## Edge Cases
 

@@ -1,39 +1,37 @@
 export const Chains = ({ env, id }) => {
   const key = `chains-${env}`;
 
-  if (typeof window === "undefined") {
-    return null;
-  }
-  if (typeof document === "undefined") {
-    return null;
-  }
+if (typeof window === "undefined") {
+return null;
+}
+if (typeof document === "undefined") {
+return null;
+}
 
-  if (!window[key]) {
-    window[key] = {
-      fetching: false,
-      data: null,
-      observer: null
-    };
-  }
+if (!window[key]) {
+window[key] = {
+fetching: false,
+data: null,
+observer: null
+};
+}
 
-  if (!window[key].fetching) {
-    const appendChains = (data) => {
-      const rootElement = document.getElementById(id);
-      if (!rootElement) {
-        return;
-      }
-      const rows = data
-        .slice()
-        .sort((a, b) => a.displayName.localeCompare(b.displayName))
-        .map((chain) => {
-          return `<tr key=${chain.id}>
+if (!window[key].fetching) {
+const appendChains = (data) => {
+const rootElement = document.getElementById(id);
+if (!rootElement) {
+return;
+}
+const rows = data
+.slice()
+.sort((a, b) => a.displayName.localeCompare(b.displayName))
+.map((chain) => {
+return `<tr key=${chain.id}>
           <td style="text-transform: capitalize;">${chain.displayName}</td>
           <td>${chain.id}</td>
           <td>${chain.tokenSupport}</td>
-          <td>${chain.depositFee / 100}%</td>
-          <td>${chain.withdrawalFee / 100}%</td>
         </tr>`;
-        });
+});
 
       rootElement.innerHTML = `<div id="${id}-marker"></div>${rows.join("")}`;
       if (!window[key].observer) {
@@ -72,30 +70,27 @@ export const Chains = ({ env, id }) => {
     } else {
       fetchChains();
     }
-  }
 
-  return (
-    <table
-      style={{ width: "100%", borderSpacing: "48px" }}
-      className="relay-table"
-    >
-      <thead
-        style={{
+}
+
+return (
+<table
+style={{ width: "100%", borderSpacing: "48px" }}
+className="relay-table" >
+<thead
+style={{
           borderBottom: "1px solid rgb(227 226 230)",
           paddingBottom: 5,
           width: "100%",
           fontSize: 16,
-        }}
-      >
-        <tr style={{ textAlign: "left" }}>
-          <th>Chain Name</th>
-          <th>Chain ID</th>
-          <th>Supported Tokens</th>
-          <th>Deposit Fee</th>
-          <th>Withdrawal Fee</th>
-        </tr>
-      </thead>
-      <tbody id={id}></tbody>
-    </table>
-  );
+        }} >
+<tr style={{ textAlign: "left" }}>
+<th>Chain Name</th>
+<th>Chain ID</th>
+<th>Supported Tokens</th>
+</tr>
+</thead>
+<tbody id={id}></tbody>
+</table>
+);
 };
