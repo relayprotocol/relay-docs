@@ -1,0 +1,302 @@
+---
+title: "Understanding Step Execution"
+---
+
+<Tip>
+  Tip: For advanced integrations, we recommend using Relay APIs. For simpler use
+  cases, the [Relay SDK](/references/sdk/getting-started) automates steps and
+  provides helpful callbacks, reducing manual effort.
+</Tip>
+
+## Step Execution using the API
+
+When executing orders using the API directly, there are often multiple steps, like submitting a deposit transaction to the solver or signing a message. These steps differ based on the desired action and best route to execute the action. To make this simple, you can use the [quote endpoint](/references/api/get-quote), which return the exact steps that you need to follow, including descriptions that you can display to users.
+
+The flow looks like this:
+
+<Steps>
+  <Step title="Fetching Steps" icon="server">
+    Call the [Get Quote API](/references/api/get-quote) to start your execution.
+  </Step>
+  <Step title="Iterate Through Steps" icon="list-ul">
+    Iterate through the steps and the items within a step, taking the necessary
+    actions. Steps with no items, or an empty array of items, should be skipped.
+    If step item data is missing then polling the api is necessary.
+  </Step>
+  <Step title="Executing Steps" icon="list-check">
+    As mentioned above each step contains an array of one or more items. These
+    items need to be iterated and completed depending on the kind of step
+    ([signature](#signature-step) or [transaction](#transaction-step)).
+  </Step>
+  <Step title="Checking the fill status" icon="bars-progress">
+    After a step is signed or submitted you should check on the progress of the
+    fill
+  </Step>
+  <Step title="Success!" icon="circle-check">
+    Once all the steps are complete you can consider the action complete and
+    notify the user.
+  </Step>
+</Steps>
+
+### Signature Step
+
+A message that needs to be signed. Every signature comes with sign data and post data. The first action we need to take is to sign the message, keep in mind the signatureKind and use the appropriate signing method. Refer to your crypto library of choice on how to sign (viem, web3, etc).
+
+<CodeGroup>
+
+```javascript Signing EIP191
+// Creating an `EIP-191` signature involves signing a message.
+// When you receive a `signatureKind: "eip191"` from the API, you will sign the value associated with the `message` property.
+// In the case below, the message `Sign in to Blur...` will be signed, and later posted to the API.
+// The step item also contains a `post` object detailing the endpoint to post the signed message to.
+const message = {
+  signatureKind: "eip191",
+  message:
+    "Sign in to Blur\n\nChallenge: e2483db1d9d66d2b77f47a8dfa13a15a0e7df5aee2287ade4bf313d6d4bdd0e0",
+};
+
+const eip191Message =
+  "\x19Ethereum Signed Message:\n" + message.message.length + message.message;
+```
+
+```javascript Signing EIP712
+//Creating an EIP-712 signature involves signing a structured object composed of a domain, types, and values.
+//When receiving a signatureKind: "eip712" from the API, you'll need to structure the signature in eth_signTypedData_v4 format.
+//Below, you'll find an example that illustrates how the domain, types, and values can be structured to create the signature.
+const data = {
+  signatureKind: "eip712",
+  domain: {
+    name: "Seaport",
+    version: "1.5",
+    chainId: 137,
+    verifyingContract: "0x00000000000000adc04c56bf30ac9d3c0aaf14dc",
+  },
+  types: {
+    OrderComponents: [
+      {
+        name: "offerer",
+        type: "address",
+      },
+      {
+        name: "zone",
+        type: "address",
+      },
+      {
+        name: "offer",
+        type: "OfferItem[]",
+      },
+      {
+        name: "consideration",
+        type: "ConsiderationItem[]",
+      },
+      {
+        name: "orderType",
+        type: "uint8",
+      },
+      {
+        name: "startTime",
+        type: "uint256",
+      },
+      {
+        name: "endTime",
+        type: "uint256",
+      },
+      {
+        name: "zoneHash",
+        type: "bytes32",
+      },
+      {
+        name: "salt",
+        type: "uint256",
+      },
+      {
+        name: "conduitKey",
+        type: "bytes32",
+      },
+      {
+        name: "counter",
+        type: "uint256",
+      },
+    ],
+    OfferItem: [
+      {
+        name: "itemType",
+        type: "uint8",
+      },
+      {
+        name: "token",
+        type: "address",
+      },
+      {
+        name: "identifierOrCriteria",
+        type: "uint256",
+      },
+      {
+        name: "startAmount",
+        type: "uint256",
+      },
+      {
+        name: "endAmount",
+        type: "uint256",
+      },
+    ],
+    ConsiderationItem: [
+      {
+        name: "itemType",
+        type: "uint8",
+      },
+      {
+        name: "token",
+        type: "address",
+      },
+      {
+        name: "identifierOrCriteria",
+        type: "uint256",
+      },
+      {
+        name: "startAmount",
+        type: "uint256",
+      },
+      {
+        name: "endAmount",
+        type: "uint256",
+      },
+      {
+        name: "recipient",
+        type: "address",
+      },
+    ],
+  },
+  value: {
+    kind: "single-token",
+    offerer: "0xd6044091d0b41efb3402ca05ba4068f969fdd9e4",
+    zone: "0x0000000000000000000000000000000000000000",
+    offer: [
+      {
+        itemType: 1,
+        token: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+        identifierOrCriteria: "0",
+        startAmount: "1000000000000000",
+        endAmount: "1000000000000000",
+      },
+    ],
+    consideration: [
+      {
+        itemType: 2,
+        token: "0x362cc74e031091992cdf0e07be54804c7cce9240",
+        identifierOrCriteria: "32",
+        startAmount: "1",
+        endAmount: "1",
+        recipient: "0xd6044091d0b41efb3402ca05ba4068f969fdd9e4",
+      },
+    ],
+    orderType: 0,
+    startTime: 1691165262,
+    endTime: 1691424522,
+    zoneHash:
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    salt: "0x07b88f641d4da48b00000000000000001fc57a14aea256b9eb70bf364ce57c64",
+    conduitKey:
+      "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+    counter: "0",
+    signature:
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+  },
+  primaryType: "OrderComponents",
+};
+```
+
+</CodeGroup>
+
+**Posting the data**
+
+After the message is signed the second action is to submit the `post` body to the `endpoint` provided in the `post` data. You'll also need to provide the signature that was generated from the sign data as a query parameter. If the request is successful we can mark the step item as complete locally.
+
+The design pattern of this API is completely generic, allowing for automatic support of new types of liquidity without needing to update the app. This data can be fed directly into an Ethereum library such as viem, making it easy to sign and submit the exact data that is needed.
+
+### Transaction Step
+
+A transaction that needs to be submitted onchain. After the transaction is submitted onchain you can poll the step items `check` endpoint. The endpoint will return a status which when successful will return 'success'. The step item can then be successfully marked as complete. _`Note that the transaction step item contains a chainId for which the transaction should be submitted on.`_
+
+### Steps Example
+
+Below is an example of steps you'll encounter in the wild when working with the API.
+
+```
+{
+  "steps": [
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Deposit funds for executing the calls",
+      "kind": "transaction",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+            "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+            "data": "0x58109c",
+            "value": "995010715204139091",
+            "maxFeePerGas": "18044119466",
+            "maxPriorityFeePerGas": "2060264926",
+            "chainId": 1,
+            "gas": 21064
+          },
+          "check": {
+            "endpoint": "/intents/status?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
+            "method": "GET"
+          }
+        }
+      ]
+    }
+  ],
+  "fees": {
+    "gas": "384398515652800",
+    "gasCurrency": "eth",
+    "relayer": "-4989478842712964",
+    "relayerGas": "521157287036",
+    "relayerService": "-4990000000000000",
+    "relayerCurrency": "eth"
+  },
+  "breakdown": {
+    "value": "1000000000000000000",
+    "timeEstimate": 10
+  },
+  "balances": {
+    "userBalance": "54764083517303347",
+    "requiredToSolve": "995010521157287036"
+  }
+}
+```
+
+Along with the steps you'll see that the following objects are returned: fees, breakdown and balances. Information about fees is detailed [here](/how-it-works/fees). Breakdown pertains to time estimation for the execution, broken down by value. The balances object is in regards to the user and how much they require to solve for the execution.
+
+### Checking the fill status
+
+Along with the step data there's an optional check object. You can use this object to check if the status of the transaction is complete. The object details the method and the endpoint to request. You should poll this until the endpoint returns `success`.
+
+```json
+{
+  "check": {
+    "endpoint": "/intents/status?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
+    "method": "GET"
+  }
+}
+```
+
+The check api will always return a status, the expected statuses are as follows:
+
+| Status    | Description                                     |
+| --------- | ----------------------------------------------- |
+| `waiting` | Deposit tx for the request is yet to be indexed |
+| `pending` | Deposit tx was indexed, now the fill is pending |
+| `success` | Relay completed successfully                    |
+| `failure` | Relay failed, attempting to refund              |
+| `refund`  | Funds were refunded due to failure              |
+
+---
+
+### SDK Reference
+
+To review the official way the SDK handles execution, please refer to the [executeSteps](https://github.com/reservoirprotocol/relay-sdk/blob/main/packages/sdk/src/utils/executeSteps.ts#L31) file which implements executing steps detailed above.

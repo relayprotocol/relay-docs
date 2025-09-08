@@ -1,22 +1,9 @@
 ---
-title: "Bridging"
-description: "How to implement token bridging"
+title: "Bridging Integration Guide"
+description: "How to Integrate Bridging using Relay"
 ---
 
-### Summary
-
-<Steps>
-  <Step title="Get a Quote">
-    <a href="#get-a-quote" style={{ position:"absolute",top:10,left:10,right:10,bottom:10,borderBottom:0 }} />
-
-    In this step we'll request a quote that includes all fees, transaction data, and execution steps required to bridge assets.
-  </Step>
-  <Step title="Execute the Bridge">
-    <a href="#execute-the-bridge" style={{ position:"absolute",top:10,left:10,right:10,bottom:10,borderBottom:0 }} />
-
-    Once we have the quote, we'll execute the bridge by submitting transactions and monitoring progress.
-  </Step>
-</Steps>
+This guide shows you how to integrate the Relay API for bridging and onboarding.
 
 ## Get a Quote
 
@@ -40,27 +27,25 @@ curl -X POST "https://api.relay.link/quote" \
   }'
 ```
 
-
 ```javascript JavaScript/Node.js
-const response = await fetch('https://api.relay.link/quote', {
-  method: 'POST',
+const response = await fetch("https://api.relay.link/quote", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    user: '0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3',
+    user: "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
     originChainId: 1,
     destinationChainId: 8453,
-    originCurrency: '0x0000000000000000000000000000000000000000',
-    destinationCurrency: '0x0000000000000000000000000000000000000000',
-    amount: '100000000000000000', // 0.1 ETH in wei
-    tradeType: 'EXACT_INPUT'
-  })
+    originCurrency: "0x0000000000000000000000000000000000000000",
+    destinationCurrency: "0x0000000000000000000000000000000000000000",
+    amount: "100000000000000000", // 0.1 ETH in wei
+    tradeType: "EXACT_INPUT",
+  }),
 });
 
 const quote = await response.json();
 ```
-
 
 ```python Python
 import requests
@@ -183,7 +168,6 @@ You can check the status of a bridge operation at any time using the `/intents/s
 curl "https://api.relay.link/intents/status?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331"
 ```
 
-
 ```javascript JavaScript
 const checkStatus = async (requestId) => {
   const response = await fetch(
@@ -233,7 +217,7 @@ You can include app fees in your bridge requests to monetize your integration:
   "appFees": [
     {
       "recipient": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
-      "fee": "100"  // 1% in basis points
+      "fee": "100" // 1% in basis points
     }
   ]
 }
@@ -252,7 +236,7 @@ Control slippage tolerance for your bridges:
   "destinationCurrency": "eth",
   "amount": "100000000000000000",
   "tradeType": "EXACT_INPUT",
-  "slippageTolerance": "50"  // 0.5% slippage tolerance
+  "slippageTolerance": "50" // 0.5% slippage tolerance
 }
 ```
 
