@@ -45,7 +45,7 @@
           {
             "group": "Resources",
             "pages": [
-              "/references/api/api_resources/supported-chains",
+              "resources/supported-chains",
               "resources/brand-assets",
               "resources/bounties",
               "resources/partnerships",
@@ -100,6 +100,14 @@
                   },
                   "references/api/api_guides/deep-linking"
                 ]
+              },
+              {
+                "group": "Chains, Tokens, Contracts",
+                "pages": [
+                  "references/api/api_resources/supported-chains",
+                  "references/api/api_resources/contract-addresses",
+                  "references/api/api_resources/supported-routes"
+                ]
               }
             ]
           },
@@ -132,14 +140,6 @@
                   "references/api/get-currencies"
                 ]
               }
-            ]
-          },
-          {
-            "group": "Resources",
-            "pages": [
-              "references/api/api_resources/supported-chains",
-              "references/api/api_resources/contract-addresses",
-              "references/api/api_resources/supported-routes"
             ]
           }
         ]
