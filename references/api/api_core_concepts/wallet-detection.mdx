@@ -48,8 +48,8 @@ flows.
 
 ## The Problem
 
-Protocol V2 uses the Relay Depository contracts to enable trustless cross-chain
-payments. For ERC20 token deposits, Protocol V2 defaults to explicit deposits
+Protocol v2 uses the Relay Depository contracts to enable trustless cross-chain
+payments. For ERC20 token deposits, Protocol v2 defaults to explicit deposits
 (two transactions) because:
 
 - It works reliably for all wallet types
@@ -126,7 +126,7 @@ EIP-7702 enables EOAs to temporarily become smart wallets through delegation:
 
 EOA detection only activates when:
 
-- Protocol V2 is enabled (`protocolVersion=preferV2` or `protocolVersion=v2`)
+- Protocol v2 is enabled (`protocolVersion=preferV2` or `protocolVersion=v2`)
 - User is on an Ethereum-compatible EVM chain
 - User is depositing ERC20 tokens (not native ETH)
 - The transaction involves the Relay Depository contracts
@@ -183,35 +183,10 @@ execution and take advantage of their enhanced capabilities.
 If the system cannot determine wallet type (network errors, unsupported chains),
 it defaults to explicit deposits (2 transactions) for safety.
 
-### Protocol V1 Fallback
+### Protocol v1 Fallback
 
-EOA detection only applies to Protocol V2 transactions that use the Relay
-Depository contracts. Protocol V1 transactions continue to use the existing
+EOA detection only applies to Protocol v2 transactions that use the Relay
+Depository contracts. Protocol v1 transactions continue to use the existing
 relayer flow with direct transfers to the solver, regardless of wallet type. In
-Protocol V1, all transactions are effectively "implicit" since they bypass the
+Protocol v1, all transactions are effectively "implicit" since they bypass the
 Depository contracts.
-
-## Benefits and Impact
-
-EOA detection significantly improves the user experience across different wallet
-types:
-
-**The Challenge:**
-
-- Protocol V2's explicit deposits created suboptimal UX for EOAs (2
-  transactions)
-- EOA users faced unnecessary friction with multi-step processes
-- Smart wallets had reliable execution but EOAs were disadvantaged
-
-**The Solution:**
-
-- EOA users get streamlined UX with implicit deposits (1 transaction)
-- Smart wallet users get optimal reliability with explicit deposits (2
-  transactions, batched)
-- All users benefit from Protocol V2's advantages without UX compromises
-- Enables the full benefits of the Depository architecture (lower cost,
-  trustless execution)
-
-This optimization ensures that Relay provides an excellent experience for all
-users, making cross-chain transactions as simple as regular payments, regardless
-of wallet type.
