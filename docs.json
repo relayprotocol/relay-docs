@@ -324,6 +324,10 @@
       "destination": "/guides/bridging"
     },
     {
+      "source": "/how-it-works/fees",
+      "destination": "/references/api/api_core_concepts/fees"
+    },
+    {
       "source": "/references/sdk/bridging/executing-a-bridge",
       "destination": "/guides/bridging"
     },
