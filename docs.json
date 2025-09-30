@@ -128,6 +128,7 @@
               "references/api/advanced",
               "references/api/swap-multi-input",
               "references/api/fast-fill",
+              "references/api/get-swap-sources",
               {
                 "group": "Deprecated",
                 "pages": [
