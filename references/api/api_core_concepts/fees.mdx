@@ -3,17 +3,34 @@ title: "Relay Fees"
 description: "Learn about Relay fees"
 ---
 
-In any given Relay there are three potential fees:
+In any given Relay there are four potential fees:
 
-1. `Execution Fees` - fees to cover network gas costs on the origin and/or destination if executed by Relay
-2. `Exchange Fees` - fees to liquidity providers that faciliate cross-asset and cross-chain token swaps
-3. `App Fees` - fees added on top of a Relay by you, the integrator
+1. **Execution Fees**
 
-We return two objects from the quote API that are of interest to best understand fees:
+   Fees to cover execution costs including network gas on the origin and/or destination chain.
+   - Fill gas estimate (and origin gas estimate for gasless transactions)
+   - \$0.02 flat fee
+2. **Swap Fees**
+
+   Fees to liquidity providers that facilitate cross-asset and cross-chain token swaps.
+   - DEX fees
+   - DEX swap impact
+   - Solver cross-chain rebalancing fees
+3. **Relay Fees**
+
+   Fees charged for using the Relay API gateway and related services.
+   - 20% of swap fee
+4. **App Fees**
+
+   Fees added on top of a Relay by you, the integrator.
+
+If you are interested in learning how app fees work, and how you can add them to your quotes please check out our [App Fees Doc](/features/app-fees).\
+\
+_Please note that the above fee structure applies to standard cases. In certain cases, such as route-specific campaigns or promotions, different fees may apply._
 
 ## Fees Object
 
-The Fees object returned from the quote API reports the following fees:
+The Fees object is returned from the quote API and the requests API. These fees are only the Relay related fee, and are segmentated as the following fees:
 
 **relayerService**: The service fee paid to the relayer to facilitate execution.
 
@@ -21,163 +38,18 @@ The Fees object returned from the quote API reports the following fees:
 
 **relayer**: The sum of the relayerService and the relayerGas.
 
-**appFees**: Third party fees added on top of the existing fees, this fee is added by app developers and accrues offchain to minimize gas costs.
+**app**: Third party fees added on top of the existing fees, this fee is added by app developers and accrues offchain to minimize gas costs.
 
-Gas fees are estimates and may fluctuate over time, if using in a calculation we recommend adding a small buffer to account for these fluctuations.
+**subsidized**: The Fees in the order that are subsidized by the integrator.
 
-### What are app fees?
+## Price Impact
 
-App fees are additional fees set by third-party developers on top of existing fees. These fees are specified when generating a quote and accrue off-chain, meaning they are not immediately paid out. Instead, the app fee payee must manually claim them later.
+If you are interested in understanding or showing your user the fees of the order more broadly, it's best to look at the `expanded price impact` object which reports:
 
-App fees are measured in basis points (bps) based on the input value of an order. When setting an app fee, a claim address must be provided, which will be used for withdrawing accumulated fees. A single quote can include multiple app fees.
+**execution** - the price impact that results from execution fees.
 
-You can accrue fees by including `appFees` in the [Quote API](https://docs.relay.link/references/api/get-quote).
+**swap** - the price impact that results from cross-currency and cross-chain token exchange
 
-Since app fees accrue off-chain, we maintain a database that tracks:
+**relay** - the price impact that results from the relay api fee (if applicable)
 
-- The app fee payee address
-- The currency in which fees are accrued
-- The total claimable balance per currency
-
-#### How do app fees work?
-
-App fees behave differently depending on whether the request is cross-chain or same-chain.
-
-**Cross-Chain**
-
-- The app fee accrues in the currency sent to the solver.
-- The app fee is recorded after the fill transaction is completed.
-
-**Same-Chain**
-
-- App fees apply only to swaps—not to wraps, unwraps, or sends.
-- App fees apply only to EVM and SVM same-chain swaps.
-- Fees are added in the form of the native currency. Even if the user isn’t initially spending native currency, they may still need to pay a small amount of it. For example, swapping `$MOG -> $MEME` may still require paying some ETH as an app fee.
-- Important: The app fee must be paid, or the transaction will fail.
-- If the input currency is native currency, instead of adding extra funds, the fee is deducted from the original amount being sent.
-- The fee is recorded only after the same-chain transaction is indexed.
-
-#### Claiming App Fees Across Chains
-
-App fee payees must claim accrued fees for major currencies (ETH, USDC and USDT) on Base regardless of the origin chain. Other currencies must be claimed on origin chain of the request.
-
-#### How to know your offchain balance?
-
-To check your accrued off-chain fees, use the app fee balances API. Here's an example curl command:
-
-```
-curl --location 'https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e01866650532c/balances'
-```
-
-The response includes the `balances.currency` field, reflecting your off-chain balance for each currency accumulated:
-
-```
-    {
-      "currency": {
-        "chainId": 8453,
-        "address": "0x0000000000000000000000000000000000000000",
-        "symbol": "ETH",
-        "name": "Ether",
-        "decimals": 18,
-        "metadata": {
-          "logoURI": "https://assets.relay.link/icons/1/light.png",
-          "verified": false,
-          "isNative": false
-        }
-      },
-      "amount": "75021651210714015",
-      "amountFormatted": "0.075021651210714015",
-      "amountUsd": "116.235557",
-      "minimumAmount": "75021651210714015"
-    }
-```
-
-#### How to claim your off-chain balance?
-
-To claim your app fees, use the app fees claim API. If using the API, the response will guide you through signing and submitting a message to the `/execute/permit` endpoint to verify ownership of your claim address. The SDK automates this process for you.
-
-<CodeGroup>
-
-```bash API
-curl --request POST \
-  --url https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e01866650532c/claim \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "chainId": 8453,
-    "currency": "0x0000000000000000000000000000000000000000",
-    "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c"
-}'
-```
-
-```javascript SDK
-import { getClient } from "@relayprotocol/relay-sdk";
-import { useWalletClient } from "wagmi";
-
-const { data: wallet } = useWalletClient();
-
-const quote = await getClient()?.actions.getQuote({
-  wallet,
-  chainId: 0,
-  toChainId: 1,
-  amount: "1000",
-  currency: "eth",
-});
-
-await relayClient.actions.execute({
-  quote,
-  wallet,
-  onProgress(steps) {
-    setStep(getCurrentStepDescription(steps));
-  },
-});
-```
-
-</CodeGroup>
-
-An example response from the API would be:
-
-```
-{
-    "steps": [
-        {
-            "id": "authorize",
-            "action": "Sign authorization",
-            "description": "Authorize claiming funds",
-            "kind": "signature",
-            "items": [
-                {
-                    "status": "incomplete",
-                    "data": {
-                        "sign": {
-                            "signatureKind": "eip191",
-                            "message": "0xa344c6123e3da9fc3f9c81edeab0b2eb39f2ea80ba54a6e0ad00123dc180619c"
-                        },
-                        "post": {
-                            "endpoint": "/execute/permits",
-                            "method": "POST",
-                            "body": {
-                                "kind": "claim",
-                                "requestId": "0xa344c6123e3da9fc3f9c81edeab0b2eb39f2ea80ba54a6e0ad00123dc180619c"
-                            }
-                        }
-                    }
-                }
-            ]
-        }
-    ]
-}
-```
-
-You can then send a request to `/execute/permit` with the `requestId` and `signature` to claim your fees. An example request would be:
-
-```
-curl --request POST \
-  --url `https://api.relay.link/execute/permits?signature=${signature}` \
-  --header "Content-Type: application/json" \
-  --data '{
-    "kind": "request",
-    "requestId": "0xa344c6123e3da9fc3f9c81edeab0b2eb39f2ea80ba54a6e0ad00123dc180619c"
-  }'
-```
-
-Once done, you can check your balance again to verify the claim.
+**app** - the price impact that results from the app fees (if applicable)

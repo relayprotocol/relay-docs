@@ -13,7 +13,6 @@ if (!window[key]) {
     data: null
   }
 }
-
 if (!window[key].fetching) {
   const appendContracts = (data) => {
     const rootElement = document.getElementById(id)
@@ -42,6 +41,10 @@ if (!window[key].fetching) {
       </tr>`
     })
     rootElement.innerHTML = rows.join("")
+    const loaderContainer = document.getElementById(`loader-container-${id}`)
+    if (loaderContainer) {
+      loaderContainer.style.display = "none"
+    }
   }
 
   const fetchChains = async () => {
@@ -62,16 +65,20 @@ if (!window[key].fetching) {
       window[key].data = false
     }
   }
-
+  const loaderContainer = document.getElementById(`loader-container-${id}`)
+  if (loaderContainer) {
+    loaderContainer.style.display = "flex"
+  }
   if (window[key].data) {
-    appendContracts(window[key].data)
+    setTimeout(() => {
+      appendContracts(window[key].data)
+    }, 1000)
   } else {
     fetchChains()
   }
 }
 
 return (
-
 <table style={{ width: "100%", borderSpacing: "48px" }} className="relay-table">
   <thead
     style={{
@@ -89,7 +96,10 @@ return (
       <th>ApprovalProxy</th>
     </tr>
   </thead>
-  <tbody id={id}>
+  <tbody id={id} style={{width: "100%"}}>
   </tbody>
+  <div className={`loader-container-${id}`} style={{ display: "none", justifyContent: "center", alignItems: "center", height: "200px", width: "100%" }}>
+    <div className="loader"></div>
+  </div>
 </table>
 ); };

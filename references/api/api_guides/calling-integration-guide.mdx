@@ -15,9 +15,8 @@ To get started make sure that you install and configure the [Relay SDK](/referen
 
 ### Guides
 
-- [**Bridge**](/guides/bridging): Bridge funds to another chain
-- [**Swap**](/guides/swapping): Swap funds from one currency to another across different chains
-- [**Custom Contract Call**](/guides/calling): Call a contract method across chains to perform a multitude of actions
+- [**Bridge**](/references/api/api_guides/bridging-integration-guide): Bridge funds to another chain
+- [**Custom Contract Call**](/references/api/api_guides/calling-integration-guide): Call a contract method across chains to perform a multitude of actions
 
 ### Cross-chain Execution with the Reservoir Aggregator
 
@@ -66,7 +65,7 @@ getClient()?.actions.buyToken({
 
 ### Contract Compatibility
 
-Before integrating cross-chain calls, ensure your contract is compatible with Relay. Review our [Contract Compatibility](/how-it-works/contract-compatibility) overview to make any necessary changes to your smart contracts.
+Before integrating cross-chain calls, ensure your contract is compatible with Relay. Review our [Contract Compatibility](/references/api/api_core_concepts/contract-compatibility) overview to make any necessary changes to your smart contracts.
 
 ## Get a Quote
 
@@ -513,7 +512,7 @@ quote_request = {
 
 After receiving a call quote, execute it by processing each step in the response. The execution handles both the origin chain transaction and destination chain fulfillment.\
 \
-Learn more about step execution using the API [here](/references/api/step-execution).
+Learn more about step execution using the API [here](/references/api/api_core_concepts/step-execution).
 
 ### Monitor Cross-Chain Call Status
 
