@@ -66,6 +66,7 @@
                 "group": "Core Concepts",
                 "pages": [
                   "references/api/api_core_concepts/step-execution",
+                  "references/api/api_core_concepts/wallet-detection",
                   "references/api/api_core_concepts/quote-errors",
                   "references/api/api_core_concepts/fees",
                   "references/api/api_core_concepts/refunds",
