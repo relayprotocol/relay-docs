@@ -41,7 +41,7 @@ if (!window[key].fetching) {
       </tr>`
     })
     rootElement.innerHTML = rows.join("")
-    document.getElementById(`loader-${id}`).style.display = "none"
+    document.getElementById(`loader-container-${id}`).style.display = "none"
   }
 
   const fetchChains = async () => {
@@ -92,8 +92,8 @@ return (
   </thead>
   <tbody id={id} style={{width: "100%"}}>
   </tbody>
-  <div className="loader-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px", width: "100%" }}>
-    <div className={`loader-${id}`}></div>
+  <div className={`loader-container-${id}`} style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px", width: "100%" }}>
+    <div className="loader"></div>
   </div>
 </table>
 ); };
