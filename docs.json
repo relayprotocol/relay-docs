@@ -117,7 +117,7 @@
               "references/api/core",
               "references/api/get-quote",
               "references/api/execute",
-              "references/api/get-intents-status-v2",
+              "references/api/get-intents-status-v3",
               "references/api/get-requests",
               "references/api/utilities",
               "references/api/get-chains",

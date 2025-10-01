@@ -47,7 +47,7 @@ We have automatic handling for common edge cases that can occur when using depos
 
 ## Debugging
 
-When looking up the status of a bridge or fetching the request data, please use the `requestId` and our [Get Execution Status API](/references/api/get-intents-status-v2).
+When looking up the status of a bridge or fetching the request data, please use the `requestId` and our [Get Execution Status API](/references/api/get-intents-status-v3).
 The transaction hash of the deposit transaction cannot be used to lookup the status of the bridge for deposit address bridges.
 To help with debugging transactions, make sure to store the `requestId` along with other data (quotes, transactions,
 bridges, etc). The `requestId` is unique to Relay's database and will be returned with the quote.

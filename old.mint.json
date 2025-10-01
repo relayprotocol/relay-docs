@@ -122,7 +122,7 @@
         "references/api/handling-errors",
         "references/api/get-chains",
         "references/api/get-quote",
-        "references/api/get-intents-status-v2",
+        "references/api/get-intents-status-v3",
         "references/api/get-requests",
         {
           "group": "Utilities",
