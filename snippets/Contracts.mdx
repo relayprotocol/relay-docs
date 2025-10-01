@@ -41,6 +41,7 @@ if (!window[key].fetching) {
       </tr>`
     })
     rootElement.innerHTML = rows.join("")
+    document.getElementById(`loader-${id}`).style.display = "none"
   }
 
   const fetchChains = async () => {
@@ -53,7 +54,6 @@ if (!window[key].fetching) {
         : "https://api.relay.link/chains"
         );
         const data = await response.json();
-        console.log('DATA', data)
         window[key].fetching = false
         window[key].data = data.chains
         appendContracts(data.chains)
@@ -65,7 +65,6 @@ if (!window[key].fetching) {
 
   if (window[key].data) {
     setTimeout(() => {
-      console.log('APPENDING CONTRACTS', window[key].data)
       appendContracts(window[key].data)
     }, 1000)
   } else {
@@ -94,7 +93,7 @@ return (
   <tbody id={id} style={{width: "100%"}}>
   </tbody>
   <div className="loader-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px", width: "100%" }}>
-    <div className="loader"></div>
+    <div className={`loader-${id}`}></div>
   </div>
 </table>
 ); };
