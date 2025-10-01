@@ -13,7 +13,6 @@ if (!window[key]) {
     data: null
   }
 }
-
 if (!window[key].fetching) {
   const appendContracts = (data) => {
     const rootElement = document.getElementById(id)
@@ -54,6 +53,7 @@ if (!window[key].fetching) {
         : "https://api.relay.link/chains"
         );
         const data = await response.json();
+        console.log('DATA', data)
         window[key].fetching = false
         window[key].data = data.chains
         appendContracts(data.chains)
@@ -64,14 +64,16 @@ if (!window[key].fetching) {
   }
 
   if (window[key].data) {
-    appendContracts(window[key].data)
+    setTimeout(() => {
+      console.log('APPENDING CONTRACTS', window[key].data)
+      appendContracts(window[key].data)
+    }, 1000)
   } else {
     fetchChains()
   }
 }
 
 return (
-
 <table style={{ width: "100%", borderSpacing: "48px" }} className="relay-table">
   <thead
     style={{
@@ -89,7 +91,10 @@ return (
       <th>ApprovalProxy</th>
     </tr>
   </thead>
-  <tbody id={id}>
+  <tbody id={id} style={{width: "100%"}}>
   </tbody>
+  <div className="loader-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px", width: "100%" }}>
+    <div className="loader"></div>
+  </div>
 </table>
 ); };
