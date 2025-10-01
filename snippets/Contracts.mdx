@@ -41,7 +41,10 @@ if (!window[key].fetching) {
       </tr>`
     })
     rootElement.innerHTML = rows.join("")
-    document.getElementById(`loader-container-${id}`).style.display = "none"
+    const loaderContainer = document.getElementById(`loader-container-${id}`)
+    if (loaderContainer) {
+      loaderContainer.style.display = "none"
+    }
   }
 
   const fetchChains = async () => {
@@ -62,7 +65,10 @@ if (!window[key].fetching) {
       window[key].data = false
     }
   }
-  document.getElementById(`loader-container-${id}`).style.display = "flex"
+  const loaderContainer = document.getElementById(`loader-container-${id}`)
+  if (loaderContainer) {
+    loaderContainer.style.display = "flex"
+  }
   if (window[key].data) {
     setTimeout(() => {
       appendContracts(window[key].data)
