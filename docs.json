@@ -1,360 +1,363 @@
 {
-	"$schema": "https://mintlify.com/docs.json",
-	"theme": "mint",
-	"name": "Relay",
-	"colors": {
-		"primary": "#4615C8",
-		"light": "#A7AAFF",
-		"dark": "#4615C8"
-	},
-	"favicon": "/favicon.png",
-	"navigation": {
-		"tabs": [
-			{
-				"tab": "Overview",
-				"groups": [
-					{
-						"group": "Introduction",
-						"pages": ["what-is-relay"]
-					},
-					{
-						"group": "Solutions",
-						"pages": [
-							"solutions/wallets-and-wallet-providers",
-							"solutions/multichain-apps",
-							"solutions/chains"
-						]
-					},
-					{
-						"group": "Use Cases",
-						"pages": [
-							"use-cases/bridging",
-							"use-cases/cross-chain-swaps",
-							"use-cases/calling"
-						]
-					},
-
-					{
-						"group": "Features",
-						"pages": [
-							"features/app-fees",
-							"features/deposit-addresses",
-							"features/mev-protection"
-						]
-					},
-					{
-						"group": "Resources",
-						"pages": [
-							"resources/supported-chains",
-							"resources/brand-assets",
-							"resources/bounties",
-							"resources/partnerships",
-							"resources/support",
-							"resources/security-and-compliance"
-						]
-					}
-				]
-			},
-			{
-				"tab": "API Reference",
-				"groups": [
-					{
-						"group": " ",
-						"pages": [
-							"references/api/overview",
-							{
-								"group": "Core Concepts",
-								"pages": [
-									"references/api/api_core_concepts/step-execution",
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Relay",
+  "colors": {
+    "primary": "#4615C8",
+    "light": "#A7AAFF",
+    "dark": "#4615C8"
+  },
+  "favicon": "/favicon.png",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "what-is-relay"
+            ]
+          },
+          {
+            "group": "Solutions",
+            "pages": [
+              "solutions/wallets-and-wallet-providers",
+              "solutions/multichain-apps",
+              "solutions/chains"
+            ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": [
+              "use-cases/bridging",
+              "use-cases/cross-chain-swaps",
+              "use-cases/calling"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/app-fees",
+              "features/deposit-addresses",
+              "features/mev-protection"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "resources/supported-chains",
+              "resources/brand-assets",
+              "resources/bounties",
+              "resources/partnerships",
+              "resources/support",
+              "resources/security-and-compliance"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": " ",
+            "pages": [
+              "references/api/overview",
+              {
+                "group": "Core Concepts",
+                "pages": [
+                  "references/api/api_core_concepts/step-execution",
                   "references/api/api_core_concepts/wallet-detection",
-									"references/api/api_core_concepts/quote-errors",
-									"references/api/api_core_concepts/fees",
-									"references/api/api_core_concepts/refunds",
-									"references/api/api_core_concepts/input-validation",
-									"references/api/api_core_concepts/trade-types",
-									"references/api/api_core_concepts/surplus-and-shortage",
-									"references/api/api_core_concepts/handling-errors",
-									"references/api/api_core_concepts/contract-compatibility"
-								]
-							},
-							{
-								"group": "Integration Guides",
-								"pages": [
-									"references/api/api_guides/bridging-integration-guide",
-									"references/api/api_guides/calling-integration-guide",
-									"references/api/api_guides/transaction-indexing",
-									{
-										"group": "Smart Account Support",
-										"pages": [
-											"references/api/api_guides/smart_accounts/smart-accounts",
-											"references/api/api_guides/smart_accounts/erc-4337",
-											"references/api/api_guides/smart_accounts/eip-7702"
-										]
-									},
-									{
-										"group": "Chain Support Guides",
-										"pages": [
-											"references/api/api_guides/testnet",
-											"references/api/api_guides/solana",
-											"references/api/api_guides/hyperliquid-support"
-										]
-									},
-									"references/api/api_guides/deep-linking"
-								]
-							},
-							{
-								"group": "Chains, Tokens, Contracts",
-								"pages": [
-									"references/api/api_resources/supported-chains",
-									"references/api/api_resources/contract-addresses",
-									"references/api/api_resources/supported-routes"
-								]
-							}
-						]
-					},
-					{
-						"group": "API Reference",
-						"pages": [
-							"references/api/core",
-							"references/api/get-quote",
-							"references/api/execute",
-							"references/api/get-intents-status-v2",
-							"references/api/get-requests",
-							"references/api/utilities",
-							"references/api/get-chains",
-							"references/api/get-currencies-v2",
-							"references/api/get-token-price",
-							"references/api/transactions-index",
-							"references/api/transactions-single",
-							"references/api/advanced",
-							"references/api/swap-multi-input",
-							"references/api/fast-fill",
-							"references/api/get-swap-sources",
-							{
-								"group": "Deprecated",
-								"pages": [
-									"references/api/execute-call",
-									"references/api/execute-bridge",
-									"references/api/execute-swap",
-									"references/api/get-price",
-									"references/api/get-config",
-									"references/api/get-intents-status",
-									"references/api/get-currencies"
-								]
-							}
-						]
-					}
-				]
-			},
-			{
-				"tab": "SDK Reference",
-				"groups": [
-					{
-						"group": "SDK Reference",
-						"pages": [
-							"references/sdk/getting-started",
-							"references/sdk/createClient",
-							{
-								"group": "Actions",
-								"pages": [
-									"references/sdk/actions/getQuote",
-									"references/sdk/actions/execute"
-								]
-							},
-							"references/sdk/adapters",
-							"references/sdk/api-types"
-						]
-					}
-				]
-			},
-			{
-				"tab": "UI Kit",
-				"groups": [
-					{
-						"group": "RelayKit",
-						"pages": [
-							"references/relay-kit/overview",
-							{
-								"group": "Hooks",
-								"pages": [
-									"references/relay-kit/hooks/getting-started",
-									"references/relay-kit/hooks/useQuote",
-									"references/relay-kit/hooks/useRelayChains",
-									"references/relay-kit/hooks/useRequests",
-									"references/relay-kit/hooks/useTokenList",
-									"references/relay-kit/hooks/useTokenPrice",
-									"references/relay-kit/hooks/useExecutionStatus"
-								]
-							},
-							{
-								"group": "UI",
-								"pages": [
-									"references/relay-kit/ui/getting-started",
-									"references/relay-kit/ui/relay-kit-provider",
-									"references/relay-kit/ui/swap-widget",
-									"references/relay-kit/ui/theming",
-									"references/relay-kit/ui/troubleshooting"
-								]
-							}
-						]
-					}
-				]
-			},
-			{
-				"tab": "Relay Protocol",
-				"groups": [
-					{
-						"group": "Relay Protocol",
-						"pages": [
-							"references/protocol/overview",
-							{
-								"group": "Depository",
-								"pages": [
-									"references/protocol/depository/overview",
-									"references/protocol/depository/architecture",
-									"references/protocol/depository/security",
-									{
-										"group": "Guides",
-										"pages": [
-											"references/protocol/depository/guides/integrating"
-										]
-									},
-									{
-										"group": "Contracts Reference",
-										"pages": [
-											"references/protocol/depository/contracts/Solana-Relay-Depository",
-											"references/protocol/depository/contracts/Evm-Relay-Depository"
-										]
-									},
-									"references/protocol/depository/addresses"
-								]
-							},
-							{
-								"group": "Oracle",
-								"pages": [
-									"references/protocol/oracle/overview",
-									"references/protocol/oracle/architecture"
-								]
-							},
-							{
-								"group": "Hub",
-								"pages": [
-									"references/protocol/hub/overview",
-									"references/protocol/hub/architecture"
-								]
-							},
-							{
-								"group": "Vaults",
-								"pages": [
-									"references/protocol/vaults/overview",
-									"references/protocol/vaults/architecture",
-									"references/protocol/vaults/security",
-									"references/protocol/vaults/backend",
-									{
-										"group": "Guides",
-										"pages": [
-											"references/protocol/vaults/guides/bridging",
-											"references/protocol/vaults/guides/interacting"
-										]
-									},
-									{
-										"group": "Contracts Reference",
-										"pages": [
-											"references/protocol/vaults/contracts/RelayPoolFactory",
-											"references/protocol/vaults/contracts/RelayPool",
-											"references/protocol/vaults/contracts/RelayPoolNativeGateway",
-											"references/protocol/vaults/contracts/RelayBridgeFactory",
-											"references/protocol/vaults/contracts/RelayBridge"
-										]
-									}
-								]
-							}
-						]
-					}
-				]
-			}
-		]
-	},
-	"logo": {
-		"light": "/logo/relay-black.svg",
-		"dark": "/logo/relay-white.svg"
-	},
-	"api": {
-		"openapi": ["https://api.relay.link/documentation/json"],
-		"mdx": {
-			"server": [
-				"https://api.relay.link",
-				"https://api.testnets.relay.link"
-			]
-		}
-	},
-	"appearance": {
-		"default": "light"
-	},
-	"navbar": {
-		"links": [
-			{
-				"label": "Support",
-				"href": "https://support.relay.link/en/"
-			},
-			{
-				"label": "Get in Touch",
-				"href": "https://forms.gle/XNeELYavjwoJwPEf7"
-			}
-		],
-		"primary": {
-			"type": "button",
-			"label": "Try Relay",
-			"href": "https://www.relay.link/"
-		}
-	},
-	"footer": {
-		"socials": {
-			"twitter": "https://twitter.com/RelayProtocol",
-			"discord": "https://discord.com/invite/relayprotocol"
-		}
-	},
-	"integrations": {
-		"posthog": {
-			"apiKey": "phc_bidXwDZgxGlWqfNtx8fhLESozcfupLUETfYB306Apmc",
-			"apiHost": "https://posthog.reservoir.tools"
-		},
-		"intercom": {
-			"appId": "b09ps4q8"
-		}
-	},
-	"redirects": [
-		{
-			"source": "/references/sdk/bridging/fetching-a-quote",
-			"destination": "/guides/bridging"
-		},
-		{
-			"source": "/how-it-works/fees",
-			"destination": "/references/api/api_core_concepts/fees"
-		},
-		{
-			"source": "/references/sdk/bridging/executing-a-bridge",
-			"destination": "/guides/bridging"
-		},
-		{
-			"source": "/references/sdk/swapping/fetching-a-quote",
-			"destination": "/guides/swapping"
-		},
-		{
-			"source": "/references/sdk/swapping/executing-a-swap",
-			"destination": "/guides/swapping"
-		},
-		{
-			"source": "/references/api/core",
-			"destination": "/references/api/overview"
-		},
-		{
-			"source": "/references/api/utilities",
-			"destination": "/references/api/overview"
-		},
-		{
-			"source": "/references/api/advanced",
-			"destination": "/references/api/overview"
-		}
-	]
+                  "references/api/api_core_concepts/quote-errors",
+                  "references/api/api_core_concepts/fees",
+                  "references/api/api_core_concepts/refunds",
+                  "references/api/api_core_concepts/input-validation",
+                  "references/api/api_core_concepts/trade-types",
+                  "references/api/api_core_concepts/surplus-and-shortage",
+                  "references/api/api_core_concepts/handling-errors",
+                  "references/api/api_core_concepts/contract-compatibility"
+                ]
+              },
+              {
+                "group": "Integration Guides",
+                "pages": [
+                  "references/api/api_guides/bridging-integration-guide",
+                  "references/api/api_guides/calling-integration-guide",
+                  "references/api/api_guides/transaction-indexing",
+                  {
+                    "group": "Smart Account Support",
+                    "pages": [
+                      "references/api/api_guides/smart_accounts/smart-accounts",
+                      "references/api/api_guides/smart_accounts/erc-4337",
+                      "references/api/api_guides/smart_accounts/eip-7702"
+                    ]
+                  },
+                  {
+                    "group": "Chain Support Guides",
+                    "pages": [
+                      "references/api/api_guides/testnet",
+                      "references/api/api_guides/solana",
+                      "references/api/api_guides/hyperliquid-support"
+                    ]
+                  },
+                  "references/api/api_guides/deep-linking"
+                ]
+              },
+              {
+                "group": "Chains, Tokens, Contracts",
+                "pages": [
+                  "references/api/api_resources/supported-chains",
+                  "references/api/api_resources/contract-addresses",
+                  "references/api/api_resources/supported-routes"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "references/api/core",
+              "references/api/get-quote",
+              "references/api/execute",
+              "references/api/get-intents-status-v2",
+              "references/api/get-requests",
+              "references/api/utilities",
+              "references/api/get-chains",
+              "references/api/get-currencies-v2",
+              "references/api/get-token-price",
+              "references/api/transactions-index",
+              "references/api/transactions-single",
+              "references/api/advanced",
+              "references/api/swap-multi-input",
+              "references/api/fast-fill",
+              "references/api/get-swap-sources",
+              {
+                "group": "Deprecated",
+                "pages": [
+                  "references/api/execute-call",
+                  "references/api/execute-bridge",
+                  "references/api/execute-swap",
+                  "references/api/get-price",
+                  "references/api/get-config",
+                  "references/api/get-intents-status",
+                  "references/api/get-currencies"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDK Reference",
+        "groups": [
+          {
+            "group": "SDK Reference",
+            "pages": [
+              "references/sdk/getting-started",
+              "references/sdk/createClient",
+              {
+                "group": "Actions",
+                "pages": [
+                  "references/sdk/actions/getQuote",
+                  "references/sdk/actions/execute"
+                ]
+              },
+              "references/sdk/adapters",
+              "references/sdk/api-types"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "UI Kit",
+        "groups": [
+          {
+            "group": "RelayKit",
+            "pages": [
+              "references/relay-kit/overview",
+              {
+                "group": "Hooks",
+                "pages": [
+                  "references/relay-kit/hooks/getting-started",
+                  "references/relay-kit/hooks/useQuote",
+                  "references/relay-kit/hooks/useRelayChains",
+                  "references/relay-kit/hooks/useRequests",
+                  "references/relay-kit/hooks/useTokenList",
+                  "references/relay-kit/hooks/useTokenPrice",
+                  "references/relay-kit/hooks/useExecutionStatus"
+                ]
+              },
+              {
+                "group": "UI",
+                "pages": [
+                  "references/relay-kit/ui/getting-started",
+                  "references/relay-kit/ui/relay-kit-provider",
+                  "references/relay-kit/ui/swap-widget",
+                  "references/relay-kit/ui/theming",
+                  "references/relay-kit/ui/troubleshooting"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Relay Protocol",
+        "groups": [
+          {
+            "group": "Relay Protocol",
+            "pages": [
+              "references/protocol/overview",
+              {
+                "group": "Depository",
+                "pages": [
+                  "references/protocol/depository/overview",
+                  "references/protocol/depository/architecture",
+                  "references/protocol/depository/security",
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "references/protocol/depository/guides/integrating"
+                    ]
+                  },
+                  {
+                    "group": "Contracts Reference",
+                    "pages": [
+                      "references/protocol/depository/contracts/Solana-Relay-Depository",
+                      "references/protocol/depository/contracts/Evm-Relay-Depository"
+                    ]
+                  },
+                  "references/protocol/depository/addresses"
+                ]
+              },
+              {
+                "group": "Oracle",
+                "pages": [
+                  "references/protocol/oracle/overview",
+                  "references/protocol/oracle/architecture"
+                ]
+              },
+              {
+                "group": "Hub",
+                "pages": [
+                  "references/protocol/hub/overview",
+                  "references/protocol/hub/architecture"
+                ]
+              },
+              {
+                "group": "Vaults",
+                "pages": [
+                  "references/protocol/vaults/overview",
+                  "references/protocol/vaults/architecture",
+                  "references/protocol/vaults/security",
+                  "references/protocol/vaults/backend",
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "references/protocol/vaults/guides/bridging",
+                      "references/protocol/vaults/guides/interacting"
+                    ]
+                  },
+                  {
+                    "group": "Contracts Reference",
+                    "pages": [
+                      "references/protocol/vaults/contracts/RelayPoolFactory",
+                      "references/protocol/vaults/contracts/RelayPool",
+                      "references/protocol/vaults/contracts/RelayPoolNativeGateway",
+                      "references/protocol/vaults/contracts/RelayBridgeFactory",
+                      "references/protocol/vaults/contracts/RelayBridge"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/relay-black.svg",
+    "dark": "/logo/relay-white.svg"
+  },
+  "api": {
+    "openapi": [
+      "https://api.relay.link/documentation/json"
+    ],
+    "mdx": {
+      "server": [
+        "https://api.relay.link",
+        "https://api.testnets.relay.link"
+      ]
+    }
+  },
+  "appearance": {
+    "default": "light"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "https://support.relay.link/en/"
+      },
+      {
+        "label": "Get in Touch",
+        "href": "https://forms.gle/XNeELYavjwoJwPEf7"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Try Relay",
+      "href": "https://www.relay.link/"
+    }
+  },
+  "footer": {
+    "socials": {
+      "twitter": "https://twitter.com/RelayProtocol",
+      "discord": "https://discord.com/invite/relayprotocol"
+    }
+  },
+  "integrations": {
+    "posthog": {
+      "apiKey": "phc_bidXwDZgxGlWqfNtx8fhLESozcfupLUETfYB306Apmc",
+      "apiHost": "https://posthog.reservoir.tools"
+    },
+    "intercom": {
+      "appId": "b09ps4q8"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/references/sdk/bridging/fetching-a-quote",
+      "destination": "/guides/bridging"
+    },
+    {
+      "source": "/how-it-works/fees",
+      "destination": "/references/api/api_core_concepts/fees"
+    },
+    {
+      "source": "/references/sdk/bridging/executing-a-bridge",
+      "destination": "/guides/bridging"
+    },
+    {
+      "source": "/references/sdk/swapping/fetching-a-quote",
+      "destination": "/guides/swapping"
+    },
+    {
+      "source": "/references/sdk/swapping/executing-a-swap",
+      "destination": "/guides/swapping"
+    },
+    {
+      "source": "/references/api/core",
+      "destination": "/references/api/overview"
+    },
+    {
+      "source": "/references/api/utilities",
+      "destination": "/references/api/overview"
+    },
+    {
+      "source": "/references/api/advanced",
+      "destination": "/references/api/overview"
+    }
+  ]
 }
