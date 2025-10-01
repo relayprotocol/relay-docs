@@ -66,7 +66,7 @@
 								"group": "Core Concepts",
 								"pages": [
 									"references/api/api_core_concepts/step-execution",
-									"references/api/api_core_concepts/wallet-detection",
+                  "references/api/api_core_concepts/wallet-detection",
 									"references/api/api_core_concepts/quote-errors",
 									"references/api/api_core_concepts/fees",
 									"references/api/api_core_concepts/refunds",
@@ -129,6 +129,7 @@
 							"references/api/advanced",
 							"references/api/swap-multi-input",
 							"references/api/fast-fill",
+							"references/api/get-swap-sources",
 							{
 								"group": "Deprecated",
 								"pages": [
@@ -326,6 +327,10 @@
 		{
 			"source": "/references/sdk/bridging/fetching-a-quote",
 			"destination": "/guides/bridging"
+		},
+		{
+			"source": "/how-it-works/fees",
+			"destination": "/references/api/api_core_concepts/fees"
 		},
 		{
 			"source": "/references/sdk/bridging/executing-a-bridge",
