@@ -62,7 +62,7 @@ if (!window[key].fetching) {
       window[key].data = false
     }
   }
-
+  document.getElementById(`loader-container-${id}`).style.display = "flex"
   if (window[key].data) {
     setTimeout(() => {
       appendContracts(window[key].data)
@@ -92,7 +92,7 @@ return (
   </thead>
   <tbody id={id} style={{width: "100%"}}>
   </tbody>
-  <div className={`loader-container-${id}`} style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px", width: "100%" }}>
+  <div className={`loader-container-${id}`} style={{ display: "none", justifyContent: "center", alignItems: "center", height: "200px", width: "100%" }}>
     <div className="loader"></div>
   </div>
 </table>
