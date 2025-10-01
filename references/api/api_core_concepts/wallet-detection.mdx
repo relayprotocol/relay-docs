@@ -1,164 +1,255 @@
 ---
 title: "Wallet Detection"
 description:
-        "How Relay automatically detects wallet types and optimizes transaction
-        flows for EOAs and smart wallets"
+        "How to detect wallet types and set the explicitDeposit parameter for
+        optimal user experience"
 ---
 
 # Wallet Detection
 
-## What are EOAs?
+When using Protocol v2 on EVM chains, you need to detect whether your user's
+wallet is an **EOA (Externally Owned Account)** or a **Smart Wallet** to
+properly set the `explicitDeposit` parameter in your quote requests.
 
-An **EOA (Externally Owned Account)** is a regular Ethereum wallet controlled by
-a private key. This includes wallets like MetaMask, Coinbase Wallet, and
-hardware wallets like Ledger. EOAs can only execute one transaction at a time
-and cannot batch multiple operations together.
+## Understanding Wallet Types
 
-In contrast, **Smart Wallets** are contract-based wallets that can execute
-multiple operations in a single transaction. Examples include Gnosis Safe,
-Argent, and ERC-4337 compatible wallets. Smart wallets can also batch approvals
-and deposits atomically, making explicit deposits more user-friendly.
+**EOAs (Externally Owned Accounts)** are regular wallets controlled by a private
+key, like MetaMask, Coinbase Wallet, and hardware wallets. These wallets can
+only execute one transaction at a time and cannot batch multiple operations
+together.
 
-## Deposit Methods Explained
-
-### Explicit Deposits (`explicitDeposit=true`)
-
-The **explicit deposit** method requires two separate transactions:
-
-1. **Approve Transaction**: User approves the Relay Depository contract to spend
-   their tokens
-2. **Deposit Transaction**: User calls the `depositErc20` function on the
-   Depository contract to transfer tokens with an order ID
-
-This method is safer and more predictable but requires two wallet confirmations.
-Smart wallets can batch these operations together, but EOAs must execute them
-sequentially.
-
-### Implicit Deposits (`explicitDeposit=false`)
-
-The **implicit deposit** method requires only one transaction:
-
-1. **Direct Transfer**: User transfers tokens directly to the Relay solver with
-   the order ID appended in the transaction calldata
-
-This method is more convenient but requires the Relay indexer to parse
-transaction traces to detect the deposit and extract the order data. It works
-well for simple token transfers but can be less reliable for complex transaction
-flows.
+**Smart Wallets** are contract-based wallets that can execute multiple
+operations in a single transaction. Examples include Gnosis Safe, Argent, and
+ERC-4337 compatible wallets. Smart wallets can batch approvals and deposits
+atomically, making multi-step flows more user-friendly.
 
 ## The Problem
 
 Protocol v2 uses the Relay Depository contracts to enable trustless cross-chain
-payments. For ERC20 token deposits, Protocol v2 defaults to explicit deposits
-(two transactions) because:
+payments. For ERC20 token deposits, there are two possible transaction flows:
 
-- It works reliably for all wallet types
-- It doesn't depend on complex transaction trace parsing
-- It provides clearer error handling and better reliability
-- It integrates cleanly with the Depository architecture
+**Explicit Deposits (2 transactions):**
 
-However, this creates poor user experience for regular wallet users (EOAs) who
-must:
+1. User approves the Relay Depository contract to spend their tokens
+2. User calls the `depositErc20` function to transfer tokens with an order ID
 
-- Confirm an approval transaction
-- Wait for it to confirm
-- Confirm a second deposit transaction
-- Wait for final confirmation
+**Implicit Deposits (1 transaction):**
 
-Smart wallets can batch these operations atomically, but EOAs cannot. This UX
-friction is particularly problematic for smaller transactions where the
-multi-step process feels disproportionately complex.
+1. User transfers tokens directly to the solver with order ID encoded in
+   transaction calldata
+
+The challenge is that **implicit deposits only work reliably for EOAs**, while
+**explicit deposits work for all wallet types but create poor UX for EOAs** who
+must execute two separate transactions.
 
 ## The Solution
 
-EOA detection automatically determines the wallet type and chooses the optimal
-deposit method:
+By detecting wallet type, you can set the `explicitDeposit` parameter to choose
+the optimal flow:
 
-- **Regular EOAs**: Use implicit deposits (1 transaction) for better UX
-- **Smart Wallets**: Use explicit deposits (2 transactions) for reliability
-- **Special Cases**: Use explicit deposits when wallet capabilities are unclear
+- **`explicitDeposit: false`** - Enables implicit deposits for EOAs (1
+  transaction)
+- **`explicitDeposit: true`** - Uses explicit approval flow for smart wallets (2
+  transactions, can be batched)
+- **Default**: `true` (safe fallback for all wallet types)
 
-## How Detection Works
+## When to Use Wallet Detection
 
-The system determines wallet type by checking three key indicators:
+You should implement wallet detection when:
 
-### 1. Smart Wallet Capabilities
+- Using `protocolVersion: "v2"` or `"preferV2"`
+- User is on an EVM chain
+- User is depositing ERC20 tokens (not native ETH)
+- You want to optimize transaction flow for your users
 
-Modern wallets can advertise advanced capabilities through standards like
-ERC-4337:
+For native ETH deposits, wallet detection is not necessary since no approval is
+required.
 
-- **Atomic Batching**: Ability to execute multiple transactions as one
-  (EIP-5792)
-- **Paymaster Support**: Fee sponsorship capabilities for gasless transactions
-- **Session Keys**: Delegated signing permissions for seamless UX
-- **Auxiliary Funds**: Alternative payment methods beyond native tokens
+## Detection Methods
+
+### 1. Smart Wallet Capabilities (EIP-5792)
+
+Check if the wallet advertises smart wallet capabilities:
+
+```typescript
+const capabilities = await wallet.getCapabilities({
+	account: wallet.account,
+	chainId,
+});
+
+const hasSmartWalletCapabilities = Boolean(
+	capabilities?.atomicBatch?.supported ||
+		capabilities?.paymasterService?.supported ||
+		capabilities?.auxiliaryFunds?.supported ||
+		capabilities?.sessionKeys?.supported
+);
+```
 
 ### 2. Contract Code Detection
 
-The system checks if the wallet address has deployed smart contract code:
+Check if the wallet address has deployed contract code:
 
-- **No Code**: Indicates a regular EOA
-- **Has Code**: Indicates a smart contract wallet (Gnosis Safe, Argent, etc.)
+```typescript
+const code = await publicClient.getCode({
+	address: walletAddress,
+});
 
-### 3. EIP-7702 Delegation
-
-EIP-7702 enables EOAs to temporarily become smart wallets through delegation:
-
-- **Delegated EOAs**: Use authorization signatures to delegate execution to
-  smart contracts
-- **Enhanced Capabilities**: Can batch transactions and execute complex logic
-  while preserving `msg.sender`
-- **Treated as Smart Wallets**: Due to their enhanced capabilities and reliable
-  batching support
-- **Cross-chain Benefits**: Enables EOAs to act as smart wallets on destination
-  chains
-
-## Decision Matrix
-
-| Wallet Type                        | Detection Result      | explicitDeposit | User Experience                |
-| ---------------------------------- | --------------------- | --------------- | ------------------------------ |
-| Regular EOA (MetaMask, Coinbase)   | EOA detected          | `false`         | 1 transaction                  |
-| Smart Wallet (Gnosis Safe, Argent) | Smart wallet detected | `true`          | 2 transactions                 |
-| EIP-7702 Delegated EOA             | Smart wallet detected | `true`          | 2 transactions                 |
-| Detection Error                    | Unknown               | `true`          | 2 transactions (safe fallback) |
-
-## When Detection Occurs
-
-EOA detection only activates when:
-
-- Protocol v2 is enabled (`protocolVersion=preferV2` or `protocolVersion=v2`)
-- User is on an Ethereum-compatible EVM chain
-- User is depositing ERC20 tokens (not native ETH)
-- The transaction involves the Relay Depository contracts
-
-For native ETH deposits, the system uses `depositNative()` which doesn't require
-approval, so EOA detection is not necessary.
-
-## Expected Behavior
-
-### For Regular Users (EOAs)
-
-**Before EOA Detection:**
-
-```
-❌ Step 1: Approve Relay Depository contract to spend USDC
-❌ Step 2: Call depositErc20() to deposit USDC
-❌ Two wallet confirmations required
-❌ Wait times between transactions
+const hasCode = Boolean(code && code !== "0x");
 ```
 
-**After EOA Detection:**
+### 3. EIP-7702 Delegation Detection
+
+Check if the wallet uses EIP-7702 delegation (code starts with `0xef01`):
+
+```typescript
+const isEIP7702Delegated = Boolean(
+	code && code.toLowerCase().startsWith("0xef01")
+);
+```
+
+**Note**: EIP-7702 delegated accounts are technically EOAs but gain smart wallet
+capabilities through authorization signatures. They require
+`explicitDeposit: true` for reliable batching and execution.
+
+### Final Determination
+
+```typescript
+const isSmartWallet =
+	hasSmartWalletCapabilities || hasCode || isEIP7702Delegated;
+const isEOA = !isSmartWallet;
+
+// Set explicitDeposit based on wallet type
+const explicitDeposit = !isEOA || isEIP7702Delegated;
+```
+
+## Safety Checks
+
+### Zero Native Balance Check
+
+If the user has zero native currency (ETH, MATIC, etc.), force
+`explicitDeposit: true` to avoid failed transactions due to insufficient gas:
+
+```typescript
+if (nativeBalance === 0n) {
+	explicitDeposit = true;
+}
+```
+
+### Low Transaction Count Check
+
+If the wallet has 1 or fewer transactions on the source chain, force
+`explicitDeposit: true` as this may indicate a new wallet requiring explicit
+handling:
+
+```typescript
+if (transactionCount <= 1) {
+	explicitDeposit = true;
+}
+```
+
+## Implementation Example
+
+Here's a complete implementation for detecting wallet types:
+
+```typescript
+export const detectWalletType = async (
+	wallet: WalletClient,
+	chainId: number
+) => {
+	if (!wallet.account) {
+		return { isEOA: false, isEIP7702Delegated: false };
+	}
+
+	try {
+		// Check 1: Smart wallet capabilities
+		let hasSmartWalletCapabilities = false;
+		try {
+			const capabilities = await wallet.getCapabilities({
+				account: wallet.account,
+				chainId,
+			});
+
+			hasSmartWalletCapabilities = Boolean(
+				capabilities?.atomicBatch?.supported ||
+					capabilities?.paymasterService
+						?.supported ||
+					capabilities?.auxiliaryFunds
+						?.supported ||
+					capabilities?.sessionKeys?.supported
+			);
+		} catch (capabilitiesError) {
+			// Wallet doesn't support capabilities API
+		}
+
+		// Check 2 & 3: Contract code detection
+		const publicClient = createPublicClient({
+			chain: getChainById(chainId),
+			transport: http(),
+		});
+
+		const code = await publicClient.getCode({
+			address: wallet.account.address,
+		});
+
+		const hasCode = Boolean(code && code !== "0x");
+		const isEIP7702Delegated = Boolean(
+			code && code.toLowerCase().startsWith("0xef01")
+		);
+
+		const isSmartWallet =
+			hasSmartWalletCapabilities ||
+			hasCode ||
+			isEIP7702Delegated;
+		const isEOA = !isSmartWallet;
+
+		return { isEOA, isEIP7702Delegated };
+	} catch (error) {
+		// On error, assume not EOA (safer default)
+		return { isEOA: false, isEIP7702Delegated: false };
+	}
+};
+```
+
+## Example Scenarios
+
+| Wallet Type                        | Detection Result      | explicitDeposit | User Experience                 |
+| ---------------------------------- | --------------------- | --------------- | ------------------------------- |
+| Regular EOA (MetaMask, Coinbase)   | EOA detected          | `false`         | 1 transaction                   |
+| Smart Wallet (Gnosis Safe, Argent) | Smart wallet detected | `true`          | 2 transactions (can be batched) |
+| EIP-7702 Delegated EOA             | Smart wallet detected | `true`          | 2 transactions (can be batched) |
+| Detection Error                    | Unknown               | `true`          | 2 transactions (safe fallback)  |
+
+## API Usage
+
+Include the `explicitDeposit` parameter in your quote requests:
+
+```typescript
+const quoteRequest = {
+	user: userAddress,
+	originChainId: sourceChainId,
+	destinationChainId: targetChainId,
+	originCurrency: sourceCurrencyAddress,
+	destinationCurrency: targetCurrencyAddress,
+	recipient: recipientAddress,
+	amount: amountInWei,
+	tradeType: "EXACT_INPUT",
+	protocolVersion: "preferV2",
+	explicitDeposit: explicitDepositValue, // Based on your detection
+};
+```
+
+## Expected User Experience
+
+### For EOA Users (`explicitDeposit: false`)
 
 ```
-✅ Step 1: Transfer USDC directly to solver with order ID in calldata
+✅ Step 1: Transfer USDC directly to solver with order ID encoded in calldata
 ✅ One wallet confirmation
 ✅ Faster execution and lower cost
 ✅ Simpler, more intuitive user experience
 ```
 
-### For Smart Wallet Users
-
-**Behavior (unchanged):**
+### For Smart Wallet Users (`explicitDeposit: true`)
 
 ```
 ✅ Step 1: Approve Relay Depository contract to spend USDC
@@ -168,25 +259,32 @@ approval, so EOA detection is not necessary.
 ✅ Full smart wallet capabilities (fee sponsorship, session keys, etc.)
 ```
 
-## Edge Cases
+## Best Practices
 
-### EIP-7702 Delegated Accounts
+1. **Handle errors gracefully** - Return
+   `{ isEOA: false, isEIP7702Delegated: false }` on errors (safer default)
+2. **Add timeout** - Detection should timeout after ~1 second to avoid blocking
+   UX
+3. **Cache results** - Cache detection results per wallet/chain combination to
+   avoid repeated calls
+4. **Include safety checks** - Always check native balance and transaction count
+   as additional safety measures
+5. **Only use with Protocol v2** - The `explicitDeposit` parameter is only
+   relevant for Protocol v2
 
-These are EOAs that use EIP-7702 authorization signatures to delegate execution
-to smart contracts. While technically still EOAs, they gain smart wallet
-capabilities like batching and can execute complex logic while preserving the
-user as `msg.sender`. They are treated as smart wallets to ensure reliable
-execution and take advantage of their enhanced capabilities.
+## Troubleshooting
 
-### Detection Failures
+### Detection Returns Incorrect Results
 
-If the system cannot determine wallet type (network errors, unsupported chains),
-it defaults to explicit deposits (2 transactions) for safety.
+- Ensure you're using the correct chain ID
+- Verify the RPC endpoint is returning accurate data
+- Check that wallet capabilities API is properly supported
 
-### Protocol v1 Fallback
+### Quote Requests Failing
 
-EOA detection only applies to Protocol v2 transactions that use the Relay
-Depository contracts. Protocol v1 transactions continue to use the existing
-relayer flow with direct transfers to the solver, regardless of wallet type. In
-Protocol v1, all transactions are effectively "implicit" since they bypass the
-Depository contracts.
+- Verify `explicitDeposit` is only included when using v2 protocol
+- Ensure user has sufficient native currency for gas
+- Check that the wallet address is valid
+
+By implementing proper wallet detection, you can provide optimal user experience
+for both EOA and smart wallet users while ensuring transaction reliability.
