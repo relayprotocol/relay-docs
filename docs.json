@@ -117,7 +117,7 @@
             "pages": [
               "references/api/core",
               "references/api/get-quote",
-              "references/api/execute-permit",
+              "references/api/execute-permits",
               "references/api/execute",
               "references/api/get-intents-status-v3",
               "references/api/get-requests",
