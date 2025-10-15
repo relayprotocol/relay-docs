@@ -18,8 +18,18 @@ Hyperliquid can be accessed using the standard Relay API flow, with the followin
 | Withdrawals from Hyperliquid | useDepositAddress\*\*\* | true      |                      |
 |                              | fromChainId             | 1337      | Hyperliquid Chain Id |
 
-These params define the necessary parameters for Hyperliquid interactions. All other required API parameters are still necessary.
-_\*\*\* for withdrawals `useDepositAddress:true` is a required param do to the current structure of hypercore._
+These params define the necessary parameters for Hyperliquid interactions. All other required API parameters are still necessary. _`*** for withdrawals useDepositAddress:true is a required param do to the current structure of hypercore.`_
+
+## Currency Addresses
+
+- Perps USDC is treated in a custom way with its address being `0x00000000000000000000000000000000`
+- For any other Spot currency the address is the tokenId value returned by the Hyperliquid RPC
+
+```bash
+curl -X POST https://api.hyperliquid.xyz/info -H 'Content-Type: application/json' -d '{"type": "spotMeta"}' | jq '.tokens[]'
+```
+
+- The address of non-Spot and non-Perps currencies (eg. currencies on HIP-3 DEXs) is determined by appending the hex-encoded DEX name at the end of the corresponding Spot currency address used by the DEX. For example, `USDC` on the `xyz` DEX is represented as `0x6d1e7cde53ba9467b783cb7c530ce05478797a`, where `0x6d1e7cde53ba9467b783cb7c530ce054` is the address of Spot USDC and `78797a` is the hex representation of “xyz”.
 
 ## Interacting with Hyperliquid to Initiate Withdrawals
 
