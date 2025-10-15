@@ -3,65 +3,7 @@ title: "Call Execution Integration Guide"
 description: "How to execution cross-chain calls using Relay"
 ---
 
-## Using Relay's Cross-chain Execution
-
-You can use Relay Cross-chain Execution with custom call methods or with the pre-defined methods of the Reservoir Aggregator.
-
-### Custom Call Methods
-
-Relay lets you execute arbitrary call data cross-chain using a custom call method. You can call custom contract methods, mint from custom contracts, mint + bridge (mint an NFT and bridge additional funds in one), or any other custom call execution.
-
-To get started make sure that you install and configure the [Relay SDK](/references/sdk/getting-started). Ensure that everything is configured properly before moving on to implementing the call action.
-
-### Guides
-
-- [**Bridge**](/references/api/api_guides/bridging-integration-guide): Bridge funds to another chain
-- [**Custom Contract Call**](/references/api/api_guides/calling-integration-guide): Call a contract method across chains to perform a multitude of actions
-
-### Cross-chain Execution with the Reservoir Aggregator
-
-To use cross-chain execution with the Reservoir Aggregator, i.e. to mint, buy or sell NFTs aggregated by Reservoir, simply use the Reservoir SDK to trigger cross-chain execution with the appropriate method. When using the Reservoir SDK to trigger a cross-chain purchase all that's required is additionally passing a `currencyChainId` to the buyToken method. This assumes you know which token you would like to buy or mint. You can leverage the Reservoir API to look at aggregated collection liquidity, or trending mints. Below is an example of what that would look like to buy a token from secondary:
-
-````typescript Cross-chain Example
-import { getClient, Execute } from "@relayprotocol/reservoir-sdk";
-import { createWalletClient, http } from 'viem'
-
-...
-
-address = "0x8ba1f109551bD432803012645Ac136ddd6000000"
-wallet = createWalletClient({
-  account: address,
-  transport: http()
-})
-
-getClient()?.actions.buyToken({
-  items: [{ token: "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d:1", quantity: 1 }],
-  options: {
-  	currencyChainId: 10
-  },
-  wallet,
-  onProgress: (steps: Execute['steps']) => {
-    console.log(steps)
-  }
-})```
-````
-
-### Summary
-
-<Steps>
-  <Step title="Get a Quote">
-    <a href="#get-a-quote" style={{ position:"absolute",top:10,left:10,right:10,bottom:10,borderBottom:0 }} />
-
-    In this step we'll request a quote that includes all fees, transaction data, and execution steps required to call a contract on another chain.
-
-  </Step>
-  <Step title="Execute the Call">
-    <a href="#execute-the-call" style={{ position:"absolute",top:10,left:10,right:10,bottom:10,borderBottom:0 }} />
-
-    Once we have the quote, we'll execute the cross-chain call by submitting transactions and monitoring progress.
-
-  </Step>
-</Steps>
+You can use Relay cross-chain execution to perform any action (tx) on any chain. This work by specificying the transaction data you wish to execute on the destination chain as part of the initial quoting processes.
 
 ### Contract Compatibility
 
