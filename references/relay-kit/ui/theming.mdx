@@ -36,6 +36,22 @@ const theme: RelayKitTheme = {
 
 If you are overriding any fonts with custom fonts you need to configure the custom font in your application. For example if you're using nextjs you can refer to this [doc](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) or if you're pulling the fonts in via css you can refer to this [doc](https://www.w3schools.com/css/css3_fonts.asp).
 
+### Light/Dark Mode
+
+RelayKit UI has built-in support for light and dark mode themes. The components will automatically adapt their appearance based on the theme mode you specify. To control the theme mode, simply add the `light` or `dark` class to your HTML container element:
+
+```html
+<!-- Light mode -->
+<html class="light">
+  ...
+</html>
+
+<!-- Dark mode -->
+<html class="dark">
+  ...
+</html>
+```
+
 ## Usage
 
 Now that your theme is configured you'll just need to pass it into the `RelayKitProvider`.
