@@ -3,87 +3,11 @@ title: "Supported Tokens & Routes"
 description: "Relay currently supports multiple cross-chain routes across 69+ blockchain networks. This guide explains how to determine if a particular route and token pair are supported by Relay"
 ---
 
+import { SupportedRoutes } from "/snippets/SupportedRoutes.mdx";
+
 ## Solver Currencies and Swap Support
 
-| Chain Name | Solver Currencies (supported natively) | Swaps Supported |
-|------------|-------------------|-----------------|
-| Ethereum | ETH, WBTC, DAI, USDT, USDC, WETH, PLUME, G7, ANIME, GOD, cbBTC, TOPIA, APE, POWER, OMI, SIPHER, G | true |
-| Base | ETH, WETH, GOD, DEGEN, POP, cbBTC, LRDS, OMI, USDC, DAI, SIPHER, USDT | true |
-| Arbitrum | ETH, G7, XAI, ANIME, USDC, cbBTC, USDT, DMT, APE, WETH, WBTC | true |
-| Optimism | ETH, SIPHER, WBTC, USDT, WETH, DAI, USDC | true |
-| BNB | G, USDC, USDT, DAI | true |
-| Polygon | POL, WBTC, USDT, DAI, USDC | true |
-| Avalanche | AVAX, GUN, USDC | true |
-| Berachain | BERA, WETH, USDC | true |
-| Corn | BTCN, USDC, WBTCN | true |
-| Funkichain | USDC, USDT, SIPHER | false |
-| Solana | SOL, PENGU, USDC | true |
-| Soon | ETH, USDC, USDT | false |
-| Story | IP, USDC, WETH | true |
-| Abstract | ETH, USDC, PENGU | true |
-| Animechain | ANIME, USDC | false |
-| Ape Chain | APE, ApeETH | true |
-| AppChain | ETH, USDC | false |
-| Arbitrum Nova | ETH, GOD | true |
-| B3 | ETH, USDC | false |
-| Blast | ETH, WETH | true |
-| Celo | CELO, USDC | true |
-| Flow EVM | FLOW, USDC | true |
-| G7 Network | G7, USDC | true |
-| Mantle | MNT, USDC | true |
-| Metis | METIS, WETH | true |
-| Perennial | ETH, USDC | false |
-| Ronin | RON, USDC | true |
-| Sei | SEI, USDC | false |
-| Soneium | ETH, USDC | true |
-| Sui | SUI, USDC | true |
-| ZERO | ETH, USDC | true |
-| Zora | ETH, USDzC | true |
-| Ancient8 | ETH | false |
-| Arena-Z | ETH | false |
-| Bitcoin | BTC | false |
-| BOB | ETH | false |
-| Boba Network | ETH | true |
-| Cronos | USDC | true |
-| Cyber | ETH | true |
-| Degen | DEGEN | false |
-| Echos | USDC | false |
-| Eclipse | ETH | false |
-| Forma | TIA | false |
-| Gnosis | USDC | true |
-| Gravity | G | true |
-| Ham | ETH | false |
-| Hemi | ETH | true |
-| HyperEVM | ETH | false |
-| Hychain | TOPIA | false |
-| Ink | ETH | true |
-| Linea | ETH | true |
-| Lisk | ETH | false |
-| Manta Pacific | ETH | true |
-| Mint | ETH | false |
-| Mode | ETH | true |
-| Morph | ETH | false |
-| Onchain Points | POP | false |
-| Polygon zkEVM | ETH | true |
-| Powerloom v2 | POWER | false |
-| Proof of Play Apex | ETH | true |
-| Proof of Play Boss | ETH | false |
-| RARI | ETH | false |
-| Redstone | ETH | true |
-| Sanko | DMT | false |
-| Scroll | ETH | true |
-| Shape | ETH | true |
-| Sonic | USDC | true |
-| Superposition | ETH | false |
-| Superseed | ETH | true |
-| SwellChain | ETH | false |
-| Taiko | ETH | true |
-| Tron | USDT | false |
-| Unichain | USDC | true |
-| World Chain | ETH | true |
-| Xai | XAI | false |
-| Zircuit | ETH | false |
-| zkSync Era | ETH | true |
+<SupportedRoutes id="supportedRoutes" />
 
 ## How to check if a route is supported?
 
@@ -222,6 +146,29 @@ Since the `tokenSupport` field is `"All"`, routes involving this chain are suppo
 ```
 
 Here, `tokenSupport` is `"Limited"`, meaning only specific tokens can be bridged. In this case, `usdc` is listed under `erc20Currencies` with `supportsBridging: true`, so routes involving `usdc` as an origin or destination token on Zora are supported.
+
+## Gas Top-Up
+
+Gas top-up automatically includes a small amount of the destination chain's native gas token (e.g., ETH) with the bridged tokens. This ensures recipients have gas to interact with their received tokens immediately.
+
+### Enabling Gas Top-Up
+
+To enable gas top-up in your quote request:
+- Set `topupGas` to `true` 
+- Optionally specify the gas amount using `topupGasAmount`
+
+### Checking Gas Top-Up Support
+
+A chain supports gas top-up when **all** of the following are true:
+
+1. **EVM chain only** - The chain's `vmType` must be `"evm"`
+2. **Non-native currency** - You cannot top up gas when bridging the chain's native token (e.g., ETH on Ethereum)
+3. **Bridging enabled** - Either:
+   - `tokenSupport` is `"All"`, OR
+   - `currency.supportsBridging` is `true`
+
+You can verify support by checking the **Gas Top Up Supported** column in the table above or by querying the [Chains API](https://api.relay.link/chains).
+
 
 ## API Reference
 
