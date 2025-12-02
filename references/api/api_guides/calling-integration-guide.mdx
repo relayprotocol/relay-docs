@@ -463,13 +463,13 @@ Track the progress of your cross-chain call using the status endpoint:
 <CodeGroup>
 
 ```bash cURL
-curl "https://api.relay.link/intents/status/v2?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331"
+curl "https://api.relay.link/intents/status/v3?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331"
 ```
 
 ```javascript JavaScript
 const checkCallStatus = async (requestId) => {
   const response = await fetch(
-    `https://api.relay.link/intents/status/v2?requestId=${requestId}`
+    `https://api.relay.link/intents/status/v3?requestId=${requestId}`
   );
 
   if (!response.ok) {
