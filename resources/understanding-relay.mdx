@@ -11,19 +11,19 @@ This section describes how Relay works. We use the example of instant bridging h
 
 ### Initial Set up
 
-In order to enable instant bridging, a trusted third party relayer (today Reservoir) locks capital in the Relay escrow contract on Ethereum Mainnet. For the sake of example, assume Reservoir has 10Eth locked, as well as having capital available to deploy on destination chains.
+In order to enable instant bridging, a trusted third party relayer (today Relay) locks capital in the Relay escrow contract on Ethereum Mainnet. For the sake of example, assume Relay has 10Eth locked, as well as having capital available to deploy on destination chains.
 
 ### Bridging Flow
 
 1. Alice wishes to instant bridge 1 Eth from Mainnet to Zora
 
-2. The app calls the Relay API to get a quote for instant bridging from Reservoir, The quote is returned with the rate, fees, and expected time for destination chain confirmation
+2. The app calls the Relay API to get a quote for instant bridging from Relay, The quote is returned with the rate, fees, and expected time for destination chain confirmation
 
-3. Alice agrees to the quote, and Reservoir publishes their intent to fulfill the quote to Relay, with a corresponding order id.
+3. Alice agrees to the quote, and Relay publishes their intent to fulfill the quote to Relay, with a corresponding order id.
 
 4. Alice submits a transfer tx (1 Eth) to the solver _directly_ with the order id appended in the tx calldata. The tx is indexed by Relay as an instant bridge initiation and triggers the assignment of 1 Eth of escrowed value in the Relay protocol to Alice (this is her assurance that she will receive either her desired outcome or a refund).
 
-5. The relayer pays Alice 1 Eth minus fees on Zora. The payment is indexed by Relay, when confirmed, reassigns the 1 Eth escrow balance from Alice to Reservoir.
+5. The relayer pays Alice 1 Eth minus fees on Zora. The payment is indexed by Relay, when confirmed, reassigns the 1 Eth escrow balance from Alice to Relay.
 
 ### Cross-chain balances & withdrawals
 
