@@ -159,7 +159,9 @@
                 "group": "Actions",
                 "pages": [
                   "references/sdk/actions/getQuote",
-                  "references/sdk/actions/execute"
+                  "references/sdk/actions/execute",
+                  "references/sdk/actions/getAppFees",
+                  "references/sdk/actions/claimAppFees"
                 ]
               },
               "references/sdk/adapters",
