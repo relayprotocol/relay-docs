@@ -282,14 +282,14 @@
     "dark": "/logo/relay-white.svg"
   },
   "api": {
-    "openapi": ["./test-openapi.json"],
+    "openapi": ["https://api.relay.link/documentation/json"],
     "mdx": {
       "server": ["https://api.relay.link", "https://api.testnets.relay.link"]
     },
     "examples": {
       "languages": ["curl", "javascript", "python"],
       "defaults": "required",
-      "prefill": true
+      "prefill": false
     }
   },
   "appearance": {

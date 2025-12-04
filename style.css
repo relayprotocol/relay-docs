@@ -66,3 +66,13 @@
       transform: rotate(360deg);
   }
   } 
+
+  #body-user [data-component-part="field-info-pill"]:has(> span.text-gray-400),
+  #body-origin-chain-id [data-component-part="field-info-pill"]:has(> span.text-gray-400),
+  #body-destination-chain-id [data-component-part="field-info-pill"]:has(> span.text-gray-400),
+  #body-origin-currency [data-component-part="field-info-pill"]:has(> span.text-gray-400),
+  #body-destination-currency [data-component-part="field-info-pill"]:has(> span.text-gray-400),
+  #body-amount [data-component-part="field-info-pill"]:has(> span.text-gray-400),
+  #body-trade-type [data-component-part="field-info-pill"]:has(> span.text-gray-400) {
+    display: none;
+  }
