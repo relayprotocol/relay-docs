@@ -93,7 +93,7 @@
     {
       "group": "How it Works",
       "pages": [
-        "how-it-works/the-reservoir-relayer",
+        "how-it-works/the-relay-solver",
         "how-it-works/contract-compatibility",
         "how-it-works/swapping",
         "how-it-works/fees",
