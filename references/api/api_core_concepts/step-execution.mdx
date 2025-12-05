@@ -218,6 +218,396 @@ The design pattern of this API is completely generic, allowing for automatic sup
 
 A transaction that needs to be submitted onchain. After the transaction is submitted onchain you can poll the step items `check` endpoint. The endpoint will return a status which when successful will return 'success'. The step item can then be successfully marked as complete. _`Note that the transaction step item contains a chainId for which the transaction should be submitted on.`_
 
+---
+
+## Step IDs
+
+Relay supports a variety of step IDs that are chained together based on the optimal route for execution. Each step has a unique `id` that identifies the type of action required. Understanding these step IDs helps you build better UX and handle each step appropriately.
+
+### Transaction Steps
+
+| Step ID | Description | When Used |
+|---------|-------------|-----------|
+| `deposit` | Deposit funds to the relayer to execute the swap | When the Relay solver holds the destination token (major tokens). Single transaction flow. |
+| `approve` | Approve the transfer of an ERC20 token | Required before `deposit` or `swap` for tokens the solver doesn't already hold. |
+| `approval` | Approve token for deposit | Token approval for deposit operations. |
+| `swap` | Execute a same-chain token swap | For same-chain swaps. May require an approval step first for EVM swaps. |
+| `send` | Send funds to the recipient | When sending the same asset on the same chain to a different recipient. |
+
+### Signature Steps
+
+| Step ID | Description | When Used |
+|---------|-------------|-----------|
+| `authorize` | Authorize the solver to spend funds from your wallet | Protocol-level permits. |
+| `authorize1` | Sign to approve swap of tokens | Cross-chain permits using Permit2 or TransferWithAuthorization (EIP-3009). Main flow for cross-chain permit operations. |
+| `authorize2` | Sign to approve transfer of tokens | Same-chain swap permits using PermitBatchWitnessTransferFrom. |
+
+### Common Step Flows
+
+Depending on the action and tokens involved, Relay chains steps together. Here are common flows you may encounter:
+
+| Flow | Description |
+|------|-------------|
+| `deposit` | Single step for major tokens the solver holds |
+| `approve` → `deposit` | Approval needed before deposit for tokens solver doesn't hold |
+| `approve` → `swap` | Same-chain swap requiring approval |
+| `authorize1` | Cross-chain permit-based transfer (gasless) |
+| `authorize1` → `authorize2` | Cross-chain swap with both authorization steps |
+
+---
+
+## Step ID Examples
+
+Below are detailed examples of each step type you may encounter when working with the Quote API.
+
+### deposit
+
+Deposit funds to the relayer to execute the swap. Used when the Relay solver holds the destination token.
+
+<Accordion title="Example Response">
+```json
+{
+  "id": "deposit",
+  "action": "Confirm transaction in your wallet",
+  "description": "Depositing funds to the relayer to execute the swap for ETH",
+  "kind": "transaction",
+  "items": [
+    {
+      "status": "incomplete",
+      "data": {
+        "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+        "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+        "data": "0x58109c",
+        "value": "995010715204139091",
+        "maxFeePerGas": "18044119466",
+        "maxPriorityFeePerGas": "2060264926",
+        "chainId": 1,
+        "gas": 21064
+      },
+      "check": {
+        "endpoint": "/intents/status?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
+        "method": "GET"
+      }
+    }
+  ]
+}
+```
+</Accordion>
+
+### approve
+
+An approval transaction to approve the transfer of an ERC20 token. Always followed by an additional step (`deposit` or `swap`) for tokens that the solver doesn't hold.
+
+<Accordion title="Example Response">
+```json
+{
+  "id": "approve",
+  "action": "Confirm transaction in your wallet",
+  "description": "Sign an approval for USDC",
+  "kind": "transaction",
+  "items": [
+    {
+      "status": "incomplete",
+      "data": {
+        "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+        "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "data": "0x095ea7b3...",
+        "value": "0",
+        "chainId": 8453,
+        "maxFeePerGas": "5937131",
+        "maxPriorityFeePerGas": "1009381"
+      },
+      "check": {
+        "endpoint": "/intents/status?requestId=0x...",
+        "method": "GET"
+      }
+    }
+  ]
+}
+```
+</Accordion>
+
+### send
+
+Send funds to a recipient on the same chain.
+
+<Accordion title="Example Response">
+```json
+{
+  "id": "send",
+  "action": "Confirm transaction in your wallet",
+  "description": "Send funds to the recipient",
+  "kind": "transaction",
+  "items": [
+    {
+      "status": "incomplete",
+      "data": {
+        "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+        "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "data": "0xa9059cbb00000000000000000000000036329d1ff4b31ec85280a86e7cf58fca7c005ed000000000000000000000000000000000000000000000000000000002540be400",
+        "value": "0",
+        "chainId": 8453,
+        "maxFeePerGas": "5937131",
+        "maxPriorityFeePerGas": "1009381"
+      },
+      "check": {
+        "endpoint": "/intents/status?requestId=0xec7244ebc6c9ce3a344f9eeb6c84df921b55e0c06b6cb25a49c167fbeafb7e1b",
+        "method": "GET"
+      }
+    }
+  ],
+  "requestId": "0xec7244ebc6c9ce3a344f9eeb6c84df921b55e0c06b6cb25a49c167fbeafb7e1b"
+}
+```
+</Accordion>
+
+### authorize1
+
+Sign authorization for cross-chain operations. Uses Permit2 or TransferWithAuthorization (EIP-3009) for gasless token transfers.
+
+<Accordion title="TransferWithAuthorization Example (EIP-3009)">
+```json
+{
+  "id": "authorize1",
+  "action": "Sign authorization",
+  "description": "Sign to approve swap of USDC for ETH",
+  "kind": "signature",
+  "items": [
+    {
+      "status": "incomplete",
+      "data": {
+        "sign": {
+          "signatureKind": "eip712",
+          "types": {
+            "TransferWithAuthorization": [
+              { "name": "from", "type": "address" },
+              { "name": "to", "type": "address" },
+              { "name": "value", "type": "uint256" },
+              { "name": "validAfter", "type": "uint256" },
+              { "name": "validBefore", "type": "uint256" },
+              { "name": "nonce", "type": "bytes32" }
+            ]
+          },
+          "domain": {
+            "name": "USD Coin",
+            "version": "2",
+            "chainId": 8453,
+            "verifyingContract": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+          },
+          "primaryType": "TransferWithAuthorization",
+          "value": {
+            "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
+            "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+            "value": "1000000",
+            "validAfter": 0,
+            "validBefore": 1764948419,
+            "nonce": "0xc1333d553004054a9c9a45ceedfae13040c7f064736c29b5c7ebc1c6b11a0a71"
+          }
+        },
+        "post": {
+          "endpoint": "/execute/permits",
+          "method": "POST",
+          "body": {
+            "kind": "eip3009",
+            "requestId": "0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
+            "api": "swap"
+          }
+        }
+      },
+      "check": {
+        "endpoint": "/intents/status?requestId=0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
+        "method": "GET"
+      }
+    }
+  ]
+}
+```
+</Accordion>
+
+<Accordion title="Permit2 Example">
+```json
+{
+  "id": "authorize1",
+  "action": "Sign authorization",
+  "description": "Sign to approve swap of PENGU for ETH",
+  "kind": "signature",
+  "items": [
+    {
+      "status": "incomplete",
+      "data": {
+        "sign": {
+          "signatureKind": "eip712",
+          "domain": {
+            "name": "Permit2",
+            "chainId": 8453,
+            "verifyingContract": "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+          },
+          "types": {
+            "PermitBatchWitnessTransferFrom": [
+              { "name": "permitted", "type": "TokenPermissions[]" },
+              { "name": "spender", "type": "address" },
+              { "name": "nonce", "type": "uint256" },
+              { "name": "deadline", "type": "uint256" },
+              { "name": "witness", "type": "RelayerWitness" }
+            ],
+            "TokenPermissions": [
+              { "name": "token", "type": "address" },
+              { "name": "amount", "type": "uint256" }
+            ],
+            "RelayerWitness": [
+              { "name": "relayer", "type": "address" },
+              { "name": "refundTo", "type": "address" },
+              { "name": "nftRecipient", "type": "address" },
+              { "name": "call3Values", "type": "Call3Value[]" }
+            ],
+            "Call3Value": [
+              { "name": "target", "type": "address" },
+              { "name": "allowFailure", "type": "bool" },
+              { "name": "value", "type": "uint256" },
+              { "name": "callData", "type": "bytes" }
+            ]
+          },
+          "value": {
+            "permitted": [
+              {
+                "token": "0x01e6bd233f7021e4f5698a3ae44242b76a246c0a",
+                "amount": "10000000000000000000000"
+              }
+            ],
+            "nonce": "44088590595258",
+            "deadline": 1764948343,
+            "spender": "0xbbbfd134e9b44bfb5123898ba36b01de7ab93d98",
+            "witness": {
+              "relayer": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+              "refundTo": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+              "nftRecipient": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+              "call3Values": [
+                {
+                  "target": "0x01e6bd233f7021e4f5698a3ae44242b76a246c0a",
+                  "allowFailure": false,
+                  "value": "0",
+                  "callData": "0x095ea7b3..."
+                }
+              ]
+            }
+          },
+          "primaryType": "PermitBatchWitnessTransferFrom"
+        },
+        "post": {
+          "endpoint": "/execute/permits",
+          "method": "POST",
+          "body": {
+            "kind": "permit2",
+            "requestId": "0xbfcb68c255e4c596d0b984454ea29f4bbc88f13f598a184aed0e624797c8f83b",
+            "api": "swap"
+          }
+        }
+      },
+      "check": {
+        "endpoint": "/intents/status?requestId=0xbfcb68c255e4c596d0b984454ea29f4bbc88f13f598a184aed0e624797c8f83b",
+        "method": "GET"
+      }
+    }
+  ]
+}
+```
+</Accordion>
+
+### authorize2
+
+Sign authorization for same-chain swap permits using PermitBatchWitnessTransferFrom.
+
+<Accordion title="Example Response">
+```json
+{
+  "id": "authorize2",
+  "action": "Sign authorization",
+  "description": "Sign to approve transfer of USDC",
+  "kind": "signature",
+  "items": [
+    {
+      "status": "incomplete",
+      "data": {
+        "sign": {
+          "signatureKind": "eip712",
+          "domain": {
+            "name": "Permit2",
+            "chainId": 8453,
+            "verifyingContract": "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+          },
+          "types": {
+            "PermitBatchWitnessTransferFrom": [
+              { "name": "permitted", "type": "TokenPermissions[]" },
+              { "name": "spender", "type": "address" },
+              { "name": "nonce", "type": "uint256" },
+              { "name": "deadline", "type": "uint256" },
+              { "name": "witness", "type": "RelayerWitness" }
+            ],
+            "TokenPermissions": [
+              { "name": "token", "type": "address" },
+              { "name": "amount", "type": "uint256" }
+            ],
+            "RelayerWitness": [
+              { "name": "relayer", "type": "address" },
+              { "name": "refundTo", "type": "address" },
+              { "name": "nftRecipient", "type": "address" },
+              { "name": "call3Values", "type": "Call3Value[]" }
+            ],
+            "Call3Value": [
+              { "name": "target", "type": "address" },
+              { "name": "allowFailure", "type": "bool" },
+              { "name": "value", "type": "uint256" },
+              { "name": "callData", "type": "bytes" }
+            ]
+          },
+          "value": {
+            "permitted": [
+              {
+                "token": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+                "amount": "1000000"
+              }
+            ],
+            "nonce": "3073764008035",
+            "deadline": 1764948471,
+            "spender": "0xbbbfd134e9b44bfb5123898ba36b01de7ab93d98",
+            "witness": {
+              "relayer": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+              "refundTo": "0x03508bb71268bba25ecacc8f620e01866650532c",
+              "nftRecipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
+              "call3Values": [
+                {
+                  "target": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+                  "allowFailure": false,
+                  "value": "0",
+                  "callData": "0x095ea7b3..."
+                }
+              ]
+            }
+          },
+          "primaryType": "PermitBatchWitnessTransferFrom"
+        },
+        "post": {
+          "endpoint": "/execute/permits",
+          "method": "POST",
+          "body": {
+            "kind": "permit2",
+            "requestId": "0x4d1756eae7d23122047cbe2f11a749ca8275983e4d8757a8b44af9d1b829df39",
+            "api": "user-swap"
+          }
+        }
+      },
+      "check": {
+        "endpoint": "/intents/status?requestId=0x4d1756eae7d23122047cbe2f11a749ca8275983e4d8757a8b44af9d1b829df39",
+        "method": "GET"
+      }
+    }
+  ]
+}
+```
+</Accordion>
+
+---
+
 ### Steps Example
 
 Below is an example of steps you'll encounter in the wild when working with the API.
