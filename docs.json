@@ -159,7 +159,9 @@
                 "group": "Actions",
                 "pages": [
                   "references/sdk/actions/getQuote",
-                  "references/sdk/actions/execute"
+                  "references/sdk/actions/execute",
+                  "references/sdk/actions/getAppFees",
+                  "references/sdk/actions/claimAppFees"
                 ]
               },
               "references/sdk/adapters",
@@ -285,6 +287,11 @@
     "openapi": ["https://api.relay.link/documentation/json"],
     "mdx": {
       "server": ["https://api.relay.link", "https://api.testnets.relay.link"]
+    },
+    "examples": {
+      "languages": ["curl", "javascript", "python"],
+      "defaults": "required",
+      "prefill": false
     }
   },
   "appearance": {
