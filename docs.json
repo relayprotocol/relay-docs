@@ -127,7 +127,6 @@
               "references/api/transactions-index",
               "references/api/transactions-single",
               "references/api/advanced",
-              "references/api/execute",
               "references/api/swap-multi-input",
               "references/api/fast-fill",
               "references/api/get-swap-sources",
