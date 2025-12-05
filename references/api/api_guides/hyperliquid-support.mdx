@@ -143,4 +143,4 @@ const res = await axios.post('https://api.hyperliquid.xyz/exchange', {
 
 You must parse the signature into parts (r, s, v). Also make sure that the v is a number and not a BigInt/BigNumber. Use the same data you used when signing, it should match exactly the data you signed. The successful response should be a 200 and the data.status should be an `“ok”`.
 
-To see how an [example](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/hyperliquid.ts) you can have a look at our publicly available SDK.
+To see an [example](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/hyperliquid.ts) you can have a look at our publicly available SDK.

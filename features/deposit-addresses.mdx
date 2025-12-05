@@ -56,11 +56,11 @@ bridges, etc). The `requestId` is unique to Relay's database and will be returne
 
 You will find an example below of sending 0.01 ETH from Base to Optimism.
 
-```curl
-curl --request POST \
-  --url 'https://api.relay.link/quote' \
-  --header 'Content-Type: application/json' \
-  --data '{
+```bash cURL
+curl -X POST \
+  'https://api.relay.link/quote' \
+  -H 'Content-Type: application/json' \
+  -d '{
 	"user": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
 	"originChainId": 8453,
 	"originCurrency": "0x0000000000000000000000000000000000000000",

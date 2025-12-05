@@ -30,20 +30,20 @@ Note: This is not required for same-chain swaps.
 
 ### API Reference
 
-**Documentation**: https://docs.relay.link/references/api/transactions-single
+[Documentation](/references/api/transactions-single)
 
-**Implementation Reference**: https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/transaction.ts#L122
+[Implementation Reference](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/transaction.ts#L122)
 
 ### Request Example
 
 ```bash
-curl -X POST http://api.relay.link/transactions/single \
-  -H "Content-Type: application/json" \
+curl -X POST 'https://api.relay.link/transactions/single' \
+  -H 'Content-Type: application/json' \
   -d '{
-    "tx": "{\"from\":\"0x742d35Cc6634C0532925a3b8d382F4d2d5d9a65e\",\"to\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"data\":\"0xa9059cbb000000000000000000000000742d35cc6634c0532925a3b8d382f4d2d5d9a65e0000000000000000000000000000000000000000000000000de0b6b3a7640000\",\"value\":\"0\",\"chainId\":8453,\"txHash\":\"0x7d1af7f8c6b5e9d4a2f3b8c7e6d9f2a5b4c7e8d1f6a3b9c2e5d8f1a4b7c0e3d6\"}",
-    "chainId": "8453",
-    "requestId": "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b"
-  }'
+  "tx": "{\"from\":\"0x03508bB71268BBA25ECaCC8F620e01866650532c\",\"to\":\"0x3c499c542cef5e3811e1192ce70d8cc03d5c3359\",\"data\":\"0xa9059cbb00000000000000000000000036329d1ff4b31ec85280a86e7cf58fca7c005ed000000000000000000000000000000000000000000000000000000000000f4240\",\"value\":\"0\",\"chainId\":137,\"gas\":\"94464\",\"maxFeePerGas\":\"34643644476\",\"maxPriorityFeePerGas\":\"34180692255\",\"txHash\":\"0x935be17e13f1dc4aee15e75cc9c119f2d639e58b061a54246843f2ddf1052f7c\"}",
+  "chainId":"137",
+  "requestId":"0xcb6bec4106d2bc6f692831e00445f843fa39239ca61bc304486b0c96e1d531a9"
+}'
 ```
 
 ## API 2: transactions/index
@@ -60,20 +60,19 @@ Use this API for transactions that contain internal deposits that need to be det
 
 ### API Reference
 
-**Documentation**: https://docs.relay.link/references/api/transactions-index
+[Documentation](/references/api/transactions-index)
 
-**Implementation Reference**: https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/transaction.ts#L113
+[Implementation Reference](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/transaction.ts#L113)
 
 ### Request Example
 
-```http
-POST https://api.relay.link/transactions/index
-Content-Type: application/json
-
-{
+```bash cURL
+curl -X POST 'https://api.relay.link/transactions/index' \
+  -H 'Content-Type: application/json' \
+  -d '{
   "txHash": "0x9f2c5e8b1d4a7f0c3e6b9d2f5a8c1e4b7d0a3f6c9e2b5d8a1f4c7e0b3d6a9f2c",
   "chainId": 8453
-}
+}'
 ```
 
 ### Integration
