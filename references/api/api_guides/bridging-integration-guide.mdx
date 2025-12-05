@@ -17,7 +17,7 @@ To bridge assets, you first need to get a quote that provides all necessary info
 curl -X POST "https://api.relay.link/quote" \
   -H "Content-Type: application/json" \
   -d '{
-    "user": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+    "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
     "originChainId": 1,
     "destinationChainId": 8453,
     "originCurrency": "0x0000000000000000000000000000000000000000",
@@ -34,7 +34,7 @@ const response = await fetch("https://api.relay.link/quote", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    user: "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+    user: "0x03508bb71268bba25ecacc8f620e01866650532c",
     originChainId: 1,
     destinationChainId: 8453,
     originCurrency: "0x0000000000000000000000000000000000000000",
@@ -51,7 +51,7 @@ const quote = await response.json();
 import requests
 
 response = requests.post('https://api.relay.link/quote', json={
-    'user': '0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3',
+    'user': '0x03508bb71268bba25ecacc8f620e01866650532c',
     'originChainId': 1,
     'destinationChainId': 8453,
     'originCurrency': '0x0000000000000000000000000000000000000000',

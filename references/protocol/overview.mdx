@@ -51,6 +51,6 @@ You can interact with the Relay Protocol through our [Relay](https://relay.link)
 
 ### Basic Flow of the current implementation
 
-Alice sends her funds to the Depository contract on the origin chain. The [Relayer](/how-it-works/the-reservoir-relayer) fills Alice's request on the destination chain. The [Hub](./hub/) keeps track of that deposit. The Relayer can then trigger the [Oracle](./oracle/) to verify that the intent was correctly filled. If so, the Relayer can then settle the payment and access their user's deposited funds.
+Alice sends her funds to the Depository contract on the origin chain. The [Relayer](/how-it-works/the-relay-solver) fills Alice's request on the destination chain. The [Hub](./hub/) keeps track of that deposit. The Relayer can then trigger the [Oracle](./oracle/) to verify that the intent was correctly filled. If so, the Relayer can then settle the payment and access their user's deposited funds.
 
 In order to fill on multiple chains, the Relayer needs to keep balances on every supported network. The [Vaults](./vaults/) are used to rebalance the Relayer's balances across chains.

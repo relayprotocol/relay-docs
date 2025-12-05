@@ -169,7 +169,7 @@ const {
 In the above example, we fetch the quote to call a Zora contract from Mainnet Ethereum. In the quote object, we'll get data on the fees required to do this call. You can learn more about fees [here](/how-it-works/fees). You'll see that we provided an amount that matches the sum of the txs, that the tradeType is `EXACT_OUTPUT` and that we passed in a valid txs array.
 
 <Note>
-  Quotes can go stale after 30 seconds. Clients should regularly fetch fresh quotes so that users are always submitting valid transactions. [Learn more](/how-it-works/the-reservoir-relayer#getting-a-quote) about Relay quotes.
+  Quotes can go stale after 30 seconds. Clients should regularly fetch fresh quotes so that users are always submitting valid transactions. [Learn more](/how-it-works/the-relay-solver#getting-a-quote) about Relay quotes.
 </Note>
 
 ## Execute the Quote

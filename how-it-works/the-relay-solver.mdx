@@ -1,23 +1,23 @@
 ---
-title: "The Reservoir Relayer"
-description: "Reservoir's production grade relaying service"
+title: "The Relay Solver"
+description: "Relay's production grade relaying service"
 ---
 
-The Reservoir relayer is a production-grade relayer currently supporting Relay. Reservoir acts as a trusted party that performs cross-chain relays and order validation.
+The Relay solver is a production-grade relayer currently supporting Relay. The solver acts as a trusted party that performs cross-chain relays and order validation.
 
 ## How does it work?
 
-When a user wishes to bridge, they submit an order and a transfer to the Reservoir relayer, who validates the order and sends the funds to the user on the destination chain. Reservoir maintains a balance on all chains in order to make executions, and then periodically rebalances to ensure there is sufficient liquidity on all chains. In the rare case of a transaction failure, Reservoir refunds the user directly as soon as possible.
+When a user wishes to bridge, they submit an order and a transfer to the Relay solver, who validates the order and sends the funds to the user on the destination chain. Relay maintains a balance on all chains in order to make executions, and then periodically rebalances to ensure there is sufficient liquidity on all chains. In the rare case of a transaction failure, Relay refunds the user directly as soon as possible.
 
-While this model requires trust in Reservoir as a service provider, it reduces the costs of executing cross-chain actions to an absolute minimum. Since each cross-chain action is simply an origin chain transfer and a destination chain transfer (42000 gas total), it is substantively cheaper than bridging on other bridges.
+While this model requires trust in Relay as a service provider, it reduces the costs of executing cross-chain actions to an absolute minimum. Since each cross-chain action is simply an origin chain transfer and a destination chain transfer (42000 gas total), it is substantively cheaper than bridging on other bridges.
 
 ## Why start with a trusted system?
 
-The current state of Relay, which requires trust in Reservoir's relayer, is an important part of the protocol development process. It is not intended as a final state of the system, but as a way to introduce the core concepts, and learn from users, developers, and relayers about what is most important in the future decentralized system. If you are interested in learning more about where Relay is headed, you can read the protocol overview [here](/references/protocol/).
+The current state of Relay, which requires trust in Relay's solver, is an important part of the protocol development process. It is not intended as a final state of the system, but as a way to introduce the core concepts, and learn from users, developers, and relayers about what is most important in the future decentralized system. If you are interested in learning more about where Relay is headed, you can read the protocol overview [here](/references/protocol/).
 
 ### Technical overview
 
-Here we walk through some technical details about how the Reservoir relayer functions.
+Here we walk through some technical details about how the Relay solver functions.
 
 #### Getting a quote
 
@@ -40,11 +40,11 @@ When the user accepts the order, they submit a transfer to the solver. An order 
 
 #### Order validation and filling
 
-Upon validation of the inbound transfer transaction, the Reservoir relayer will fill the order on the destination chain. Included in the fill transaction is the order ID associated with the quote. Reservoir maps the origin and destination chain transactions together by order ID to ensure the transaction is filled appropriately.
+Upon validation of the inbound transfer transaction, the Relay solver will fill the order on the destination chain. Included in the fill transaction is the order ID associated with the quote. Relay maps the origin and destination chain transactions together by order ID to ensure the transaction is filled appropriately.
 
 #### Rebalancing
 
-The Reservoir relayer uses a robust rebalancing algorithm to make sure funds are as available as possible for cross-chain executions. The user is not responsible for any rebalancing activity. If the Reservoir relayer becomes "off-balance", the capacity for instant relaying may be limited.
+The Relay solver uses a robust rebalancing algorithm to make sure funds are as available as possible for cross-chain executions. The user is not responsible for any rebalancing activity. If the Relay solver becomes "off-balance", the capacity for instant relaying may be limited.
 
 #### Refunds
 
@@ -56,4 +56,4 @@ If the user submits the transfer event after quote expiration, the relayer may n
 
 ### Disputes
 
-Due to the trusted nature of the current Relay design, disputes (i.e. cases where a user did not receive the expected outcome and was not refunded) should be brought directly to the Reservoir support team.
+Due to the trusted nature of the current Relay design, disputes (i.e. cases where a user did not receive the expected outcome and was not refunded) should be brought directly to the Relay support team.
