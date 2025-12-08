@@ -109,7 +109,8 @@
                   "references/api/api_resources/contract-addresses",
                   "references/api/api_resources/supported-routes"
                 ]
-              }
+              },
+              "references/api/troubleshooting"
             ]
           },
           {
