@@ -30,7 +30,7 @@ description: Get a quote for a crosschain relay (bridge, swap, call, etc)
 ### Native Bridge Example
 
 ```typescript
-import { getClient } from "@reservoir0x/relay-sdk";
+import { getClient } from "@relayprotocol/relay-sdk";
 import { useWalletClient } from "wagmi";
 
 const { data: wallet } = useWalletClient();
@@ -96,4 +96,4 @@ const quote = await getClient()?.actions.getQuote({
 });
 ```
 
-**Note** - Quotes can go stale after 30 seconds. Clients should regularly fetch fresh quotes so that users are always submitting valid transactions. See [Getting a quote](/how-it-works/the-reservoir-relayer#getting-a-quote) for more information on how quotes work.
+**Note** - Quotes are revalidated when being filled, clients should regularly fetch fresh quotes so that users are always submitting up to date quotes. See [Getting a quote](/how-it-works/the-relay-solver#getting-a-quote) for more information on how quotes work.

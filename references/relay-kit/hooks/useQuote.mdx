@@ -23,9 +23,9 @@ The hook returns an object with the base [Tanstack Query response](https://tanst
 
 <CodeGroup>
 ```typescript Fetching a Quote
-import { useQuote } from '@reservoir0x/relay-kit-hooks'
+import { useQuote } from '@relayprotocol/relay-kit-hooks'
 import { useWalletClient } from 'wagmi'
-import { getClient } from '@reservoir0x/relay-sdk'
+import { getClient } from '@relayprotocol/relay-sdk'
 
 const queryOptions = {...} //Query options from tanstack
 const walletClient = useWalletClient()
@@ -59,9 +59,9 @@ const {
 
 ````
 ```typescript Executing a Quote
-import { useQuote } from '@reservoir0x/relay-kit-hooks'
+import { useQuote } from '@relayprotocol/relay-kit-hooks'
 import { useWalletClient } from 'wagmi'
-import { getClient } from '@reservoir0x/relay-sdk'
+import { getClient } from '@relayprotocol/relay-sdk'
 
 const queryOptions = {...} //Query options from tanstack
 const walletClient = useWalletClient()
@@ -90,7 +90,7 @@ const {
 ## Query Function
 
 ```typescript
-import { queryQuote } from "@reservoir0x/relay-kit-hooks";
+import { queryQuote } from "@relayprotocol/relay-kit-hooks";
 
 const response = queryQuote("https://api.relay.link", {
   user: address,

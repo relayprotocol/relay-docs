@@ -24,7 +24,7 @@ An adapter is a function that takes parameters and returns an object that adhere
 
 ### What adapters are available out of the box?
 
-The following adapters are officially maintained and developed by the Reservoir Relay team:
+The following adapters are officially maintained and developed by the Relay team:
 
 [SVM Adapter](https://github.com/reservoirprotocol/relay-kit/tree/main/packages/relay-svm-wallet-adapter): This adapter gives the sdk the ability to submit transactions on SVM (Solana Virtual Machine) networks. It does not support signing messages and under the hood it uses the [solana web3 sdk](https://solana-labs.github.io/solana-web3.js/).
 
@@ -39,12 +39,12 @@ The following adapters are officially maintained and developed by the Reservoir 
 
 ### How can I use an adapter?
 
-You can either make your own adapter, as long as it adheres to the interface above or you can use one of the officials adapters developed and maintained by the Reservoir Relay team. All of our sdk methods handle a viem wallet or adapted wallet. The viem wallet adapter is used by default when a [viem wallet](https://viem.sh/docs/clients/wallet.html) is passed in for convenience. Refer below for implementation details:
+You can either make your own adapter, as long as it adheres to the interface above or you can use one of the officials adapters developed and maintained by the Relay team. All of our sdk methods handle a viem wallet or adapted wallet. The viem wallet adapter is used by default when a [viem wallet](https://viem.sh/docs/clients/wallet.html) is passed in for convenience. Refer below for implementation details:
 
 <CodeGroup>
 ```typescript Solana
-import { getClient, Execute, getQuote } from "@reservoir0x/relay-sdk";
-import { adaptSolanaWallet } from '@reservoir0x/relay-solana-wallet-adapter'
+import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk";
+import { adaptSolanaWallet } from '@relayprotocol/relay-solana-wallet-adapter'
 import { Connection, Keypair, clusterApiUrl, SystemProgram, Transaction } from '@solana/web3.js';
 ...
 
@@ -74,7 +74,7 @@ getClient().actions.execute({
 })
 ```
 ```typescript Viem
-import { getClient, Execute, getQuote, adaptViemWallet } from "@reservoir0x/relay-sdk";
+import { getClient, Execute, getQuote, adaptViemWallet } from "@relayprotocol/relay-sdk";
 import { createWalletClient } from 'wagmi'
 import { mainnet } from 'viem/chains'
 
@@ -99,8 +99,8 @@ getClient().actions.execute({
 })
 ```
 ```typescript Bitcoin
-import { getClient, Execute, getQuote } from "@reservoir0x/relay-sdk";
-import { adaptBitcoinWallet } from '@reservoir0x/relay-bitcoin-wallet-adapter'
+import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk";
+import { adaptBitcoinWallet } from '@relayprotocol/relay-bitcoin-wallet-adapter'
 import { createWalletClient } from 'wagmi'
 import { mainnet } from 'viem/chains'
 
@@ -141,8 +141,8 @@ getClient().actions.execute({
 })
 ```
 ```typescript Ethers
-import { getClient } from '@reservoir0x/relay-sdk'
-import { adaptEthersSigner } from '@reservoir0x/relay-ethers-wallet-adapter'
+import { getClient } from '@relayprotocol/relay-sdk'
+import { adaptEthersSigner } from '@relayprotocol/relay-ethers-wallet-adapter'
 import { useSigner } from 'wagmi'
 
 ...
@@ -168,8 +168,8 @@ getClient().actions.execute({
 ```typescript Sui
 import { getFullnodeUrl, SuiClient } from '@mysten/sui/client'
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519'
-import { getClient, Execute, getQuote } from "@reservoir0x/relay-sdk"
-import { adaptSuiWallet } from '@reservoir0x/relay-sui-wallet-adapter'
+import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk"
+import { adaptSuiWallet } from '@relayprotocol/relay-sui-wallet-adapter'
 
 // Create a connection to Sui mainnet
 const rpcUrl = getFullnodeUrl('mainnet')

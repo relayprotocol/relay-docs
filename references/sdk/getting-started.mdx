@@ -6,20 +6,20 @@ sidebarTitle: Getting Started
 
 ## Installation
 
-Install the [Relay SDK](https://github.com/reservoirprotocol/relay-sdk) and its peer dependency [viem](https://viem.sh/)
+Install the [Relay SDK](https://github.com/relayprotocol/relay-kit) and its peer dependency [viem](https://viem.sh/)
 
 <CodeGroup>
 ```shell yarn
-yarn add @reservoir0x/relay-sdk viem 
+yarn add @relayprotocol/relay-sdk viem 
 ```
 ```shell npm
-npm install --save @reservoir0x/relay-sdk viem 
+npm install --save @relayprotocol/relay-sdk viem 
 ```
 ```shell pnpm
-pnpm add @reservoir0x/relay-sdk viem 
+pnpm add @relayprotocol/relay-sdk viem 
 ```
 ```shell bun
-bun add @reservoir0x/relay-sdk viem 
+bun add @relayprotocol/relay-sdk viem 
 ```
 </CodeGroup>
 
@@ -33,7 +33,7 @@ typescript ^5.0.4 (if using typescript)
 To configure the SDK we first need to create a global instance of a RelayClient:
 
 ```typescript
-import { createClient, convertViemChainToRelayChain, MAINNET_RELAY_API, TESTNET_RELAY_API } from '@reservoir0x/relay-sdk'
+import { createClient, convertViemChainToRelayChain, MAINNET_RELAY_API, TESTNET_RELAY_API } from '@relayprotocol/relay-sdk'
 import { mainnet } from 'viem/chains'
 
 createClient({
@@ -57,7 +57,7 @@ import { RainbowKitProvider, getDefaultWallets } from "@rainbow-me/rainbowkit";
 import { WagmiConfig, createConfig, configureChains, Chain } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { alchemyProvider } from "wagmi/providers/alchemy";
-import { configureDynamicChains } from "@reservoir0x/relay-sdk";
+import { configureDynamicChains } from "@relayprotocol/relay-sdk";
 import { RainbowKitChain } from "@rainbow-me/rainbowkit/dist/components/RainbowKitProvider/RainbowKitChainContext";
 
 const AppWrapper: FC<AppWrapperProps> = ({ children }) => {

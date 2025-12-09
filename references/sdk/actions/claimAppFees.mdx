@@ -9,7 +9,7 @@ description: Claim app fees for a wallet
 
 | Property      | Description                                                                 | Required |
 |---------------|-----------------------------------------------------------------------------|----------|
-| **wallet**    | A valid WalletClient from viem or an adapted wallet generated from an adapter that meets this [interface](https://github.com/reservoirprotocol/relay-sdk/blob/main/packages/sdk/src/types/AdaptedWallet.ts).          | ✅       |
+| **wallet**    | A valid WalletClient from viem or an adapted wallet generated from an adapter that meets this [interface](https://github.com/relayprotocol/relay-kit/blob/main/packages/sdk/src/types/AdaptedWallet.ts).          | ✅       |
 | **chainId**   | Chain ID to claim fees on                                                   | ✅       |
 | **currency**  | Token address to claim                                     | ✅       |
 | **recipient** | Address to receive claimed fees (defaults to wallet address)     | ❌       |
@@ -18,7 +18,7 @@ description: Claim app fees for a wallet
 ### Example
 
 ```typescript
-import { getClient } from "@reservoir0x/relay-sdk";
+import { getClient } from "@relayprotocol/relay-sdk";
 import { useWalletClient } from "wagmi";
 
 const { data: wallet } = useWalletClient();

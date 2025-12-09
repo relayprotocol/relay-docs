@@ -9,18 +9,18 @@ sidebarTitle: useExecutionStatus
 | Parameter    | Description                                                                                                                                    | Required |
 |--------------|------------------------------------------------------------------------------------------------------------------------------------------------|----------|
 | **baseApiUrl**       | Base api url for the relay api, defaults to https://api.relay.link but can also be configured to https://api.testnets.relay.link | ❌       |
-| **options**      | Query parameters that map directly to the [execution status api](/references/api/get-intents-status-v2.mdx)                                                                                                   | ❌       |
+| **options**      | Query parameters that map directly to the [execution status api](/references/api/get-intents-status-v3.mdx)                                                                                                   | ❌       |
 | **queryOptions** | Tanstack query options. Refer to the [Tanstack](https://tanstack.com/query/latest/docs/framework/react/guides/query-options) docs.              | ❌       |
 
 ## Return Data
 
-The hook returns an object with the base [Tanstack Query response](https://tanstack.com/query/v5/docs/framework/react/reference/useQuery). The data property maps to the object returned in the aforementioned [execution status api](/references/api/get-intents-status-v2.mdx).
+The hook returns an object with the base [Tanstack Query response](https://tanstack.com/query/v5/docs/framework/react/reference/useQuery). The data property maps to the object returned in the aforementioned [execution status api](/references/api/get-intents-status-v3.mdx).
 
 ## Usage
 
 <CodeGroup>
 ```typescript
-import { useExecutionStatus } from '@reservoir0x/relay-kit-hooks'
+import { useExecutionStatus } from '@relayprotocol/relay-kit-hooks'
 
 const { status,
         details,
@@ -39,7 +39,7 @@ const { status,
 ## Query Function
 
 ```typescript
-import { queryExecutionStatus } from '@reservoir0x/relay-kit-hooks'
+import { queryExecutionStatus } from '@relayprotocol/relay-kit-hooks'
 
 queryExecutionStatus()
 

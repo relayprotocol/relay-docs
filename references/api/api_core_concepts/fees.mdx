@@ -1,0 +1,55 @@
+---
+title: "Relay Fees"
+description: "Learn about Relay fees"
+---
+
+In any given Relay there are four potential fees:
+
+1. **Execution Fees**
+
+   Fees to cover execution costs including network gas on the origin and/or destination chain.
+   - Fill gas estimate (and origin gas estimate for gasless transactions)
+   - \$0.02 flat fee
+2. **Swap Fees**
+
+   Fees to liquidity providers that facilitate cross-asset and cross-chain token swaps.
+   - DEX fees
+   - DEX swap impact
+   - Solver cross-chain rebalancing fees
+3. **Relay Fees**
+
+   Fees charged for using the Relay API gateway and related services.
+   - 20% of swap fee
+4. **App Fees**
+
+   Fees added on top of a Relay by you, the integrator.
+
+If you are interested in learning how app fees work, and how you can add them to your quotes please check out our [App Fees Doc](/features/app-fees).\
+\
+_Please note that the above fee structure applies to standard cases. In certain cases, such as route-specific campaigns or promotions, different fees may apply._
+
+## Fees Object
+
+The Fees object is returned from the quote API and the requests API. These fees are only the Relay related fee, and are segmentated as the following fees:
+
+**relayerService**: The service fee paid to the relayer to facilitate execution.
+
+**relayerGas**: The gas fee given to the solver to pay gas fees on the destination chain.
+
+**relayer**: The sum of the relayerService and the relayerGas.
+
+**app**: Third party fees added on top of the existing fees, this fee is added by app developers and accrues offchain to minimize gas costs.
+
+**subsidized**: The Fees in the order that are subsidized by the integrator.
+
+## Price Impact
+
+If you are interested in understanding or showing your user the fees of the order more broadly, it's best to look at the `expanded price impact` object which reports:
+
+**execution** - the price impact that results from execution fees.
+
+**swap** - the price impact that results from cross-currency and cross-chain token exchange
+
+**relay** - the price impact that results from the relay api fee (if applicable)
+
+**app** - the price impact that results from the app fees (if applicable)

@@ -1,15 +1,33 @@
 ---
-title: 'API Overview'
+title: "API Overview"
 ---
+
 We offer multiple APIs to fully harness Relay's tools. You can use our APIs for instant bridging or cross-chain execution.
 
-| API | Description                           |
-| -------- | ------------------------------------- |
-|[Get Chains](/references/api/get-chains)|Returns all possible chains available|
-|[Get Token Price](/references/api/get-token-price)|Returns the price of a token on a specific chain|
-|[Get Quote](/references/api/get-quote)|Get an executable quote for a bridge, swap or call|
-|[Get Execution Status](/references/api/get-intents-status-v2)|Returns current execution status|
-|[Get Request](/references/api/get-requests)|Returns all the cross chain transactions|
-|[Transactions Index](/references/api/transactions-index)|Notify the backend about a transaction|
-|[Multi-input Quote](/references/api/swap-multi-input)|Get an executable quote for swapping tokens from multiple origin chains to a single destination chain|
-|[Execute](/references/api/execute)| Execute a gasless transaction
+## Core
+
+[Get Quote](/references/api/get-quote): Get an executable quote for a bridge, swap or call
+
+[Execute](/references/api/execute): Execute a gasless transaction
+
+[Get Status](/references/api/get-intents-status-v3): Returns current execution status
+
+[Get Requests](/references/api/get-requests): Returns all relay transactions
+
+## Utilities
+
+[Get Chains](/references/api/get-chains): Returns all possible chains available and their configurations
+
+[Get Currencies](/references/api/get-currencies-v2): Returns all the tokens available on a specific chain
+
+[Get Token Price](/references/api/get-token-price): Returns the price of a token on a specific chain
+
+[Transactions Index](/references/api/transactions-index): Notify the backend in order to fetch the traces and detect any internal deposits
+
+[Transactions Single](/references/api/transactions-single): Notify the backend to index transfers, wraps and unwraps
+
+## Advanced
+
+[Multi-input Quote](/references/api/swap-multi-input): Get an executable quote for swapping tokens from multiple origin chains to a single destination chain
+
+[Fast Fill](/references/api/fast-fill): Fast fills a destination fill

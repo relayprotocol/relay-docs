@@ -22,8 +22,8 @@ The data property maps to the object returned in the aforementioned
 ## Usage
 
 ```typescript
-import { useTokenPrice } from "@reservoir0x/relay-kit-hooks";
-import { useRelayClient } from "@reservoir0x/relay-kit-ui";
+import { useTokenPrice } from "@relayprotocol/relay-kit-hooks";
+import { useRelayClient } from "@relayprotocol/relay-kit-ui";
 import { zeroAddress } from "viem";
 
 const {
@@ -53,7 +53,7 @@ if (isLoading) {
 ## Query Function
 
 ```typescript
-import { queryTokenPrice } from "@reservoir0x/relay-kit-hooks";
+import { queryTokenPrice } from "@relayprotocol/relay-kit-hooks";
 import { zeroAddress } from "viem";
 
 // Example: Fetch price for ETH on Base (chain 8453)

@@ -3,57 +3,105 @@ title: What is Relay?
 description: "The fastest and cheapest way to bridge & transact across chains"
 ---
 
-Relay is a multichain payments protocol that enables instant, low-cost bridging, swapping, and cross-chain execution. It works using Relayers who execute cross-chain transactions in exchange for a small fee. Relay is designed to minimize gas costs and execution latency, making it ideal for price-sensitive applications, such as payments, bridging, nft minting and gas abstraction.
+Relay is a multichain payments network, designed to make swapping and transacting across 100s of chains delightfully simple. Since launching in 2024, Relay has served **5M users**, processed **50M transactions**, and driven **$5B+ in volume** across **85+ networks**.
 
-It features the following key properties:
+It combines two core components:
 
-- **Fast**: Relayers can fill orders optimistically, even before payment is confirmed. Small payments can confirm in seconds.
-- **Cheap**: As much logic as possible is performed off of expensive chains to reduce costs.
-- **Lightweight**: Can operate on any chain with just a single relayer
+- Instant low cost cross-chain intents, powered by the [Relay Protocol]()
+- Comprehensive DEX Meta-Aggregation across 85 chains
 
-## How does it work?
+This makes Relay a powerful solution for a diverse set of use cases:
 
-Relay is powered by Relayers. When a user wishes to bridge, they receive a quote from the Relay API. When the quote is accepted, the user deposits into the [Relay Depository Contracts](/references/protocol/depository/overview), either by submitting a tx or signing a gasless permission. The user is then filled on the destination chain by a Relayer. At this point the users order has been successfully completed. The last step of the Relay involves the Relayer claiming deposited funds, mediated by the [Relay Protocol](/references/protocol/).
-
-Today Relay is powered by the [Reservoir Relayer](/how-it-works/the-reservoir-relayer). With a live deposit flow in production, Users no longer need to trust Relayers in our system and we are currently finalizing how additional Relayers may be added.
-
-## How is it so fast?
-
-In traditional message-based bridges (LayerZero, Axelar, Wormhole, etc), there needs to be consensus amongst a group of actors that something happened on Chain A, before it can be acted upon on Chain B. This is because there are often shared liquidity pools on either side, and so you need to be certain that the action on Chain A was completed. For safety, this usually takes at least a couple of minutes.
-
-By contrast, when using a relayer model (Relay, Across, etc), a single relayer executes the order on Chain B using their own funds. This means they don’t need to wait for the action on Chain A to be fully confirmed, or to get consensus. When a user submits an order, the relayer fills as soon as possible, at which point the user's desired intent is complete. This can happen in as little as a few seconds for low cost actions, like NFT mints and gas sponsorship.
-
-## How is it so cheap?
-
-When bridging or swapping, there are typically three cost components:
-
-- **Asset transfer**: Moving assets from one wallet to another
-- **Order validation**: Ensuring that the user’s order was fulfilled correctly
-- **Fee collection**: Paying fees to actors such as a protocol, wallet or relayer
-
-In most systems, order validation and fee collection happen on the same chain as asset transfer, which is usually a high-cost chain like Ethereum. In Relay, order validation and fee collection happen on a cheaper settlment chain, while asset transfers are reduced to _direct_ transfers between the user and the relayer. This avoids the gas required when routing assets through onchain protocols. This reduces the cost to the absolute minimum possible. For example, for a crosschain bridge, the gas cost to use Relay is ~42,000 gas (origin & destination), while with Across, the _cheapest_ alternative, it is roughly ~250,000 gas.
-
-## What chains are supported?
-
-In many systems, expanding to a new chain requires deploying contracts, getting consensus amongst a network of actors, or deploying liquidity pools. With Relay, you just need a single relayer who is willing to operate on a chain, and it’s permissionless for them to get started. This is critical in a world with an abundance of chains. If you are interested in having your chain supported, reach out!
-
-## Use Cases
-
-Learn more about the powerful use cases that can be built on Relay:
-
-<CardGroup cols={2}>
+<Columns cols={3}>
   <Card
-    title="Instant Bridging"
-    icon="bridge"
-    href="https://docs.relay.link/use-cases/instant-bridging"
+    title="Bridging & Onboarding"
+    icon="link"
+    href="/use-cases/bridging"
+    cta="Learn More"
   >
-    Get your docs set up locally for easy development
+    Instant Bridging between 85+ Chains
   </Card>
   <Card
-    title="Cross-chain Execution"
-    icon="route"
-    href="https://docs.relay.link/use-cases/cross-chain-execution"
+    title="Swaps"
+    href="/use-cases/cross-chain-swaps"
+    icon="right-left"
+    cta="Learn More"
   >
-    Preview your changes before you push to make sure they're perfect
+    Same-chain & Cross-chain Swaps on Every Chain
   </Card>
-</CardGroup>
+  <Card
+    title="Call Execution"
+    href="/use-cases/calling"
+    icon="hexagon-nodes"
+    cta="Learn More"
+  >
+    Pay for Txs with Tokens on any Chain
+  </Card>
+</Columns>
+
+To see Relay in action, and test supported routes, try the [Relay App](https://relay.link/bridge).
+
+To start building, check out the [Integration Guide](/references/api/api_guides/bridging-integration-guide).
+
+---
+
+## The Relay Stack
+
+Built as a full-stack solution for every layer of the multichain payments experience:
+
+### Relay App
+
+**For everyone who wants to swap tokens across chains** - The fastest way to go from any token to any token across chains. Swap ETH on Ethereum for SOL on Solana in one transaction — built on the same infrastructure that powers enterprise customers.
+
+[Try the App](https://relay.link/)
+
+### Relay API
+
+**For developers building multichain experiences** - One integration, 75+ chains, zero complexity. Abstract the hardest parts of multichain development:
+
+- **Bridge instantly** between chains with predictable fees
+- **Swap seamlessly** using meta-aggregation across all major DEXs
+- **Deliver payments-grade UX** with gas sponsorship, guaranteed rates, and SLAs
+
+Whether you're building wallets, marketplaces, or consumer apps, Relay makes crosschain payments fast, reliable, and invisible.
+
+[View Documentation](/references/api/overview)
+
+### Relay Protocol
+
+**The network powering it all** - The open system connecting users to relayers who execute onchain actions with maximum capital efficiency. Designed for low gas costs, rapid chain expansion, and enterprise-grade reliability.
+
+[Learn More](/references/protocol/overview)
+
+---
+
+## Payments-Grade Reliability
+
+Unlike traditional bridges, Relay delivers the reliability users expect from modern payments:
+
+- **99.9% uptime** across 85+ networks
+- **Fast execution** instead of multi-minute wait times
+- **Automatic redundancy** systems ensuring transactions complete
+- **Clear completion signals** for apps and users
+
+---
+
+## Trusted by Leading Teams
+
+**Chain Expansion**: Alchemy, Conduit, and Caldera rely on Relay to provide payment rails to every rollup out of the box.
+
+**Chain Abstraction**: OpenSea powers crosschain mints through Relay so collectors never worry about which chain they're on. Phantom collapses complex swaps into seamless flows.
+
+**Multichain Infrastructure**: Apps like OneBalance route execution through Relay, letting users access opportunities across chains as easily as checking their balance.
+
+---
+
+## Get Started
+
+**For Users**: [Try the Relay App](https://relay.link/) to swap any token across any chain instantly.
+
+**For Teams & Developers**: Check out our [Integration Guides](/references/api/api_guides/bridging-integration-guide) to add multichain payments to your app.
+
+---
+
+_Contact us about enterprise features including dedicated support, custom SLAs, and priority routing._

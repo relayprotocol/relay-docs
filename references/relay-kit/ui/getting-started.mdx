@@ -9,16 +9,16 @@ Use this React ui package to smoothly embed a fully featured Relay powered inter
 
 <CodeGroup>
 ```shell yarn
-yarn add viem wagmi @tanstack/react-query @reservoir0x/relay-kit-ui 
+yarn add viem wagmi @tanstack/react-query @relayprotocol/relay-kit-ui 
 ```
 ```shell npm
-npm install viem wagmi @tanstack/react-query @reservoir0x/relay-kit-ui 
+npm install viem wagmi @tanstack/react-query @relayprotocol/relay-kit-ui 
 ```
 ```shell pnpm
-pnpm add viem wagmi @tanstack/react-query @reservoir0x/relay-kit-ui 
+pnpm add viem wagmi @tanstack/react-query @relayprotocol/relay-kit-ui 
 ```
 ```shell bun
-bun add viem wagmi @tanstack/react-query @reservoir0x/relay-kit-ui 
+bun add viem wagmi @tanstack/react-query @relayprotocol/relay-kit-ui 
 ```
 </CodeGroup>
 
@@ -32,13 +32,13 @@ The hooks require [TanStack Query](https://tanstack.com/query/latest) to be inst
 Once all dependencies are installed you can now configure and wrap your application with the `RelayKitProvider`. You'll need to also wrap your application with the QueryClientProvider and the WagmiProvider. Note the order in the snippet below.
 
 ```tsx
-import { RelayKitProvider } from '@reservoir0x/relay-kit-ui'
-import { convertViemChainToRelayChain } from '@reservoir0x/relay-sdk'
+import { RelayKitProvider } from '@relayprotocol/relay-kit-ui'
+import { convertViemChainToRelayChain } from '@relayprotocol/relay-sdk'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, createConfig, WagmiProvider } from '@wagmi/core'
 import { mainnet } from '@wagmi/core/chains'
-import { MAINNET_RELAY_API, TESTNET_RELAY_API } from '@reservoir0x/relay-sdk'
-import '@reservoir0x/relay-kit-ui/styles.css'
+import { MAINNET_RELAY_API, TESTNET_RELAY_API } from '@relayprotocol/relay-sdk'
+import '@relayprotocol/relay-kit-ui/styles.css'
 
 const queryClient = new QueryClient()
 
@@ -78,27 +78,27 @@ const App = () => {
 }
 ```
 
-If you're using the `convertViemChainToRelayChain` you'll need to install and import the `@reservoir0x/relay-sdk` to use this function.
+If you're using the `convertViemChainToRelayChain` you'll need to install and import the `@relayprotocol/relay-sdk` to use this function.
 
 ### Styling
 
 Make sure to import the styles.css globally otherwise the components will be unstyled:
 
 ```tsx
-import '@reservoir0x/relay-kit-ui/styles.css'
+import '@relayprotocol/relay-kit-ui/styles.css'
 ```
 
 ### Configuring Chains Dynamically
 While you can easily supply chains that your application supports, you may want to fetch the supported Relay chains dynamically and configure them in your application. This can be done by using the [useRelayChains](/references/relay-kit/hooks/useRelayChains) hook.
 
 ```typescript
-import { useRelayChains } from '@reservoir0x/relay-kit-hooks'
-import { RelayKitProvider } from '@reservoir0x/relay-kit-ui'
-import { convertViemChainToRelayChain } from '@reservoir0x/relay-sdk'
+import { useRelayChains } from '@relayprotocol/relay-kit-hooks'
+import { RelayKitProvider } from '@relayprotocol/relay-kit-ui'
+import { convertViemChainToRelayChain } from '@relayprotocol/relay-sdk'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, createConfig, WagmiProvider } from '@wagmi/core'
 import { mainnet } from '@wagmi/core/chains'
-import { MAINNET_RELAY_API, TESTNET_RELAY_API } from '@reservoir0x/relay-sdk'
+import { MAINNET_RELAY_API, TESTNET_RELAY_API } from '@relayprotocol/relay-sdk'
 
 const queryClient = new QueryClient()
 

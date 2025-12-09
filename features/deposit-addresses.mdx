@@ -1,0 +1,122 @@
+---
+title: "Deposit Addresses"
+description: "Learn how to use Relay with a deposit address for instant bridging."
+---
+
+Relay supports instantly and cheaply bridging from a variety of EVM and non-EVM chain to any token.
+We are now launching deposit addresses to allow users to bridge without connecting a wallet. Users can send funds to a designated address
+and Relay will instantly deposit the correct tokens on the destination chain in the user's wallet. This is a great way for users to quickly
+start transacting on a new chain!
+
+## How It Works
+
+A deposit address is linked to a single bridge request. They are generated on-demand, and they cannot be reused. To enable using a deposit address for your bridge, you will need to set the `useDepositAddress` body parameter to `true` in the quote request.
+
+Failures via deposit addresses are extremely rare, but are still possible. If something goes wrong, we will default to manually handling refunds. If you wish to automatically receive refunds on the origin chain, specify the `refundTo` address. This will mean refunds will automatically be issued on origin in case of any filling failures.
+
+The deposit transaction requires no calldata. You just need to send any value to the  
+address specified in the API request response data. As long as this amount is enough to cover any gas or relay fees, it will be automatically bridged based on the route requested in the initial quote.
+
+Deposit addresses are supported for most major currencies. Supported currencies can be queried via the [currencies API](https://docs.relay.link/references/api/get-currencies) by specifying the `depositAddressOnly` body parameter to `true`.
+
+When using deposit addresses, there are more relayer gas fees associated with bridges. Typically about
+33,000 extra gas is required than regular native bridges, and about 70,000 more for ERC-20 bridges. For very small bridges, we don't recommend using deposit addresses since so much gas is required.
+
+Once a deposit occurs, the quote will automatically be generated post-deposit to account for gas fluctuation and recompute all fees. This can change the amount received to be different than the quoted value but will always be at least the minimum rate. If the minimum rate cannot be achieved, the deposit amount will be refunded.
+
+All relay EVM deposit addresses being and end with the character `d` (not case-sensitive). This is to help us with reducing the indexing search space.
+
+## Edge Cases
+
+We have automatic handling for common edge cases that can occur when using deposit addresses:
+
+- Depositing to the Wrong Chain -- For example, if the bridge request requires a deposit on Base but the funds
+  are deposited on Optimism, this amount is bridged to the destination chain originally requested as long as its enough to cover the fees and gas associated with the bridge. Please note that this will mean a new quote will be generated in-flight. NOTE: This is only supported for relay supported cross-chain currencies, see limitations.
+- Double Spend -- If funds are deposited to the same deposit addressed twice, we automatically refund the second deposit amount to the refundTo address if its specified. Otherwise, the funds require manual intervention.
+- Extra Funds are Received -- If the user deposits more funds than what is quoted, the quote will be
+  regenerated to account for this surplus amount and the bridge will still be filled.
+- Less Funds are Received -- If the user deposits less funds than what is quoted, a new quote will be generated to account for the lower amount, and the bridge will be filled.
+
+## Limitations
+
+- Calldata execution on destination is not allowed.
+- If an ERC20 is sent to the wrong chain, if it is supported by relay (like USDC on major chains), it will be auto-bridged. Make sure to confirm that its supported before allowing this type of flow.
+- Only exact input bridging is allowed. Specifying exact output will not work.
+- When non-supported currency or NFTs are sent to the deposit address, we
+  currently do not support recovering of those assets.
+
+## Debugging
+
+When looking up the status of a bridge or fetching the request data, please use the `requestId` and our [Get Execution Status API](/references/api/get-intents-status-v3).
+The transaction hash of the deposit transaction cannot be used to lookup the status of the bridge for deposit address bridges.
+To help with debugging transactions, make sure to store the `requestId` along with other data (quotes, transactions,
+bridges, etc). The `requestId` is unique to Relay's database and will be returned with the quote.
+
+## Example Request
+
+You will find an example below of sending 0.01 ETH from Base to Optimism.
+
+```bash cURL
+curl -X POST \
+  'https://api.relay.link/quote' \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"user": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+	"originChainId": 8453,
+	"originCurrency": "0x0000000000000000000000000000000000000000",
+	"destinationChainId": 10,
+	"destinationCurrency": "0x0000000000000000000000000000000000000000",
+	"tradeType": "EXACT_INPUT",
+	"recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+	"amount": "100000000000000000",
+	"usePermit": false,
+	"useExternalLiquidity": false,
+	"referrer": "relay.link/bridge",
+	"useDepositAddress": true,
+	"refundTo": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd"
+}'
+```
+
+- `useDepositAddress` must be set to `true` <br />
+- `refundTo` must be set when `useDepositAddress` is being used.
+  This is the address that refunds will be sent to in case of an issue.
+
+## Example Response
+
+```curl
+	"steps": [
+		{
+			"id": "deposit",
+			"action": "Confirm transaction in your wallet",
+			"description": "Deposit funds for executing the calls",
+			"kind": "transaction",
+			"depositAddress": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
+			"requestId": "0xa1dea21f62a85b9ede98b7a6442b7b9574bdfd71adabc03397242adf122038de",
+			"items": [
+				{
+					"status": "incomplete",
+					"data": {
+						"from": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+						"to": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
+						"data": "0x",
+						"value": "100000000000000000",
+						"maxFeePerGas": "4222843",
+						"maxPriorityFeePerGas": "987146",
+						"chainId": 8453
+					},
+					"check": {
+						"endpoint": "/intents/status?requestId=0xa1dea21f62a85b9ede98b7a6442b7b9574bdfd71adabc03397242adf122038de",
+						"method": "GET"
+					}
+				}
+			]
+		}
+	],
+.
+.
+.
+(other metadata associated with the quote, such as fees, rate, etc, omitted for brevity)
+.
+.
+.
+```
