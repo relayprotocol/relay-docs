@@ -25,14 +25,13 @@ When a user wishes to Relay, the application receives an order (quote) from the 
 
 #### Quote Execution Flow:
 
-- User gets a quote which is valid for 30 seconds.
-- If the user submits within 30 seconds, the solver will fill the request.
-- If the user doesn't submit in time, the solver will get a fresh quote.
-- If the new quote is higher than the old one, the fallback flow is triggered.
-- If the new quote is less than or equal to the old one, the solver proceeds with the request.
-- In the fallback case, the user is refunded either on the destination (default) or origin chain. (The `refundOnOrigin` param can be passed into the bridge/call apis and sdk actions to override the refund logic)
+- User gets a quote.
+- User submits the quote, the solver will revalidate the quote to get up to date fees.
+- If the recomputed quote is lower than the minimum amount, the refund flow is triggered.
+- If the recomputed quote is higher than or equal to the original quote, the solver proceeds with filling the quote.
+- In the refund case, the user is refunded on the origin chain.
 
-**Note:** Because quotes can go stale after 30 seconds, it is crucial for the client to regularly fetch fresh quotes so that users are always submitting valid transactions.
+**Note:** Because quote fees are recomputed when filling, it is crucial for the client to regularly fetch quotes so they are as fresh as possible.
 
 #### Onchain order attribution
 
