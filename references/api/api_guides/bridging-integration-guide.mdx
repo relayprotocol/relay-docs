@@ -17,7 +17,7 @@ To bridge assets, you first need to get a quote that provides all necessary info
 curl -X POST "https://api.relay.link/quote" \
   -H "Content-Type: application/json" \
   -d '{
-    "user": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+    "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
     "originChainId": 1,
     "destinationChainId": 8453,
     "originCurrency": "0x0000000000000000000000000000000000000000",
@@ -34,7 +34,7 @@ const response = await fetch("https://api.relay.link/quote", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    user: "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+    user: "0x03508bb71268bba25ecacc8f620e01866650532c",
     originChainId: 1,
     destinationChainId: 8453,
     originCurrency: "0x0000000000000000000000000000000000000000",
@@ -51,7 +51,7 @@ const quote = await response.json();
 import requests
 
 response = requests.post('https://api.relay.link/quote', json={
-    'user': '0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3',
+    'user': '0x03508bb71268bba25ecacc8f620e01866650532c',
     'originChainId': 1,
     'destinationChainId': 8453,
     'originCurrency': '0x0000000000000000000000000000000000000000',
@@ -165,13 +165,13 @@ You can check the status of a bridge operation at any time using the `/intents/s
 <CodeGroup>
 
 ```bash cURL
-curl "https://api.relay.link/intents/status?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331"
+curl "https://api.relay.link/intents/status/v3?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331"
 ```
 
 ```javascript JavaScript
 const checkStatus = async (requestId) => {
   const response = await fetch(
-    `https://api.relay.link/intents/status?requestId=${requestId}`
+    `https://api.relay.link/intents/status/v3?requestId=${requestId}`
   );
   return await response.json();
 };
@@ -246,7 +246,7 @@ Control slippage tolerance for your bridges:
 
 ☐ **Check chain support** - Confirm both origin and destination chains are supported
 
-☐ **Validate quote** - Quotes expire after 30 seconds, so fetch fresh quotes before execution
+☐ **Validate quote** - Quotes are revalidated when being filled, keep your quotes as fresh as possible.
 
 ☐ **Handle errors** - Implement proper error handling for API requests and transaction failures
 

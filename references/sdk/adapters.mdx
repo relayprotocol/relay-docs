@@ -24,7 +24,7 @@ An adapter is a function that takes parameters and returns an object that adhere
 
 ### What adapters are available out of the box?
 
-The following adapters are officially maintained and developed by the Reservoir Relay team:
+The following adapters are officially maintained and developed by the Relay team:
 
 [SVM Adapter](https://github.com/reservoirprotocol/relay-kit/tree/main/packages/relay-svm-wallet-adapter): This adapter gives the sdk the ability to submit transactions on SVM (Solana Virtual Machine) networks. It does not support signing messages and under the hood it uses the [solana web3 sdk](https://solana-labs.github.io/solana-web3.js/).
 
@@ -39,7 +39,7 @@ The following adapters are officially maintained and developed by the Reservoir 
 
 ### How can I use an adapter?
 
-You can either make your own adapter, as long as it adheres to the interface above or you can use one of the officials adapters developed and maintained by the Reservoir Relay team. All of our sdk methods handle a viem wallet or adapted wallet. The viem wallet adapter is used by default when a [viem wallet](https://viem.sh/docs/clients/wallet.html) is passed in for convenience. Refer below for implementation details:
+You can either make your own adapter, as long as it adheres to the interface above or you can use one of the officials adapters developed and maintained by the Relay team. All of our sdk methods handle a viem wallet or adapted wallet. The viem wallet adapter is used by default when a [viem wallet](https://viem.sh/docs/clients/wallet.html) is passed in for convenience. Refer below for implementation details:
 
 <CodeGroup>
 ```typescript Solana

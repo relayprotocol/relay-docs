@@ -109,7 +109,8 @@
                   "references/api/api_resources/contract-addresses",
                   "references/api/api_resources/supported-routes"
                 ]
-              }
+              },
+              "references/api/troubleshooting"
             ]
           },
           {
@@ -117,7 +118,7 @@
             "pages": [
               "references/api/core",
               "references/api/get-quote",
-              "references/api/execute",
+              "references/api/execute-permits",
               "references/api/get-intents-status-v3",
               "references/api/get-requests",
               "references/api/utilities",
@@ -158,7 +159,9 @@
                 "group": "Actions",
                 "pages": [
                   "references/sdk/actions/getQuote",
-                  "references/sdk/actions/execute"
+                  "references/sdk/actions/execute",
+                  "references/sdk/actions/getAppFees",
+                  "references/sdk/actions/claimAppFees"
                 ]
               },
               "references/sdk/adapters",
@@ -207,6 +210,7 @@
             "group": "Relay Protocol",
             "pages": [
               "references/protocol/overview",
+              "references/protocol/audits",
               {
                 "group": "Depository",
                 "pages": [
@@ -283,6 +287,11 @@
     "openapi": ["https://api.relay.link/documentation/json"],
     "mdx": {
       "server": ["https://api.relay.link", "https://api.testnets.relay.link"]
+    },
+    "examples": {
+      "languages": ["curl", "javascript", "python"],
+      "defaults": "required",
+      "prefill": false
     }
   },
   "appearance": {
@@ -321,6 +330,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/how-it-works/the-reservoir-relayer",
+      "destination": "/how-it-works/the-relay-solver"
+    },
     {
       "source": "/references/sdk/bridging/fetching-a-quote",
       "destination": "/guides/bridging"

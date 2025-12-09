@@ -22,7 +22,7 @@ Deposit addresses are supported for most major currencies. Supported currencies 
 When using deposit addresses, there are more relayer gas fees associated with bridges. Typically about
 33,000 extra gas is required than regular native bridges, and about 70,000 more for ERC-20 bridges. For very small bridges, we don't recommend using deposit addresses since so much gas is required.
 
-If a deposit occurs more than 30 seconds after the quote is generated, a new quote will automatically be generated post-deposit to account for gas fluctuation. This can change the amount received to be different than the quoted value.
+Once a deposit occurs, the quote will automatically be generated post-deposit to account for gas fluctuation and recompute all fees. This can change the amount received to be different than the quoted value but will always be at least the minimum rate. If the minimum rate cannot be achieved, the deposit amount will be refunded.
 
 All relay EVM deposit addresses being and end with the character `d` (not case-sensitive). This is to help us with reducing the indexing search space.
 
@@ -56,11 +56,11 @@ bridges, etc). The `requestId` is unique to Relay's database and will be returne
 
 You will find an example below of sending 0.01 ETH from Base to Optimism.
 
-```curl
-curl --request POST \
-  --url 'https://api.relay.link/quote' \
-  --header 'Content-Type: application/json' \
-  --data '{
+```bash cURL
+curl -X POST \
+  'https://api.relay.link/quote' \
+  -H 'Content-Type: application/json' \
+  -d '{
 	"user": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
 	"originChainId": 8453,
 	"originCurrency": "0x0000000000000000000000000000000000000000",

@@ -55,18 +55,20 @@ const wagmiConfig = createConfig({
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <RelayKitProvider options={{
-          appName: 'Relay Demo',
-          appFees: [
-            {
-              recipient: '0x0000000000000000000000000000000000000000',
-              fee: '100' // 1%
-            }
-          ]
-          duneApiKey: "YOUR_DUNE_KEY",
-          chains,
-          baseApiUrl: MAINNET_RELAY_API
-        }}>
+		<RelayKitProvider options={{
+			appName: 'Relay Demo',
+			appFees: [
+			  {
+				recipient: '0x0000000000000000000000000000000000000000',
+				fee: '100' // 1%
+			  }
+			],
+			duneConfig: {
+				apiKey: "YOUR_DUNE_KEY",
+			},
+			chains,
+			baseApiUrl: MAINNET_RELAY_API
+		  }}>
         <WagmiProvider config={wagmiConfig}>
           <YourApp />
         </WagmiProvider>
@@ -130,7 +132,9 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <RelayKitProvider options={{
-          duneApiKey: "YOUR_DUNE_KEY",
+		  duneConfig: {
+			apiKey: "YOUR_DUNE_KEY",
+		  },
           chains,
           baseApiUrl: MAINNET_RELAY_API
         }}>

@@ -37,31 +37,31 @@ The easiest way to claim your App fees is to use the [Relay App](https://relay.l
 
 To check your accrued App fees, use the App fee balances API. Here’s an example curl command:
 
-```
+```bash cURL
 curl --location 'https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e01866650532c/balances'
 ```
 
 The response includes the `balances.currency` field reflecting your off-chain balance for each currency accumulated:
 
-```
+```json
  {
-      "currency": {
-        "chainId": 8453,
-        "address": "0x0000000000000000000000000000000000000000",
-        "symbol": "USDC",
-        "name": "USDC",
-        "decimals": 6,
-        "metadata": {
-          "logoURI": "https://assets.relay.link/icons/1/light.png",
-          "verified": false,
-          "isNative": false
-        }
-      },
-      "amount": "75021651210714015",
-      "amountFormatted": "0.075021651210714015",
-      "amountUsd": "116.235557",
-      "minimumAmount": "75021651210714015"
+  "currency": {
+    "chainId": 8453,
+    "address": "0x0000000000000000000000000000000000000000",
+    "symbol": "USDC",
+    "name": "USDC",
+    "decimals": 6,
+    "metadata": {
+      "logoURI": "https://assets.relay.link/icons/1/light.png",
+      "verified": false,
+      "isNative": false
     }
+  },
+  "amount": "75021651210714015",
+  "amountFormatted": "0.075021651210714015",
+  "amountUsd": "116.235557",
+  "minimumAmount": "75021651210714015"
+}
 ```
 
 ### **How to claim your off-chain balance?**
@@ -70,7 +70,7 @@ To claim your app fees, use the app fees claim API. If using the API, the respon
 
 **API/SDK**
 
-```
+```bash cURL
 curl --request POST \
   --url https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e01866650532c/claim \
   --header 'Content-Type: application/json' \
@@ -83,7 +83,7 @@ curl --request POST \
 
 An example response from the API would be:
 
-```
+```json
 {
     "steps": [
         {
@@ -117,11 +117,11 @@ An example response from the API would be:
 
 You can then send a request to `/execute/permit` with the `requestId` and `signature` to claim your fees. An example request would be:
 
-```
-curl --request POST \
-  --url `https://api.relay.link/execute/permits?signature=${signature}` \
-  --header "Content-Type: application/json" \
-  --data '{
+```bash cURL
+curl -X POST \
+  https://api.relay.link/execute/permits?signature=${signature} \
+  -H 'Content-Type: application/json' \
+  -d '{
     "kind": "request",
     "requestId": "0xa344c6123e3da9fc3f9c81edeab0b2eb39f2ea80ba54a6e0ad00123dc180619c"
   }'
