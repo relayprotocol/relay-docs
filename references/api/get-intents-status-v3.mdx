@@ -3,3 +3,15 @@ title: "Get Status"
 description: "This API returns current status of intent."
 openapi: get /intents/status/v3
 ---
+
+Relay statuses take one of the following options:
+
+| Status | Description |
+|--------|-------------|
+| `waiting` | Waiting for deposit confirmation |
+| `pending` | Deposit confirmed, pending destination chain submission |
+| `submitted` | Destination transaction submitted |
+| `success` | Successful fill on destination |
+| `delayed` | Destination fill delayed, still processing |
+| `refunded` | Successfully refunded |
+| `failure` | Unsuccessful fill |
