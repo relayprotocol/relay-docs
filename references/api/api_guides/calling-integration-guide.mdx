@@ -412,12 +412,29 @@ quote_request = {
 
 </CodeGroup>
 
+### Sweeping ERC20 Balance
+
+Relay's router contract has a useful function that you can call to transfer out full balance of an ERC20 token, even if you don't know the full balance. There are currently two methods for doing this:
+
+* [cleanupErc20s](https://github.com/relayprotocol/relay-periphery/blob/db8d066881e6d190bd33cbe6abd94e23deeb6b31/src/v2/RelayRouter.sol#L82-L113)
+* [cleanupNative](https://github.com/relayprotocol/relay-periphery/blob/db8d066881e6d190bd33cbe6abd94e23deeb6b31/src/v2/RelayRouter.sol#L158-L172)
+
+You can use these by passing in the txs field as follows:
+
+```json
+{
+  "to": "0xRouterContractAddress",
+  "data": "0xEncodedCalldata", // encoded calldata for cleanupErc20s or cleanupNative
+  "value": 0,
+}
+```
+
 ### ERC20 Troubleshooting Guide
 
 **Problem**: "ERC20: transfer amount exceeds allowance" error
 **Solution**: Ensure you include the approval transaction before your contract call
 
-**Problem**: Transaction reverts with "ERC20: insufficient allowance"\
+**Problem**: Transaction reverts with "ERC20: insufficient allowance"
 **Solution**: Check that the approval amount is sufficient for your contract call
 
 **Problem**: Approval transaction succeeds but contract call fails
