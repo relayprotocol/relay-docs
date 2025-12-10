@@ -321,10 +321,6 @@
     }
   },
   "integrations": {
-    "posthog": {
-      "apiKey": "phc_bidXwDZgxGlWqfNtx8fhLESozcfupLUETfYB306Apmc",
-      "apiHost": "https://posthog.reservoir.tools"
-    },
     "intercom": {
       "appId": "b09ps4q8"
     }
