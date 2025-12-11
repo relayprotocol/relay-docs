@@ -21,7 +21,7 @@ To execute a cross-chain transaction, you need to specify the origin chain for p
 curl -X POST "https://api.relay.link/quote" \
   -H "Content-Type: application/json" \
   -d '{
-    "user": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+    "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
     "originChainId": 1,
     "destinationChainId": 8453,
     "originCurrency": "0x0000000000000000000000000000000000000000",
@@ -30,9 +30,9 @@ curl -X POST "https://api.relay.link/quote" \
     "tradeType": "EXACT_OUTPUT",
     "txs": [
       {
-        "to": "0xContractAddress",
+        "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",  
         "value": "100000000000000000",
-        "data": "0x40c10f19000000000000000000000000742d35cc6634c0532925a3b8d9d4db0a2d7dd5b30000000000000000000000000000000000000000000000000000000000000001"
+        "data": "0xd0e30db0"
       }
     ]
   }'
@@ -45,7 +45,7 @@ const response = await fetch("https://api.relay.link/quote", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    user: "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+    user: "0x03508bb71268bba25ecacc8f620e01866650532c",
     originChainId: 1,
     destinationChainId: 8453,
     originCurrency: "0x0000000000000000000000000000000000000000",
@@ -54,10 +54,10 @@ const response = await fetch("https://api.relay.link/quote", {
     tradeType: "EXACT_OUTPUT", // Required for cross-chain calls
     txs: [
       {
-        to: "0xContractAddress",
-        value: "100000000000000000", // Must match total amount
-        data: "0x40c10f19...", // Contract call data
-      },
+        "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",  
+        "value": "100000000000000000", // Must match total amount
+        "data": "0xd0e30db0" // Contract call data
+      }
     ],
   }),
 });
@@ -69,7 +69,7 @@ const quote = await response.json();
 import requests
 
 response = requests.post('https://api.relay.link/quote', json={
-    'user': '0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3',
+    'user': '0x03508bb71268bba25ecacc8f620e01866650532c',
     'originChainId': 1,
     'destinationChainId': 8453,
     'originCurrency': '0x0000000000000000000000000000000000000000',
@@ -78,10 +78,10 @@ response = requests.post('https://api.relay.link/quote', json={
     'tradeType': 'EXACT_OUTPUT',  # Required for cross-chain calls
     'txs': [
         {
-            'to': '0xContractAddress',
-            'value': '100000000000000000',  # Must match total amount
-            'data': '0x40c10f19...'  # Contract call data
-        }
+        "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",  
+        "value": "100000000000000000", // Must match total amount
+        "data": "0xd0e30db0" // Contract call data
+      }
     ]
 })
 
@@ -114,13 +114,13 @@ const contractABI = [
 // Create interface to encode function data
 const iface = new ethers.Interface(contractABI);
 const callData = iface.encodeFunctionData("mint", [
-  "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3", // recipient
+  "0x03508bb71268bba25ecacc8f620e01866650532c", // recipient
   1, // amount to mint
 ]);
 
 // Use this callData in your quote request
 const quoteRequest = {
-  user: "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+  user: "0x03508bb71268bba25ecacc8f620e01866650532c",
   originChainId: 1,
   destinationChainId: 8453,
   originCurrency: "eth",
@@ -153,11 +153,11 @@ const callData = encodeFunctionData({
     },
   ],
   functionName: "mint",
-  args: ["0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3", 1n],
+  args: ["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", 1n],
 });
 
 const quoteRequest = {
-  user: "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+  user: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
   originChainId: 1,
   destinationChainId: 8453,
   originCurrency: "eth",
@@ -197,12 +197,12 @@ contract = w3.eth.contract(abi=contract_abi)
 
 # Encode function call
 call_data = contract.encodeABI('mint', [
-    '0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3',
+    '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     1
 ])
 
 quote_request = {
-    'user': '0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3',
+    'user': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     'originChainId': 1,
     'destinationChainId': 8453,
     'originCurrency': 'eth',
@@ -210,7 +210,7 @@ quote_request = {
     'amount': '100000000000000000',
     'tradeType': 'EXACT_OUTPUT',
     'txs': [{
-        'to': '0xContractAddress',
+        'to': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
         'value': '100000000000000000',
         'data': call_data
     }]
@@ -412,12 +412,29 @@ quote_request = {
 
 </CodeGroup>
 
+### Sweeping ERC20 Balance
+
+Relay's router contract has a useful function that you can call to transfer out full balance of an ERC20 token, even if you don't know the full balance. There are currently two methods for doing this:
+
+* [cleanupErc20s](https://github.com/relayprotocol/relay-periphery/blob/db8d066881e6d190bd33cbe6abd94e23deeb6b31/src/v2/RelayRouter.sol#L82-L113)
+* [cleanupNative](https://github.com/relayprotocol/relay-periphery/blob/db8d066881e6d190bd33cbe6abd94e23deeb6b31/src/v2/RelayRouter.sol#L158-L172)
+
+You can use these by passing in the txs field as follows:
+
+```json
+{
+  "to": "0xRouterContractAddress",
+  "data": "0xEncodedCalldata", // encoded calldata for cleanupErc20s or cleanupNative
+  "value": 0,
+}
+```
+
 ### ERC20 Troubleshooting Guide
 
 **Problem**: "ERC20: transfer amount exceeds allowance" error
 **Solution**: Ensure you include the approval transaction before your contract call
 
-**Problem**: Transaction reverts with "ERC20: insufficient allowance"\
+**Problem**: Transaction reverts with "ERC20: insufficient allowance"
 **Solution**: Check that the approval amount is sufficient for your contract call
 
 **Problem**: Approval transaction succeeds but contract call fails
@@ -508,53 +525,57 @@ const checkCallStatus = async (requestId) => {
 
 You can include app fees in your call requests to monetize your integration:
 
-```json
-{
-  "user": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+```bash cURL
+curl -X POST "https://api.relay.link/quote" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
   "originChainId": 1,
   "destinationChainId": 8453,
-  "originCurrency": "eth",
-  "destinationCurrency": "eth",
+  "originCurrency": "0x0000000000000000000000000000000000000000",
+  "destinationCurrency": "0x0000000000000000000000000000000000000000",
   "amount": "100000000000000000",
   "tradeType": "EXACT_OUTPUT",
   "txs": [
     {
-      "to": "0xContractAddress",
+      "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",  
       "value": "100000000000000000",
-      "data": "0x40c10f19..."
+      "data": "0xd0e30db0"
     }
   ],
   "appFees": [
     {
-      "recipient": "0xYourFeeRecipient",
+      "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
       "fee": "50"
     }
   ]
-}
+}'
 ```
 
 ### Custom Slippage
 
 Control slippage tolerance for your calls:
 
-```json
-{
-  "user": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+```bash cURL
+curl -X POST "https://api.relay.link/quote" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
   "originChainId": 1,
   "destinationChainId": 8453,
-  "originCurrency": "eth",
-  "destinationCurrency": "eth",
+  "originCurrency": "0x0000000000000000000000000000000000000000",
+  "destinationCurrency": "0x0000000000000000000000000000000000000000",
   "amount": "100000000000000000",
   "tradeType": "EXACT_OUTPUT",
   "txs": [
     {
-      "to": "0xContractAddress",
+      "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",  
       "value": "100000000000000000",
-      "data": "0x40c10f19..."
+      "data": "0xd0e30db0"
     }
   ],
-  "slippageTolerance": "50" // 0.5% slippage tolerance
-}
+  "slippageTolerance": "50"
+}'
 ```
 
 ## Preflight Checklist
