@@ -11,14 +11,14 @@ Hyperliquid can be accessed using the standard Relay API flow, with the followin
 
 ## Hyperliquid Specific API Parameters
 
-| **Action**                   | **Parameter**           | **Input** | **Description**      |
-| ---------------------------- | ----------------------- | --------- | -------------------- |
-| Deposit to Hyperliquid       | toChainId               | 1337      | Hyperliquid Chain Id |
-|                              | recipient               |           | Hyperliquid Address  |
-| Withdrawals from Hyperliquid | useDepositAddress\*\*\* | true      |                      |
-|                              | fromChainId             | 1337      | Hyperliquid Chain Id |
+| **Action**                   | **Parameter**         | **Input** | **Description**      |
+| ---------------------------- | --------------------- | --------- | -------------------- |
+| Deposit to Hyperliquid       | toChainId             | 1337      | Hyperliquid Chain Id |
+|                              | recipient             |           | Hyperliquid Address  |
+| Withdrawals from Hyperliquid | protocolVersion\*\*\* | v2        |                      |
+|                              | fromChainId           | 1337      | Hyperliquid Chain Id |
 
-These params define the necessary parameters for Hyperliquid interactions. All other required API parameters are still necessary. _`*** for withdrawals useDepositAddress:true is a required param do to the current structure of hypercore.`_
+These params define the necessary parameters for Hyperliquid interactions. All other required API parameters are still necessary. _`*** for withdrawals protocolVersion:v2 is a required param.`_
 
 ## Currency Addresses
 
