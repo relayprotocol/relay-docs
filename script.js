@@ -1,42 +1,3 @@
-const script = document.createElement("script");
-script.src =
-  "https://gist.githubusercontent.com/pedromcunha/76466a9b4f382d5d84c96b4ccd63558c/raw/ad158ec82f50be7716313376bf3486c8ed13666b/iframeResizer.min.js";
-script.id = "iframeResizer";
-document.head.appendChild(script);
-
-// Load Posthog
-async function loadPostHog() {
-  const { posthog } = await import(
-    "https://cdn.jsdelivr.net/npm/posthog-js@1.202.5/+esm"
-  );
-
-  posthog.init("phc_bidXwDZgxGlWqfNtx8fhLESozcfupLUETfYB306Apmc", {
-    autocapture: true,
-    capture_pageview: true,
-    capture_pageleave: true,
-    mask_all_text: false,
-    api_host: "https://api-p.relay.link",
-  });
-
-  return posthog;
-}
-
-loadPostHog();
-
-//Load ms clarity
-(function (c, l, a, r, i, t, y) {
-  c[a] =
-    c[a] ||
-    function () {
-      (c[a].q = c[a].q || []).push(arguments);
-    };
-  t = l.createElement(r);
-  t.async = 1;
-  t.src = "https://www.clarity.ms/tag/" + i;
-  y = l.getElementsByTagName(r)[0];
-  y.parentNode.insertBefore(t, y);
-})(window, document, "clarity", "script", "ujoarm77s7");
-
 //Logic for prefilling vms
 // Utility functions for playground inputs
 function findInputByLabel(labelText) {
@@ -372,3 +333,114 @@ const observer = new MutationObserver((mutations) => {
     }
   }
 }).observe(document.body, { childList: true, subtree: true });
+
+const addLearnMore = (
+  targetId,
+  href,
+  linkText,
+  learnMoreId,
+  direction = "after"
+) => {
+  const bodyTarget = document.getElementById(targetId);
+  const learnMoreTarget = document.getElementById(learnMoreId);
+  if (
+    !learnMoreTarget &&
+    bodyTarget &&
+    bodyTarget.nextSibling &&
+    bodyTarget.nextSibling.children &&
+    bodyTarget.nextSibling.children[0]
+  ) {
+    const descriptionEl = bodyTarget.nextSibling.children[0];
+    const a = document.createElement("a");
+    if (direction === "before") {
+      descriptionEl.before(a);
+    } else {
+      descriptionEl.after(a);
+    }
+    a.id = learnMoreId;
+    a.href = href;
+    a.target = "_blank";
+    a.textContent = linkText;
+    a.classList.add("prose-sm");
+  }
+};
+
+function waitForElementId(elementId, callback) {
+  const check = () => document.querySelector(elementId);
+
+  // If it's already there, run immediately
+  if (check()) {
+    callback(check());
+    return;
+  }
+
+  // Otherwise observe DOM mutations
+  const observer = new MutationObserver(() => {
+    const el = check();
+    if (el) {
+      observer.disconnect();
+      callback(el);
+    }
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+}
+
+//Logic for detecting page changes
+function onPageChange() {
+  if (window.location.pathname.includes("/references/api/get-quote")) {
+    waitForElementId("#body-trade-type", (bodyTradeType) => {
+      addLearnMore(
+        "body-trade-type",
+        "/references/api/api_core_concepts/trade-types",
+        "Learn more about trade types",
+        "learn-more-trade-type"
+      );
+      addLearnMore(
+        "body-app-fees",
+        "/features/app-fees",
+        "Learn more about app fees",
+        "learn-more-app-fees"
+      );
+      addLearnMore(
+        "response-fees",
+        "/references/api/api_core_concepts/fees",
+        "Learn more about fees",
+        "learn-more-fees",
+        "before"
+      );
+    });
+  }
+}
+
+// Run on first page load
+onPageChange();
+
+(function () {
+  // Patch pushState
+  const pushState = history.pushState;
+  history.pushState = function () {
+    const ret = pushState.apply(this, arguments);
+    window.dispatchEvent(new Event("mintlify:navigation"));
+    return ret;
+  };
+
+  // Patch replaceState
+  const replaceState = history.replaceState;
+  history.replaceState = function () {
+    const ret = replaceState.apply(this, arguments);
+    window.dispatchEvent(new Event("mintlify:navigation"));
+    return ret;
+  };
+
+  // Back/forward navigation
+  window.addEventListener("popstate", () => {
+    window.dispatchEvent(new Event("mintlify:navigation"));
+  });
+})();
+
+// Listen for any navigation event
+window.addEventListener("mintlify:navigation", onPageChange);
