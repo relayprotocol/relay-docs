@@ -46,6 +46,13 @@ function findInputByLabel(labelText) {
   );
 }
 
+function findSelectByLabel(labelText) {
+  const selects = document.querySelectorAll("select");
+  return Array.from(selects).find((select) =>
+    select.getAttribute("aria-label")?.includes(labelText)
+  );
+}
+
 function setInputValue(input, value, delay = 0) {
   return new Promise((resolve) => {
     if (!input) {
@@ -73,6 +80,7 @@ function createButton(icon, label, onClick) {
   iconElement.alt = label;
   button.appendChild(iconElement);
   button.addEventListener("click", onClick);
+  button.id = `${label.toLowerCase().replace(" ", "-")}-button`;
   return button;
 }
 
@@ -114,6 +122,9 @@ const observer = new MutationObserver((mutations) => {
                 const destinationCurrencyInput = findInputByLabel(
                   "Enter destinationCurrency"
                 );
+                const protocolVersionInput = findSelectByLabel(
+                  "Select protocolVersion"
+                );
                 const amountInput = findInputByLabel("Enter amount");
                 const recipientInput = findInputByLabel("Enter recipient");
                 await setInputValue(
@@ -135,6 +146,7 @@ const observer = new MutationObserver((mutations) => {
                   recipientInput,
                   "0x03508bb71268bba25ecacc8f620e01866650532c"
                 );
+                await setInputValue(protocolVersionInput, "preferV2");
               } catch (error) {
                 console.error(error);
               } finally {
@@ -163,6 +175,9 @@ const observer = new MutationObserver((mutations) => {
                 );
                 const amountInput = findInputByLabel("Enter amount");
                 const recipientInput = findInputByLabel("Enter recipient");
+                const protocolVersionInput = findSelectByLabel(
+                  "Select protocolVersion"
+                );
                 await setInputValue(
                   userInput,
                   "CbKGgVKLJFb8bBrf58DnAkdryX6ubewVytn7X957YwNr"
@@ -182,6 +197,7 @@ const observer = new MutationObserver((mutations) => {
                   recipientInput,
                   "0x03508bb71268bba25ecacc8f620e01866650532c"
                 );
+                await setInputValue(protocolVersionInput, "preferV2");
               } catch (error) {
                 console.error(error);
               } finally {
@@ -210,6 +226,9 @@ const observer = new MutationObserver((mutations) => {
                 );
                 const amountInput = findInputByLabel("Enter amount");
                 const recipientInput = findInputByLabel("Enter recipient");
+                const protocolVersionInput = findSelectByLabel(
+                  "Select protocolVersion"
+                );
                 await setInputValue(
                   userInput,
                   "bc1q4vxn43l44h30nkluqfxd9eckf45vr2awz38lwa"
@@ -229,6 +248,7 @@ const observer = new MutationObserver((mutations) => {
                   recipientInput,
                   "0x03508bb71268bba25ecacc8f620e01866650532c"
                 );
+                await setInputValue(protocolVersionInput, "preferV2");
               } catch (error) {
                 console.error(error);
               } finally {
@@ -236,7 +256,115 @@ const observer = new MutationObserver((mutations) => {
               }
             }
           );
-          vmQuicksetsDiv.append(evmButton, solanaButton, bitcoinButton);
+          const hyperliquidButton = createButton(
+            "https://assets.relay.link/icons/square/1337/light.png",
+            "Hyperliquid",
+            async (e) => {
+              e.target.disabled = true;
+              try {
+                const userInput = findInputByLabel("Enter user");
+                const originChainIdInput = findInputByLabel(
+                  "Enter originChainId"
+                );
+                const destinationChainIdInput = findInputByLabel(
+                  "Enter destinationChainId"
+                );
+                const originCurrencyInput = findInputByLabel(
+                  "Enter originCurrency"
+                );
+                const destinationCurrencyInput = findInputByLabel(
+                  "Enter destinationCurrency"
+                );
+                const protocolVersionInput = findSelectByLabel(
+                  "Select protocolVersion"
+                );
+                const amountInput = findInputByLabel("Enter amount");
+                const recipientInput = findInputByLabel("Enter recipient");
+                await setInputValue(
+                  userInput,
+                  "0x03508bb71268bba25ecacc8f620e01866650532c"
+                );
+                await setInputValue(originChainIdInput, 1337);
+                await setInputValue(destinationChainIdInput, 8453);
+                await setInputValue(
+                  originCurrencyInput,
+                  "0x00000000000000000000000000000000"
+                );
+                await setInputValue(
+                  destinationCurrencyInput,
+                  "0x0000000000000000000000000000000000000000"
+                );
+                await setInputValue(amountInput, "100000000");
+                await setInputValue(
+                  recipientInput,
+                  "0x03508bb71268bba25ecacc8f620e01866650532c"
+                );
+                await setInputValue(protocolVersionInput, "preferV2");
+              } catch (error) {
+                console.error(error);
+              } finally {
+                e.target.disabled = false;
+              }
+            }
+          );
+          const tronButton = createButton(
+            "https://assets.relay.link/icons/square/728126428/light.png",
+            "Tron",
+            async (e) => {
+              e.target.disabled = true;
+              try {
+                const userInput = findInputByLabel("Enter user");
+                const originChainIdInput = findInputByLabel(
+                  "Enter originChainId"
+                );
+                const destinationChainIdInput = findInputByLabel(
+                  "Enter destinationChainId"
+                );
+                const originCurrencyInput = findInputByLabel(
+                  "Enter originCurrency"
+                );
+                const destinationCurrencyInput = findInputByLabel(
+                  "Enter destinationCurrency"
+                );
+                const protocolVersionInput = findSelectByLabel(
+                  "Select protocolVersion"
+                );
+                const amountInput = findInputByLabel("Enter amount");
+                const recipientInput = findInputByLabel("Enter recipient");
+                await setInputValue(
+                  userInput,
+                  "THa7BwoPfacfiELa63pbmm3g5PGKYmtJyt"
+                );
+                await setInputValue(originChainIdInput, 728126428);
+                await setInputValue(destinationChainIdInput, 8453);
+                await setInputValue(
+                  originCurrencyInput,
+                  "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+                );
+                await setInputValue(
+                  destinationCurrencyInput,
+                  "0x0000000000000000000000000000000000000000"
+                );
+                await setInputValue(amountInput, "1000000");
+                await setInputValue(
+                  recipientInput,
+                  "0x03508bb71268bba25ecacc8f620e01866650532c"
+                );
+                await setInputValue(protocolVersionInput, "preferV2");
+              } catch (error) {
+                console.error(error);
+              } finally {
+                e.target.disabled = false;
+              }
+            }
+          );
+          vmQuicksetsDiv.append(
+            evmButton,
+            solanaButton,
+            bitcoinButton,
+            hyperliquidButton,
+            tronButton
+          );
           target.parentNode.insertBefore(introHeading, target);
           target.parentNode.insertBefore(vmQuicksetsDiv, target);
         }
