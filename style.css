@@ -76,3 +76,44 @@
   #body-trade-type [data-component-part="field-info-pill"]:has(> span.text-gray-400) {
     display: none;
   }
+
+  #custom-vm-quicksets {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    margin-left: 16px;
+    border-bottom: 1px solid;
+    border-color: rgb(var(--gray-200)/.7);
+    padding-bottom: 16px;
+  }
+
+  #custom-vm-quicksets button {
+    border-radius: 4px;
+    overflow: hidden;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    opacity: 1;
+  }
+
+  #custom-vm-quicksets button img {
+    width: 32px;
+    height: 32px;
+  }
+
+  #custom-vm-quicksets button:hover {
+    opacity: 0.8;
+  }
+
+  #custom-vm-quicksets-intro {
+    font-weight: 600;
+    margin-top: 20px;
+    margin-left: 16px;
+  }
+
+  #hyperliquid-button {
+    background-color: #fff;
+    padding: 2px;
+    max-height: 32px;
+  }
+
