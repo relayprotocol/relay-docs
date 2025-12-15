@@ -5,7 +5,7 @@ description: "Add App Fees on any route and collect in stablecoins "
 
 ## What are App Fees?
 
-App fees are additional fees set by third-party developers on top of existing fees. These fees are specified when generating a quote. To improve the gas costs of fee setting, App fees are not paid out in real-time. Rather, App Fees accrue in base _USDC,_ and can be claimed as desired at your convenience.
+App fees are additional fees set by third-party developers on top of existing fees. These fees are specified when generating a quote. To improve the gas costs of fee setting, App fees are not paid out in real-time. Rather, App Fees accrue in an offchain base _USDC,_ balance and can be withdrawn as desired at your convenience.
 
 ## Setting App Fees
 
@@ -27,15 +27,15 @@ App Fees are measured in basis points (bps) based on the input value of an order
 - App Fee Recipients _must_ be an EVM compatible wallet address, even for non-EVM chains.
 - App fees _can_ be an array, for setting multiple fees at once
 
-## Claiming App Fees
+## Withdrawing App Balance
 
-App fees accrue in USDC, and can be claimed on any chain. Fees are free to claim on Base, and Relay exchange fees apply to claim on any other chain or in any other currency.
+App balance accrue in USDC from app fees, and can be claimed on any chain. The balance is free to claim on Base, and Relay app balance apply to claim on any other chain or in any other currency.
 
-The easiest way to claim your App fees is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App also works for claiming via a multisig. Here’s how you can claim via API:
+The easiest way to claim your App Balance is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App Balance page also supports withdrawing via a multisig. Here’s how you can withdraw via the API:
 
-### Check App Fees Balance
+### Get App Balance
 
-To check your accrued App fees, use the App fee balances API. Here’s an example curl command:
+To check your accrued App Balance, use the App fee balances API. Here’s an example curl command:
 
 ```bash cURL
 curl --location 'https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e01866650532c/balances'
@@ -64,9 +64,11 @@ The response includes the `balances.currency` field reflecting your off-chain ba
 }
 ```
 
-### **How to claim your off-chain balance?**
+To learn more about this api, see the [Get App Fee Balance](/references/api/get-app-fee-balances) API reference.
 
-To claim your app fees, use the app fees claim API. If using the API, the response will guide you through signing and submitting a message to the `/execute/permit` endpoint to verify ownership of your claim address. The SDK automates this process for you.
+### **How to withdraw your off-chain balance?**
+
+To withdraw your app fees, use the app fees claim API. If using the API, the response will guide you through signing and submitting a message to the `/execute/permit` endpoint to verify ownership of your claim address. The SDK automates this process for you.
 
 **API/SDK**
 
@@ -127,4 +129,4 @@ curl -X POST \
   }'
 ```
 
-Once done, you can check your balance again to verify the claim.
+Once done, you can check your balance again to verify the withdrawal. To learn more about this api, see the [Claim App Fee Balance](/references/api/claim-app-fees) API reference.

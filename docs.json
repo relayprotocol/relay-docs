@@ -127,6 +127,8 @@
               "references/api/get-token-price",
               "references/api/transactions-index",
               "references/api/transactions-single",
+              "references/api/get-app-fee-balances",
+              "references/api/claim-app-fees",
               "references/api/advanced",
               "references/api/swap-multi-input",
               "references/api/fast-fill",
