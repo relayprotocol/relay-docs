@@ -58,12 +58,12 @@ const walletAddress = wallet.publicKey.toString()
 
 const adaptedWallet = adaptSolanaWallet(
   walletAddress,
-  792703809, //chain id that Relay uses to identify solana 
-  connection,
-  connection.sendTransaction
+  792703809, // Chain ID that Relay uses to identify Solana 
+  connection, // The Solana web3.js Connection instance for interacting with the network
+  connection.sendTransaction // Function to sign and send a transaction, returning a promise with a base58 encoded transaction signature
 )
 
-const options = ... //define this based on getQuote options
+const options = ... // define this based on getQuote options
 
 const quote = await getClient().actions.getQuote(options)
 
@@ -71,7 +71,7 @@ getClient().actions.execute({
   quote,
   wallet: adaptedWallet,
   onProgress: ({steps, fees, breakdown, currentStep, currentStepItem, txHashes, details}) => {
-        //custom handling
+        // custom handling
   },
   ...
 })
@@ -88,7 +88,7 @@ const walletClient = createWalletClient({
   transport: custom(window.ethereum!)
 })
 
-const options = ... //define this based on getQuote options
+const options = ... // define this based on getQuote options
 
 const quote = await getClient().actions.getQuote(options)
 
@@ -96,7 +96,7 @@ getClient().actions.execute({
   quote,
   wallet: adaptViemWallet(walletClient),
   onProgress: ({steps, fees, breakdown, currentStep, currentStepItem, txHashes, details}) => {
-        //custom handling
+        // custom handling
   },
   ...
 })
