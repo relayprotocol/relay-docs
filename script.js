@@ -365,8 +365,13 @@ const addLearnMore = (
   }
 };
 
-function waitForElementId(elementId, callback) {
-  const check = () => document.querySelector(elementId);
+function waitForElementId(elementId, text, callback) {
+  const check = () => {
+    const element = document.querySelector(elementId);
+    return element && text
+      ? element && element.textContent.includes(text)
+      : element;
+  };
 
   // If it's already there, run immediately
   if (check()) {
@@ -392,7 +397,7 @@ function waitForElementId(elementId, callback) {
 //Logic for detecting page changes
 function onPageChange() {
   if (window.location.pathname.includes("/references/api/get-quote")) {
-    waitForElementId("#body-trade-type", (bodyTradeType) => {
+    waitForElementId("#body-trade-type", undefined, (bodyTradeType) => {
       addLearnMore(
         "body-trade-type",
         "/references/api/api_core_concepts/trade-types",
@@ -413,6 +418,20 @@ function onPageChange() {
         "before"
       );
     });
+  } else if (window.location.pathname.includes("/references/api/get-chains")) {
+    waitForElementId(
+      "#response-chains-token-support",
+      undefined,
+      (bodyChains) => {
+        addLearnMore(
+          "response-chains-token-support",
+          "/references/api/api_resources/supported-routes#step-1:-check-token-support-level",
+          "Learn more about token support",
+          "learn-more-token-support",
+          "before"
+        );
+      }
+    );
   }
 }
 
