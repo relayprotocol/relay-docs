@@ -51,7 +51,9 @@ const observer = new MutationObserver((mutations) => {
       const modal = document.querySelector(
         '[data-testid="api-playground-modal"]'
       );
-      if (modal) {
+      const title = document.querySelector("#page-title");
+      const isQuotePage = "Get Quote" === title?.textContent;
+      if (modal && isQuotePage) {
         if (document.getElementById("custom-vm-quicksets")) {
           return;
         }
