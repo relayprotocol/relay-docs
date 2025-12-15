@@ -127,6 +127,8 @@
               "references/api/get-token-price",
               "references/api/transactions-index",
               "references/api/transactions-single",
+              "references/api/get-app-fee-balances",
+              "references/api/claim-app-fees",
               "references/api/advanced",
               "references/api/swap-multi-input",
               "references/api/fast-fill",
@@ -321,10 +323,6 @@
     }
   },
   "integrations": {
-    "posthog": {
-      "apiKey": "phc_bidXwDZgxGlWqfNtx8fhLESozcfupLUETfYB306Apmc",
-      "apiHost": "https://posthog.reservoir.tools"
-    },
     "intercom": {
       "appId": "b09ps4q8"
     }

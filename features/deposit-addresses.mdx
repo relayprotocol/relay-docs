@@ -10,12 +10,11 @@ start transacting on a new chain!
 
 ## How It Works
 
-A deposit address is linked to a single bridge request. They are generated on-demand, and they cannot be reused. To enable using a deposit address for your bridge, you will need to set the `useDepositAddress` body parameter to `true` in the quote request.
+Once generated a single deposit address can be reused so long as the input is the same currency and on the same chain. To enable using a deposit address for your bridge, you will need to set the `useDepositAddress` body parameter to `true` in the quote request.
 
 Failures via deposit addresses are extremely rare, but are still possible. If something goes wrong, we will default to manually handling refunds. If you wish to automatically receive refunds on the origin chain, specify the `refundTo` address. This will mean refunds will automatically be issued on origin in case of any filling failures.
 
-The deposit transaction requires no calldata. You just need to send any value to the  
-address specified in the API request response data. As long as this amount is enough to cover any gas or relay fees, it will be automatically bridged based on the route requested in the initial quote.
+The deposit transaction requires no calldata. You just need to send any value to the address specified in the API request response data. As long as this amount is enough to cover any gas or relay fees, it will be automatically bridged based on the route requested in the initial quote.
 
 Deposit addresses are supported for most major currencies. Supported currencies can be queried via the [currencies API](https://docs.relay.link/references/api/get-currencies) by specifying the `depositAddressOnly` body parameter to `true`.
 
@@ -32,7 +31,6 @@ We have automatic handling for common edge cases that can occur when using depos
 
 - Depositing to the Wrong Chain -- For example, if the bridge request requires a deposit on Base but the funds
   are deposited on Optimism, this amount is bridged to the destination chain originally requested as long as its enough to cover the fees and gas associated with the bridge. Please note that this will mean a new quote will be generated in-flight. NOTE: This is only supported for relay supported cross-chain currencies, see limitations.
-- Double Spend -- If funds are deposited to the same deposit addressed twice, we automatically refund the second deposit amount to the refundTo address if its specified. Otherwise, the funds require manual intervention.
 - Extra Funds are Received -- If the user deposits more funds than what is quoted, the quote will be
   regenerated to account for this surplus amount and the bridge will still be filled.
 - Less Funds are Received -- If the user deposits less funds than what is quoted, a new quote will be generated to account for the lower amount, and the bridge will be filled.
@@ -40,10 +38,8 @@ We have automatic handling for common edge cases that can occur when using depos
 ## Limitations
 
 - Calldata execution on destination is not allowed.
-- If an ERC20 is sent to the wrong chain, if it is supported by relay (like USDC on major chains), it will be auto-bridged. Make sure to confirm that its supported before allowing this type of flow.
 - Only exact input bridging is allowed. Specifying exact output will not work.
-- When non-supported currency or NFTs are sent to the deposit address, we
-  currently do not support recovering of those assets.
+- When non-supported currency or NFTs are sent to the deposit address, we currently do not support recovering of those assets.
 
 ## Debugging
 
@@ -78,8 +74,8 @@ curl -X POST \
 ```
 
 - `useDepositAddress` must be set to `true` <br />
-- `refundTo` must be set when `useDepositAddress` is being used.
-  This is the address that refunds will be sent to in case of an issue.
+- `refundTo` can be optionally set when `useDepositAddress` is being used.
+  This is the address that refunds will be sent to in case of an issue. If not specified then manual refund is required.
 
 ## Example Response
 

@@ -285,7 +285,7 @@ Deposit funds to the relayer to execute the swap. Used when the Relay solver hol
         "gas": 21064
       },
       "check": {
-        "endpoint": "/intents/status?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
+        "endpoint": "/intents/status/v3?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
         "method": "GET"
       }
     }
@@ -318,7 +318,7 @@ An approval transaction to approve the transfer of an ERC20 token. Always follow
         "maxPriorityFeePerGas": "1009381"
       },
       "check": {
-        "endpoint": "/intents/status?requestId=0x...",
+        "endpoint": "/intents/status/v3?requestId=0x...",
         "method": "GET"
       }
     }
@@ -351,7 +351,7 @@ Send funds to a recipient on the same chain.
         "maxPriorityFeePerGas": "1009381"
       },
       "check": {
-        "endpoint": "/intents/status?requestId=0xec7244ebc6c9ce3a344f9eeb6c84df921b55e0c06b6cb25a49c167fbeafb7e1b",
+        "endpoint": "/intents/status/v3?requestId=0xec7244ebc6c9ce3a344f9eeb6c84df921b55e0c06b6cb25a49c167fbeafb7e1b",
         "method": "GET"
       }
     }
@@ -471,7 +471,7 @@ The main flow for cross-chain permits. Uses Permit2 or TransferWithAuthorization
             }
           },
           "check": {
-            "endpoint": "/intents/status?requestId=0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
+            "endpoint": "/intents/status/v3?requestId=0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
             "method": "GET"
           }
         }
@@ -565,7 +565,7 @@ Sign authorization for same-chain swap permits using PermitBatchWitnessTransferF
         }
       },
       "check": {
-        "endpoint": "/intents/status?requestId=0x4d1756eae7d23122047cbe2f11a749ca8275983e4d8757a8b44af9d1b829df39",
+        "endpoint": "/intents/status/v3?requestId=0x4d1756eae7d23122047cbe2f11a749ca8275983e4d8757a8b44af9d1b829df39",
         "method": "GET"
       }
     }
@@ -601,7 +601,7 @@ Sign authorization for same-chain swap permits using PermitBatchWitnessTransferF
             "gas": 21064
           },
           "check": {
-            "endpoint": "/intents/status?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
+            "endpoint": "/intents/status/v3?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
             "method": "GET"
           }
         }
@@ -636,21 +636,13 @@ Along with the step data there's an optional check object. You can use this obje
 ```json
 {
   "check": {
-    "endpoint": "/intents/status?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
+    "endpoint": "/intents/status/v3?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
     "method": "GET"
   }
 }
 ```
 
-The check api will always return a status, the expected statuses are as follows:
-
-| Status    | Description                                     |
-| --------- | ----------------------------------------------- |
-| `waiting` | Deposit tx for the request is yet to be indexed |
-| `pending` | Deposit tx was indexed, now the fill is pending |
-| `success` | Relay completed successfully                    |
-| `failure` | Relay failed, attempting to refund              |
-| `refund`  | Funds were refunded due to failure              |
+The check api will always return a status, to get a full list of statuses, please refer to the [Get Status](/references/api/get-intents-status-v3) API Reference.
 
 ---
 

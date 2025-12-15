@@ -9,7 +9,7 @@ An adapter is a function that takes parameters and returns an object that adhere
 
 | Property                   | Description                                                                                     | Required |
 | -------------------------- | ----------------------------------------------------------------------------------------------- | -------- |
-| **vmType**                    | A string representing a supported vmType (`evm`  `svm`  `bvm`  `suivm`)                                                   | ✅       |
+| **vmType**                    | A string representing a supported vmType (`evm`  `svm`  `bvm`  `suivm` `tvm`)                                                   | ✅       |
 | **getChainId**                | An async function that returns a chain id                                                                                              | ✅       |
 | **handleSignMessageStep**     | An async function that given a signature step item and a step generates a signature                                                                                              | ✅       |
 | **handleSendTransactionStep** | An async function that given a chain id, a transaction step item and a step returns a transaction hash                                                                                              | ✅       |
@@ -20,21 +20,24 @@ An adapter is a function that takes parameters and returns an object that adhere
 | **getBalance**                 | An optional method to override the default balance fetching logic for selected tokens in the ui kit.                                                                                               | ❌      |
 | **supportsAtomicBatch**        | An optional async function that takes a chain ID and returns whether the wallet supports [EIP-5792's atomic batch capability](https://www.eip5792.xyz/introduction). EVM wallets only.  | ❌      |
 | **handleBatchTransactionStep** | An optional async function that takes a chain ID and an array of transaction step items, returning a call bundle identifier for batch processing. Only available for EVM wallets that support atomic batching. | ❌      |
+| **isEOA** | An optional boolean that indicates if the wallet is an EOA (Externally Owned Account). This is used to determine if the wallet is an EOA or a contract account. | ❌      |
 
 
 ### What adapters are available out of the box?
 
 The following adapters are officially maintained and developed by the Relay team:
 
-[SVM Adapter](https://github.com/reservoirprotocol/relay-kit/tree/main/packages/relay-svm-wallet-adapter): This adapter gives the sdk the ability to submit transactions on SVM (Solana Virtual Machine) networks. It does not support signing messages and under the hood it uses the [solana web3 sdk](https://solana-labs.github.io/solana-web3.js/).
+[SVM Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-svm-wallet-adapter): This adapter gives the sdk the ability to submit transactions on SVM (Solana Virtual Machine) networks. It does not support signing messages and under the hood it uses the [solana web3 sdk](https://solana-labs.github.io/solana-web3.js/).
 
-[Bitcoin Adapter](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/relay-bitcoin-wallet-adapter): This adapter gives the sdk the ability to submit transaction to the Bitcoin blockchain. Under the hood it uses [bitcoinjs-lib](https://www.npmjs.com/package/bitcoinjs-lib) to sign and submit transactions. Note that bitcoin transactions have a long finalization period and unlike quicker vms are not polled in real time for confirmation.
+[Bitcoin Adapter](https://github.com/relayprotocol/relay-kit/blob/main/packages/relay-bitcoin-wallet-adapter): This adapter gives the sdk the ability to submit transaction to the Bitcoin blockchain. Under the hood it uses [bitcoinjs-lib](https://www.npmjs.com/package/bitcoinjs-lib) to sign and submit transactions. Note that bitcoin transactions have a long finalization period and unlike quicker vms are not polled in real time for confirmation.
 
-[Viem Adapter](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/viemWallet.ts): This adapter is the default one used when no adapter is provided. You can also import it yourself to convert any viem wallet client into an adapted wallet ready to be used in the sdk.
+[Viem Adapter](https://github.com/relayprotocol/relay-kit/blob/main/packages/sdk/src/utils/viemWallet.ts): This adapter is the default one used when no adapter is provided. You can also import it yourself to convert any viem wallet client into an adapted wallet ready to be used in the sdk.
 
-[Ethers Adapter](https://github.com/reservoirprotocol/relay-kit/tree/main/packages/relay-ethers-wallet-adapter): If your application uses ethers then you'll need this adapter to use the SDK. You'll still need to install viem as that's required for polling transactions but you can pass in your ethers signer to submit transactions and sign messages.
+[Ethers Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-ethers-wallet-adapter): If your application uses ethers then you'll need this adapter to use the SDK. You'll still need to install viem as that's required for polling transactions but you can pass in your ethers signer to submit transactions and sign messages.
 
-[Sui Adapter](https://github.com/reservoirprotocol/relay-kit/tree/main/packages/relay-sui-wallet-adapter): This adapter gives the sdk the ability to submit transactions on Sui networks. Under the hood it uses the [@mysten/sui](https://www.npmjs.com/package/@mysten/sui) sdk.
+[Sui Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-sui-wallet-adapter): This adapter gives the sdk the ability to submit transactions to the Sui blockchain. Under the hood it uses the [@mysten/sui](https://www.npmjs.com/package/@mysten/sui) sdk.
+
+[Tron Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-tron-wallet-adapter): This adapter gives the sdk the ability to submit transactions to the Tron blockchain. Under the hood it uses the [tronweb](https://www.npmjs.com/package/tronweb) sdk.
 
 
 ### How can I use an adapter?
@@ -55,12 +58,12 @@ const walletAddress = wallet.publicKey.toString()
 
 const adaptedWallet = adaptSolanaWallet(
   walletAddress,
-  792703809, //chain id that Relay uses to identify solana 
-  connection,
-  connection.sendTransaction
+  792703809, // Chain ID that Relay uses to identify Solana 
+  connection, // The Solana web3.js Connection instance for interacting with the network
+  connection.sendTransaction // Function to sign and send a transaction, returning a promise with a base58 encoded transaction signature
 )
 
-const options = ... //define this based on getQuote options
+const options = ... // define this based on getQuote options
 
 const quote = await getClient().actions.getQuote(options)
 
@@ -68,7 +71,7 @@ getClient().actions.execute({
   quote,
   wallet: adaptedWallet,
   onProgress: ({steps, fees, breakdown, currentStep, currentStepItem, txHashes, details}) => {
-        //custom handling
+        // custom handling
   },
   ...
 })
@@ -85,7 +88,7 @@ const walletClient = createWalletClient({
   transport: custom(window.ethereum!)
 })
 
-const options = ... //define this based on getQuote options
+const options = ... // define this based on getQuote options
 
 const quote = await getClient().actions.getQuote(options)
 
@@ -93,7 +96,7 @@ getClient().actions.execute({
   quote,
   wallet: adaptViemWallet(walletClient),
   onProgress: ({steps, fees, breakdown, currentStep, currentStepItem, txHashes, details}) => {
-        //custom handling
+        // custom handling
   },
   ...
 })
@@ -196,6 +199,37 @@ const adaptedWallet = adaptSuiWallet(
   }
 )
 
+const options = ... //define this based on getQuote options
+
+const quote = await getClient().actions.getQuote(options)
+
+getClient().actions.execute({
+  quote,
+  wallet: adaptedWallet,
+  onProgress: ({steps, fees, breakdown, currentStep, currentStepItem, txHashes, details}) => {
+    //custom handling
+  },
+    ...
+})
+
+```
+```typescript Tron
+import { TronWallet } from 'tronweb'
+import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk"
+import { adaptTronWallet } from '@relayprotocol/relay-tron-wallet-adapter'
+
+// Create a TronWeb instance, we recommend using a provider like dynamiclabs if using this on the frontend
+// Note: you should never share your private key with anyone or use on the frontend
+const tronWeb = new TronWeb({fullHost: 'xxx', privateKey: 'privateKey'});
+const walletAddress = tronWeb.defaultAddress.base58
+if (!tronWeb) {
+  throw 'Unable to setup Tron wallet'
+}
+
+const adaptedWallet = adaptTronWallet(
+  walletAddress,
+  tronWeb
+)
 const options = ... //define this based on getQuote options
 
 const quote = await getClient().actions.getQuote(options)
