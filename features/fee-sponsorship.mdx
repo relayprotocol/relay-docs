@@ -5,7 +5,11 @@ description: "Sponsor your users' transaction fees to improve UX and reduce fric
 
 ## What is Fee Sponsorship?
 
-Fee Sponsorship allows you to cover the transaction fees for your users' Relay transactions. By sponsoring fees, you can eliminate the friction of users needing to pay for gas, creating a seamless experience. This is particularly valuable for onboarding new users or providing a premium experience for your application.
+Fee Sponsorship allows you to cover the destination chain fees for your users' Relay transactions. By sponsoring these fees, you can reduce costs for your users and create a more seamless experience. This is particularly valuable for onboarding new users or providing a premium experience for your application.
+
+<Note>
+Fee sponsorship covers all destination chain fees (including gas topup amounts), but **not** the origin chain gas fee. Users will still need to pay the gas required to submit their transaction on the origin chain.
+</Note>
 
 ## Requirements
 
@@ -15,7 +19,7 @@ Before you can sponsor transactions, you need:
 2. **Sufficient App Balance** — Your app balance must have enough funds to cover the fees you wish to sponsor.
 
 <Note>
-Don't have an API key yet? [Request one here](/api-keys). // @TODO: Add link to api keys page
+Don't have an API key? [Reach out to the Relay team](https://forms.gle/XNeELYavjwoJwPEf7). 
 </Note>
 
 Each API key is associated with a sponsoring wallet address. Once you're set up, you can begin depositing funds and sponsoring transactions.
