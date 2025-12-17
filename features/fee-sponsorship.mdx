@@ -1,0 +1,251 @@
+---
+title: "Fee Sponsorship"
+description: "Sponsor your users' transaction fees to improve UX and reduce friction"
+---
+
+## What is Fee Sponsorship?
+
+Fee Sponsorship allows you to cover the transaction fees for your users' Relay transactions. By sponsoring fees, you can eliminate the friction of users needing to pay for gas, creating a seamless experience. This is particularly valuable for onboarding new users or providing a premium experience for your application.
+
+## Requirements
+
+Before you can sponsor transactions, you need:
+
+1. **An API Key** — Required to authenticate your sponsorship requests and associate them with your app balance.
+2. **Sufficient App Balance** — Your app balance must have enough funds to cover the fees you wish to sponsor.
+
+<Note>
+Don't have an API key yet? [Request one here](/api-keys). // @TODO: Add link to api keys page
+</Note>
+
+Each API key is associated with a sponsoring wallet address. Once you're set up, you can begin depositing funds and sponsoring transactions.
+
+---
+
+## Funding Your App Balance
+
+There are two ways to deposit funds to your app balance:
+
+### Option 1: Use the Relay App UI
+
+The simplest way to deposit funds is through the [Relay App Balance UI](https://www.relay.link/app-balance). This provides a user-friendly interface for managing your balance.
+
+### Option 2: Direct On-Chain Deposit
+
+You can programmatically deposit to your app balance by sending a transaction on Base to the Relay solver. This method involves appending specific calldata in place of the request ID to identify the deposit.
+
+#### How It Works
+
+When you transfer funds to the solver using specific calldata, Relay treats it as a deposit to your app balance. This method uses a fixed 12-character prefix and suffix (`012345abcdef`) with the middle portion specifying which address to credit:
+
+**Calldata Format:**
+```
+0x[prefix][address-to-credit][suffix]
+```
+
+- **Prefix:** `012345abcdef`
+- **Address to Credit:** The wallet address to deposit funds for (use `0000000000000000000000000000000000000000` for `msg.sender`)
+- **Suffix:** `012345abcdef`
+
+#### Examples
+
+| Calldata | Behavior |
+|------------|----------|
+| `0x012345abcdef0000000000000000000000000000000000000000012345abcdef` | Credits `msg.sender` |
+| `0x012345abcdefd5c0d17ccb9071d27a4f7ed8255f59989b9aee0d012345abcdef` | Credits `0xd5c0d17ccb9071d27a4f7ed8255f59989b9aee0d` |
+
+<Tip>
+The ability to specify a different address is useful for building auto-topup systems or having more granular control over which accounts receive deposits.
+</Tip>
+
+#### Solver Address
+
+Deposits should be sent to the Relay solver on Base:
+
+| Network | Address |
+|---------|---------|
+| Base | `0xf70da97812cb96acdf810712aa562db8dfa3dbef` |
+
+#### TypeScript Example
+
+```typescript
+import { erc20Abi, encodeFunctionData, createWalletClient } from 'viem'
+import { base } from 'viem/chains'
+
+const BASE_USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as const
+const RELAY_BASE_SOLVER_ADDRESS = '0xf70da97812cb96acdf810712aa562db8dfa3dbef' as const
+const REQUEST_ID_PREFIX = '012345abcdef'
+
+const walletClient = createWalletClient({
+  chain: base,
+  transport: custom(window.ethereum!),
+})
+
+const [userAddress] = await walletClient.getAddresses()
+
+const amountInWei = '100000000' // 100 USDC
+
+// Encode the transfer function call
+const transferData = encodeFunctionData({
+  abi: erc20Abi,
+  functionName: 'transfer',
+  args: [RELAY_BASE_SOLVER_ADDRESS, amountInWei]
+})
+
+// Add custom calldata to credit the wallet address
+const customCalldata =
+  `${REQUEST_ID_PREFIX}${userAddress.slice(2)}${REQUEST_ID_PREFIX}` as `0x${string}`
+
+const hash = await walletClient.sendTransaction({
+  to: BASE_USDC_ADDRESS,
+  data: `${transferData}${customCalldata}`,
+  account: userAddress,
+  chain: base
+})
+
+
+```
+
+---
+
+## Checking Your App Balance
+
+Before sponsoring transactions, you'll want to verify your available balance. Use the [Get App Fee Balances](/references/api/get-app-fee-balances) API:
+
+```bash cURL
+curl --location 'https://api.relay.link/app-fees/{your-wallet-address}/balances'
+```
+
+**Example:**
+
+```bash cURL
+curl --location 'https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e01866650532c/balances'
+```
+
+**Example Response:**
+
+```json
+{
+  "currency": {
+    "chainId": 8453,
+    "address": "0x0000000000000000000000000000000000000000",
+    "symbol": "USDC",
+    "name": "USDC",
+    "decimals": 6,
+    "metadata": {
+      "logoURI": "https://assets.relay.link/icons/1/light.png",
+      "verified": false,
+      "isNative": false
+    }
+  },
+  "amount": "75021651210714015",
+  "amountFormatted": "0.075021651210714015",
+  "amountUsd": "116.235557",
+  "minimumAmount": "75021651210714015"
+}
+```
+
+---
+
+## Sponsoring Transactions
+
+Once your app balance is funded, you can sponsor transactions by including specific parameters in your quote requests.
+
+### Required Header
+
+| Header | Type | Description |
+|--------|------|-------------|
+| `x-api-key` | `string` | Your API key, required to authenticate sponsorship requests and associate them with your app balance. |
+
+### Sponsorship Parameters
+
+Add these parameters to your [Get Quote](/references/api/get-quote) API request:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `subsidizeFees` | `boolean` | Set to `true` to have the sponsor pay for all fees associated with the request, including gas topup amounts. |
+| `maxSubsidizationAmount` | `string` | _(Optional)_ The maximum amount to subsidize in USDC with 6 decimal places (e.g., `"1000000"` = $1.00). If the total fees exceed this threshold, the entire request will **not** be subsidized. |
+
+### Example Request
+
+```bash cURL
+curl -X POST \
+  'https://api.relay.link/quote' \
+  -H 'Content-Type: application/json' \
+  -H 'x-api-key: your-api-key' \
+  -d '{
+    "user": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+    "originChainId": 8453,
+    "originCurrency": "0x0000000000000000000000000000000000000000",
+    "destinationChainId": 10,
+    "destinationCurrency": "0x0000000000000000000000000000000000000000",
+    "tradeType": "EXACT_INPUT",
+    "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+    "amount": "100000000000000000",
+    "subsidizeFees": true,
+    "maxSubsidizationAmount": "5000000"
+  }'
+```
+
+In this example:
+- `x-api-key` header authenticates your sponsorship request
+- `subsidizeFees: true` enables fee sponsorship
+- `maxSubsidizationAmount: "5000000"` caps sponsorship at $5.00 USDC
+
+### How `maxSubsidizationAmount` Works
+
+The `maxSubsidizationAmount` parameter acts as a safety threshold:
+
+- If the total fees are **at or below** this amount, the sponsor covers the full cost
+- If the total fees **exceed** this amount, **no sponsorship occurs** — the user pays all fees
+
+This protects you from unexpectedly high costs during network congestion or volatile market conditions.
+
+<Warning>
+When `maxSubsidizationAmount` is exceeded, the entire request falls back to user-paid fees. The fees are not partially subsidized.
+</Warning>
+
+---
+
+## Fees Object
+
+When you sponsor transactions, the quote response includes a `fees` object with a `subsidized` field showing the fees covered by your sponsorship:
+
+```json
+{
+  "fees": {
+    "relayerService": "...",
+    "relayerGas": "...",
+    "relayer": "...",
+    "app": "...",
+    "subsidized": {
+      "amount": "500000",
+      "amountUsd": "0.50"
+    }
+  }
+}
+```
+
+For more details on the fee structure, see [Relay Fees](/references/api/api_core_concepts/fees).
+
+---
+
+## Best Practices
+
+1. **Monitor Your Balance** — Set up alerts or automated checks to ensure your app balance doesn't run dry during high-traffic periods.
+
+2. **Use `maxSubsidizationAmount`** — Always set a reasonable cap to protect against unexpected fee spikes.
+
+3. **Consider Auto-Topup** — For production applications, consider implementing an auto-topup system using the direct on-chain deposit method.
+
+4. **Track Sponsored Transactions** — Use the [Get Requests](/references/api/get-requests) API to monitor your sponsored transaction history and costs.
+
+---
+
+## Related Resources
+
+- [App Fees](/features/app-fees) — Learn how to collect fees from your users
+- [Get App Fee Balances](/references/api/get-app-fee-balances) — API reference for checking balances
+- [Get Quote](/references/api/get-quote) — API reference for quote requests
+- [Relay Fees](/references/api/api_core_concepts/fees) — Understanding Relay's fee structure
+
