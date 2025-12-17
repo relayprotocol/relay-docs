@@ -133,7 +133,7 @@ function onPageChange() {
   }
 
   // GET QUOTE
-  if (path.includes("/references/api/get-quote")) {
+  if (path.includes("/references/api/get-quote-v2")) {
     startPageObserver(enhanceGetQuotePage);
 
     // GET CHAINS

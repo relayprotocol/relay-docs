@@ -117,7 +117,7 @@
             "group": "API Reference",
             "pages": [
               "references/api/core",
-              "references/api/get-quote",
+              "references/api/get-quote-v2",
               "references/api/execute-permits",
               "references/api/get-intents-status-v3",
               "references/api/get-requests",
@@ -142,7 +142,8 @@
                   "references/api/get-price",
                   "references/api/get-config",
                   "references/api/get-intents-status",
-                  "references/api/get-currencies"
+                  "references/api/get-currencies",
+                  "references/api/get-quote"
                 ]
               }
             ]
