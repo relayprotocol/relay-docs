@@ -99,7 +99,8 @@
                       "references/api/api_guides/hyperliquid-support"
                     ]
                   },
-                  "references/api/api_guides/deep-linking"
+                  "references/api/api_guides/deep-linking",
+                  "references/api/api_guides/websockets"
                 ]
               },
               {
@@ -146,6 +147,10 @@
                 ]
               }
             ]
+          },
+          {
+            "group": "Websockets",
+            "pages": ["references/websockets/intent-status"]
           }
         ]
       },

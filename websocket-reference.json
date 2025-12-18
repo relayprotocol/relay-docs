@@ -1,0 +1,320 @@
+{
+  "asyncapi": "3.0.0",
+  "id": "https://relay.link/websocket",
+  "info": {
+    "title": "Relay WebSocket API",
+    "version": "1.0.0",
+    "description": "WebSocket interface for subscribing to real-time request status updates.",
+    "contact": {
+      "name": "Relay Support",
+      "url": "https://relay.link/support"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "defaultContentType": "application/json",
+  "servers": {
+    "production": {
+      "host": "ws.relay.link",
+      "pathname": "/",
+      "protocol": "wss",
+      "description": "Production WebSocket server",
+      "variables": {
+        "apiKey": {
+          "description": "Relay API key",
+          "default": "YOUR_API_KEY"
+        }
+      }
+    }
+  },
+  "channels": {
+    "relay-ws": {
+      "address": "relay-ws",
+      "description": "Stream transaction statuses for Relay transactions.",
+      "messages": {
+        "ConnectionReady": {
+          "name": "ConnectionReady",
+          "summary": "Sent by the server when the WebSocket connection is ready.",
+          "examples": [
+            {
+              "summary": "Connection established",
+              "payload": {
+                "type": "connection",
+                "status": "ready",
+                "data": {
+                  "id": "9nqpzwmwh86"
+                }
+              }
+            }
+          ],
+          "payload": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["connection"] },
+              "status": { "type": "string", "enum": ["ready"] },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" }
+                },
+                "required": ["id"]
+              }
+            },
+            "required": ["type", "status", "data"]
+          }
+        },
+        "SubscribeRequest": {
+          "name": "SubscribeRequest",
+          "summary": "Client requests subscription to real-time transaction status events.",
+          "examples": [
+            {
+              "summary": "Subscribe to request.status.updated",
+              "payload": {
+                "type": "subscribe",
+                "event": "request.status.updated",
+                "filters": {
+                  "id": "0xae0827617d4ae75b406969971c2d4df9a8e8d819ff0f09581fb45ca123fcc7a0"
+                }
+              }
+            }
+          ],
+          "payload": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["subscribe"],
+                "default": "subscribe"
+              },
+              "event": {
+                "type": "string",
+                "default": "request.status.updated"
+              },
+              "filters": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" }
+                },
+                "required": ["id"]
+              }
+            },
+            "required": ["type", "event"]
+          }
+        },
+        "SubscribeResponse": {
+          "name": "SubscribeResponse",
+          "summary": "Server acknowledges a successful subscription.",
+          "examples": [
+            {
+              "summary": "Subscribe response",
+              "payload": {
+                "type": "subscribe",
+                "status": "success",
+                "data": {
+                  "event": "request.status.updated",
+                  "filters": {
+                    "id": "0xae0827617d4ae75b406969971c2d4df9a8e8d819ff0f09581fb45ca123fcc7a0"
+                  }
+                }
+              }
+            }
+          ],
+          "payload": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["subscribe"] },
+              "status": { "type": "string", "enum": ["success"] },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string" },
+                  "filters": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" }
+                    },
+                    "required": ["id"]
+                  }
+                },
+                "required": ["event"]
+              }
+            },
+            "required": ["type", "status", "data"]
+          }
+        },
+        "UnsubscribeRequest": {
+          "name": "UnsubscribeRequest",
+          "summary": "Client unsubscribes from request.status.updated events. Not required if disconnecting from the websocket as the server cleans up automatically.",
+          "examples": [
+            {
+              "summary": "Unsubscribe request",
+              "payload": {
+                "type": "unsubscribe",
+                "event": "request.status.updated",
+                "filters": {
+                  "id": "0xae0827617d4ae75b406969971c2d4df9a8e8d819ff0f09581fb45ca123fcc7a0"
+                }
+              }
+            }
+          ],
+          "payload": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["unsubscribe"],
+                "default": "unsubscribe"
+              },
+              "event": {
+                "type": "string",
+                "default": "request.status.updated"
+              },
+              "filters": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" }
+                },
+                "required": ["id"]
+              }
+            },
+            "required": ["type", "event"]
+          }
+        },
+        "UnsubscribeResponse": {
+          "name": "UnsubscribeResponse",
+          "summary": "Server confirms unsubscription.",
+          "examples": [
+            {
+              "summary": "Unsubscribe response",
+              "payload": {
+                "type": "unsubscribe",
+                "status": "success",
+                "data": {
+                  "event": "request.status.updated"
+                }
+              }
+            }
+          ],
+          "payload": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["unsubscribe"] },
+              "status": { "type": "string", "enum": ["success"] },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "event": { "type": "string" }
+                },
+                "required": ["event"]
+              }
+            },
+            "required": ["type", "status", "data"]
+          }
+        },
+        "RequestStatusUpdatedEvent": {
+          "name": "RequestStatusUpdatedEvent",
+          "summary": "Server pushes real-time transaction status events.",
+          "examples": [
+            {
+              "summary": "Request status updated",
+              "payload": {
+                "event": "request.status.updated",
+                "data": {
+                  "status": "pending",
+                  "inTxHashes": [
+                    "5Mmr6W2xicDPW3QuNVYcEiyVTxxVSBZ39zMugn9ePkuvZKc9ask4p33i4c81HTVthNFab5oKRCshCK6a1tveUyN6"
+                  ],
+                  "txHashes": [],
+                  "updatedAt": 1765989801294,
+                  "originChainId": 792703809,
+                  "destinationChainId": 8453,
+                  "requestId": "0x0931cd6b5a77317ccfe2513d29309db748bbad68eeda9b1235f902622d2af43d"
+                },
+                "publishedAt": 1765989801309
+              }
+            }
+          ],
+          "payload": {
+            "type": "object",
+            "properties": {
+              "event": { "type": "string", "enum": ["request.status.updated"] },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string" },
+                  "inTxHashes": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "txHashes": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "updatedAt": { "type": "number" },
+                  "originChainId": { "type": "number" },
+                  "destinationChainId": { "type": "number" },
+                  "requestId": { "type": "string" }
+                },
+                "required": [
+                  "status",
+                  "updatedAt",
+                  "originChainId",
+                  "destinationChainId",
+                  "requestId"
+                ]
+              },
+              "publishedAt": { "type": "number" }
+            },
+            "required": ["event", "data", "publishedAt"]
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "receiveConnectionReady": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/relay-ws" },
+      "summary": "Receive a connection-ready message from the server.",
+      "messages": [{ "$ref": "#/channels/relay-ws/messages/ConnectionReady" }]
+    },
+    "sendSubscribeRequest": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/relay-ws" },
+      "summary": "Send a subscribe request to the server.",
+      "messages": [{ "$ref": "#/channels/relay-ws/messages/SubscribeRequest" }]
+    },
+    "receiveSubscribeResponse": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/relay-ws" },
+      "summary": "Receive subscription confirmation from the server.",
+      "messages": [{ "$ref": "#/channels/relay-ws/messages/SubscribeResponse" }]
+    },
+    "receiveRequestStatusUpdatedEvent": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/relay-ws" },
+      "summary": "Receive request.status.updated events from the server.",
+      "messages": [
+        { "$ref": "#/channels/relay-ws/messages/RequestStatusUpdatedEvent" }
+      ]
+    },
+    "sendUnsubscribeRequest": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/relay-ws" },
+      "summary": "Send an unsubscribe request to the server.",
+      "messages": [
+        { "$ref": "#/channels/relay-ws/messages/UnsubscribeRequest" }
+      ]
+    },
+    "receiveUnsubscribeResponse": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/relay-ws" },
+      "summary": "Receive an unsubscribe confirmation from the server.",
+      "messages": [
+        { "$ref": "#/channels/relay-ws/messages/UnsubscribeResponse" }
+      ]
+    }
+  }
+}
