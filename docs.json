@@ -47,10 +47,10 @@
             "group": "Resources",
             "pages": [
               "resources/supported-chains",
-              "resources/brand-assets",
-              "resources/bounties",
               "resources/enterprise",
+              "resources/bounties",
               "resources/support",
+              "resources/brand-assets",
               "resources/security-and-compliance"
             ]
           }

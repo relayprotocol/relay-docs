@@ -121,6 +121,20 @@ function enhanceGetChainsPage() {
   });
 }
 
+function enhanceFeeSponsorshipPage() {
+  waitForElementId("#page-title", "Fee Sponsorship", () => {
+    if (!document.getElementById("enterprise-link")) {
+      const enterpriseLink = document.createElement("a");
+      enterpriseLink.textContent = "Enterprise";
+      enterpriseLink.href = "/resources/enterprise";
+      enterpriseLink.id = "enterprise-link";
+      const pageTitle = document.getElementById("page-title");
+      pageTitle.appendChild(enterpriseLink);
+      pageTitle.classList.add("flex", "items-center");
+    }
+  });
+}
+
 // ---- MAIN NAVIGATION HANDLER --------------
 
 function onPageChange() {
@@ -132,13 +146,12 @@ function onPageChange() {
     pageObserver = null;
   }
 
-  // GET QUOTE
   if (path.includes("/references/api/get-quote-v2")) {
     startPageObserver(enhanceGetQuotePage);
-
-    // GET CHAINS
   } else if (path.includes("/references/api/get-chains")) {
     startPageObserver(enhanceGetChainsPage);
+  } else if (path.includes("/features/fee-sponsorship")) {
+    startPageObserver(enhanceFeeSponsorshipPage);
   }
 }
 
