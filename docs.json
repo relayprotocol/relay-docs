@@ -164,7 +164,7 @@
             "pages": [
               "references/relay-kit/overview",
               {
-                "group": "SDK Reference",
+                "group": "SDK",
                 "pages": [
                   "references/relay-kit/sdk/installation",
                   "references/relay-kit/sdk/createClient",
