@@ -1,6 +1,6 @@
 ---
-title: 'EIP-7702'
-description: 'How to use EIP-7702 to execute cross-chain transactions'
+title: "EIP-7702"
+description: "How to use EIP-7702 to execute cross-chain transactions"
 ---
 
 EIP-7702 enables smart account behavior for EOAs by allowing them to execute arbitrary calls via an authorization signature. This is especially useful for cross-chain transactions where the origin chain funds the destination chain execution, but the destination-side call must still reflect the user's EOA as the `msg.sender`.
@@ -18,7 +18,7 @@ EIP-7702 solves this by turning any EOA into a smart wallet, allowing relayed ca
 
 ## Relaying on the destination chain using EIP-7702
 
-You can use EIP-7702 by passing an `authorizationList` inside the `txs` array during your `/quote` API call. The Solver will relay these transactions on the destination chain by passing the `authorizationList` while sending a type-4 transaction.
+You can use EIP-7702 by passing an `authorizationList` inside the `txs` array during your `/quote/v2` API call. The Solver will relay these transactions on the destination chain by passing the `authorizationList` while sending a type-4 transaction.
 
 Here’s a complete example:
 
@@ -36,7 +36,7 @@ const authorizationHash = await walletClient.signAuthorization({
   contractAddress: smartAccountImplementation,
 });
 
-// Workaround for viem and RPC compatibility 
+// Workaround for viem and RPC compatibility
 delete authorizationHash.v;
 (authorizationHash as any).address = authorizationHash.contractAddress;
 
@@ -63,7 +63,7 @@ const executeCallData = encodeFunctionData({
 // Step 4: Construct and send quote request
 const requestData = {
   user: eoa7702.address,
-  originChainId: 10, 
+  originChainId: 10,
   destinationChainId: 42161,
   originCurrency: "0x0000000000000000000000000000000000000000",
   destinationCurrency: "0x0000000000000000000000000000000000000000",
@@ -81,4 +81,3 @@ const requestData = {
   ],
 };
 ```
-

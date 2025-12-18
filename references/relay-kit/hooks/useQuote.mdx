@@ -6,11 +6,11 @@ sidebarTitle: useQuote
 
 ## Parameters
 
-| Parameter    | Description                                                                                                                                                                                                                   | Required |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| **client**       | A RelayClient instance. You can create one using the [SDK](http://localhost:3000/references/sdk/createClient) or retrieve one using the `useRelayClient` hook from the UI kit.                                             | ✅       |
+| Parameter        | Description                                                                                                                                                                                                                   | Required |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| **client**       | A RelayClient instance. You can create one using the [SDK](http://localhost:3000/references/sdk/createClient) or retrieve one using the `useRelayClient` hook from the UI kit.                                                | ✅       |
 | **wallet**       | A valid [WalletClient](https://viem.sh/docs/clients/wallet.html) from Viem or an AdaptedWallet generated from an adapter. This parameter can be left empty if just retrieving a quote, but is required for executing a quote. | ❌       |
-| **options**      | Options that map directly to the [quote API](/references/api/get-quote).                                                                                                                                                 | ✅       |
+| **options**      | Options that map directly to the [quote API](/references/api/get-quote-v2).                                                                                                                                                   | ✅       |
 | **onRequest**    | A callback function that triggers when a request is made to fetch the quote.                                                                                                                                                  | ❌       |
 | **onResponse**   | A callback function that triggers when a response is returned.                                                                                                                                                                | ❌       |
 | **queryOptions** | Tanstack query options. Refer to the [Tanstack](https://tanstack.com/query/latest/docs/framework/react/guides/query-options) docs.                                                                                            | ❌       |
@@ -32,29 +32,29 @@ const walletClient = useWalletClient()
 const relayClient = getClient() //Either use getClient, createClient or useRelayClient from the ui kit
 
 const {
-  data: quote,
-  isLoading: isFetchingQuote,
-  executeQuote,
-  error
+data: quote,
+isLoading: isFetchingQuote,
+executeQuote,
+error
 } = useQuote(
-  relayClient ? relayClient : undefined,
-  walletClient.data,
+relayClient ? relayClient : undefined,
+walletClient.data,
 {
-  user: address,
-  originChainId: 1,
-  destinationChainId: 10,
-  originCurrency: "0x0000000000000000000000000000000000000000",
-  destinationCurrency: "0x0000000000000000000000000000000000000000",
-  tradeType: "EXACT_INPUT",
-  amount: "10000000"
+user: address,
+originChainId: 1,
+destinationChainId: 10,
+originCurrency: "0x0000000000000000000000000000000000000000",
+destinationCurrency: "0x0000000000000000000000000000000000000000",
+tradeType: "EXACT_INPUT",
+amount: "10000000"
 },
 () => {
-  console.log("Request Triggered!")
+console.log("Request Triggered!")
 },
 () => {
-  console.log("Response Returned!")
+console.log("Response Returned!")
 },
-  queryOptions
+queryOptions
 )
 
 ````
