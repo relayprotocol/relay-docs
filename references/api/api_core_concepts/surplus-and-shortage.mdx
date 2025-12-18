@@ -8,13 +8,13 @@ There are swaps or bridges where a surplus or shortage can happen. To understand
 we first need to understand how an origin operation can produce a surplus or shortage.
 
 ## Origin Operation Types
-When starting a bridge or swap, Relay labels then as origin operations. After submission, origin 
+When starting a bridge or swap, Relay labels them as origin operations. After submission, origin 
 operations send their output to the solver to complete the bridge or swap. There are 
 three possible outcomes for an origin operation:
 
 1. **Exact**: When the origin operation matches the solver's input exactly, the destination operation proceeds as initially quoted.
 2. **Surplus**: When the solver executes the origin operation input, there is positive slippage after the swap or bridge. This results in a surplus or extra funds.
-3. **Shortage**: When the solver executes the oirgin operation input, there is negative slippage after the swap or bridge. This results in a shortage or less funds.
+3. **Shortage**: When the solver executes the origin operation input, there is negative slippage after the swap or bridge. This results in a shortage or less funds.
 
 ## How are surpluses or shortages handled?
 
@@ -23,10 +23,10 @@ An origin operation can produce three possible outcomes. Depending on the outcom
 1. **Exact**: The expected amount is received. The destination operation proceeds as initially quoted.
 2. **Surplus**: The solver receives more than expected. The quoted rate is used as a heuristic to determine whether to proceed with the operation. 
 Specifically, if the solver can guarantee that the input amount can be swapped for at least the quoted rate of the expected amount, the operation continues. 
-Surpluses typically result in the user receiving more than expected on the desitnation chain.
+Surpluses typically result in the user receiving more than expected on the destination chain.
 3. **Shortage**: The solver receives less than expected. The quoted rate is used as a heuristic to determine whether to proceed with the operation. 
 Specifically, if the solver can guarantee that the input amount can be swapped for at least the quoted rate of the expected amount, the operation continues. 
-Shortages typically result in the user receiving less than expected on the desitnation chain.
+Shortages typically result in the user receiving less than expected on the destination chain.
 
 ## Surplus Example
 
