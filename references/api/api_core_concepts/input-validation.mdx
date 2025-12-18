@@ -1,7 +1,8 @@
 ---
-title: 'Input Validation'
-description: 'Perform optional onchain validation of requests'
+title: "Input Validation"
+description: "Perform optional onchain validation of requests"
 ---
+
 By default, Relay quotes are paid for with an unvalidated transfer. This keeps gas cost to an absolute minimum. However, if you want to do your own onchain validation, this is possible. We offer an Attestation API where the Solver will attest to any subset of the order parameters, which you can check onchain. For example, you could validate that:
 
 - Correct amount was sent
@@ -12,10 +13,10 @@ By default, Relay quotes are paid for with an unvalidated transfer. This keeps g
 
 ## Guide
 
-First of all, you can make a regular request via the /quote API
+First of all, you can make a regular request via the /quote/v2 API
 
 ```
-curl -X POST https://api.relay.link/quote -H 'Content-Type: application/json' -d 
+curl -X POST https://api.relay.link/quote/v2 -H 'Content-Type: application/json' -d
 '{
     "user":"0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
     "originChainId":1,"destinationChainId":7777777,"originCurrency":"0x0000000000000000000000000000000000000000",
@@ -33,7 +34,9 @@ you can take the request id and pass it to the /requests/:requestId/signature AP
 ```
 curl -X GET https://api.relay.link/requests/0x910113af21b5771f35712ab2680b578e5551a2e358916d9c540aa4f613418e2a/signature
 ```
+
 The signature API will get you a response as below:
+
 ```
 {
   "requestData": {
@@ -68,4 +71,3 @@ export const signRequestData = async (requestId: string, requestData: RequestDat
   return getSolver().signMessage(arrayify(keccak256(packedRequestData)));
 };
 ```
-

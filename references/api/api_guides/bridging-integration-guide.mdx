@@ -7,14 +7,14 @@ This guide shows you how to integrate the Relay API for bridging and onboarding.
 
 ## Get a Quote
 
-To bridge assets, you first need to get a quote that provides all necessary information including fees, transaction data, and execution steps. Use the [quote endpoint](/references/api/get-quote) to request bridging information.
+To bridge assets, you first need to get a quote that provides all necessary information including fees, transaction data, and execution steps. Use the [quote endpoint](/references/api/get-quote-v2) to request bridging information.
 
 ### Basic Quote Request
 
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "https://api.relay.link/quote" \
+curl -X POST "https://api.relay.link/quote/v2" \
   -H "Content-Type: application/json" \
   -d '{
     "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
@@ -28,7 +28,7 @@ curl -X POST "https://api.relay.link/quote" \
 ```
 
 ```javascript JavaScript/Node.js
-const response = await fetch("https://api.relay.link/quote", {
+const response = await fetch("https://api.relay.link/quote/v2", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -50,7 +50,7 @@ const quote = await response.json();
 ```python Python
 import requests
 
-response = requests.post('https://api.relay.link/quote', json={
+response = requests.post('https://api.relay.link/quote/v2', json={
     'user': '0x03508bb71268bba25ecacc8f620e01866650532c',
     'originChainId': 1,
     'destinationChainId': 8453,
