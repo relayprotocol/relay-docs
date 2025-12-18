@@ -184,7 +184,7 @@
               {
                 "group": "Hooks",
                 "pages": [
-                  "references/relay-kit/hooks/getting-started",
+                  "references/relay-kit/hooks/installation",
                   "references/relay-kit/hooks/useQuote",
                   "references/relay-kit/hooks/useRelayChains",
                   "references/relay-kit/hooks/useRequests",
@@ -196,7 +196,7 @@
               {
                 "group": "UI",
                 "pages": [
-                  "references/relay-kit/ui/getting-started",
+                  "references/relay-kit/ui/installation",
                   "references/relay-kit/ui/relay-kit-provider",
                   "references/relay-kit/ui/swap-widget",
                   "references/relay-kit/ui/theming",
@@ -401,6 +401,14 @@
     {
       "source": "/references/sdk/actions/claimAppFees",
       "destination": "/references/relay-kit/sdk/actions/claimAppFees"
+    },
+    {
+      "source": "/references/relay-kit/hooks/getting-started",
+      "destination": "/references/relay-kit/hooks/installation"
+    },
+    {
+      "source": "/references/relay-kit/ui/getting-started",
+      "destination": "/references/relay-kit/ui/installation"
     }
   ]
 }
