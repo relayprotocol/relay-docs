@@ -38,6 +38,7 @@
             "group": "Features",
             "pages": [
               "features/app-fees",
+              "features/fee-sponsorship",
               "features/deposit-addresses",
               "features/mev-protection"
             ]
@@ -99,7 +100,8 @@
                       "references/api/api_guides/hyperliquid-support"
                     ]
                   },
-                  "references/api/api_guides/deep-linking"
+                  "references/api/api_guides/deep-linking",
+                  "references/api/api_guides/websockets"
                 ]
               },
               {
@@ -117,7 +119,7 @@
             "group": "API Reference",
             "pages": [
               "references/api/core",
-              "references/api/get-quote",
+              "references/api/get-quote-v2",
               "references/api/execute-permits",
               "references/api/get-intents-status-v3",
               "references/api/get-requests",
@@ -142,47 +144,47 @@
                   "references/api/get-price",
                   "references/api/get-config",
                   "references/api/get-intents-status",
-                  "references/api/get-currencies"
+                  "references/api/get-currencies",
+                  "references/api/get-quote"
                 ]
               }
             ]
-          }
-        ]
-      },
-      {
-        "tab": "SDK Reference",
-        "groups": [
+          },
           {
-            "group": "SDK Reference",
-            "pages": [
-              "references/sdk/getting-started",
-              "references/sdk/createClient",
-              {
-                "group": "Actions",
-                "pages": [
-                  "references/sdk/actions/getQuote",
-                  "references/sdk/actions/execute",
-                  "references/sdk/actions/getAppFees",
-                  "references/sdk/actions/claimAppFees"
-                ]
-              },
-              "references/sdk/adapters",
-              "references/sdk/api-types"
-            ]
+            "group": "Websockets",
+            "pages": ["references/websockets/intent-status"]
           }
         ]
       },
       {
-        "tab": "UI Kit",
+        "tab": "RelayKit",
         "groups": [
           {
             "group": "RelayKit",
             "pages": [
               "references/relay-kit/overview",
               {
+                "group": "SDK Reference",
+                "pages": [
+                  "references/relay-kit/sdk/installation",
+                  "references/relay-kit/sdk/createClient",
+                  {
+                    "group": "Actions",
+                    "pages": [
+                      "references/relay-kit/sdk/actions/getQuote",
+                      "references/relay-kit/sdk/actions/execute",
+                      "references/relay-kit/sdk/actions/getAppFees",
+                      "references/relay-kit/sdk/actions/claimAppFees"
+                    ]
+                  },
+                  "references/relay-kit/sdk/adapters",
+                  "references/relay-kit/sdk/api-types"
+                ]
+              },
+              {
                 "group": "Hooks",
                 "pages": [
-                  "references/relay-kit/hooks/getting-started",
+                  "references/relay-kit/hooks/installation",
                   "references/relay-kit/hooks/useQuote",
                   "references/relay-kit/hooks/useRelayChains",
                   "references/relay-kit/hooks/useRequests",
@@ -194,7 +196,7 @@
               {
                 "group": "UI",
                 "pages": [
-                  "references/relay-kit/ui/getting-started",
+                  "references/relay-kit/ui/installation",
                   "references/relay-kit/ui/relay-kit-provider",
                   "references/relay-kit/ui/swap-widget",
                   "references/relay-kit/ui/theming",
@@ -367,6 +369,50 @@
     {
       "source": "/resources/partnerships",
       "destination": "/resources/enterprise"
+    },
+    {
+      "source": "/references/sdk/getting-started",
+      "destination": "/references/relay-kit/sdk/installation"
+    },
+    {
+      "source": "/references/sdk/installation",
+      "destination": "/references/relay-kit/sdk/installation"
+    },
+    {
+      "source": "/references/sdk/createClient",
+      "destination": "/references/relay-kit/sdk/createClient"
+    },
+    {
+      "source": "/references/sdk/adapters",
+      "destination": "/references/relay-kit/sdk/adapters"
+    },
+    {
+      "source": "/references/sdk/api-types",
+      "destination": "/references/relay-kit/sdk/api-types"
+    },
+    {
+      "source": "/references/sdk/actions/getQuote",
+      "destination": "/references/relay-kit/sdk/actions/getQuote"
+    },
+    {
+      "source": "/references/sdk/actions/execute",
+      "destination": "/references/relay-kit/sdk/actions/execute"
+    },
+    {
+      "source": "/references/sdk/actions/getAppFees",
+      "destination": "/references/relay-kit/sdk/actions/getAppFees"
+    },
+    {
+      "source": "/references/sdk/actions/claimAppFees",
+      "destination": "/references/relay-kit/sdk/actions/claimAppFees"
+    },
+    {
+      "source": "/references/relay-kit/hooks/getting-started",
+      "destination": "/references/relay-kit/hooks/installation"
+    },
+    {
+      "source": "/references/relay-kit/ui/getting-started",
+      "destination": "/references/relay-kit/ui/installation"
     }
   ]
 }

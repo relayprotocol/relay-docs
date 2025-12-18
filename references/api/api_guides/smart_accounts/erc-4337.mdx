@@ -1,8 +1,7 @@
 ---
-title: 'ERC-4337'
-description: 'How to use ERC-4337 to execute cross-chain transactions'
+title: "ERC-4337"
+description: "How to use ERC-4337 to execute cross-chain transactions"
 ---
-
 
 One can use ERC-4337 user operations to execute cross-chain transactions. There are three possible interactions that one can have:
 
@@ -12,9 +11,9 @@ One can use ERC-4337 user operations to execute cross-chain transactions. There 
 
 ## Relaying only on the origin chain
 
-Interacting with the solver using ERC-4337 user operations requires two additional steps on top of the standard `/quote` flow. 
+Interacting with the solver using ERC-4337 user operations requires two additional steps on top of the standard `/quote/v2` flow.
 
-- The first requires sending an extra field in the `/quote` request body, `userOperationGasOverhead`. This field indicates how much additional gas overhead will be necessary to include the user operation on the chain as compared to a normal EOA transaction. 
+- The first requires sending an extra field in the `/quote/v2` request body, `userOperationGasOverhead`. This field indicates how much additional gas overhead will be necessary to include the user operation on the chain as compared to a normal EOA transaction.
 
 - The second step is optional, you can choose to send the user operation to the Solver’s `eth_sendUserOperation` JSON RPC endpoint or submit it to any Bundler of your choice. Once the user operation has been included on the chain either by the Solver or by another Bundler on the origin chain, the Solver will execute the destination chain transaction.
 
@@ -22,12 +21,11 @@ One slightly different thing in the way the Solver accepts user operations is th
 
 If using an external Bundler, you might need to send non-zero `maxFeePerGas` and `maxPriorityFeePerGas` as two different parties are being paid in this case.
 
-In the following example, we demonstrate how to use a Safe Smart Account with a Pimlico Paymaster and use Relay to get the quotes and submit the user operation. 
+In the following example, we demonstrate how to use a Safe Smart Account with a Pimlico Paymaster and use Relay to get the quotes and submit the user operation.
 
 The script makes use of Viem’s `privateKeyToAccount` to create an owner but any other owner creation method is applicable.
 
 ```typescript
-
 import { createPublicClient, http, toHex } from "viem";
 import { baseSepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
@@ -91,17 +89,16 @@ const executeUserOperation = async () => {
     };
 
     const quoteResponse = await axios.post(
-      "https://api.relay.link/quote",
+      "https://api.relay.link/quote/v2",
       requestData,
       {
         headers: {
           "Content-Type": "application/json",
         },
-      },
+      }
     );
-	
-		
-		// Fetch the transaction data from the response of the quote call 
+
+    // Fetch the transaction data from the response of the quote call
     const { steps } = quoteResponse.data;
     const item = steps[0].items[0];
     const { to, data, value } = item.data;
@@ -140,29 +137,28 @@ const executeUserOperation = async () => {
       signature: await safeAccount.getStubSignature(),
     };
 
-    const { paymaster, paymasterData } =
-      await paymasterClient.getPaymasterData({
+    const { paymaster, paymasterData } = await paymasterClient.getPaymasterData(
+      {
         ...userOperation,
         chainId: baseSepolia.id,
         entryPointAddress: entryPoint07Address,
-      });
+      }
+    );
 
     (userOperation as UserOperation).paymaster = paymaster;
     (userOperation as UserOperation).paymasterData = paymasterData;
-    
-    
 
     userOperation.signature =
       await safeAccount.signUserOperation(userOperation);
-	
-		// Convert all values to hex
+
+    // Convert all values to hex
     const hexUserOperation = Object.fromEntries(
       Object.entries(userOperation).map(([key, value]) => {
         if (typeof value === "number" || typeof value === "bigint") {
           return [key, toHex(value)];
         }
         return [key, value];
-      }),
+      })
     );
 
     const eth_sendUserOperationResponse = await axios.post(
@@ -177,7 +173,7 @@ const executeUserOperation = async () => {
         headers: {
           "Content-Type": "application/json",
         },
-      },
+      }
     );
 
     const { result } = eth_sendUserOperationResponse.data;
@@ -193,12 +189,11 @@ const executeUserOperation = async () => {
 };
 
 executeUserOperation();
-
 ```
 
 ## Relaying only on the destination chain
 
-To execute user operations on the destinations, you can pass in the transaction details in the [txs](https://docs.relay.link/references/api/get-quote#body-txs) array while calling the quote API. 
+To execute user operations on the destinations, you can pass in the transaction details in the [txs](https://docs.relay.link/references/api/get-quote-v2#body-txs) array while calling the quote API.
 
 ```typescript
 import { encodeFunctionData } from 'viem';
@@ -236,16 +231,16 @@ const transaction = {
 
 // txs array to be passed in the quote API call
 // One can add more transactions pre and post user operation execution
-const txs = [transaction]; 
+const txs = [transaction];
 ```
 
 Once the txs array has been created, pass it in the quote API call.
 
 ## Relaying on both the origin and destination chain
 
-The ability to execute user operations on both the origin and destination chains can be done by individually following the above-mentioned steps. 
+The ability to execute user operations on both the origin and destination chains can be done by individually following the above-mentioned steps.
 
-- Pass the userOperationGasOverhead while making the `/quote` call and also pass the destination chain Entry Point transaction encoded in the `txs` array.
+- Pass the userOperationGasOverhead while making the `/quote/v2` call and also pass the destination chain Entry Point transaction encoded in the `txs` array.
 - Create the user operation using the transaction data returned in the response of the quote API.
 - Execute the origin chain user operation either by making a call to `eth_sendUserOperation` JSON RPC to the Solver or to any other Bundler.
 - After the user operation is included on the origin chain, the Solver will pick up the transaction and destination `txs` will be executed by the Solver

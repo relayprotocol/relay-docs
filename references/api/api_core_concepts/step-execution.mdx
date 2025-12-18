@@ -4,19 +4,20 @@ title: "Understanding Step Execution"
 
 <Tip>
   Tip: For advanced integrations, we recommend using Relay APIs. For simpler use
-  cases, the [Relay SDK](/references/sdk/getting-started) automates steps and
+  cases, the [Relay SDK](/references/relay-kit/sdk/installation) automates steps and
   provides helpful callbacks, reducing manual effort.
 </Tip>
 
 ## Step Execution using the API
 
-When executing orders using the API directly, there are often multiple steps, like submitting a deposit transaction to the solver or signing a message. These steps differ based on the desired action and best route to execute the action. To make this simple, you can use the [quote endpoint](/references/api/get-quote), which return the exact steps that you need to follow, including descriptions that you can display to users.
+When executing orders using the API directly, there are often multiple steps, like submitting a deposit transaction to the solver or signing a message. These steps differ based on the desired action and best route to execute the action. To make this simple, you can use the [quote endpoint](/references/api/get-quote-v2), which return the exact steps that you need to follow, including descriptions that you can display to users.
 
 The flow looks like this:
 
 <Steps>
   <Step title="Fetching Steps" icon="server">
-    Call the [Get Quote API](/references/api/get-quote) to start your execution.
+    Call the [Get Quote API](/references/api/get-quote-v2) to start your
+    execution.
   </Step>
   <Step title="Iterate Through Steps" icon="list-ul">
     Iterate through the steps and the items within a step, taking the necessary
@@ -226,33 +227,33 @@ Each step has a unique `id` that identifies the type of action required. Underst
 
 ### Transaction Steps
 
-| Step ID | Description | When Used |
-|---------|-------------|-----------|
-| `deposit` | Deposit funds to the relayer for cross-chain execution | Used for cross-chain swaps and bridges. |
-| `approve` | Approve the transfer of an ERC20 token | Required before `deposit` or `swap` steps for ERC20 tokens the solver doesn't hold. |
-| `approval` | Approve token for deposit | Token approval for deposit operations. |
-| `swap` | Execute a same-chain token swap | For same-chain swaps. May require an approval step first for EVM swaps. |
-| `send` | Send funds to the recipient | When sending the same asset on the same chain to a different recipient. |
+| Step ID    | Description                                            | When Used                                                                           |
+| ---------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `deposit`  | Deposit funds to the relayer for cross-chain execution | Used for cross-chain swaps and bridges.                                             |
+| `approve`  | Approve the transfer of an ERC20 token                 | Required before `deposit` or `swap` steps for ERC20 tokens the solver doesn't hold. |
+| `approval` | Approve token for deposit                              | Token approval for deposit operations.                                              |
+| `swap`     | Execute a same-chain token swap                        | For same-chain swaps. May require an approval step first for EVM swaps.             |
+| `send`     | Send funds to the recipient                            | When sending the same asset on the same chain to a different recipient.             |
 
 ### Signature Steps
 
-| Step ID | Description | When Used |
-|---------|-------------|-----------|
-| `authorize` | Sign authorization for specific operations | Used for: (1) Claiming [app fees](/features/app-fees) - EIP-191 signature to verify wallet ownership, (2) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits - nonce-mapping signature. |
-| `authorize1` | Sign to approve swap of tokens | Main flow for cross-chain permits Permit/Permit2. |
-| `authorize2` | Sign to approve transfer of tokens | Same-chain swap permits. |
+| Step ID      | Description                                | When Used                                                                                                                                                                                                      |
+| ------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `authorize`  | Sign authorization for specific operations | Used for: (1) Claiming [app fees](/features/app-fees) - EIP-191 signature to verify wallet ownership, (2) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits - nonce-mapping signature. |
+| `authorize1` | Sign to approve swap of tokens             | Main flow for cross-chain permits Permit/Permit2.                                                                                                                                                              |
+| `authorize2` | Sign to approve transfer of tokens         | Same-chain swap permits.                                                                                                                                                                                       |
 
 ### Common Step Flows
 
 Depending on the action and tokens involved, Relay chains steps together. Here are common flows you may encounter:
 
-| Flow | Description |
-|------|-------------|
-| `deposit` | Single step for cross-chain swaps/bridges  |
-| `swap` | Single step for same-chain swaps |
+| Flow                  | Description                                     |
+| --------------------- | ----------------------------------------------- |
+| `deposit`             | Single step for cross-chain swaps/bridges       |
+| `swap`                | Single step for same-chain swaps                |
 | `approve` → `deposit` | Approval needed before deposit for ERC20 tokens |
-| `approve` → `swap` | Same-chain swap requiring approval |
-| `authorize1` | Cross-chain permit-based transfer (gasless) |
+| `approve` → `swap`    | Same-chain swap requiring approval              |
+| `authorize1`          | Cross-chain permit-based transfer (gasless)     |
 
 ---
 
@@ -403,82 +404,83 @@ Sign authorization for specific operations. This step is used in two scenarios:
 The main flow for cross-chain permits. Uses Permit2 or TransferWithAuthorization (EIP-3009).
 
 <Accordion title="Example Step">
-```json
-{
-   {
-      "id": "authorize1",
-      "action": "Sign authorization",
-      "description": "Sign to approve swap of USDC for ETH",
-      "kind": "signature",
-      "items": [
-        {
-          "status": "incomplete",
-          "data": {
-            "sign": {
-              "signatureKind": "eip712",
-              "types": {
-                "TransferWithAuthorization": [
-                  {
-                    "name": "from",
-                    "type": "address"
-                  },
-                  {
-                    "name": "to",
-                    "type": "address"
-                  },
-                  {
-                    "name": "value",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "validAfter",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "validBefore",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "nonce",
-                    "type": "bytes32"
-                  }
-                ]
-              },
-              "domain": {
-                "name": "USD Coin",
-                "version": "2",
-                "chainId": 8453,
-                "verifyingContract": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
-              },
-              "primaryType": "TransferWithAuthorization",
-              "value": {
-                "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
-                "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-                "value": "1000000",
-                "validAfter": 0,
-                "validBefore": 1764948419,
-                "nonce": "0xc1333d553004054a9c9a45ceedfae13040c7f064736c29b5c7ebc1c6b11a0a71"
-              }
+  ```json
+  {{
+    id: "authorize1",
+    action: "Sign authorization",
+    description: "Sign to approve swap of USDC for ETH",
+    kind: "signature",
+    items: [
+      {
+        status: "incomplete",
+        data: {
+          sign: {
+            signatureKind: "eip712",
+            types: {
+              TransferWithAuthorization: [
+                {
+                  name: "from",
+                  type: "address",
+                },
+                {
+                  name: "to",
+                  type: "address",
+                },
+                {
+                  name: "value",
+                  type: "uint256",
+                },
+                {
+                  name: "validAfter",
+                  type: "uint256",
+                },
+                {
+                  name: "validBefore",
+                  type: "uint256",
+                },
+                {
+                  name: "nonce",
+                  type: "bytes32",
+                },
+              ],
             },
-            "post": {
-              "endpoint": "/execute/permits",
-              "method": "POST",
-              "body": {
-                "kind": "eip3009",
-                "requestId": "0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
-                "api": "swap"
-              }
-            }
+            domain: {
+              name: "USD Coin",
+              version: "2",
+              chainId: 8453,
+              verifyingContract: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            },
+            primaryType: "TransferWithAuthorization",
+            value: {
+              from: "0x03508bb71268bba25ecacc8f620e01866650532c",
+              to: "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+              value: "1000000",
+              validAfter: 0,
+              validBefore: 1764948419,
+              nonce:
+                "0xc1333d553004054a9c9a45ceedfae13040c7f064736c29b5c7ebc1c6b11a0a71",
+            },
           },
-          "check": {
-            "endpoint": "/intents/status/v3?requestId=0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
-            "method": "GET"
-          }
-        }
-      ]
-   }
-}
-```
+          post: {
+            endpoint: "/execute/permits",
+            method: "POST",
+            body: {
+              kind: "eip3009",
+              requestId:
+                "0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
+              api: "swap",
+            },
+          },
+        },
+        check: {
+          endpoint:
+            "/intents/status/v3?requestId=0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
+          method: "GET",
+        },
+      },
+    ],
+  }}
+  ```
 </Accordion>
 
 ### authorize2
@@ -578,7 +580,6 @@ Sign authorization for same-chain swap permits using PermitBatchWitnessTransferF
 
 ### Full Quote Example
 
-
 ```
 {
   "steps": [
@@ -627,7 +628,7 @@ Sign authorization for same-chain swap permits using PermitBatchWitnessTransferF
 }
 ```
 
-Along with the steps you'll see that the following objects are returned: `fees`, `breakdown` and `balances`. Information about fees is detailed [here](/how-it-works/fees). `breakdown` pertains to time estimation for the execution, broken down by value. The `balances` object is in regards to the user and how much they require to solve for the execution.
+Along with the steps you'll see that the following objects are returned: `fees`, `breakdown` and `balances`. Information about fees is detailed [here](/references/api/api_core_concepts/fees). `breakdown` pertains to time estimation for the execution, broken down by value. The `balances` object is in regards to the user and how much they require to solve for the execution.
 
 ### Checking the fill status
 

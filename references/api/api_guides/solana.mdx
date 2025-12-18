@@ -29,8 +29,8 @@ your input is Solana specific.
 |                      | `currency`   | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
 
 <Info>
-	When withdrawing from Solana using the SDK, you will not need to
-	speicify the depositing wallet address.{" "}
+  When withdrawing from Solana using the SDK, you will not need to specify the
+  depositing wallet address.{" "}
 </Info>
 
 ### API Params
@@ -60,8 +60,8 @@ contract addresses. We do support all tradeable tokens on
 | USDT  | `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB` | USDT         | 6        |
 
 <Tip>
-	Relay supports **any** Solana token available on Jupiter. You can visit
-	[Jupiter](https://jup.ag/) to explore all the tokens available.
+  Relay supports **any** Solana token available on Jupiter. You can visit
+  [Jupiter](https://jup.ag/) to explore all the tokens available.
 </Tip>
 
 ## API
@@ -69,7 +69,7 @@ contract addresses. We do support all tradeable tokens on
 Once you have the necessary information, you can start utilizing our API for
 full Solana withdrawal and deposit support. To get started, check out the
 [execution steps](/references/api/api_core_concepts/step-execution) of our API. Then when you're
-ready to swap, head over to the [Get Quote](/references/api/get-quote) API
+ready to swap, head over to the [Get Quote](/references/api/get-quote-v2) API
 endpoint.
 
 Please note that instead of the usual calldata returned with EVM transactions,
@@ -80,7 +80,7 @@ there’s different calldata that needs to be handled accordingly.
 You'll need the information shared in the tables above to utilize the SDK to
 deposit or withdraw from Solana. In addition to that you'll also need to install
 and configure the
-[relay solana adapter](/references/sdk/adapters#what-adapters-are-available-out-of-the-box).
+[relay solana adapter](/references/relay-kit/sdk/adapters#what-adapters-are-available-out-of-the-box).
 To get started, learn how to set up our
-[SDK client](/references/sdk/getting-started). Afterwards, explore our
-[getQuote](/references/sdk/actions/getQuote) SDK action to start swapping.
+[SDK client](/references/relay-kit/sdk/installation). Afterwards, explore our
+[getQuote](/references/relay-kit/sdk/actions/getQuote) SDK action to start swapping.
