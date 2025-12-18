@@ -8,7 +8,7 @@ sidebarTitle: useQuote
 
 | Parameter        | Description                                                                                                                                                                                                                   | Required |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| **client**       | A RelayClient instance. You can create one using the [SDK](http://localhost:3000/references/sdk/createClient) or retrieve one using the `useRelayClient` hook from the UI kit.                                                | ✅       |
+| **client**       | A RelayClient instance. You can create one using the [SDK](http://localhost:3000/references/relay-kit/sdk/createClient) or retrieve one using the `useRelayClient` hook from the UI kit.                                                | ✅       |
 | **wallet**       | A valid [WalletClient](https://viem.sh/docs/clients/wallet.html) from Viem or an AdaptedWallet generated from an adapter. This parameter can be left empty if just retrieving a quote, but is required for executing a quote. | ❌       |
 | **options**      | Options that map directly to the [quote API](/references/api/get-quote-v2).                                                                                                                                                   | ✅       |
 | **onRequest**    | A callback function that triggers when a request is made to fetch the quote.                                                                                                                                                  | ❌       |
@@ -17,7 +17,7 @@ sidebarTitle: useQuote
 
 ## Return Data
 
-The hook returns an object with the base [Tanstack Query response](https://tanstack.com/query/v5/docs/framework/react/reference/useQuery), it also returns an `executeQuote` function which allows you to conveniently execute the quote. The function takes one parameter, an [onProgress callback](/references/sdk/actions/execute) that mirrors the underlying execute action. from the SDK.
+The hook returns an object with the base [Tanstack Query response](https://tanstack.com/query/v5/docs/framework/react/reference/useQuery), it also returns an `executeQuote` function which allows you to conveniently execute the quote. The function takes one parameter, an [onProgress callback](/references/relay-kit/sdk/actions/execute) that mirrors the underlying execute action. from the SDK.
 
 ## Usage
 
