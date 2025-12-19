@@ -20,7 +20,7 @@ Relay Status Websockets specifically stream transaction statuses for both cross 
 
 ## Integrating Relay Websockets
 
-Today Relay Websockets are in Beta, and we are rolling them out to priority customers on an as-needed basis. Please reach out if you are interested in integrating them into your product.
+Refer to the guide below on how to integrate the websocket into your application. You may also refer to the [websocket reference](/references/websockets/intent-status) for more details.
 
 ### **Events**
 
@@ -38,30 +38,25 @@ To connect using an API key, provide your API key as a query param in the connec
 const wss = new ws(`wss://ws.relay.link?apiKey=${YOUR_API_KEY}`);
 ```
 
-<aside>
-🚧
+<Tip>Authentication is generally not required in client-side applications.</Tip>
 
-## **The websocket server needs to restart to deploy updates**
+<Warning>
+**The websocket server needs to restart to deploy updates**
 
 The websocket server uses a rolling restart mechanism to deploy new changes. This will disconnect you and require you to reconnect to the websocket server. There is no downtime, as you are only disconnected once the new server is up and running. Please make sure to include logic in your implementation to handle these restarts, and reconnect accordingly.
 
-</aside>
+</Warning>
 
 ## **Interacting with the Websocket**
 
 Before sending any messages over the Websocket, wait for a ready message back from the server. The message looks like:
 
-JSON
-
-```jsx
+```json
 {
-  // The type of operation
-	"type": "connection",
-  // The status of the operation
-	"status": "ready",
+	"type": "connection", // The type of operation
+	"status": "ready", // The status of the operation
 	"data": {
-    // Your socket id for debugging purposes
-		"id": "9nqpzwmwh86"
+		"id": "9nqpzwmwh86" // Your socket id for debugging purposes
 	}
 }
 ```
@@ -70,9 +65,8 @@ JSON
 
 Below is an example on how to subscribe to a websocket using filters.
 
-JSON
-
-```jsx
+<CodeGroup>
+```json Subscribe
 {
 	"type": "subscribe",
 	"event": "request.status.updated",
@@ -81,12 +75,7 @@ JSON
     }
 }
 ```
-
-### **Subscription Response**
-
-JSON
-
-```jsx
+```json Subscribe Response
 {
 	"type": "subscribe",
 	"status": "success",
@@ -98,12 +87,12 @@ JSON
 	}
 }
 ```
+</CodeGroup>
 
 ### **Unsubscribing**
 
-JSON
-
-```jsx
+<CodeGroup>
+```json Unsubscribe
 {
 	"type": "unsubscribe",
 	"event": "request.status.updated",
@@ -112,12 +101,7 @@ JSON
   }
 }
 ```
-
-### **Unsubscribe Response**
-
-JSON
-
-```jsx
+```json Unsubscribe Response
 {
 	"type": "unsubscribe",
 	"status": "success",
@@ -126,16 +110,17 @@ JSON
 	}
 }
 ```
+</CodeGroup>
 
-## **Connecting Examples**
+<Tip>Unsubscribing is not required if disconnecting from the websocket as the server cleans up automatically.</Tip>
+
+## **Example**
 
 ### **Javascript**
 
 ```
 npm install ws
 ```
-
-JavaScript
 
 ```jsx
 const ws = require("ws");
@@ -174,5 +159,3 @@ wss.on("open", function open() {
   });
 });
 ```
-
-¸

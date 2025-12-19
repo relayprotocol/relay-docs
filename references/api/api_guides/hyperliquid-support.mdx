@@ -7,16 +7,16 @@ Relay supports depositing and withdrawing Hyperliquid (Hypercore) perpsUSDC from
 
 # API Access
 
-Hyperliquid can be accessed using the standard Relay API flow. To get started, review the [**execution steps**](https://docs.relay.link/references/api/step-execution) documentation. When you're ready to execute swaps, refer to the [**Get Quote**](https://docs.relay.link/references/api/get-quote) API endpoint.
+Hyperliquid can be accessed using the standard Relay API flow. To get started, review the [**execution steps**](https://docs.relay.link/references/api/step-execution) documentation. When you're ready to execute swaps, refer to the [**Get Quote**](https://docs.relay.link/references/api/get-quote-v2) API endpoint.
 
 ## Hyperliquid-Specific API Parameters
 
-| **Action**                   | **Parameter**   | **Input** | **Description**                                       |
-| ---------------------------- | --------------- | --------- | ----------------------------------------------------- |
-| Deposit to Hyperliquid       | toChainId       | 1337      | Hyperliquid Chain ID                                  |
-|                              | recipient       |           | Hyperliquid Address                                   |
-| Withdraw from Hyperliquid    | protocolVersion | v2        | Required for withdrawals                              |
-|                              | fromChainId     | 1337      | Hyperliquid Chain ID                                  |
+| **Action**                | **Parameter**   | **Input** | **Description**          |
+| ------------------------- | --------------- | --------- | ------------------------ |
+| Deposit to Hyperliquid    | toChainId       | 1337      | Hyperliquid Chain ID     |
+|                           | recipient       |           | Hyperliquid Address      |
+| Withdraw from Hyperliquid | protocolVersion | v2        | Required for withdrawals |
+|                           | fromChainId     | 1337      | Hyperliquid Chain ID     |
 
 These parameters are specific to Hyperliquid interactions. All other standard API parameters remain required. Note that `protocolVersion: v2` is mandatory for withdrawals.
 
@@ -39,7 +39,9 @@ Hyperliquid withdrawals use a two-step signature flow. The v2 implementation lev
 2. **Deposit**: Sign and submit the Hyperliquid transfer transaction using the same nonce
 
 <Warning>
-The deposit transaction must use the exact same nonce from the authorization signature. If the nonces don't match, Relay cannot associate the transfer with the request ID.
+  The deposit transaction must use the exact same nonce from the authorization
+  signature. If the nonces don't match, Relay cannot associate the transfer with
+  the request ID.
 </Warning>
 
 ### Getting Hyperliquid Balances
@@ -49,7 +51,7 @@ Use the [Hyperliquid info API](https://hyperliquid.gitbook.io/hyperliquid-docs/f
 ### Example Quote Request
 
 ```bash
-curl 'https://api.relay.link/quote' \
+curl 'https://api.relay.link/quote/v2' \
   -H 'content-type: application/json' \
   -d '{
     "user": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
@@ -72,7 +74,9 @@ The response includes two steps that must be executed in order.
 The first step (`id: authorize`) requires signing an EIP-712 message that maps the nonce to the request ID. This signature can be executed on any EVM chain.
 
 <Note>
-When signing on a different chain than the default, update both `item.data.sign.domain.chainId` and `item.data.post.body.signatureChainId` to match the chain ID where the user signs the message.
+  When signing on a different chain than the default, update both
+  `item.data.sign.domain.chainId` and `item.data.post.body.signatureChainId` to
+  match the chain ID where the user signs the message.
 </Note>
 
 Example authorize step response:
@@ -192,38 +196,38 @@ To sign the deposit step, you need to convert it into EIP-712 signature data. Ex
 
 ```typescript
 // Extract data from the deposit step
-const stepItem = step.items[0]
-const action = stepItem.data.action
-const eip712Types = stepItem.data.eip712Types
-const eip712PrimaryType = stepItem.data.eip712PrimaryType
+const stepItem = step.items[0];
+const action = stepItem.data.action;
+const eip712Types = stepItem.data.eip712Types;
+const eip712PrimaryType = stepItem.data.eip712PrimaryType;
 
 // The chain ID of the connected wallet
-const chainId = 1 // Example: Ethereum mainnet
+const chainId = 1; // Example: Ethereum mainnet
 
 // Construct the EIP-712 signature data
 const signatureData = {
   domain: {
-    name: 'HyperliquidSignTransaction',
-    version: '1',
+    name: "HyperliquidSignTransaction",
+    version: "1",
     chainId: chainId,
-    verifyingContract: '0x0000000000000000000000000000000000000000'
+    verifyingContract: "0x0000000000000000000000000000000000000000",
   },
   types: {
     ...eip712Types,
     EIP712Domain: [
-      { name: 'name', type: 'string' },
-      { name: 'version', type: 'string' },
-      { name: 'chainId', type: 'uint256' },
-      { name: 'verifyingContract', type: 'address' }
-    ]
+      { name: "name", type: "string" },
+      { name: "version", type: "string" },
+      { name: "chainId", type: "uint256" },
+      { name: "verifyingContract", type: "address" },
+    ],
   },
   primaryType: eip712PrimaryType,
   value: {
     ...action.parameters,
     type: action.type,
-    signatureChainId: `0x${chainId.toString(16)}`
-  }
-}
+    signatureChainId: `0x${chainId.toString(16)}`,
+  },
+};
 ```
 
 Key fields explained:
@@ -239,17 +243,17 @@ Key fields explained:
 Use your wallet client to sign the EIP-712 typed data:
 
 ```typescript
-import { useWalletClient } from 'wagmi'
+import { useWalletClient } from "wagmi";
 
-const { data: walletClient } = useWalletClient()
+const { data: walletClient } = useWalletClient();
 
 const signature = await walletClient.signTypedData({
   account: walletClient.account,
   domain: signatureData.domain,
   types: signatureData.types,
   primaryType: signatureData.primaryType,
-  message: signatureData.value
-})
+  message: signatureData.value,
+});
 ```
 
 ### Submitting to Hyperliquid
@@ -257,28 +261,27 @@ const signature = await walletClient.signTypedData({
 After signing, submit the transaction to Hyperliquid's exchange API:
 
 ```typescript
-import { parseSignature } from 'viem'
-import axios from 'axios'
+import { parseSignature } from "viem";
+import axios from "axios";
 
-const { r, s, v } = parseSignature(signature)
+const { r, s, v } = parseSignature(signature);
 
-
-const action = signatureData.value
-const nonce = stepItem.data.nonce
+const action = signatureData.value;
+const nonce = stepItem.data.nonce;
 
 // Submit to Hyperliquid
-const response = await axios.post('https://api.hyperliquid.xyz/exchange', {
+const response = await axios.post("https://api.hyperliquid.xyz/exchange", {
   signature: {
     r,
     s,
-    v: Number(v ?? 0n)
+    v: Number(v ?? 0n),
   },
   nonce,
-  action
-})
+  action,
+});
 
-if (response.status !== 200 || response.data?.status !== 'ok') {
-  throw new Error('Failed to submit transaction to Hyperliquid')
+if (response.status !== 200 || response.data?.status !== "ok") {
+  throw new Error("Failed to submit transaction to Hyperliquid");
 }
 ```
 

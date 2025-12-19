@@ -3,20 +3,20 @@ title: 'Refunds'
 description: 'Learn how Relay handles refunds.'
 ---
 
-Relay strives for 100% successful bridges & swaps. Occassionally, due to a variety of 
+Relay strives for 100% successful bridges & swaps. Occasionally, due to a variety of 
 possible circumstances, a bridge or swap might be refunded instead of completed. 
 Learn more about Relay's refund logic and how it works. 
 
 ## What is a refund?
 A refund is returned funds to a user due to a failed swap or bridge.
-Relay will refund the user's their funds on the destination chain. 
+Relay will refund the user's funds on the destination chain. 
 If the destination chain is unavailable, Relay will refund the user's funds on the deposit chain. 
-The destination chain might be unavaible for a variety of reasons like a network outage.
+The destination chain might be unavailable for a variety of reasons like a network outage.
 
 ## What causes refunds to happen?
 A refund is triggered when the swap or bridge fails to complete.
 A failure can occur for a variety of reasons including but not exclusive to:
-- *Transactions Reverting:* Before giving a quote, we simulate the transaction to insure it will succeed.
+- *Transactions Reverting:* Before giving a quote, we simulate the transaction to ensure it will succeed.
 Between the time the quote is given and the user accepts & deposits funds, the transaction could revert.
 Transactions reverting could be caused by if there is a contested mint or execution was delayed.
 - *User's Wallet Address is Different Than Transaction Depositing Address:* This happens when the user
@@ -28,7 +28,7 @@ address that received the quote.
   Quotes expire after 1 minute then a new quote is generated. 
 - *Destination Chain is Unavailable:* Occasionally, the destination chain will
 have a network outage beyond our control. An example could be an RPC that is down or 
-the chain is experiencing a large reorginization.
+the chain is experiencing a large reorganization.
 - *User Sends Deposits With the Same Request ID in the Calldata Multiple Times*
 - *User Send Deposits Without a Request ID in the Calldata*
 
