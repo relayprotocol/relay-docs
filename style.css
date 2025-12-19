@@ -117,3 +117,17 @@
     max-height: 32px;
   }
 
+  #enterprise-link {
+    margin-left: 10px;
+    padding: 2px 8px;
+    color: #fff;
+    border-radius: 20px;
+    font-size: 14px;
+    background-color: rgb(var(--primary-dark)/1);
+    display: inline-block;
+    line-height: normal;
+    font-weight: 600;
+    font-style: normal;
+    letter-spacing: normal;
+  }
+

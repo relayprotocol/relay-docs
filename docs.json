@@ -47,10 +47,10 @@
             "group": "Resources",
             "pages": [
               "resources/supported-chains",
-              "resources/brand-assets",
+              "resources/enterprise",
               "resources/bounties",
-              "resources/partnerships",
               "resources/support",
+              "resources/brand-assets",
               "resources/security-and-compliance"
             ]
           }
@@ -365,6 +365,10 @@
     {
       "source": "/references/api/advanced",
       "destination": "/references/api/overview"
+    },
+    {
+      "source": "/resources/partnerships",
+      "destination": "/resources/enterprise"
     },
     {
       "source": "/references/sdk/getting-started",
