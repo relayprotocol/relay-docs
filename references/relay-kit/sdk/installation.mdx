@@ -1,7 +1,7 @@
 ---
-title: Getting Started
+title: Installation
 description: Setup the Relay SDK in your application
-sidebarTitle: Getting Started
+sidebarTitle: Installation
 ---
 
 ## Installation
@@ -43,9 +43,10 @@ createClient({
 });
 ```
 
-You can replace the `baseApiUrl` with `TESTNET_RELAY_API` when testing with testnets. In the example above we also pass in an array of RelayChains converted from a viem chain, the sdk exports a function (`convertViemChainToRelayChain`) to easily do this. [Learn more](/references/sdk/createClient) about the `createClient` options.
-
--- Warning! Calling `createClient` creates a singleton instance that will be used throughout your application. --
+You can replace the `baseApiUrl` with `TESTNET_RELAY_API` when testing with testnets. In the example above we also pass in an array of RelayChains converted from a viem chain, the sdk exports a function (`convertViemChainToRelayChain`) to easily do this. [Learn more](/references/relay-kit/sdk/createClient) about the `createClient` options.
+<Warning>
+Calling `createClient` creates a singleton instance that will be used throughout your application.
+</Warning>
 ### (Optional) Dynamically Configure Chains:
 
 The sdk provides a utility function for fetching the supported chains dynamically and configuring the SDK. Below is an example of how you could set that up:
@@ -122,3 +123,4 @@ function createWagmiConfig(dynamicChains: Chain[]) {
 ```
 
 The above example demonstrates how to setup dynamic chains in a react application. At the start of your application you would basically configure the dynamic chains in the SDK by using the `configureDynamicChains` method. Then with the new chains in the promise you would use the `viemChain` property to create the wagmi config (refer to the [wagmi docs](https://1.x.wagmi.sh/react/getting-started#create-a-wagmi-config) for this). Finally take the resulting chains and configure the `RainbowKitProvider`. Although in this example we used RainbowKit + Wagmi, you're free to choose whatever libraries you'd like to connect a users wallet. You can call this method as often as you like to refresh the SDK's chains.
+
