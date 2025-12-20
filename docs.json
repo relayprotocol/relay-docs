@@ -63,6 +63,7 @@
             "group": " ",
             "pages": [
               "references/api/overview",
+              "references/api/api-keys",
               {
                 "group": "Core Concepts",
                 "pages": [
