@@ -5,10 +5,15 @@ description: Get a quote for a crosschain relay (bridge, swap, call, etc)
 
 ### Arguments
 
-| Property                     | Description                                                                                                                                                                                 | Required |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| **parameters**               | Quote parameters defined below                                                                                                                                                              | ✅       |
-| **includeDefaultParameters** | Setting this to true will include default parameters, which include user and recipient. These parameters are based on the wallet and fallback to the dead address if the wallet is missing. | ✅       |
+| Property       | Description                                                                                                                                                                                                  | Required |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| **parameters** | Quote parameters defined below                                                                                                                                                                               | ✅       |
+| **includeDefaultParameters** | Setting this to true will include default parameters, which include user and recipient. These parameters are based on the wallet and fallback to the dead address if the wallet is missing. | ❌       |
+| **headers** | Custom headers to pass along with the quote request, such as `x-api-key` for authentication.                                                                                                                    | ❌       |
+
+<Warning>
+**Warning**: Never pass `x-api-key` in headers from client-side code. Only use the `headers` parameter with API keys when calling `getQuote` entirely on the server.
+</Warning>
 
 ### Quote Parameters
 
@@ -93,6 +98,25 @@ const quote = await getClient()?.actions.getQuote({
   user: "WALLET_ADDRESS", //Replace with your wallet address
   recipient: "0x0000c3caa36e2d9a8cd5269c976ede05018f0000",
 });
+```
+
+### Server-Side Example with API Key
+
+```typescript
+// Server-side only - pass API key via headers
+const quote = await getClient()?.actions.getQuote(
+  {
+    chainId: 1,
+    toChainId: 10,
+    currency: "0x0000000000000000000000000000000000000000",
+    toCurrency: "0x0000000000000000000000000000000000000000",
+    amount: "10000000000000000", // 0.01 ETH
+    user: "WALLET_ADDRESS",
+    recipient: "RECIPIENT_ADDRESS",
+  },
+  false,
+  { "x-api-key": process.env.RELAY_API_KEY }
+);
 ```
 
 **Note** - Quotes are revalidated when being filled, clients should regularly fetch fresh quotes so that users are always submitting up to date quotes. See [Getting a quote](/how-it-works/the-relay-solver#getting-a-quote) for more information on how quotes work.

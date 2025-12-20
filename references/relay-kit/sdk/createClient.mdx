@@ -8,7 +8,8 @@ This method is used to create the Relay client globally in your application. The
 
 | Property                            | Description                                                                                                                                     | Required |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| **baseApiUrl**                      | The base api url to use when making requests, you can use the `MAINNET_RELAY_API` or the `TESTNET_RELAY_API` constants exported by the package. | ✅      |
+| **baseApiUrl**                      | The base API url to use when making requests. You can use the `MAINNET_RELAY_API` or the `TESTNET_RELAY_API` constants exported by the package, or pass in your own proxy API url to protect your API key on the client. | ✅      |
+| **apiKey**                          | A Relay API key to use when making requests. Only pass in this property when the Relay client instance is used exclusively server-side. Otherwise you'll leak your key to the client.                                                                                                  | ❌       |
 | **chains**                          | A list of Relay Chains, by default a list of backup chains is configured                                                                       | ❌       |
 | **source**                          | The source to associate your onchain activity with, should map to a domain                                                                     | ❌       |
 | **logLevel**                        | The level at which to log, refer to the `LogLevel` enum exported by the package                                                                 | ❌       |
