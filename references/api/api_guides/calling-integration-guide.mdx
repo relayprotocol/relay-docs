@@ -3,6 +3,8 @@ title: "Call Execution Integration Guide"
 description: "How to execute cross-chain calls using Relay"
 ---
 
+import GetAnApiKey from "/snippets/GetAnApiKey.mdx";
+
 You can use Relay cross-chain execution to perform any action (tx) on any chain. This works by specifying the transaction data you wish to execute on the destination chain as part of the initial quoting process.
 
 ### Contract Compatibility
@@ -87,8 +89,9 @@ response = requests.post('https://api.relay.link/quote/v2', json={
 
 quote = response.json()
 ```
-
 </CodeGroup>
+
+<GetAnApiKey />
 
 ### Contract Interaction with Web3
 
