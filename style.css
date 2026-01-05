@@ -132,7 +132,7 @@
   }
 
   @media (width < 700px) {
-    [class*="intercom-with-namespace"]
+    [class*="intercom-with-namespace"],
     .intercom-lightweight-app-launcher {
       bottom: 60px !important;
     }
