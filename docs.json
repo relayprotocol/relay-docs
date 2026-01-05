@@ -63,6 +63,7 @@
             "group": " ",
             "pages": [
               "references/api/overview",
+              "references/api/quickstart",
               {
                 "group": "Core Concepts",
                 "pages": [

@@ -1,0 +1,269 @@
+---
+title: 'Quickstart'
+description: 'Execute your first cross-chain transaction in under 5 minutes.'
+---
+
+Relay is a multichain payments network. You define the **Intent** (what the user wants), and Relay handles the **Execution** (how to get there).
+
+Follow this 5-step flow to integrate Relay into your application:
+
+![Core Loop](/images/core-loop.png)
+
+<Steps>
+  <Step title="Configure">
+    To see how fast and simple Relay makes transacting cross-chain, let’s bridge real assets between inexpensive L2s—Base and Arbitrum.
+
+    **Prerequisites:**
+
+    - **Base URL:** `https://api.relay.link`
+    - **Environment:** Node.js installed
+    - **Wallet:** An EOA with a small amount of ETH (~$2.00 USD equivalent) on Base
+
+    <Callout icon="key" color="#4615C8">
+    ### Coming Soon: API Key Provisioning
+    A self-serve form to request API keys is currently in development. For now, you can start building immediately without one.
+    </Callout>
+  </Step>
+  <Step title="Quote">
+    Every action in Relay starts with a Quote. 
+
+    The [quote endpoint](/references/api/get-quote-v2) handles all of your use cases, whether it’s a [**bridge**](/use-cases/bridging), [**swap**](/use-cases/cross-chain-swaps), or [**cross-chain call**](/use-cases/calling). It calculates fees, finds the best route, and generates the transaction data.
+
+    ## **Request**
+
+    As an example, let’s consider the scenario of bridging 0.0001 ETH from Base (Chain ID 8453) to Arbitrum One (Chain ID 42161): <br/>
+    _Note: the `requestId` will be unique to every request._
+
+    <CodeGroup>
+      ```bash Request
+      curl -X POST "https://api.relay.link/quote/v2" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "user": "YOUR_WALLET_ADDRESS",
+        "originChainId": 8453,
+        "destinationChainId": 42161,
+        "originCurrency": "0x0000000000000000000000000000000000000000",
+        "destinationCurrency": "0x0000000000000000000000000000000000000000",
+        "amount": "100000000000000",
+        "tradeType": "EXACT_INPUT"
+      }'
+      ```
+      ```json Response expandable
+      {
+        "steps": [
+          {
+            "id": "deposit",
+            "action": "Confirm transaction in your wallet",
+            "description": "Deposit funds to the relayer to execute the bridge",
+            "kind": "transaction",
+            "requestId": "0x8a9b3c...", 
+            "items": [
+              {
+                "status": "incomplete",
+                "data": {
+                  "from": "YOUR_WALLET_ADDRESS",
+                  "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+                  "data": "0x00fad611...", 
+                  "value": "100000000000000",
+                  "chainId": 8453, 
+                  "gas": "150000",
+                  "maxFeePerGas": "100000000",
+                  "maxPriorityFeePerGas": "100000000"
+                },
+                "check": {
+                  "endpoint": "/intents/status?requestId=0x8a9b3c...",
+                  "method": "GET"
+                }
+              }
+            ],
+            "depositAddress": "" 
+          }
+        ],
+        # ...
+        "fees": {
+          "gas": {
+            "amount": "21000", 
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18
+            },
+            "amountUsd": "0.01" 
+          },
+          "relayer": {
+            "amount": "5000000000000",
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18
+            },
+            "amountUsd": "0.02" 
+          }
+        },
+        "details": {
+          "operation": "bridge",
+          "sender": "YOUR_WALLET_ADDRESS",
+          "recipient": "YOUR_WALLET_ADDRESS",
+          "timeEstimate": 15,
+          "currencyIn": {
+            "amount": "100000000000000",
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "decimals": 18
+            }
+          },
+          "currencyOut": {
+            "amount": "95000000000000", 
+            "currency": {
+              "chainId": 42161,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "decimals": 18
+            }
+          },
+          "totalImpact": {
+            "usd": "-0.02",
+            "percent": "-0.50"
+          },
+          "rate": "0.95"
+        }
+      }
+      ```
+    </CodeGroup>
+  </Step>
+  <Step title="Execute">
+    The [quote endpoint](/references/api/get-quote-v2) returns a `steps` array. Think of this as a recipe your application must follow. You need to iterate through these steps and prompt the user to sign or submit them.
+    <Callout icon="person-swimming" color="#4615C8">
+      ### Deep Dive
+      For the full logic on parsing steps, see [Understanding Step Execution](/references/api/api_core_concepts/step-execution).    
+    </Callout>
+
+    ## The Logic
+    For a simple ETH bridge, the `steps` array contains a single transaction item. To execute it:
+
+    - **Check the Step Kind:** Identify if the step is a `transaction` (submit to chain) or a `signature` (sign off-chain).
+    - **Execute:** For transactions, submit the provided `data`, `to`, `value`, and `chainId` using the user's wallet. For signatures, follow the `signatureKind` provided in the step item to sign the `message`.
+
+    <Callout icon="plus" color="#4615C8">
+    ### Need More Complexity?
+    For the full logic on parsing steps, see [Understanding Step Execution](/references/api/api_core_concepts/step-execution). Because Relay's API is generic, this exact same loop automatically handles advanced flows:
+
+    - [**Cross-Chain Swaps**](/references/api/api_guides/bridging-integration-guide): Uses the same logic as bridging; just change the input/output currencies in the Quote.
+    - [**Smart Accounts**](/references/api/api_guides/smart_accounts/smart-accounts): Batches multiple steps into a single atomic user operation.
+    - [**Contract Calls**](/references/api/api_guides/calling-integration-guide): Executes arbitrary logic (like NFT mints) on the destination chain.
+    </Callout>
+
+    ## The Script (Node.js / Viem example)
+    Copy the script below to execute the transaction returned by the Quote in Step 2. You'll need to add the wallet connection logic using your preferred provider.
+    ```typescript
+    // npm install viem
+    import { createWalletClient, http } from 'viem';
+    import { privateKeyToAccount } from 'viem/accounts';
+    import { base } from 'viem/chains';
+
+    // 1. Setup Wallet (Base)
+    //Initialize your wallet using a provider or your preferred method
+    const account = {}
+    const client = createWalletClient({
+      account,
+      chain: base,
+      transport: http()
+    });
+
+    // 2. The Quote from Step 2 (Paste JSON response)
+    const quote = { /* PASTE_FULL_JSON_RESPONSE_HERE */ };
+
+    async function execute() {
+      console.log("🚀 Starting Execution...");
+
+      // Iterate through steps (usually just 1 for ETH bridge)
+      for (const step of quote.steps) {
+        //Although there is an array of items, you can safely select the first item
+        //as there is just one returned
+        const item = step.items[0]
+        if (step.kind === 'transaction') {
+          console.log(`Submitting Transaction...`);
+          
+          // 3. Send Transaction
+          const hash = await client.sendTransaction({
+            to: item.data.to,
+            data: item.data.data, 
+            value: BigInt(item.data.value),
+            chain: base 
+          });
+          
+          //4. Optional but you may want to wait for the transaction receipt
+          //to ensure that the origin transaction was successfully submitted.
+          
+          console.log(`✅ Bridge Initiated: ${hash}`);
+          console.log(`requestId: ${step.requestId}`); // Save this for Step 4!
+        }
+      }
+    }
+
+    execute();
+    ```
+  </Step>
+  <Step title="Monitor">
+    Once you submit the transaction, the Relay Solver detects the deposit and fills the request on the destination chain. 
+
+    Use the [status endpoint](/references/api/get-intents-status-v3) with the  `requestId` located inside each step object in your [quote response](/references/api/quickstart#request) to track status and confirm success. You can also use the `check.endpoint` property inside the step item object as the endpoint for checking the status of the request. <br/>
+    _Note: Replace with the requestId returned in your quote_
+    <CodeGroup>
+      ```bash Request
+      curl "https://api.relay.link/intents/status/v3?requestId=0x20538510fd9eab7a90c3e54418f8f477bfef24d83c11955a8ca835e6154b59d3"
+      ```
+      ```json Response
+      {
+        "status": "success",
+        "inTxHashes": [
+          "0x9421772820b92c239162341a17994b4ad8706c974af2ebf88084a1b3b614d328"
+        ],
+        "txHashes": [
+          "0xef2a71eb2ddd952b31f7b552e133d3af048e4be30a568f2bea54a36d8f3b12cd"
+        ],
+        "updatedAt": 1767385462193,
+        "originChainId": 8453,
+        "destinationChainId": 56
+      }
+      ```
+    </CodeGroup>
+
+    <Tip>
+      ### Tip
+      Poll this endpoint once per second. For a real-time status stream you can subscribe to Relay’s [websocket server](/references/api/api_guides/websockets).
+    </Tip>
+
+    ## Status Lifecycle
+    The diagram below illustrates the journey of a cross-chain transaction through Relay's infrastructure and the corresponding API statuses. Below are descriptions for each status. Refer to the [Get Status](/references/api/get-intents-status-v3) endpoint for a full list of statuses and what they mean.
+
+    - `waiting`: The user is submitting or has submitted the deposit transaction to the Relay Depository contract on the origin chain, but it has not yet been indexed by the system.
+    - `pending`: The deposit was successfully indexed. The Relay Solver is now monitoring the request and preparing the fill transaction on the destination chain.
+    - `success`: The Relay Solver successfully executed the "Fill Tx", and the funds have reached the recipient.
+    
+    ![Status Lifecycle](/images/status-lifecycle.png)
+
+    The diagram also depicts paths where a transaction may end up in a failure or refund state if the fill cannot be completed. Learn more about how Relay helps you handle [refunds](https://docs.relay.link/references/api/api_core_concepts/refunds).
+  </Step>
+  <Step title="Optimize">
+    You have successfully executed your first cross-chain transaction with Relay!
+    Check out some of the advanced features we offer to customize the experience:
+
+    - [**App Fees**](/features/app-fees): Monetize your integration by adding a fee (in bps) to every quote. Revenue is collected automatically in USDC.
+    - [**Smart Accounts**](/references/api/api_guides/smart_accounts/smart-accounts): Use [ERC-4337](/references/api/api_guides/smart_accounts/erc-4337) and [EIP-7702](/references/api/api_guides/smart_accounts/eip-7702) to enable *Gas Sponsorship* and *Atomic Batching* (e.g., Approve + Swap in one click).
+    - [**Transaction Indexing**](/references/api/api_guides/transaction-indexing): Handle complex settlement scenarios, like tracking complex same-chain wraps or transfers.
+  </Step>
+</Steps>
+
+---
+
+### See Also
+- [**Bridging & Onboarding**](/use-cases/bridging): Learn more about instant cross-chain deposits and withdrawals.
+- [**Swaps**](/use-cases/cross-chain-swaps): Combine bridging with DEX meta-aggregation for any-to-any token swaps.
+- [**Call Execution**](/use-cases/calling): Execute arbitrary transactions on any chain, paying with any token.
