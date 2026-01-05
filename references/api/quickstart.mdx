@@ -3,7 +3,7 @@ title: 'Quickstart'
 description: 'Execute your first cross-chain transaction in under 5 minutes.'
 ---
 
-Relay is a multichain payments network. You define the Intent (what the user wants), and Relay handles the Execution (how to get there).
+Relay is a multichain payments network. You define the **Intent** (what the user wants), and Relay handles the **Execution** (how to get there).
 
 Follow this 5-step flow to integrate Relay into your application:
 
@@ -138,7 +138,7 @@ Follow this 5-step flow to integrate Relay into your application:
     </CodeGroup>
   </Step>
   <Step title="Execute">
-    The [quote endpoint](/references/api/get-quote-v2) returns a steps array. Think of this as a recipe your application must follow. You need to iterate through these steps and prompt the user to sign or submit them.
+    The [quote endpoint](/references/api/get-quote-v2) returns a `steps` array. Think of this as a recipe your application must follow. You need to iterate through these steps and prompt the user to sign or submit them.
     <Callout icon="person-swimming" color="#4615C8">
       ### Deep Dive
       For the full logic on parsing steps, see [Understanding Step Execution](/references/api/api_core_concepts/step-execution).    
@@ -211,7 +211,9 @@ Follow this 5-step flow to integrate Relay into your application:
     ```
   </Step>
   <Step title="Monitor">
-    Once you submit the transaction, the Relay Solver detects the deposit and fills the request on the destination chain. Use the [status endpoint](/references/api/get-intents-status-v3) with the  requestId located inside each step object in your [quote response](/references/api/quickstart#request) to track status and confirm success. You can also use the `check.endpoint` property inside the step item object as the endpoint for checking the status of the request. <br/>
+    Once you submit the transaction, the Relay Solver detects the deposit and fills the request on the destination chain. 
+
+    Use the [status endpoint](/references/api/get-intents-status-v3) with the  `requestId` located inside each step object in your [quote response](/references/api/quickstart#request) to track status and confirm success. You can also use the `check.endpoint` property inside the step item object as the endpoint for checking the status of the request. <br/>
     _Note: Replace with the requestId returned in your quote_
     <CodeGroup>
       ```bash Request
@@ -247,7 +249,7 @@ Follow this 5-step flow to integrate Relay into your application:
     
     ![Status Lifecycle](/images/status-lifecycle.png)
 
-    The diagram also depicts failure paths where a transaction may end up in a failure or refund state if the fill cannot be completed. Learn more about how Relay helps you handle [refunds](https://docs.relay.link/references/api/api_core_concepts/refunds).
+    The diagram also depicts paths where a transaction may end up in a failure or refund state if the fill cannot be completed. Learn more about how Relay helps you handle [refunds](https://docs.relay.link/references/api/api_core_concepts/refunds).
   </Step>
   <Step title="Optimize">
     You have successfully executed your first cross-chain transaction with Relay!
@@ -256,10 +258,12 @@ Follow this 5-step flow to integrate Relay into your application:
     - [**App Fees**](/features/app-fees): Monetize your integration by adding a fee (in bps) to every quote. Revenue is collected automatically in USDC.
     - [**Smart Accounts**](/references/api/api_guides/smart_accounts/smart-accounts): Use [ERC-4337](/references/api/api_guides/smart_accounts/erc-4337) and [EIP-7702](/references/api/api_guides/smart_accounts/eip-7702) to enable *Gas Sponsorship* and *Atomic Batching* (e.g., Approve + Swap in one click).
     - [**Transaction Indexing**](/references/api/api_guides/transaction-indexing): Handle complex settlement scenarios, like tracking complex same-chain wraps or transfers.
-
-    ### See Also
-    - [**Bridging & Onboarding**](/use-cases/bridging): Learn more about instant cross-chain deposits and withdrawals.
-    - [**Swaps**](/use-cases/cross-chain-swaps): Combine bridging with DEX meta-aggregation for any-to-any token swaps.
-    - [**Call Execution**](/use-cases/calling): Execute arbitrary transactions on any chain, paying with any token.
   </Step>
 </Steps>
+
+---
+
+### See Also
+- [**Bridging & Onboarding**](/use-cases/bridging): Learn more about instant cross-chain deposits and withdrawals.
+- [**Swaps**](/use-cases/cross-chain-swaps): Combine bridging with DEX meta-aggregation for any-to-any token swaps.
+- [**Call Execution**](/use-cases/calling): Execute arbitrary transactions on any chain, paying with any token.
