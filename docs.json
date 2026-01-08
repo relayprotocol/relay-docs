@@ -40,7 +40,8 @@
               "features/app-fees",
               "features/fee-sponsorship",
               "features/deposit-addresses",
-              "features/mev-protection"
+              "features/mev-protection",
+              "features/sponsored-execution"
             ]
           },
           {
