@@ -39,8 +39,17 @@
             "pages": [
               "features/app-fees",
               "features/fee-sponsorship",
-              "features/deposit-addresses",
-              "features/mev-protection"
+              "features/deposit-addresses"
+            ]
+          },
+          {
+            "group": "Safety & Security",
+            "pages": [
+              "security/compliance",
+              "security/bounties",
+              "security/mev-protection",
+              "security/community-support",
+              "security/contract-audits"
             ]
           },
           {
@@ -50,8 +59,7 @@
               "resources/enterprise",
               "resources/bounties",
               "resources/support",
-              "resources/brand-assets",
-              "resources/security-and-compliance"
+              "resources/brand-assets"
             ]
           }
         ]
@@ -414,6 +422,18 @@
     {
       "source": "/references/relay-kit/ui/getting-started",
       "destination": "/references/relay-kit/ui/installation"
+    },
+    {
+      "source": "/resources/security-and-compliance",
+      "destination": "/security/compliance"
+    },
+    {
+      "source": "/resources/bounties",
+      "destination": "/security/bounties"
+    },
+    {
+      "source": "/features/mev-protection",
+      "destination": "/security/mev-protection"
     }
   ]
 }
