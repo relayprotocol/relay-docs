@@ -71,8 +71,8 @@
             "group": " ",
             "pages": [
               "references/api/overview",
-              "references/api/api-keys",
               "references/api/quickstart",
+              "references/api/api-keys",
               {
                 "group": "Core Concepts",
                 "pages": [
