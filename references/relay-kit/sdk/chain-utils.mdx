@@ -1,0 +1,61 @@
+---
+title: Chain Utils
+description: Utility functions for configuring chains in the Relay SDK
+sidebarTitle: Chain Utils
+---
+
+
+## Overview
+
+The `/chain-utils` subpath export contains utilities for dynamically configuring chains in your application. These functions were moved to a separate entry point to enable better tree-shaking and reduce the default SDK bundle size.
+
+## Installation
+
+The chain utilities are included in the main SDK package. Simply import from the `/chain-utils` subpath:
+
+```typescript
+import { 
+  configureViemChain, 
+  configureDynamicChains
+} from '@relayprotocol/relay-sdk/chain-utils'
+```
+
+## Functions
+
+### configureViemChain
+
+Configures a single viem chain for use with the Relay SDK.
+
+```typescript
+import { configureViemChain } from '@relayprotocol/relay-sdk/chain-utils'
+import { arbitrum } from 'viem/chains'
+
+const relayChain = configureViemChain(arbitrum)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| **chain** | `Chain` | A viem chain object to configure for Relay |
+
+**Returns:** A configured Relay chain object ready to use with the SDK.
+
+---
+
+### configureDynamicChains
+
+Fetches supported chains from the Relay API and configures them dynamically in the SDK. This is useful for applications that want to support all available chains without hardcoding them.
+
+```typescript
+import { configureDynamicChains } from '@relayprotocol/relay-sdk/chain-utils'
+
+const chains = await configureDynamicChains()
+// Returns an array of configured chains with viemChain properties
+```
+
+**Returns:** `Promise<RelayChain[]>` - An array of Relay chain objects, each containing a `viemChain` property for use with wagmi/viem.
+
+
+
+
+
+

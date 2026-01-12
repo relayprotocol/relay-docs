@@ -58,7 +58,7 @@ import { RainbowKitProvider, getDefaultWallets } from "@rainbow-me/rainbowkit";
 import { WagmiConfig, createConfig, configureChains, Chain } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { alchemyProvider } from "wagmi/providers/alchemy";
-import { configureDynamicChains } from "@relayprotocol/relay-sdk";
+import { configureDynamicChains } from "@relayprotocol/relay-sdk/chain-utils";
 import { RainbowKitChain } from "@rainbow-me/rainbowkit/dist/components/RainbowKitProvider/RainbowKitChainContext";
 
 const AppWrapper: FC<AppWrapperProps> = ({ children }) => {

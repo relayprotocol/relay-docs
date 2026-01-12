@@ -188,7 +188,8 @@
                     ]
                   },
                   "references/relay-kit/sdk/adapters",
-                  "references/relay-kit/sdk/api-types"
+                  "references/relay-kit/sdk/api-types",
+                  "references/relay-kit/sdk/chain-utils"
                 ]
               },
               {
