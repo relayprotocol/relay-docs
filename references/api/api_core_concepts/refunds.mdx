@@ -48,3 +48,23 @@ Degen uses Degen.
 Yes, refunds happen automatically when swaps or bridges fail to complete.
 If a failure occurs, Relay will refund the user's funds almost instantly. Please 
 remember no refund is given if the refund amount cannot cover the cost of gas.
+
+## How can I force a refund for testing purposes?
+You can force a refund by passing `debug-force-refund` as the referrer.
+
+```bash cURL
+curl -X POST \
+  'https://api.relay.link/quote/v2' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "referrer": "debug-force-refund",
+    "user":"0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
+    "originChainId":8453,
+    "destinationChainId": 10,
+    "originCurrency":"0x0000000000000000000000000000000000000000",
+    "destinationCurrency":"0x0000000000000000000000000000000000000000",
+    "recipient":"0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
+    "tradeType":"EXACT_INPUT",
+    "amount":"1000000000000000000"
+  }'
+```
