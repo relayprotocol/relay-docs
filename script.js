@@ -100,6 +100,13 @@ function enhanceGetQuotePage() {
     );
 
     addLearnMore(
+      "body-topup-gas",
+      "/references/api/api_resources/supported-routes#gas-top-up",
+      "Learn more about topping up gas",
+      "learn-more-topup-gas"
+    );
+
+    addLearnMore(
       "response-fees",
       "/references/api/api_core_concepts/fees",
       "Learn more about fees",

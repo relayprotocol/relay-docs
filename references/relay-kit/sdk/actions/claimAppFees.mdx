@@ -13,6 +13,7 @@ description: Claim app fees for a wallet
 | **chainId**   | Chain ID to claim fees on                                                   | ✅       |
 | **currency**  | Token address to claim                                     | ✅       |
 | **recipient** | Address to receive claimed fees (defaults to wallet address)     | ❌       |
+| **amount**  | The amount to be claimed in the currency specified. | ❌       |
 | **onProgress**| Callback to update UI state as execution progresses. Can also be used to get the transaction hash for a given step item. The following data points are returned: `steps`, `fees`, `breakdown`, `txHashes`, `currentStep`, `currentStepItem`, `details`                    | ❌       |
 
 ### Example
@@ -26,8 +27,9 @@ const { data: wallet } = useWalletClient();
 const { data } = await getClient().actions.claimAppFees({
   wallet,
   chainId: 8453, // Base
-  currency: "0x0000000000000000000000000000000000000000", // ETH
+  currency: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", // USDC
   recipient: "0x...", // Optional
+  amount: "10000000", // Optional (10 USDC)
   onProgress: ({steps, fees, breakdown, currentStep, currentStepItem, txHashes, details}) => {
     // custom handling
   },
