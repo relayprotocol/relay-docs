@@ -79,7 +79,6 @@
                 "pages": [
                   "references/api/api_core_concepts/step-execution",
                   "references/api/api_core_concepts/wallet-detection",
-                  "references/api/api_core_concepts/quote-errors",
                   "references/api/api_core_concepts/fees",
                   "references/api/api_core_concepts/refunds",
                   "references/api/api_core_concepts/input-validation",
@@ -437,6 +436,10 @@
     {
       "source": "/features/mev-protection",
       "destination": "/security/mev-protection"
+    },
+    {
+      "source": "/references/api/api_core_concepts/quote-errors",
+      "destination": "/references/api/api_core_concepts/handling-errors"
     }
   ]
 }
