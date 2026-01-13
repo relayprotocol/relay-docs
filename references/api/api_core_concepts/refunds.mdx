@@ -37,7 +37,7 @@ If the refund amount is not enough to cover the cost of gas, Relay will
 mark the bridge or swap as failed & no refund will be sent.
 
 ## What currency is used for refunds?
-The Refund currency can vary by route. Generally, Relay will refund the user in the original currency they sent. Usually this is one of the currencies in the `solverCurrencies` in the [chain api response](/references/api/get-chains), which are usually native or stable coins.
+The refund currency can vary by route. Relay will always attempt to refund the user in the original currency they sent. Usually this is one of the currencies in the `solverCurrencies` in the [chain api response](/references/api/get-chains), which are native or stable coins.
 
 
 ## Are refunds automatic & instant?
