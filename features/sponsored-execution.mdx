@@ -21,7 +21,7 @@ In this example use case you want to execute a gasless Relay quote with the [exe
 
 <Steps>
   <Step title="Get a quote">
-    This flow assumes that the user is using a smart wallet. Use the [quote endpoint](/references/api/get-quote-v2) to get a quote for the transaction you want to execute.
+    This flow assumes that the user is using a smart wallet. Use the [quote endpoint](/references/api/get-quote-v2) to get a quote for the transaction you want to execute. The `originGasOverhead` indicates how much additional gas overhead will be necessary to include the user operation on the chain as compared to a normal EOA transaction.
     <CodeGroup>
      ```bash cURL
       curl -X POST "https://api.relay.link/quote/v2" \
@@ -33,7 +33,8 @@ In this example use case you want to execute a gasless Relay quote with the [exe
         "originCurrency": "0x0000000000000000000000000000000000000000",
         "destinationCurrency": "0x0000000000000000000000000000000000000000",
         "amount": "100000000000000",
-        "tradeType": "EXACT_INPUT"
+        "tradeType": "EXACT_INPUT",
+        "originGasOverhead": "300000" //This is the overhead gas cost of the smart wallet, this will be used when simulating the transaction
       }'
       ```
       ```json Response expandable
@@ -418,21 +419,10 @@ In this example use case you want to execute a gasless Relay quote with the [exe
             chainId: 8453,
             to: 'YOUR_WALLET_ADDRESS',
             data: steps[0].items[0].data.data, //Quote data from previous step
-            value: 0,
-            //Only relevant if using EIP-7702
-            authorizationList: [
-              {
-                chainId: authorization.chainId,
-                address: authorization.address, //This is your smart contract proxy address
-                nonce: authorization.nonce,
-                yParity: authorization.yParity,
-                r: authorization.r,
-                s: authorization.s
-              }
-            ]
+            value: steps[0].items[0].data.value, //Quote value from previous step
           },
           executionOptions: {
-            subsidizeFees: true, //Set this to pay for destination fees
+            //Optional execution options
           }
         })
       };
@@ -730,4 +720,5 @@ In this example use case you want to execute a gasless Relay quote with the [exe
 
 * Only EVM chains are supported currently.
 * Partial sponsorship is not yet supported. Should the fees amount to more than the app balance, the transaction will not be sponsored.
-* If the transaction relies on `tx.origin`, the transaction signer must be a smart wallet (EIP-7702, ERC-4337, etc).
+* If the transaction relies on `msg.sender`, the transaction signer must be a smart wallet (EIP-7702, ERC-4337, etc).
+* The API won't work if the transaction relies on `tx.origin`.
