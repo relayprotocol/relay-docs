@@ -39,7 +39,8 @@
             "pages": [
               "features/app-fees",
               "features/fee-sponsorship",
-              "features/deposit-addresses"
+              "features/deposit-addresses",
+              "features/sponsored-execution"
             ]
           },
           {
