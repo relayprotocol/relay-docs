@@ -1,0 +1,98 @@
+---
+title: "Rate Limits and API Keys"
+---
+
+Relay enforces rate limits to ensure platform reliability and fair usage across integrators. Default limits apply to all requests. Higher limits are available via API keys.
+
+## Default Rate Limits (No API Key)
+
+The following limits apply when no API key is provided:
+
+| Endpoint | Limit |
+| --- | --- |
+| `/quote` | 50 requests per minute |
+| `/requests` | 200 requests per minute |
+| `/transactions/status` | 200 requests per minute |
+| Other endpoints | 200 requests per minute |
+
+## API Key Rate Limits
+
+When using an API key, limits increase and are applied per key:
+
+| Endpoint | Limit |
+| --- | --- |
+| `/quote` | 10 requests per second |
+| `/requests` | 10 requests per second |
+| `/transactions/status` | 10 requests per second |
+| Other endpoints | 200 requests per minute |
+
+API keys are recommended for server-side production integrations and higher-throughput use cases.
+
+## How to Get an API Key
+
+To request an API key:
+
+1. Fill out the [API key request form](https://forms.gle/uiRVYXhtH8uBqybR9).
+2. The Relay team will review and provision your key within 72 hours.
+
+Once approved, you will receive a unique API key tied to your integration.
+
+
+## How to Use an API Key
+
+### HTTP Requests
+
+Pass the API key in the request headers:
+
+```
+x-api-key: YOUR_API_KEY
+```
+
+This header should be included on all requests where higher rate limits are required.
+
+### SDK Usage
+
+<CodeGroup>
+```jsx Global API Key
+// It is recommended to only set the apiKey parameter when using the SDK server-side.
+import {
+  createClient,
+  MAINNET_RELAY_API,
+} from "@relayprotocol/relay-sdk";
+
+createClient({
+  baseApiUrl: MAINNET_RELAY_API,
+  apiKey: "YOUR_API_KEY",
+  ...
+  //other parameters
+});
+```
+```jsx SDK Action API Key
+// In the case that you prefer not to set a global api key 
+// you can pass the api key into the headers parameter of the getQuote function. 
+import { getClient } from "@relayprotocol/relay-sdk";
+
+const quoteParams = {...}
+
+const quote = await getClient()?.actions.getQuote(params, undefined, {
+	"x-api-key": "YOUR_API_KEY"
+});
+```
+</CodeGroup>
+
+### Proxy API
+
+If using the sdk on the client, create a proxy api which appends the key in the headers and then pass that endpoint into the `baseApiUrl` parameter. This prevents your key from being leaked while allowing you to set up the necessary protection in your proxy api.
+
+```jsx
+import {
+  createClient,
+  MAINNET_RELAY_API,
+} from "@relayprotocol/relay-sdk";
+
+createClient({
+  baseApiUrl: "https://my-proxy.relay.link", //Replace with your proxy endpoint
+  ...
+  //other parameters
+});
+```

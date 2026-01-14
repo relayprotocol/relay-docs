@@ -1,0 +1,724 @@
+---
+title: "Sponsored Execution"
+description: "Submit arbitrary transactions for execution while sponsoring fees"
+---
+
+## How does it work?
+
+Gasless transactions on EVM are regular transactions where the transaction signer and the gas payer are two different addresses. Rather than signing with the same address and then submitting their transaction and paying gas, a user can simply sign a transaction payload, and other entities (relayers, solvers, etc.) can submit the transaction on their behalf and sponsor the gas costs.
+
+This is not natively possible, so there are custom transaction payloads to enable this: [Permit2](https://github.com/dragonfly-xyz/useful-solidity-patterns/tree/main/patterns/permit2), [EIP-3009](https://eips.ethereum.org/EIPS/eip-3009), [ERC-2771 payloads](https://eips.ethereum.org/EIPS/eip-2771), [ERC-4337 user operations](https://eips.ethereum.org/EIPS/eip-4337), etc. The core concept is that as long as the transaction execution does not rely on `tx.origin` (the transaction submitter), any user can sign permit payloads or Smart Account actions (EIP-7702, ERC-4337 user operations etc.) and a relayer can post those payloads on chain by wrapping them in a transaction.
+
+This is where the `/execute` API comes in. The API allows users to submit raw calls (the partial payload of a regular EVM transaction). It includes the `to`, `data`, `value` and an optional EIP-7702 `authorizationList`.
+
+## How to use it?
+
+This feature is only currently available to Enterprise Partners, learn more about the [Enterprise Partner Program](/resources/enterprise) to get started. Once you're an Enterprise Partner you should have an API key and a linked funding address. You'll then need to fund your app balance, you can learn more about that [here](/features/fee-sponsorship).
+
+### Executing a gasless quote
+
+In this example use case you want to execute a gasless Relay quote with the [execute](/references/api/execute) API.
+
+<Steps>
+  <Step title="Get a quote">
+    This flow assumes that the user is using a smart wallet. Use the [quote endpoint](/references/api/get-quote-v2) to get a quote for the transaction you want to execute. The `originGasOverhead` indicates how much additional gas overhead will be necessary to include the user operation on the chain as compared to a normal EOA transaction.
+    <CodeGroup>
+     ```bash cURL
+      curl -X POST "https://api.relay.link/quote/v2" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "user": "YOUR_WALLET_ADDRESS",
+        "originChainId": 8453,
+        "destinationChainId": 42161,
+        "originCurrency": "0x0000000000000000000000000000000000000000",
+        "destinationCurrency": "0x0000000000000000000000000000000000000000",
+        "amount": "100000000000000",
+        "tradeType": "EXACT_INPUT",
+        "originGasOverhead": "300000" //This is the overhead gas cost of the smart wallet, this will be used when simulating the transaction
+      }'
+      ```
+      ```json Response expandable
+      {
+        "steps": [
+          {
+            "id": "deposit",
+            "action": "Confirm transaction in your wallet",
+            "description": "Depositing funds to the relayer to execute the swap for ETH",
+            "kind": "transaction",
+            "items": [
+              {
+                "status": "incomplete",
+                "data": {
+                  "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+                  "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+                  "data": "0x49290c1c00000000000000000000000003508bb71268bba25ecacc8f620e01866650532c70387ea00ba97925c3bf1263363b2a7bdc0401faa00f0af4140627c7f385952c",
+                  "value": "100000000000000",
+                  "chainId": 8453,
+                  "maxFeePerGas": "3501361",
+                  "maxPriorityFeePerGas": "1000007"
+                },
+                "check": {
+                  "endpoint": "/intents/status/v3?requestId=0xa9ad21ed31b40317d2dad7750d642b8a72adf086f250f8a33c1636488c780878",
+                  "method": "GET"
+                }
+              }
+            ],
+            "requestId": "0xa9ad21ed31b40317d2dad7750d642b8a72adf086f250f8a33c1636488c780878",
+            "depositAddress": ""
+          }
+          # ...
+        ],
+        "fees": {
+          "gas": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "89121108862",
+            "amountFormatted": "0.000000089121108862",
+            "amountUsd": "0.000279",
+            "minimumAmount": "89121108862"
+          },
+          "relayer": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "9212128356056",
+            "amountFormatted": "0.000009212128356056",
+            "amountUsd": "0.028858",
+            "minimumAmount": "9212128356056"
+          },
+          "relayerGas": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "1219936568400",
+            "amountFormatted": "0.0000012199365684",
+            "amountUsd": "0.003822",
+            "minimumAmount": "1219936568400"
+          },
+          "relayerService": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "7992191787656",
+            "amountFormatted": "0.000007992191787656",
+            "amountUsd": "0.025037",
+            "minimumAmount": "7992191787656"
+          },
+          "app": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0",
+            "minimumAmount": "0"
+          },
+          "subsidized": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0",
+            "minimumAmount": "0"
+          }
+        },
+        "details": {
+          "operation": "swap",
+          "sender": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+          "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+          "currencyIn": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "100000000000000",
+            "amountFormatted": "0.0001",
+            "amountUsd": "0.313265",
+            "minimumAmount": "100000000000000"
+          },
+          "currencyOut": {
+            "currency": {
+              "chainId": 42161,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "90787871643944",
+            "amountFormatted": "0.000090787871643944",
+            "amountUsd": "0.284407",
+            "minimumAmount": "86520841676679"
+          },
+          "refundCurrency": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x0000000000000000000000000000000000000000",
+              "symbol": "ETH",
+              "name": "Ether",
+              "decimals": 18,
+              "metadata": {
+                "logoURI": "https://assets.relay.link/icons/1/light.png",
+                "verified": true
+              }
+            },
+            "amount": "100000000000000",
+            "amountFormatted": "0.0001",
+            "amountUsd": "0.313265",
+            "minimumAmount": "100000000000000"
+          },
+          "totalImpact": {
+            "usd": "-0.028858",
+            "percent": "-9.21"
+          },
+          "swapImpact": {
+            "usd": "0.000000",
+            "percent": "0.00"
+          },
+          "expandedPriceImpact": {
+            "swap": {
+              "usd": "-0.000030"
+            },
+            "execution": {
+              "usd": "-0.023822"
+            },
+            "relay": {
+              "usd": "-0.005007"
+            },
+            "app": {
+              "usd": "0"
+            }
+          },
+          "rate": "0.90787871643944",
+          "slippageTolerance": {
+            "origin": {
+              "usd": "0.000000",
+              "value": "0",
+              "percent": "0.00"
+            },
+            "destination": {
+              "usd": "0.013339",
+              "value": "4267029967265",
+              "percent": "4.69"
+            }
+          },
+          "timeEstimate": 1,
+          "userBalance": "0",
+          "isFixedRate": true,
+          "route": {
+            "origin": {
+              "inputCurrency": {
+                "currency": {
+                  "chainId": 8453,
+                  "address": "0x0000000000000000000000000000000000000000",
+                  "symbol": "ETH",
+                  "name": "Ether",
+                  "decimals": 18,
+                  "metadata": {
+                    "logoURI": "https://assets.relay.link/icons/1/light.png",
+                    "verified": true
+                  }
+                },
+                "amount": "100000000000000",
+                "amountFormatted": "0.0001",
+                "amountUsd": "0.313265",
+                "minimumAmount": "100000000000000"
+              },
+              "outputCurrency": {
+                "currency": {
+                  "chainId": 8453,
+                  "address": "0x0000000000000000000000000000000000000000",
+                  "symbol": "ETH",
+                  "name": "Ether",
+                  "decimals": 18,
+                  "metadata": {
+                    "logoURI": "https://assets.relay.link/icons/1/light.png",
+                    "verified": true
+                  }
+                },
+                "amount": "100000000000000",
+                "amountFormatted": "0.0001",
+                "amountUsd": "0.313265",
+                "minimumAmount": "100000000000000"
+              },
+              "router": "relay"
+            },
+            "destination": {
+              "inputCurrency": {
+                "currency": {
+                  "chainId": 42161,
+                  "address": "0x0000000000000000000000000000000000000000",
+                  "symbol": "ETH",
+                  "name": "Ether",
+                  "decimals": 18,
+                  "metadata": {
+                    "logoURI": "https://assets.relay.link/icons/1/light.png",
+                    "verified": true
+                  }
+                },
+                "amount": "90787871643944",
+                "amountFormatted": "0.000090787871643944",
+                "amountUsd": "0.284407",
+                "minimumAmount": "86520841676679"
+              },
+              "outputCurrency": {
+                "currency": {
+                  "chainId": 42161,
+                  "address": "0x0000000000000000000000000000000000000000",
+                  "symbol": "ETH",
+                  "name": "Ether",
+                  "decimals": 18,
+                  "metadata": {
+                    "logoURI": "https://assets.relay.link/icons/1/light.png",
+                    "verified": true
+                  }
+                },
+                "amount": "90787871643944",
+                "amountFormatted": "0.000090787871643944",
+                "amountUsd": "0.284407",
+                "minimumAmount": "86520841676679"
+              },
+              "router": "relay"
+            }
+          }
+        },
+        "protocol": {
+          "v2": {
+            "orderId": "0x70387ea00ba97925c3bf1263363b2a7bdc0401faa00f0af4140627c7f385952c",
+            "orderData": {
+              "version": "v1",
+              "solverChainId": "base",
+              "solver": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+              "salt": "0x7cae8841bbd4c7c9da1b2a8d9ebdc948d54f5cb4178aca2d289e65edc1bddf52",
+              "inputs": [
+                {
+                  "payment": {
+                    "chainId": "base",
+                    "currency": "0x0000000000000000000000000000000000000000",
+                    "amount": "100000000000000",
+                    "weight": "1"
+                  },
+                  "refunds": [
+                    {
+                      "chainId": "base",
+                      "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+                      "currency": "0x0000000000000000000000000000000000000000",
+                      "minimumAmount": "0",
+                      "deadline": 1768418493,
+                      "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+                    },
+                    {
+                      "chainId": "arbitrum",
+                      "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+                      "currency": "0x0000000000000000000000000000000000000000",
+                      "minimumAmount": "0",
+                      "deadline": 1768418493,
+                      "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "chainId": "arbitrum",
+                "payments": [
+                  {
+                    "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+                    "currency": "0x0000000000000000000000000000000000000000",
+                    "minimumAmount": "86520841676679",
+                    "expectedAmount": "90787871643944"
+                  }
+                ],
+                "calls": [],
+                "deadline": 1768418493,
+                "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+              },
+              "fees": []
+            },
+            "paymentDetails": {
+              "chainId": "base",
+              "depository": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+              "currency": "0x0000000000000000000000000000000000000000",
+              "amount": "100000000000000"
+            }
+          }
+        }
+      }
+      ```
+    </CodeGroup>
+  </Step>
+  <Step title="Execute the transaction">
+    With the quote in hand, you can now execute the transaction. You'll need to pass the data from previous steps to the api.
+    ```typescript
+      const options = {
+        method: 'POST',
+        headers: {'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          requestId: steps[0].requestId, //Quote requestId from previous step
+          executionKind: 'rawCalls',
+          data: {
+            chainId: 8453,
+            to: 'YOUR_WALLET_ADDRESS',
+            data: steps[0].items[0].data.data, //Quote data from previous step
+            value: steps[0].items[0].data.value, //Quote value from previous step
+          },
+          executionOptions: {
+            //Optional execution options
+          }
+        })
+      };
+
+      fetch('https://api.relay.link/execute', options)
+        .then(res => res.json())
+        .then(res => console.log(res))
+        .catch(err => console.error(err));
+    ```
+  </Step>
+  <Step title="Monitor">
+    Now that the transaction has been submitted, you can monitor the status of the transaction using the requestId from the quote data and the [status endpoint](/references/api/get-intents-status-v3).
+    ```typescript
+      const response = await fetch(`https://api.relay.link/intents/status/v3?requestId=${requestId}`);
+      const data = await response.json();
+      console.log(data);
+    ```
+  </Step>
+    Refer to the [quickstart guide](/references/api/quickstart#status-lifecycle) for more information on how to monitor the status of a transaction.
+</Steps>
+
+### More Use Cases
+
+<AccordionGroup>
+  <Accordion title="Gasless ERC-20 transfer from ERC-4337 Smart Account">
+    If the user has a Smart Account (such as an ERC-4337 Smart Account), any transaction can be made gasless for the Smart Account by signing an ERC-4337 user operation and submitting it to the /execute API.
+
+    The only step is to create the user operation, get it signed by the user and then create the final call data of the handleOps call of the Entry Point before submitting to the /execute endpoint.
+
+    _Note: The maxFeePerGas and maxPriorityFeePerGas The ERC-4337 user operation should be 0; it will result in a double payment to the solver (The solver already has adjusted the cost in the quote, so no need for this payment)_
+    <Steps>
+        <Step title="Create the user operation">
+         <CodeGroup>
+         ```typescript example.ts
+          import {
+            createPublicClient,
+            createWalletClient,
+            createClient,
+            http,
+            encodeFunctionData,
+            keccak256,
+            encodeAbiParameters,
+            toHex,
+          } from "viem";
+          import { base } from "viem/chains";
+          import { UserOperation } from "./types.ts";
+          import { entryPointAbi, smartAccountAbi } from "./abis.ts";
+
+          // ---- Config ----
+          const ENTRY_POINT = "0xEntryPointAddress" as const;
+          const YOUR_WALLET_ADDRESS = "0xYourAddress" as const;
+          const BENEFICIARY = "0xYourBeneficiary" as const;
+
+          // ---- Clients ----
+          const publicClient = createPublicClient({
+            chain: base,
+            transport: http(),
+          });
+
+          const ownerAccount = ... // Replace with your owner account
+
+          const walletClient = createWalletClient({
+            account: ownerAccount,
+            chain: base,
+            transport: http()
+          });
+
+          const userOpPackHash = keccak256(packUserOp(userOp));
+
+          const encoded = encodeAbiParameters(
+            [
+              { type: "bytes32" }, // userOp hash
+              { type: "address" }, // entryPoint
+              { type: "uint256" }, // chainId
+            ],
+            [userOpPackHash, ENTRY_POINT, BigInt(base.id)],
+          );
+
+          const userOpHash = keccak256(encoded);
+
+          const signature = await walletClient.signMessage({
+            message: { raw: userOpHash },
+          });
+
+          const signedUserOp: UserOperation = { ...userOp, signature };
+
+          const handleOpsData = encodeFunctionData({
+            abi: entryPointAbi,
+            functionName: "handleOps",
+            args: [[signedUserOp], BENEFICIARY],
+          });
+          ```
+          ```typescript types.ts
+          export type UserOperation = {
+            sender: `0x${string}`;
+            nonce: bigint;
+            initCode: `0x${string}`;
+            callData: `0x${string}`;
+            callGasLimit: bigint;
+            verificationGasLimit: bigint;
+            preVerificationGas: bigint;
+            maxFeePerGas: bigint;
+            maxPriorityFeePerGas: bigint;
+            paymasterAndData: `0x${string}`;
+            signature: `0x${string}`;
+          };
+
+          ```
+          ```typescript abis.ts
+          export const entryPointAbi = [
+            {
+              type: "function",
+              name: "handleOps",
+              stateMutability: "nonpayable",
+              inputs: [
+                {
+                  name: "ops",
+                  type: "tuple[]",
+                  components: [
+                    { name: "sender", type: "address" },
+                    { name: "nonce", type: "uint256" },
+                    { name: "initCode", type: "bytes" },
+                    { name: "callData", type: "bytes" },
+                    { name: "callGasLimit", type: "uint256" },
+                    { name: "verificationGasLimit", type: "uint256" },
+                    { name: "preVerificationGas", type: "uint256" },
+                    { name: "maxFeePerGas", type: "uint256" },
+                    { name: "maxPriorityFeePerGas", type: "uint256" },
+                    { name: "paymasterAndData", type: "bytes" },
+                    { name: "signature", type: "bytes" },
+                  ],
+                },
+                { name: "beneficiary", type: "address" },
+              ],
+              outputs: [],
+            },
+          ] as const;
+
+          // Example smart account ABI with an `execute` function
+          export const smartAccountAbi = [
+            {
+              type: "function",
+              name: "execute",
+              stateMutability: "nonpayable",
+              inputs: [
+                { name: "to", type: "address" },
+                { name: "value", type: "uint256" },
+                { name: "data", type: "bytes" },
+              ],
+              outputs: [],
+            },
+            {
+              type: "function",
+              name: "nonce",
+              stateMutability: "view",
+              inputs: [],
+              outputs: [{ name: "", type: "uint256" }],
+            },
+          ] as const;
+          ```
+         </CodeGroup>
+        </Step>
+        <Step title="Send the payload to the /execute endpoint">
+          <CodeGroup>
+          ```typescript Request
+            const options = {
+              method: 'POST',
+              headers: {'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                executionKind: 'rawCalls',
+                data: {
+                  chainId: 8453,
+                  to: 'YOUR_WALLET_ADDRESS',
+                  data: handleOpsData,
+                  value: "0"
+                }
+              })
+            };
+
+            fetch('https://api.relay.link/execute', options)
+              .then(res => res.json())
+              .then(res => console.log(res))
+              .catch(err => console.error(err));
+          ```
+          ```json Response
+          {
+            "message": "Transaction submitted",
+            "requestId": "0xabc123..."
+          }
+          ```
+          </CodeGroup>
+        </Step>
+        <Step title="Monitor">
+          Now that the transaction has been submitted, you can monitor the status of the transaction using the requestId returned in the api response and the [status endpoint](/references/api/get-intents-status-v3).
+          ```typescript
+            const response = await fetch(`https://api.relay.link/intents/status/v3?requestId=${requestId}`);
+            const data = await response.json();
+            console.log(data);
+          ```
+        </Step>
+    </Steps>
+  </Accordion>
+  <Accordion title="Gasless upgrade to an EIP-7702 Smart Account">
+    Another example of a flow where the transaction execution does not depend on `tx.origin` is the action of upgrading a regular EOA to an EIP-7702 smart account. In this flow, any entity can execute an upgrade payload and a signed EIP-7702 `authorizationList` from the EOA.
+
+    The client must pass the correct fields for the `to` (which is the EOA that is to be upgraded), data is the call data for the initialization of the EOA's EIO-7702 Smart Account and the authorizationList which contains the signed information about the Smart Account to upgrade to.
+    <Steps>
+        <Step title="Sign the EIP-7702 authorizationList">
+          <CodeGroup>
+          ```typescript example.ts
+          import {
+            createWalletClient,
+            http,
+            encodeFunctionData,
+            hexToSignature,
+          } from "viem";
+          import { privateKeyToAccount } from "viem/accounts";
+          import { base } from "viem/chains";
+
+          // This flow requires access to the EOA private key
+          const walletClient = createWalletClient({
+            account: privateKeyToAccount("0xYourEOAPrivateKey"),
+            chain: base,
+            transport: http()
+          });
+
+          // Build init calldata (replace ABI + args with your real upgrade initializer)
+          const initCalldata = encodeFunctionData({
+            abi: [{
+              type: "function",
+              name: "initialize",
+              inputs: [
+                { name: "owner", type: "address" },
+                { name: "config", type: "uint256" }
+              ],
+              outputs: []
+            }],
+            functionName: "initialize",
+            args: ["0xEOA_TO_UPGRADE", 1n]
+          });
+
+
+          // --- Sign EIP-7702 Authorization (viem handles everything: r, s, yParity, nonce, chainId) ---
+          const authorization = await client.signAuthorization({
+            account: client.account!,
+            contractAddress: "0xSMART_ACCOUNT_CONTRACT" //This is the contract that will have authorization
+          });
+          ```
+          </CodeGroup>
+        </Step>
+        <Step title="Send the payload to the /execute endpoint">
+          <CodeGroup>
+          ```typescript Request
+            const options = {
+              method: 'POST',
+              headers: {'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                executionKind: 'rawCalls',
+                data: {
+                  chainId: 8453,
+                  to: '0xEOA_TO_UPGRADE',
+                  data: initCalldata,
+                  value: "0",
+                  authorizationList: [authorization]
+                }
+              })
+            };
+
+            fetch('https://api.relay.link/execute', options)
+              .then(res => res.json())
+              .then(res => console.log(res))
+              .catch(err => console.error(err));
+          ```
+          ```json Response
+          {
+            "message": "Transaction submitted",
+            "requestId": "0xabc123..."
+          }
+          ```
+          </CodeGroup>
+        </Step>
+        <Step title="Monitor">
+          Now that the transaction has been submitted, you can monitor the status of the transaction using the requestId returned in the api response and the [status endpoint](/references/api/get-intents-status-v3).
+          ```typescript
+            const response = await fetch(`https://api.relay.link/intents/status/v3?requestId=${requestId}`);
+            const data = await response.json();
+            console.log(data);
+          ```
+        </Step>
+    </Steps>
+  </Accordion>
+</AccordionGroup>
+
+## Caveats
+
+* Only EVM chains are supported currently.
+* Partial sponsorship is not yet supported. Should the fees amount to more than the app balance, the transaction will not be sponsored.
+* If the transaction relies on `msg.sender`, the transaction signer must be a smart wallet (EIP-7702, ERC-4337, etc).
+* The API won't work if the transaction relies on `tx.origin`.

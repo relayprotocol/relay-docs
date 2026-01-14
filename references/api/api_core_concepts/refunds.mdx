@@ -37,14 +37,30 @@ If the refund amount is not enough to cover the cost of gas, Relay will
 mark the bridge or swap as failed & no refund will be sent.
 
 ## What currency is used for refunds?
-For bridges, Relay will refund the user in the original currency they sent. <br />
-For swaps, Relay will refund users in the default currency of the chain.  You can determine 
-the default currency of a chain by looking at the fee currency. For example,
-if a chain's default currency is ETH than ETH will be refunded. We have a few chains that
-their native currency is not ETH: Avalanche uses USDC, Polygon uses USDC, Xai uses Xai, and
-Degen uses Degen.
+The refund currency can vary by route. Relay will always attempt to refund the user in the original currency they sent. Usually this is one of the currencies in the `solverCurrencies` in the [chain api response](/references/api/get-chains), which are native or stable coins.
+
 
 ## Are refunds automatic & instant?
 Yes, refunds happen automatically when swaps or bridges fail to complete.
 If a failure occurs, Relay will refund the user's funds almost instantly. Please 
 remember no refund is given if the refund amount cannot cover the cost of gas.
+
+## How can I force a refund for testing purposes?
+You can force a refund by passing `debug-force-refund` as the referrer.
+
+```bash cURL
+curl -X POST \
+  'https://api.relay.link/quote/v2' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "referrer": "debug-force-refund",
+    "user":"0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
+    "originChainId":8453,
+    "destinationChainId": 10,
+    "originCurrency":"0x0000000000000000000000000000000000000000",
+    "destinationCurrency":"0x0000000000000000000000000000000000000000",
+    "recipient":"0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
+    "tradeType":"EXACT_INPUT",
+    "amount":"1000000000000000000"
+  }'
+```

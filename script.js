@@ -100,6 +100,13 @@ function enhanceGetQuotePage() {
     );
 
     addLearnMore(
+      "body-topup-gas",
+      "/references/api/api_resources/supported-routes#gas-top-up",
+      "Learn more about topping up gas",
+      "learn-more-topup-gas"
+    );
+
+    addLearnMore(
       "response-fees",
       "/references/api/api_core_concepts/fees",
       "Learn more about fees",
@@ -135,6 +142,20 @@ function enhanceFeeSponsorshipPage() {
   });
 }
 
+function enhanceSponsoredExecutionPage() {
+  waitForElementId("#page-title", "Sponsored Execution", () => {
+    if (!document.getElementById("enterprise-link")) {
+      const enterpriseLink = document.createElement("a");
+      enterpriseLink.textContent = "Enterprise";
+      enterpriseLink.href = "/resources/enterprise";
+      enterpriseLink.id = "enterprise-link";
+      const pageTitle = document.getElementById("page-title");
+      pageTitle.appendChild(enterpriseLink);
+      pageTitle.classList.add("flex", "items-center");
+    }
+  });
+}
+
 // ---- MAIN NAVIGATION HANDLER --------------
 
 function onPageChange() {
@@ -152,6 +173,8 @@ function onPageChange() {
     startPageObserver(enhanceGetChainsPage);
   } else if (path.includes("/features/fee-sponsorship")) {
     startPageObserver(enhanceFeeSponsorshipPage);
+  } else if (path.includes("/features/sponsored-execution")) {
+    startPageObserver(enhanceSponsoredExecutionPage);
   }
 }
 
