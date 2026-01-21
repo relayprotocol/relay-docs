@@ -16,7 +16,7 @@ Failures via deposit addresses are extremely rare, but are still possible. If so
 
 The deposit transaction requires no calldata. You just need to send any value to the address specified in the API request response data. As long as this amount is enough to cover any gas or relay fees, it will be automatically bridged based on the route requested in the initial quote.
 
-Deposit addresses are supported for most major currencies. Supported currencies can be queried via the [currencies API](https://docs.relay.link/references/api/get-currencies) by specifying the `depositAddressOnly` body parameter to `true`.
+Deposit addresses are supported for most major currencies. Supported currencies can be queried via the [currencies API](https://docs.relay.link/references/api/get-currencies-v2) by specifying the `depositAddressOnly` body parameter to `true`.
 
 When using deposit addresses, there are more relayer gas fees associated with bridges. Typically about
 33,000 extra gas is required than regular native bridges, and about 70,000 more for ERC-20 bridges. For very small bridges, we don't recommend using deposit addresses since so much gas is required.
