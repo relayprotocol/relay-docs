@@ -107,7 +107,8 @@
                     "pages": [
                       "references/api/api_guides/testnet",
                       "references/api/api_guides/solana",
-                      "references/api/api_guides/hyperliquid-support"
+                      "references/api/api_guides/hyperliquid-support",
+                      "references/api/api_guides/lighter-support"
                     ]
                   },
                   "references/api/api_guides/deep-linking",
