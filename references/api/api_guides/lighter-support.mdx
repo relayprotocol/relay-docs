@@ -1,0 +1,67 @@
+---
+title: "Lighter Support"
+description: "How to deposit to Lighter from any Relay chain"
+---
+
+Relay supports depositing to Lighter from any supported chain. To try it today, use the [Relay App](https://relay.link/bridge/lighter). This document details how to integrate Lighter deposits into your application.
+
+<Note>
+  Currently, only deposits to Lighter are supported. Withdrawals from Lighter are not yet available.
+</Note>
+
+# Prerequisites
+
+Before you can bridge funds to Lighter, you must first set up an account on [lighter.exchange](https://lighter.exchange/). Once your account is created, you can retrieve your account index to use as the recipient for deposits.
+
+# API Access
+
+Lighter can be accessed using the standard Relay API flow. To get started, review the [**execution steps**](https://docs.relay.link/references/api/api_core_concepts/step-execution) documentation. When you're ready to execute deposits, refer to the [**Get Quote**](https://docs.relay.link/references/api/get-quote-v2) API endpoint.
+
+## Lighter-Specific API Parameters
+
+| **Parameter**       | **Input**   | **Description**                                      |
+| ------------------- | ----------- | ---------------------------------------------------- |
+| toChainId           | 3586256     | Lighter Chain ID                                     |
+| recipient           |             | Lighter Account Index (not a wallet address)         |
+
+These parameters are specific to Lighter interactions. All other standard API parameters remain required.
+
+<Warning>
+  The `recipient` parameter must be your Lighter account index, not your wallet address. See below for how to retrieve your account index.
+</Warning>
+
+## Getting Your Lighter Account Index
+
+To deposit to Lighter, you need to use your Lighter account index as the `recipient` parameter. You can retrieve this using the Lighter API's `accountsByL1Address` endpoint:
+
+```bash
+curl 'https://mainnet.zklighter.elliot.ai/api/v1/accountsByL1Address?l1_address=YOUR_WALLET_ADDRESS'
+```
+
+Replace `YOUR_WALLET_ADDRESS` with your Ethereum wallet address. The response will include your `accountIndex`, which you should use as the `recipient` in your quote request.
+
+For more details, see the [Lighter API documentation](https://apidocs.lighter.xyz/reference/accountsbyl1address).
+
+## Example Quote Request
+
+```bash
+curl 'https://api.relay.link/quote/v2' \
+  -H 'content-type: application/json' \
+  -d '{
+    "user": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+    "originChainId": 8453,
+    "destinationChainId": 3586256,
+    "originCurrency": "0x0000000000000000000000000000000000000000",
+    "destinationCurrency": "0",
+    "recipient": "509564",
+    "tradeType": "EXACT_INPUT",
+    "amount": "1000000000000000000"
+  }'
+```
+
+In this example:
+- `originChainId: 8453` - Depositing from Base
+- `destinationChainId: 3586256` - Lighter chain ID
+- `recipient: "509564"` - Your Lighter account index (replace with your actual account index)
+
+The response will include the execution steps required to complete the deposit. Follow the standard [step execution](https://docs.relay.link/references/api/api_core_concepts/step-execution) flow to complete the transaction.
