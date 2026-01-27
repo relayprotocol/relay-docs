@@ -6,7 +6,7 @@ const addLearnMore = (
   href,
   linkText,
   learnMoreId,
-  direction = "after"
+  direction = "after",
 ) => {
   const bodyTarget = document.getElementById(targetId);
   const learnMoreTarget = document.getElementById(learnMoreId);
@@ -89,21 +89,21 @@ function enhanceGetQuotePage() {
       "body-trade-type",
       "/references/api/api_core_concepts/trade-types",
       "Learn more about trade types",
-      "learn-more-trade-type"
+      "learn-more-trade-type",
     );
 
     addLearnMore(
       "body-app-fees",
       "/features/app-fees",
       "Learn more about app fees",
-      "learn-more-app-fees"
+      "learn-more-app-fees",
     );
 
     addLearnMore(
       "body-topup-gas",
       "/references/api/api_resources/supported-routes#gas-top-up",
       "Learn more about topping up gas",
-      "learn-more-topup-gas"
+      "learn-more-topup-gas",
     );
 
     addLearnMore(
@@ -111,7 +111,7 @@ function enhanceGetQuotePage() {
       "/references/api/api_core_concepts/fees",
       "Learn more about fees",
       "learn-more-fees",
-      "before"
+      "before",
     );
   });
 }
@@ -123,7 +123,7 @@ function enhanceGetChainsPage() {
       "/references/api/api_resources/supported-routes#step-1:-check-token-support-level",
       "Learn more about token support",
       "learn-more-token-support",
-      "before"
+      "before",
     );
   });
 }
@@ -156,6 +156,20 @@ function enhanceSponsoredExecutionPage() {
   });
 }
 
+function enhanceFastFillPage() {
+  waitForElementId("#page-title", "Fast Fill", () => {
+    if (!document.getElementById("enterprise-link")) {
+      const enterpriseLink = document.createElement("a");
+      enterpriseLink.textContent = "Enterprise";
+      enterpriseLink.href = "/resources/enterprise";
+      enterpriseLink.id = "enterprise-link";
+      const pageTitle = document.getElementById("page-title");
+      pageTitle.appendChild(enterpriseLink);
+      pageTitle.classList.add("flex", "items-center");
+    }
+  });
+}
+
 // ---- MAIN NAVIGATION HANDLER --------------
 
 function onPageChange() {
@@ -175,6 +189,8 @@ function onPageChange() {
     startPageObserver(enhanceFeeSponsorshipPage);
   } else if (path.includes("/features/sponsored-execution")) {
     startPageObserver(enhanceSponsoredExecutionPage);
+  } else if (path.includes("/features/fast-fill")) {
+    startPageObserver(enhanceFastFillPage);
   }
 }
 

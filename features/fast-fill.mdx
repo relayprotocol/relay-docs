@@ -1,0 +1,201 @@
+---
+title: "Fast Fill"
+description: "Accelerate the destination fill of a cross-chain request"
+---
+
+Fast Fill is a feature that allows you to accelerate the destination fill of a cross-chain request. This is useful if you want to speed up the completion of a bridge or swap operation before it's landed onchain.
+
+## Requirements
+
+Before you can start fast filling requests, you need:
+
+1. **An API Key** — Required to authenticate your fast fill requests. [Request an api key](/references/api/api-keys#how-to-get-an-api-key).
+2. **Enterprise Partnership** — Reach out to the Relay team to become an Enterprise Partner. Learn more about the [Enterprise Partner Program](/resources/enterprise).
+3. **An Outstanding Balance Limit** - When reaching out to the Relay team to enable this feature, you'll need to set an outstanding balance limit. This is the maximum amount of funds that can be fast filled at any given time. These will clear as transactions land onchain.
+
+Once you're set up, you can begin fast filling requests.
+
+---
+
+## How to use it?
+
+To Fast Fill a request you simply need to call the [Fast Fill API](/references/api/fast-fill) with the request ID of the request you want to fast fill after you've submitted it onchain but before it finalizes. The request will be instantly filled and the total amount will be added to your outstanding balance. Once the transaction lands on chain and Relay indexes your transaction, the funds will be cleared from your outstanding balance.
+
+### Example
+
+This example demonstrates the full fast fill flow: getting a quote, submitting the transaction on-chain, calling the fast fill API, and monitoring the status.
+
+<CodeGroup>
+```typescript SDK
+import { getClient, createClient } from "@relayprotocol/relay-sdk";
+import { createWalletClient, createPublicClient, http } from "viem";
+import { base } from "viem/chains";
+
+// 1. Setup Wallet - Initialize your wallet using your preferred method
+const account = {}; // Your wallet account (e.g., privateKeyToAccount, or injected wallet)
+const wallet = createWalletClient({
+  account,
+  chain: base,
+  transport: http(),
+});
+
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http(),
+});
+
+// 2. Initialize the Relay client
+createClient({
+  baseApiUrl: "https://api.relay.link",
+  source: "YOUR_APP_NAME",
+});
+
+// 3. Get a quote using the SDK
+const quote = await getClient().actions.getQuote({
+  chainId: 8453, // Base
+  toChainId: 42161, // Arbitrum
+  currency: "0x0000000000000000000000000000000000000000", // ETH
+  toCurrency: "0x0000000000000000000000000000000000000000", // ETH
+  amount: "100000000000000", // 0.0001 ETH
+  tradeType: "EXACT_INPUT",
+  wallet,
+});
+
+const requestId = quote.steps[0].requestId;
+console.log(`Request ID: ${requestId}`);
+
+// 4. Execute the quote and fast fill once the transaction is submitted
+let txHash: string;
+
+await getClient().actions.execute({
+  quote,
+  wallet,
+  onProgress: async ({ currentStep, currentStepItem, txHashes }) => {
+    // Once transaction is submitted, trigger fast fill immediately
+    if (txHashes && txHashes.length > 0 && !txHash) {
+      txHash = txHashes[0];
+      console.log(`Transaction submitted: ${txHash}`);
+
+      // 5. Call Fast Fill immediately after submitting (before waiting for confirmation)
+      const fastFillResult = await getClient().actions.fastFill({
+        requestId,
+      });
+      console.log("Fast fill initiated:", fastFillResult);
+    }
+
+    // Monitor progress
+    if (currentStep && currentStepItem) {
+      console.log(`Step: ${currentStep.action}, Status: ${currentStepItem.status}`);
+    }
+  },
+});
+
+console.log("Bridge completed successfully!");
+```
+
+```typescript API
+import { createWalletClient, createPublicClient, http, type Hex } from "viem";
+import { base } from "viem/chains";
+
+// 1. Setup Wallet - Initialize your wallet using your preferred method
+const account = {}; // Your wallet account (e.g., privateKeyToAccount, or injected wallet)
+const walletClient = createWalletClient({
+  account,
+  chain: base,
+  transport: http(),
+});
+
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http(),
+});
+
+const API_KEY = "YOUR_API_KEY"; // Required for fast fill
+
+// 2. Get a quote from the Relay API
+const quoteResponse = await fetch("https://api.relay.link/quote/v2", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${API_KEY}`,
+  },
+  body: JSON.stringify({
+    user: account.address,
+    originChainId: 8453, // Base
+    destinationChainId: 42161, // Arbitrum
+    originCurrency: "0x0000000000000000000000000000000000000000", // ETH
+    destinationCurrency: "0x0000000000000000000000000000000000000000", // ETH
+    amount: "100000000000000", // 0.0001 ETH
+    tradeType: "EXACT_INPUT",
+  }),
+});
+
+const quote = await quoteResponse.json();
+const step = quote.steps[0];
+const item = step.items[0];
+const requestId = step.requestId;
+
+console.log(`Request ID: ${requestId}`);
+
+// 3. Submit the transaction on-chain
+const txHash = await walletClient.sendTransaction({
+  to: item.data.to as Hex,
+  data: item.data.data as Hex,
+  value: BigInt(item.data.value),
+});
+
+console.log(`Transaction submitted: ${txHash}`);
+
+// 4. Call the Fast Fill API immediately after submitting (before waiting for receipt)
+// This accelerates the fill on the destination chain
+const fastFillResponse = await fetch("https://api.relay.link/fast-fill", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${API_KEY}`,
+  },
+  body: JSON.stringify({
+    requestId,
+  }),
+});
+
+const fastFillResult = await fastFillResponse.json();
+console.log("Fast fill initiated:", fastFillResult);
+
+// 5. Now wait for the transaction receipt (origin chain confirmation)
+const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+console.log(`Origin transaction confirmed in block ${receipt.blockNumber}`);
+
+// 6. Poll the status API to confirm the fill completed
+const checkStatus = async (): Promise<any> => {
+  const statusResponse = await fetch(
+    `https://api.relay.link/intents/status/v3?requestId=${requestId}`,
+    {
+      headers: { "Authorization": `Bearer ${API_KEY}` },
+    }
+  );
+  return statusResponse.json();
+};
+
+// Poll until success
+let status = await checkStatus();
+while (status.status !== "success" && status.status !== "failure") {
+  console.log(`Status: ${status.status}`);
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+  status = await checkStatus();
+}
+
+if (status.status === "success") {
+  console.log("Bridge completed successfully!");
+  console.log(`Destination tx: ${status.txHashes?.[0]}`);
+} else {
+  console.error("Bridge failed:", status);
+}
+```
+
+</CodeGroup>
+
+## Caveats
+
+* Slippage may lead to a surplus or shortage in your outstanding balance. This may eventually max out your outstanding balance. In order to clear this reach out to the Relay team to resolve this. If you have a good estimate of the final amount you can use the `solverInputCurrencyAmount` parameter to specify the exact amount of input currency you want to use for the fill, thus minimizing slippage.
+* We recommend protecting your API key on the backend by not exposing it to the client.
