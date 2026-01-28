@@ -40,7 +40,8 @@
               "features/app-fees",
               "features/fee-sponsorship",
               "features/deposit-addresses",
-              "features/sponsored-execution"
+              "features/sponsored-execution",
+              "features/fast-fill"
             ]
           },
           {
@@ -185,7 +186,8 @@
                       "references/relay-kit/sdk/actions/getQuote",
                       "references/relay-kit/sdk/actions/execute",
                       "references/relay-kit/sdk/actions/getAppFees",
-                      "references/relay-kit/sdk/actions/claimAppFees"
+                      "references/relay-kit/sdk/actions/claimAppFees",
+                      "references/relay-kit/sdk/actions/fastFill"
                     ]
                   },
                   "references/relay-kit/sdk/adapters",
