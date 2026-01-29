@@ -8,6 +8,7 @@
     "dark": "#4615C8"
   },
   "favicon": "/favicon.png",
+  "homepage": "index",
   "navigation": {
     "tabs": [
       {
@@ -15,7 +16,7 @@
         "groups": [
           {
             "group": "Introduction",
-            "pages": ["what-is-relay"]
+            "pages": ["index", "what-is-relay"]
           },
           {
             "group": "Solutions",
