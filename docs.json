@@ -300,8 +300,7 @@
   },
   "logo": {
     "light": "/logo/relay-black.svg",
-    "dark": "/logo/relay-white.svg",
-    "href": "/"
+    "dark": "/logo/relay-white.svg"
   },
   "api": {
     "openapi": ["https://api.relay.link/documentation/json"],
