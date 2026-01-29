@@ -273,6 +273,10 @@ For transactions originating from Solana, you can designate an alternative accou
 The `depositFeePayer` parameter operates independently from the `subsidizeFees` and `subsidizeRent` parameters. It applies specifically to Solana origin transactions and does not draw from your app balance.
 </Note>
 
+<Warning>
+When using `depositFeePayer`, Relay returns a transaction that requires the integrator's sponsoring wallet to sign **first**. The integrator must sign the transaction before passing it to the user. If the user receives an unsigned transaction, they could potentially modify it to drain the sponsoring wallet.
+</Warning>
+
 **When to use `depositFeePayer`:**
 
 - When you want to provide a gasless experience for users depositing from Solana
