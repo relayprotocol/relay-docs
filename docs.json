@@ -8,6 +8,7 @@
     "dark": "#4615C8"
   },
   "favicon": "/favicon.png",
+  "homepage": "index",
   "navigation": {
     "tabs": [
       {
@@ -299,7 +300,8 @@
   },
   "logo": {
     "light": "/logo/relay-black.svg",
-    "dark": "/logo/relay-white.svg"
+    "dark": "/logo/relay-white.svg",
+    "href": "/"
   },
   "api": {
     "openapi": ["https://api.relay.link/documentation/json"],
