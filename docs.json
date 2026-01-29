@@ -300,7 +300,8 @@
   },
   "logo": {
     "light": "/logo/relay-black.svg",
-    "dark": "/logo/relay-white.svg"
+    "dark": "/logo/relay-white.svg",
+    "href": "/"
   },
   "api": {
     "openapi": ["https://api.relay.link/documentation/json"],
@@ -343,6 +344,9 @@
     "intercom": {
       "appId": "b09ps4q8"
     }
+  },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
   },
   "redirects": [
     {
