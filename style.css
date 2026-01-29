@@ -140,6 +140,21 @@
 
   /* Homepage */
 
+  /* Remove active tab highlight on homepage */
+  body:has(.homepage-bg) .nav-tabs-item[href="/what-is-relay"] {
+    color: rgb(75 85 99) !important; /* text-gray-600 */
+    text-shadow: none !important;
+  }
+
+  .dark body:has(.homepage-bg) .nav-tabs-item[href="/what-is-relay"],
+  body.dark:has(.homepage-bg) .nav-tabs-item[href="/what-is-relay"] {
+    color: rgb(156 163 175) !important; /* dark:text-gray-400 */
+  }
+
+  body:has(.homepage-bg) .nav-tabs-item[href="/what-is-relay"] > div {
+    background: transparent !important;
+  }
+
   .homepage-bg {
     width: 100%;
     height: 40vh;

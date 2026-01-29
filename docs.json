@@ -12,15 +12,6 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Home",
-        "groups": [
-          {
-            "group": "Home",
-            "pages": ["index"]
-          }
-        ]
-      },
-      {
         "tab": "Overview",
         "groups": [
           {
@@ -309,7 +300,8 @@
   },
   "logo": {
     "light": "/logo/relay-black.svg",
-    "dark": "/logo/relay-white.svg"
+    "dark": "/logo/relay-white.svg",
+    "href": "/"
   },
   "api": {
     "openapi": ["https://api.relay.link/documentation/json"],
