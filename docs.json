@@ -12,11 +12,20 @@
   "navigation": {
     "tabs": [
       {
+        "tab": "Home",
+        "groups": [
+          {
+            "group": "Home",
+            "pages": ["index"]
+          }
+        ]
+      },
+      {
         "tab": "Overview",
         "groups": [
           {
             "group": "Introduction",
-            "pages": ["index", "what-is-relay"]
+            "pages": ["what-is-relay"]
           },
           {
             "group": "Solutions",

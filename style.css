@@ -167,6 +167,12 @@
     flex-direction: column;
     gap: 12px;
     max-width: 300px;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+
+  .dark .homepage-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #1a1a1a;
   }
 
   .homepage-card:hover .homepage-card-link {
@@ -181,11 +187,19 @@
     margin-bottom: -8px;
   }
 
+  .dark .homepage-card h3 {
+    color: #fff;
+  }
+
   .homepage-card-description {
     margin: 0 0 40px 0;
     font-size: 14px;
     color: #666;
     line-height: 1.5;
+  }
+
+  .dark .homepage-card-description {
+    color: #999;
   }
 
   .homepage-card-link {
@@ -195,15 +209,38 @@
     margin-top: auto;
   }
 
+  .dark .homepage-card-link {
+    color: #a78bfa;
+  }
+
   @media (width < 700px) {
     .homepage-bg {
       height: 30vh;
+    }
+
+    .homepage-bg-text {
+      font-size: 24px !important;
+    }
+
+    .homepage-bg-logo {
+      width: 200px;
+    }
+
+    .homepage-cards {
+      margin: 40px 12px 0 12px;
     }
   }
 
   @media (width < 600px) {
     .homepage-bg {
       height: 20vh;
+    }
+    .homepage-bg-text {
+      font-size: 20px !important;
+    }
+
+    .homepage-bg-container > div {
+      gap: 0 !important;
     }
   }
 
@@ -214,5 +251,6 @@
     }
     .homepage-card {
       max-width: 600px;
+      width: 100%;
     }
   }
