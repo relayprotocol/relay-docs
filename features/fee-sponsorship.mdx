@@ -167,6 +167,8 @@ Add these parameters to your [Get Quote](/references/api/get-quote) API request:
 |-----------|------|-------------|
 | `subsidizeFees` | `boolean` | Set to `true` to have the sponsor pay for all fees associated with the request, including gas topup amounts. |
 | `maxSubsidizationAmount` | `string` | _(Optional)_ The maximum amount to subsidize in USDC with 6 decimal places (e.g., `"1000000"` = $1.00). If the total fees exceed this threshold, the entire request will **not** be subsidized. |
+| `subsidizeRent` | `boolean` | _(Optional)_ Set to `true` to sponsor Solana ATA rent fees. Requires `subsidizeFees` to also be enabled. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
+| `depositFeePayer` | `string` | _(Optional)_ A Solana address to pay deposit transaction fees for Solana origin transactions. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 
 ### Example Request
 
@@ -206,6 +208,114 @@ This protects you from unexpectedly high costs during network congestion or vola
 <Warning>
 When `maxSubsidizationAmount` is exceeded, the entire request falls back to user-paid fees. The fees are not partially subsidized.
 </Warning>
+
+---
+
+## Solana Fee Sponsorship
+
+Solana transactions involve unique cost structures that differ from EVM chains. In addition to standard transaction fees, Solana requires rent payments for creating new accounts, such as Associated Token Accounts (ATAs). Relay provides specific parameters to handle these costs.
+
+### Understanding Solana Rent
+
+When a user receives a token on Solana for the first time, an Associated Token Account must be created to hold that token. This account creation requires a rent payment (approximately 0.002 SOL). Without sponsorship, this cost falls on the user.
+
+### Sponsoring Destination Rent with `subsidizeRent`
+
+The `subsidizeRent` parameter allows you to sponsor the rent fees for ATA creation on Solana destination transactions.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `subsidizeRent` | `boolean` | Set to `true` to have the sponsor pay for Solana rent fees associated with ATA creation on the destination chain. |
+
+<Warning>
+The `subsidizeRent` parameter must be used in conjunction with `subsidizeFees`. There is currently no system for separating destination gas and rent fees. If you enable `subsidizeRent` without `subsidizeFees`, the rent will not be sponsored.
+</Warning>
+
+**Important considerations:**
+
+- When `subsidizeFees` is enabled but `subsidizeRent` is not, requests involving ATA creation will automatically fall back to user-paid fees. This is because rent sponsorship without explicit opt-in presents an exploitation vector.
+- The exploitation risk stems from the fact that users can close their ATA after the transaction completes and reclaim the rent. This effectively converts sponsored rent into a direct transfer of funds to the user.
+- Only enable `subsidizeRent` when you have a trusted relationship with your users or have implemented safeguards against abuse.
+
+#### Example Request
+
+```bash cURL
+curl -X POST \
+  'https://api.relay.link/quote' \
+  -H 'Content-Type: application/json' \
+  -H 'x-api-key: your-api-key' \
+  -d '{
+    "user": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+    "originChainId": 8453,
+    "originCurrency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "destinationChainId": 792703809,
+    "destinationCurrency": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "tradeType": "EXACT_INPUT",
+    "recipient": "9aUn5swQzUTRanaaTwmszxiv89cvFwUCjEBv1vZCoT1u",
+    "amount": "10000000",
+    "subsidizeFees": true,
+    "subsidizeRent": true,
+    "maxSubsidizationAmount": "5000000"
+  }'
+```
+
+In this example, a user bridges USDC from Base to Solana. Both `subsidizeFees` and `subsidizeRent` are enabled, ensuring the sponsor covers all destination fees including any ATA rent required for the recipient to receive USDC on Solana.
+
+### Sponsoring Origin Deposits with `depositFeePayer`
+
+For transactions originating from Solana, you can designate an alternative account to pay the transaction fees and rent for the deposit transaction using `depositFeePayer`.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `depositFeePayer` | `string` | A Solana address that will pay the transaction fees and rent for deposit transactions on Solana. This account must have sufficient SOL to cover these costs. |
+
+<Note>
+The `depositFeePayer` parameter operates independently from the `subsidizeFees` and `subsidizeRent` parameters. It applies specifically to Solana origin transactions and does not draw from your app balance.
+</Note>
+
+**When to use `depositFeePayer`:**
+
+- When you want to provide a gasless experience for users depositing from Solana
+- When your application maintains a dedicated fee-paying wallet for Solana transactions
+- When you want to abstract away the complexity of SOL requirements from your users
+
+#### Example Request
+
+```bash cURL
+curl -X POST \
+  'https://api.relay.link/quote' \
+  -H 'Content-Type: application/json' \
+  -H 'x-api-key: your-api-key' \
+  -d '{
+    "user": "9aUn5swQzUTRanaaTwmszxiv89cvFwUCjEBv1vZCoT1u",
+    "originChainId": 792703809,
+    "originCurrency": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "destinationChainId": 8453,
+    "destinationCurrency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "tradeType": "EXACT_INPUT",
+    "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+    "amount": "10000000",
+    "depositFeePayer": "YourFeePayerSolanaAddressHere"
+  }'
+```
+
+In this example, a user bridges USDC from Solana to Base. The `depositFeePayer` address will cover the Solana transaction fees for the deposit, allowing the user to transact without holding SOL.
+
+### Solana Sponsorship Summary
+
+| Parameter | Direction | Funding Source | Use Case |
+|-----------|-----------|----------------|----------|
+| `subsidizeFees` + `subsidizeRent` | To Solana (destination) | App Balance | Sponsor destination gas and ATA rent when users receive tokens on Solana |
+| `depositFeePayer` | From Solana (origin) | Specified Solana wallet | Sponsor origin transaction fees when users deposit from Solana |
+
+---
+
+## What Fee Sponsorship Does Not Cover
+
+Fee sponsorship is designed to cover relay and execution costs, but certain fees remain outside its scope:
+
+- **Origin chain gas fees** — Users must pay the gas required to submit their transaction on the origin chain (unless using `depositFeePayer` for Solana origins).
+- **App fees** — Fees configured via the `appFees` parameter are not deducted from your sponsor balance. These are separate charges that accrue to the specified recipient addresses.
 
 ---
 
@@ -250,4 +360,5 @@ For more details on the fee structure, see [Relay Fees](/references/api/api_core
 - [Get App Fee Balances](/references/api/get-app-fee-balances) — API reference for checking balances
 - [Get Quote](/references/api/get-quote) — API reference for quote requests
 - [Relay Fees](/references/api/api_core_concepts/fees) — Understanding Relay's fee structure
+- [Solana Support](/references/api/api_guides/solana) — Guide to depositing and withdrawing on Solana
 
