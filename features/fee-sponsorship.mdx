@@ -274,7 +274,10 @@ The `depositFeePayer` parameter operates independently from the `subsidizeFees` 
 </Note>
 
 <Warning>
-When using `depositFeePayer`, Relay returns a transaction that requires the integrator's sponsoring wallet to sign **first**. The integrator must sign the transaction before passing it to the user. If the user receives an unsigned transaction, they could potentially modify it to drain the sponsoring wallet.
+**Security considerations for `depositFeePayer`:**
+
+- **Signing order is critical.** Relay returns a transaction that requires the integrator's sponsoring wallet to sign **first**. The integrator must sign the transaction before passing it to the user. If the user receives an unsigned transaction, they could potentially modify it to drain the sponsoring wallet.
+- **Avoid same-chain swaps with untrusted users.** The `depositFeePayer` parameter is exploitable when used for same-chain swaps on Solana. Only use it for same-chain operations when the wallet is under your control.
 </Warning>
 
 **When to use `depositFeePayer`:**
