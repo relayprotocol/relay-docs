@@ -142,7 +142,7 @@ Follow this 5-step flow to integrate Relay into your application:
     The [quote endpoint](/references/api/get-quote-v2) returns a `steps` array. Think of this as a recipe your application must follow. You need to iterate through these steps and prompt the user to sign or submit them.
     <Callout icon="person-swimming" color="#4615C8">
       ### Deep Dive
-      For the full logic on parsing steps, see [Understanding Step Execution](/references/api/api_core_concepts/step-execution).    
+      For the full logic on parsing steps, see [**Understanding Step Execution**](/references/api/api_core_concepts/step-execution).    
     </Callout>
 
     ## The Logic
@@ -151,18 +151,9 @@ Follow this 5-step flow to integrate Relay into your application:
     - **Check the Step Kind:** Identify if the step is a `transaction` (submit to chain) or a `signature` (sign off-chain).
     - **Execute:** For transactions, submit the provided `data`, `to`, `value`, and `chainId` using the user's wallet. For signatures, follow the `signatureKind` provided in the step item to sign the `message`.
 
-    <Callout icon="plus" color="#4615C8">
-    ### Need More Complexity?
-    For the full logic on parsing steps, see [Understanding Step Execution](/references/api/api_core_concepts/step-execution). Because Relay's API is generic, this exact same loop automatically handles advanced flows:
-
-    - [**Cross-Chain Swaps**](/references/api/api_guides/bridging-integration-guide): Uses the same logic as bridging; just change the input/output currencies in the Quote.
-    - [**Smart Accounts**](/references/api/api_guides/smart_accounts/smart-accounts): Batches multiple steps into a single atomic user operation.
-    - [**Contract Calls**](/references/api/api_guides/calling-integration-guide): Executes arbitrary logic (like NFT mints) on the destination chain.
-    </Callout>
-
     ## The Script (Node.js / Viem example)
     Copy the script below to execute the transaction returned by the Quote in Step 2. You'll need to add the wallet connection logic using your preferred provider.
-    ```typescript
+    ```typescript expandable
     // npm install viem
     import { createWalletClient, http } from 'viem';
     import { privateKeyToAccount } from 'viem/accounts';
@@ -238,7 +229,7 @@ Follow this 5-step flow to integrate Relay into your application:
 
     <Tip>
       ### Tip
-      Poll this endpoint once per second. For a real-time status stream you can subscribe to Relay’s [websocket server](/references/api/api_guides/websockets).
+      Poll this endpoint once per second. For a real-time status stream you can subscribe to Relay’s [**websocket server**](/references/api/api_guides/websockets).
     </Tip>
 
     ## Status Lifecycle
