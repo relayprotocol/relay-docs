@@ -3,6 +3,8 @@ title: 'Quickstart'
 description: 'Execute your first cross-chain transaction in under 5 minutes.'
 ---
 
+import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
+
 Relay is a multichain payments network. You define the **Intent** (what the user wants), and Relay handles the **Execution** (how to get there).
 
 Follow this 5-step flow to integrate Relay into your application:
@@ -227,10 +229,7 @@ Follow this 5-step flow to integrate Relay into your application:
       ```
     </CodeGroup>
 
-    <Tip>
-      ### Tip
-      Poll this endpoint once per second. For a real-time status stream you can subscribe to Relay’s [**websocket server**](/references/api/api_guides/websockets).
-    </Tip>
+    <StatusWebsockets />
 
     ## Status Lifecycle
     The diagram below illustrates the journey of a cross-chain transaction through Relay's infrastructure and the corresponding API statuses. Below are descriptions for each status. Refer to the [Get Status](/references/api/get-intents-status-v3) endpoint for a full list of statuses and what they mean.
