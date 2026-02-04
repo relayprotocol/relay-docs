@@ -9,128 +9,128 @@ import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
 
 <QuickstartCallout/>
 
-## Get a Quote
+<Steps>
+  <Step title="Get a Quote">
+    Every action in Relay starts with a Quote, this includes bridging. The quote provides all necessary information including fees, transaction data, and execution steps. Use the [quote endpoint](/references/api/get-quote-v2) to request a bridge quote.
 
-Every action in Relay starts with a Quote, this includes bridging. The quote provides all necessary information including fees, transaction data, and execution steps. Use the [quote endpoint](/references/api/get-quote-v2) to request a bridge quote.
-
-<CodeGroup>
-```bash Request
-curl -X POST "https://api.relay.link/quote/v2" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
-    "originChainId": 1,
-    "destinationChainId": 8453,
-    "originCurrency": "0x0000000000000000000000000000000000000000",
-    "destinationCurrency": "0x0000000000000000000000000000000000000000",
-    "amount": "100000000000000000",
-    "tradeType": "EXACT_INPUT"
-  }'
-```
-```json Response expandable
-{
-  "steps": [
+    <CodeGroup>
+    ```bash Request
+    curl -X POST "https://api.relay.link/quote/v2" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
+        "originChainId": 1,
+        "destinationChainId": 8453,
+        "originCurrency": "0x0000000000000000000000000000000000000000",
+        "destinationCurrency": "0x0000000000000000000000000000000000000000",
+        "amount": "100000000000000000",
+        "tradeType": "EXACT_INPUT"
+      }'
+    ```
+    ```json Response expandable
     {
-      "id": "deposit",
-      "action": "Confirm transaction in your wallet",
-      "description": "Deposit funds for executing the bridge",
-      "kind": "transaction",
-      "requestId": "0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331",
-      "items": [
+      "steps": [
         {
-          "status": "incomplete",
-          "data": {
-            "from": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
-            "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-            "data": "0x00fad611",
-            "value": "100000000000000000",
-            "chainId": 1
-          },
-          "check": {
-            "endpoint": "/intents/status?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331",
-            "method": "GET"
-          }
+          "id": "deposit",
+          "action": "Confirm transaction in your wallet",
+          "description": "Deposit funds for executing the bridge",
+          "kind": "transaction",
+          "requestId": "0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331",
+          "items": [
+            {
+              "status": "incomplete",
+              "data": {
+                "from": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+                "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+                "data": "0x00fad611",
+                "value": "100000000000000000",
+                "chainId": 1
+              },
+              "check": {
+                "endpoint": "/intents/status?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331",
+                "method": "GET"
+              }
+            }
+          ]
         }
-      ]
-    }
-  ],
-  "fees": {
-    "gas": {
-      "amount": "21000000000000000",
-      "currency": "eth"
-    },
-    "relayer": {
-      "amount": "5000000000000000",
-      "currency": "eth"
-    }
-  },
-  "details": {
-    "operation": "bridge",
-    "timeEstimate": 30,
-    "currencyIn": {
-      "currency": {
-        "chainId": 1,
-        "address": "0x0000000000000000000000000000000000000000",
-        "symbol": "ETH",
-        "name": "Ethereum",
-        "decimals": 18
+      ],
+      "fees": {
+        "gas": {
+          "amount": "21000000000000000",
+          "currency": "eth"
+        },
+        "relayer": {
+          "amount": "5000000000000000",
+          "currency": "eth"
+        }
       },
-      "amount": "100000000000000000"
-    },
-    "currencyOut": {
-      "currency": {
-        "chainId": 8453,
-        "address": "0x0000000000000000000000000000000000000000",
-        "symbol": "ETH",
-        "name": "Ethereum",
-        "decimals": 18
-      },
-      "amount": "95000000000000000"
+      "details": {
+        "operation": "bridge",
+        "timeEstimate": 30,
+        "currencyIn": {
+          "currency": {
+            "chainId": 1,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ethereum",
+            "decimals": 18
+          },
+          "amount": "100000000000000000"
+        },
+        "currencyOut": {
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ethereum",
+            "decimals": 18
+          },
+          "amount": "95000000000000000"
+        }
+      }
     }
-  }
-}
-```
-</CodeGroup>
+    ```
+    </CodeGroup>
 
-You can learn more about quote request parameters and response data [here](/references/api/get-quote-v2).
+    You can learn more about quote request parameters and response data [here](/references/api/get-quote-v2).
 
-<GetAnApiKey />
+    <GetAnApiKey />
+  </Step>
+  <Step title="Execute the Bridge">
+    After receiving a bridge quote, execute it by processing each step in the response. The execution handles both the origin chain transaction and destination chain fulfillment.\
+    \
+    Learn more about step execution using the API [here](/references/api/api_core_concepts/step-execution).
+  </Step>
+  <Step title="Monitor Bridge Status">
+    You can check the status of a bridge operation at any time using the [status endpoint](/references/api/get-intents-status-v3) with the `requestId` located inside each step object in your [quote response](/references/api/quickstart#request).
 
-## Execute the Bridge
+    <CodeGroup>
+    ```bash Request
+    curl "https://api.relay.link/intents/status/v3?requestId=0xed42e2e48c56b06f8f384d66d5f3e6c450fc3a2c7cba19d92a01a649a31a0e94"
+    ```
+    ```json Response
+    {
+      "status": "success",
+      "inTxHashes": [
+        "0xae0a66324f82bc54299663972b3a48c939af777ff795b13bd72e7755a6a68bb3"
+      ],
+      "txHashes": [
+        "3exJVjCEMfqVCBN6FBCXPFp6JUmm91pBp9Mp5XWwkoBVAgcr6fM4kZyzdAhoRWtWAvVESMZPGA7G1CibTF8uxaMk"
+      ],
+      "updatedAt": 1769988962883,
+      "originChainId": 8453,
+      "destinationChainId": 792703809
+    }
+    ```
+    </CodeGroup>
 
-After receiving a bridge quote, execute it by processing each step in the response. The execution handles both the origin chain transaction and destination chain fulfillment.\
-\
-Learn more about step execution using the API [here](/references/api/api_core_concepts/step-execution).
+    <StatusWebsockets showHeader={false} />
 
-## Monitor Bridge Status
+    Learn more about how to check the status of the fill [here](/references/api/api_core_concepts/step-execution#checking-the-fill-status).
 
-You can check the status of a bridge operation at any time using the `/intents/status` endpoint.
-
-<CodeGroup>
-```bash Request
-curl "https://api.relay.link/intents/status/v3?requestId=0xed42e2e48c56b06f8f384d66d5f3e6c450fc3a2c7cba19d92a01a649a31a0e94"
-```
-```json Response
-{
-  "status": "success",
-  "inTxHashes": [
-    "0xae0a66324f82bc54299663972b3a48c939af777ff795b13bd72e7755a6a68bb3"
-  ],
-  "txHashes": [
-    "3exJVjCEMfqVCBN6FBCXPFp6JUmm91pBp9Mp5XWwkoBVAgcr6fM4kZyzdAhoRWtWAvVESMZPGA7G1CibTF8uxaMk"
-  ],
-  "updatedAt": 1769988962883,
-  "originChainId": 8453,
-  "destinationChainId": 792703809
-}
-```
-</CodeGroup>
-
-<StatusWebsockets showHeader={false} />
-
-Learn more about how to check the status of the fill [here](/references/api/api_core_concepts/step-execution#checking-the-fill-status).
-
-Learn more about the status lifecycle, see the [status lifecycle diagram](/references/api/quickstart#status-lifecycle).
+    Learn more about the status lifecycle, see the [status lifecycle diagram](/references/api/quickstart#status-lifecycle).
+  </Step>
+</Steps>
 
 ## UX Considerations
 
@@ -142,5 +142,7 @@ Learn more about the status lifecycle, see the [status lifecycle diagram](/refer
 ### See Also
 
 - [**App Fees**](/features/app-fees): Monetize your integration by adding a fee (in bps) to every quote.
+- [**Deposit Addresses**](/features/deposit-addresses): Use Relay deposit addresses to unlock new chains and reduce wallet friction.
 - [**Fee Sponsorship**](/features/fee-sponsorship): Sponsor fees for your users to reduce friction and improve the user experience.
-- [**Handling Errors**](/references/api/api_core_concepts/errors): Learn how to handle quote errors in the Relay API.
+- [**Handling Errors**](/references/api/api_core_concepts/errors): Handle quote errors when using the Relay API.
+- [**Relay Fees**](/references/api/api_core_concepts/fees): Understand the fees associated with using the Relay API.

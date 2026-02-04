@@ -269,3 +269,89 @@
       width: 100%;
     }
   }
+
+  /* Relay Checkbox */
+  .relay-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border: 1px solid #C8CCFF;
+    border-radius: 3px;
+    background-color: #F7F8FF;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .relay-checkbox:hover {
+    border-color: #B4B8FF;
+    background-color: #EFF1FF;
+  }
+
+  .relay-checkbox:focus {
+    outline: none;
+    border-color: #4615C8;
+    box-shadow: 0 0 0 2px rgba(70, 21, 200, 0.15);
+  }
+
+  .relay-checkbox:checked {
+    background-color: #4615C8;
+    border-color: #4615C8;
+  }
+
+  .relay-checkbox:checked:hover {
+    background-color: #3B00B4;
+    border-color: #3B00B4;
+  }
+
+  .relay-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 4px;
+    height: 7px;
+    border: solid #fff;
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+  }
+
+  .relay-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background-color: #EFF1FF;
+    border-color: #D7DBFF;
+  }
+
+  /* Dark mode */
+  .dark .relay-checkbox {
+    background-color: #141331;
+    border-color: #4016B8;
+  }
+
+  .dark .relay-checkbox:hover {
+    border-color: #4C24D1;
+    background-color: #221166;
+  }
+
+  .dark .relay-checkbox:focus {
+    border-color: #5B2AF9;
+    box-shadow: 0 0 0 2px rgba(91, 42, 249, 0.25);
+  }
+
+  .dark .relay-checkbox:checked {
+    background-color: #4615C8;
+    border-color: #4615C8;
+  }
+
+  .dark .relay-checkbox:checked:hover {
+    background-color: #3901AA;
+    border-color: #3901AA;
+  }
+
+  .dark .relay-checkbox:disabled {
+    background-color: #221166;
+    border-color: #4016B8;
+  }
