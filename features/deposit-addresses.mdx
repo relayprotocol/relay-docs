@@ -27,6 +27,14 @@ Once a deposit occurs, the quote will automatically be generated post-deposit to
 
 All Relay EVM deposit addresses begin and end with the character `d` (not case-sensitive). This is to help us with reducing the indexing search space.
 
+## Supported Currencies
+
+To determine which currencies support deposit addresses on a specific chain, use the [chains API](https://docs.relay.link/references/api/get-chains-v2) endpoint. Each chain's response includes a `solverCurrencies` array that contains all currencies available for deposit address bridging on that chain.
+
+This method provides the most straightforward way to check deposit address support without requiring additional queries. Simply look up the desired chain and check if your target currency is included in the `solverCurrencies` list.
+
+Alternatively, you can query the [currencies API](https://docs.relay.link/references/api/get-currencies-v2) by setting the `depositAddressOnly` parameter to `true` to get a comprehensive list of all supported currencies across chains.
+
 ## Edge Cases
 
 We have automatic handling for common edge cases that can occur when using deposit addresses:
