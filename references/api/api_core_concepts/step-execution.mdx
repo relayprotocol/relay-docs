@@ -227,33 +227,33 @@ Each step has a unique `id` that identifies the type of action required. Underst
 
 ### Transaction Steps
 
-| Step ID    | Description                                            | When Used                                                                           |
-| ---------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `deposit`  | Deposit funds to the relayer for cross-chain execution | Used for cross-chain swaps and bridges.                                             |
-| `approve`  | Approve the transfer of an ERC20 token                 | Required before `deposit` or `swap` steps for ERC20 tokens the solver doesn't hold. |
-| `approval` | Approve token for deposit                              | Token approval for deposit operations.                                              |
-| `swap`     | Execute a same-chain token swap                        | For same-chain swaps. May require an approval step first for EVM swaps.             |
-| `send`     | Send funds to the recipient                            | When sending the same asset on the same chain to a different recipient.             |
+| Step ID                   | Description                                            | When Used                                                                           |
+| ------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| [`deposit`](#deposit)     | Deposit funds to the relayer for cross-chain execution | Used for cross-chain swaps and bridges.                                             |
+| [`approve`](#approve)     | Approve the transfer of an ERC20 token                 | Required before `deposit` or `swap` steps for ERC20 tokens the solver doesn't hold. |
+| `approval`                | Approve token for deposit                              | Token approval for deposit operations.                                              |
+| `swap`                    | Execute a same-chain token swap                        | For same-chain swaps. May require an approval step first for EVM swaps.             |
+| [`send`](#send)           | Send funds to the recipient                            | When sending the same asset on the same chain to a different recipient.             |
 
 ### Signature Steps
 
-| Step ID      | Description                                | When Used                                                                                                                                                                                                      |
-| ------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `authorize`  | Sign authorization for specific operations | Used for: (1) Claiming [app fees](/features/app-fees) - EIP-191 signature to verify wallet ownership, (2) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits - nonce-mapping signature. |
-| `authorize1` | Sign to approve swap of tokens             | Main flow for cross-chain permits Permit/Permit2.                                                                                                                                                              |
-| `authorize2` | Sign to approve transfer of tokens         | Same-chain swap permits.                                                                                                                                                                                       |
+| Step ID                       | Description                                | When Used                                                                                                                                                                                                      |
+| ----------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`authorize`](#authorize)     | Sign authorization for specific operations | Used for: (1) Claiming [app fees](/features/app-fees) - EIP-191 signature to verify wallet ownership, (2) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits - nonce-mapping signature. |
+| [`authorize1`](#authorize1)   | Sign to approve swap of tokens             | Main flow for cross-chain permits Permit/Permit2.                                                                                                                                                              |
+| [`authorize2`](#authorize2)   | Sign to approve transfer of tokens         | Same-chain swap permits.                                                                                                                                                                                       |
 
 ### Common Step Flows
 
 Depending on the action and tokens involved, Relay chains steps together. Here are common flows you may encounter:
 
-| Flow                  | Description                                     |
-| --------------------- | ----------------------------------------------- |
-| `deposit`             | Single step for cross-chain swaps/bridges       |
-| `swap`                | Single step for same-chain swaps                |
-| `approve` → `deposit` | Approval needed before deposit for ERC20 tokens |
-| `approve` → `swap`    | Same-chain swap requiring approval              |
-| `authorize1`          | Cross-chain permit-based transfer (gasless)     |
+| Flow                                                | Description                                     |
+| --------------------------------------------------- | ----------------------------------------------- |
+| [`deposit`](#deposit)                               | Single step for cross-chain swaps/bridges       |
+| `swap`                                              | Single step for same-chain swaps                |
+| [`approve`](#approve) → [`deposit`](#deposit)       | Approval needed before deposit for ERC20 tokens |
+| [`approve`](#approve) → `swap`                      | Same-chain swap requiring approval              |
+| [`authorize1`](#authorize1)                         | Cross-chain permit-based transfer (gasless)     |
 
 ---
 
@@ -265,8 +265,7 @@ Below are detailed examples of each step type you may encounter when working wit
 
 Deposit funds to the relayer to execute the swap. Used when the Relay solver holds the destination token.
 
-<Accordion title="Example Step">
-```json
+```json expandable
 {
   "id": "deposit",
   "action": "Confirm transaction in your wallet",
@@ -293,14 +292,12 @@ Deposit funds to the relayer to execute the swap. Used when the Relay solver hol
   ]
 }
 ```
-</Accordion>
 
 ### approve
 
 An approval transaction to approve the transfer of an ERC20 token. Always followed by an additional step (`deposit` or `swap`).
 
-<Accordion title="Example Step">
-```json
+```json expandable
 {
   "id": "approve",
   "action": "Confirm transaction in your wallet",
@@ -326,14 +323,12 @@ An approval transaction to approve the transfer of an ERC20 token. Always follow
   ]
 }
 ```
-</Accordion>
 
 ### send
 
 Send funds to a recipient on the same chain.
 
-<Accordion title="Example Step">
-```json
+```json expandable
 {
   "id": "send",
   "action": "Confirm transaction in your wallet",
@@ -360,7 +355,6 @@ Send funds to a recipient on the same chain.
   "requestId": "0xec7244ebc6c9ce3a344f9eeb6c84df921b55e0c06b6cb25a49c167fbeafb7e1b"
 }
 ```
-</Accordion>
 
 ### authorize
 
@@ -369,8 +363,7 @@ Sign authorization for specific operations. This step is used in two scenarios:
 1. **Claiming App Fees**: Signs an EIP-191 message to verify wallet ownership before claiming accrued app fees.
 2. **Hyperliquid Deposits**: Signs a nonce-mapping signature for v2 Hyperliquid deposits.
 
-<Accordion title="App Fee Claim Example">
-```json
+```json expandable App Fee Claim Example
 {
   "id": "authorize",
   "action": "Sign authorization",
@@ -397,15 +390,13 @@ Sign authorization for specific operations. This step is used in two scenarios:
   ]
 }
 ```
-</Accordion>
 
 ### authorize1
 
 The main flow for cross-chain permits. Uses Permit2 or TransferWithAuthorization (EIP-3009).
 
-<Accordion title="Example Step">
-  ```json
-  {{
+  ```json expandable
+  {
     id: "authorize1",
     action: "Sign authorization",
     description: "Sign to approve swap of USDC for ETH",
@@ -479,16 +470,14 @@ The main flow for cross-chain permits. Uses Permit2 or TransferWithAuthorization
         },
       },
     ],
-  }}
+  }
   ```
-</Accordion>
 
 ### authorize2
 
 Sign authorization for same-chain swap permits using PermitBatchWitnessTransferFrom.
 
-<Accordion title="Example Step">
-```json
+```json expandable
 {
   "id": "authorize2",
   "action": "Sign authorization",
@@ -574,13 +563,12 @@ Sign authorization for same-chain swap permits using PermitBatchWitnessTransferF
   ]
 }
 ```
-</Accordion>
 
 ---
 
 ### Full Quote Example
 
-```
+```json expandable
 {
   "steps": [
     {
