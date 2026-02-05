@@ -10,9 +10,18 @@ import QuickstartCallout from "/snippets/QuickstartCallout.mdx";
 
 You can use Relay cross-chain execution to perform any action (tx) on any chain. This works by specifying the transaction data you wish to execute on the destination chain as part of the initial quoting process.
 
+## Before you start
+
+While not mandatory for integration, doing the following will improve the UX for your users considerably:
+
+* **Verify user balance** - Confirm user has sufficient funds for amount \+ fees
+* **Check chain support** - Confirm both origin and destination chains are supported
+* **Validate quote** - Quotes are revalidated when being filled, keep your quotes as fresh as possible.
+* **Handle errors** - Implement proper error handling for API requests and transaction failures
 
 <Steps>
   <Step title="Get a Quote">
+    ## Get a Quote
     To execute a cross-chain transaction, you need to specify the origin chain for payment, the destination chain where the contract is deployed, and the transaction data to execute. Use the [quote endpoint](/references/api/get-quote-v2) with specific parameters for cross-chain calling.
 
     <CodeGroup>
@@ -542,11 +551,11 @@ You can use Relay cross-chain execution to perform any action (tx) on any chain.
 
     </CodeGroup>
 
-    ## ERC20 Contract Calls
+    ### ERC20 Contract Calls
 
     **Critical**: When your contract call involves spending ERC20 tokens, you must include an approval transaction in your `txs` array. The approval must come before the actual contract call.
 
-    ### ERC20 Approval \+ Contract Call Pattern
+    #### ERC20 Approval \+ Contract Call Pattern
 
     <CodeGroup>
     ```javascript JavaScript/ethers.js expandable
@@ -733,7 +742,7 @@ You can use Relay cross-chain execution to perform any action (tx) on any chain.
 
     </CodeGroup>
 
-    ### Sweeping ERC20 Balance
+    #### Sweeping ERC20 Balance
 
     Relay's router contract has a useful function that you can call to transfer out full balance of an ERC20 token, even if you don't know the full balance. There are currently two methods for doing this:
 
@@ -750,7 +759,7 @@ You can use Relay cross-chain execution to perform any action (tx) on any chain.
     }
     ```
 
-    ### ERC20 Troubleshooting Guide
+    #### ERC20 Troubleshooting Guide
 
     **Problem**: "ERC20: transfer amount exceeds allowance" error
     **Solution**: Ensure you include the approval transaction before your contract call
@@ -783,11 +792,13 @@ You can use Relay cross-chain execution to perform any action (tx) on any chain.
     You can learn more about quote request parameters and response data [here](/references/api/get-quote-v2).
   </Step>
   <Step title="Execute the Call">
+    ## Execute the Call
     After receiving a call quote, execute it by processing each step in the response. The execution handles both the origin chain transaction and destination chain fulfillment.\
   \
     Learn more about step execution using the API [here](/references/api/api_core_concepts/step-execution).
   </Step>
   <Step title="Monitor Cross-Chain Call Status">
+    ## Monitor Cross-Chain Call Status
     Track the progress of your cross-chain call using the status endpoint:
 
     <CodeGroup>
@@ -818,7 +829,7 @@ You can use Relay cross-chain execution to perform any action (tx) on any chain.
   </Step>
 </Steps>
 
-### Preflight Checklist
+## Preflight Checklist
 
 <input className="relay-checkbox" type="checkbox" name="contract-compatibility" value="yes"/> **Contract compatibility** - Before integrating cross-chain calls, ensure your contract is compatible with Relay. Review our [Contract Compatibility](/references/api/api_core_concepts/contract-compatibility) overview to make any necessary changes to your smart contracts.
 
@@ -954,14 +965,7 @@ const txs = [
 ```
 </CodeGroup>
 
-## UX Considerations
-
-* **Verify user balance** - Confirm user has sufficient funds for amount \+ fees
-* **Check chain support** - Confirm both origin and destination chains are supported
-* **Validate quote** - Quotes are revalidated when being filled, keep your quotes as fresh as possible.
-* **Handle errors** - Implement proper error handling for API requests and transaction failures
-
-### See Also
+## See Also
 
 - [**App Fees**](/features/app-fees): Monetize your integration by adding a fee (in bps) to every quote.
 - [**Fee Sponsorship**](/features/fee-sponsorship): Sponsor fees for your users to reduce friction and improve the user experience.

@@ -9,8 +9,18 @@ import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
 
 <QuickstartCallout/>
 
+## Before you start
+
+While not mandatory for integration, doing the following will improve the UX for your users considerably:
+
+* **Verify user balance** - Ensure the user has sufficient funds for the bridge amount plus fees
+* **Check chain support** - Confirm both origin and destination chains are supported
+* **Validate quote** - Quotes are revalidated when being filled, keep your quotes as fresh as possible.
+* **Handle errors** - Implement proper error handling for API requests and transaction failures
+
 <Steps>
   <Step title="Get a Quote">
+    ## Get a Quote
     Every action in Relay starts with a Quote, this includes bridging. The quote provides all necessary information including fees, transaction data, and execution steps. Use the [quote endpoint](/references/api/get-quote-v2) to request a bridge quote.
 
     <CodeGroup>
@@ -97,11 +107,13 @@ import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
     <GetAnApiKey />
   </Step>
   <Step title="Execute the Bridge">
+    ## Execute the Bridge
     After receiving a bridge quote, execute it by processing each step in the response. The execution handles both the origin chain transaction and destination chain fulfillment.\
     \
     Learn more about step execution using the API [here](/references/api/api_core_concepts/step-execution).
   </Step>
   <Step title="Monitor Bridge Status">
+    ## Monitor Bridge Status
     You can check the status of a bridge operation at any time using the [status endpoint](/references/api/get-intents-status-v3) with the `requestId` located inside each step object in your [quote response](/references/api/quickstart#request).
 
     <CodeGroup>
@@ -132,14 +144,7 @@ import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
   </Step>
 </Steps>
 
-## UX Considerations
-
-* **Verify user balance** - Ensure the user has sufficient funds for the bridge amount plus fees
-* **Check chain support** - Confirm both origin and destination chains are supported
-* **Validate quote** - Quotes are revalidated when being filled, keep your quotes as fresh as possible.
-* **Handle errors** - Implement proper error handling for API requests and transaction failures
-
-### See Also
+## See Also
 
 - [**App Fees**](/features/app-fees): Monetize your integration by adding a fee (in bps) to every quote.
 - [**Deposit Addresses**](/features/deposit-addresses): Use Relay deposit addresses to unlock new chains and reduce wallet friction.
