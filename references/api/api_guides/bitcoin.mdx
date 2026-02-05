@@ -25,17 +25,6 @@ integration.
 | Withdraw from Bitcoin | `chainId`    | `8253038`                                   | Chain ID assigned to Bitcoin in Relay. |
 |                       | `currency`   | `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8` | Native BTC identifier.                 |
 
-### API Params
-
-| Action                | Parameter             | Input                                       | Description                            |
-| --------------------- | --------------------- | ------------------------------------------- | -------------------------------------- |
-| Deposit to Bitcoin    | `recipient`           | User's Bitcoin Address                      | Valid Bitcoin address.                 |
-|                       | `destinationChainId`  | `8253038`                                   | Chain ID assigned to Bitcoin in Relay. |
-|                       | `destinationCurrency` | `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8` | Native BTC identifier.                 |
-| Withdraw from Bitcoin | `user`                | User's Bitcoin Address                      | Valid Bitcoin address.                 |
-|                       | `originChainId`       | `8253038`                                   | Chain ID assigned to Bitcoin in Relay. |
-|                       | `originCurrency`      | `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8` | Native BTC identifier.                 |
-
 ### Bitcoin Currency
 
 | Token | Currency Address                            | Symbol | Decimals |
@@ -92,13 +81,26 @@ async function getBitcoinBalance(address: string) {
 
 ## API
 
+### Params
+
+| Action                | Parameter             | Input                                       | Description                            |
+| --------------------- | --------------------- | ------------------------------------------- | -------------------------------------- |
+| Deposit to Bitcoin    | `recipient`           | User's Bitcoin Address                      | Valid Bitcoin address.                 |
+|                       | `destinationChainId`  | `8253038`                                   | Chain ID assigned to Bitcoin in Relay. |
+|                       | `destinationCurrency` | `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8` | Native BTC identifier.                 |
+| Withdraw from Bitcoin | `user`                | User's Bitcoin Address                      | Valid Bitcoin address.                 |
+|                       | `originChainId`       | `8253038`                                   | Chain ID assigned to Bitcoin in Relay. |
+|                       | `originCurrency`      | `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8` | Native BTC identifier.                 |
+
+### Execution
+
 Bitcoin uses the standard Relay API flow. Review the
 [execution steps](/references/api/api_core_concepts/step-execution)
 documentation, then use the [Get Quote](/references/api/get-quote-v2) endpoint.
 
 ### Example: Withdraw from Bitcoin to Base
 
-```bash
+```bash Request
 curl -X POST "https://api.relay.link/quote/v2" \
   -H "Content-Type: application/json" \
   -d '{
@@ -112,10 +114,112 @@ curl -X POST "https://api.relay.link/quote/v2" \
     "amount": "100000"
   }'
 ```
+```json Response expandable
+{
+  "steps": [
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the relayer to execute the swap for USDC",
+      "kind": "transaction",
+      "requestId": "0x90399ed9112ee951b6312fae28196e02384f6fd26c5d40a3d51bf2b0fbb1ae80",
+      "depositAddress": "",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "psbt": "70736274ff0100fdb4010200000007d5..."
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0x90399ed9112ee951b6312fae28196e02384f6fd26c5d40a3d51bf2b0fbb1ae80",
+            "method": "GET"
+          }
+        }
+      ]
+    }
+  ],
+  "fees": {
+    "gas": {
+      "currency": {
+        "chainId": 8253038,
+        "address": "bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8",
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/currencies/btc.png",
+          "verified": true
+        }
+      },
+      "amount": "3639",
+      "amountFormatted": "0.00003639",
+      "amountUsd": "2.654085",
+      "minimumAmount": "3639"
+    },
+    "relayer": {
+      "currency": {
+        "chainId": 8253038,
+        "address": "bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8",
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/currencies/btc.png",
+          "verified": true
+        }
+      },
+      "amount": "660",
+      "amountFormatted": "0.0000066",
+      "amountUsd": "0.481367",
+      "minimumAmount": "660"
+    }
+  },
+  "details": {
+    "operation": "swap",
+    "sender": "bc1q4vxn43l44h30nkluqfxd9eckf45vr2awz38lwa",
+    "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
+    "currencyIn": {
+      "currency": {
+        "chainId": 8253038,
+        "address": "bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8",
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/currencies/btc.png",
+          "verified": true
+        }
+      },
+      "amount": "100000",
+      "amountFormatted": "0.001",
+      "amountUsd": "72.934456",
+      "minimumAmount": "100000"
+    },
+    "currencyOut": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "metadata": {
+          "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+          "verified": true
+        }
+      },
+      "amount": "72469395",
+      "amountFormatted": "72.469395",
+      "amountUsd": "72.446929",
+      "minimumAmount": "71020007"
+    },
+    "timeEstimate": 4
+  }
+}
+```
 
 ### Example: Deposit to Bitcoin from Base
 
-```bash
+```bash Request
 curl -X POST "https://api.relay.link/quote/v2" \
   -H "Content-Type: application/json" \
   -d '{
@@ -128,6 +232,127 @@ curl -X POST "https://api.relay.link/quote/v2" \
     "tradeType": "EXACT_INPUT",
     "amount": "10000000"
   }'
+```
+```json Response expandable
+{
+  "steps": [
+    {
+      "id": "approve",
+      "action": "Confirm transaction in your wallet",
+      "description": "Sign an approval for USDC",
+      "kind": "transaction",
+      "requestId": "0xd24628d1b4707b389e0298ecf86733c9f524599a2e28bdb1458f27f58cc4d6ca",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
+            "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "chainId": 8453
+          }
+        }
+      ]
+    },
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the relayer to execute the swap for BTC",
+      "kind": "transaction",
+      "requestId": "0xd24628d1b4707b389e0298ecf86733c9f524599a2e28bdb1458f27f58cc4d6ca",
+      "depositAddress": "",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
+            "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+            "chainId": 8453
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0xd24628d1b4707b389e0298ecf86733c9f524599a2e28bdb1458f27f58cc4d6ca",
+            "method": "GET"
+          }
+        }
+      ]
+    }
+  ],
+  "fees": {
+    "gas": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "238331268682",
+      "amountFormatted": "0.000000238331268682",
+      "amountUsd": "0.000510",
+      "minimumAmount": "238331268682"
+    },
+    "relayer": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "metadata": {
+          "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+          "verified": true
+        }
+      },
+      "amount": "678569",
+      "amountFormatted": "0.678569",
+      "amountUsd": "0.678359",
+      "minimumAmount": "678569"
+    }
+  },
+  "details": {
+    "operation": "swap",
+    "sender": "0x03508bb71268bba25ecacc8f620e01866650532c",
+    "recipient": "bc1q4vxn43l44h30nkluqfxd9eckf45vr2awz38lwa",
+    "currencyIn": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "metadata": {
+          "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+          "verified": true
+        }
+      },
+      "amount": "10000000",
+      "amountFormatted": "10.0",
+      "amountUsd": "9.996900",
+      "minimumAmount": "10000000"
+    },
+    "currencyOut": {
+      "currency": {
+        "chainId": 8253038,
+        "address": "bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8",
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/currencies/btc.png",
+          "verified": true
+        }
+      },
+      "amount": "12759",
+      "amountFormatted": "0.00012759",
+      "amountUsd": "9.305707",
+      "minimumAmount": "12504"
+    },
+    "timeEstimate": 158
+  }
+}
 ```
 
 <Info>
@@ -158,7 +383,7 @@ deposit addresses, there are additional considerations:
 ### Block Confirmations
 
 When using deposit addresses, Relay waits for **1 block confirmation** before
-processing. Bitcoin's block time averages ~10 minutes but varies significantly —
+processing. Bitcoin's block time averages ~10 minutes but varies significantly.
 blocks can arrive within minutes of each other or take 30-50 minutes.
 
 <Warning>
@@ -174,10 +399,10 @@ When using `useDepositAddress: true` with Bitcoin as origin:
 - The `user` address must be a valid Bitcoin address
 - The `user` address balance must exceed the quoted amount (otherwise returns
   `INSUFFICIENT_FUNDS`)
-- For indicative quotes, use a known high-balance address ("whale address") —
-  the actual deposit can originate from any address
+- For indicative quotes, use a known high-balance address ("whale address").
+  The actual deposit can originate from any address.
 
-```bash
+```bash Request
 curl -X POST "https://api.relay.link/quote/v2" \
   -H "Content-Type: application/json" \
   -d '{
@@ -192,4 +417,106 @@ curl -X POST "https://api.relay.link/quote/v2" \
     "useDepositAddress": true,
     "refundTo": "bc1q4vxn43l44h30nkluqfxd9eckf45vr2awz38lwa"
   }'
+```
+```json Response expandable
+{
+  "steps": [
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the relayer to execute the swap for USDC",
+      "kind": "transaction",
+      "requestId": "0x1ebf65e0a3f7976ef40e4f83f1e0b46aaa605c567117a442374777214c432961",
+      "depositAddress": "bc1q327vyreq97q3n5ksha8ld998w02hereae20k8n",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "psbt": "70736274ff0100fd67010200000007d5..."
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0x1ebf65e0a3f7976ef40e4f83f1e0b46aaa605c567117a442374777214c432961",
+            "method": "GET"
+          }
+        }
+      ]
+    }
+  ],
+  "fees": {
+    "gas": {
+      "currency": {
+        "chainId": 8253038,
+        "address": "bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8",
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/currencies/btc.png",
+          "verified": true
+        }
+      },
+      "amount": "3532",
+      "amountFormatted": "0.00003532",
+      "amountUsd": "2.576453",
+      "minimumAmount": "3532"
+    },
+    "relayer": {
+      "currency": {
+        "chainId": 8253038,
+        "address": "bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8",
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/currencies/btc.png",
+          "verified": true
+        }
+      },
+      "amount": "1966",
+      "amountFormatted": "0.00001966",
+      "amountUsd": "1.434118",
+      "minimumAmount": "1966"
+    }
+  },
+  "details": {
+    "operation": "swap",
+    "sender": "bc1q4vxn43l44h30nkluqfxd9eckf45vr2awz38lwa",
+    "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
+    "currencyIn": {
+      "currency": {
+        "chainId": 8253038,
+        "address": "bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8",
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/currencies/btc.png",
+          "verified": true
+        }
+      },
+      "amount": "100000",
+      "amountFormatted": "0.001",
+      "amountUsd": "72.946000",
+      "minimumAmount": "100000"
+    },
+    "currencyOut": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "metadata": {
+          "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+          "verified": true
+        }
+      },
+      "amount": "71567150",
+      "amountFormatted": "71.56715",
+      "amountUsd": "71.544964",
+      "minimumAmount": "70135807"
+    },
+    "timeEstimate": 4
+  }
+}
 ```

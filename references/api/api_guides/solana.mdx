@@ -33,17 +33,6 @@ your input is Solana specific.
   depositing wallet address.{" "}
 </Info>
 
-### API Params
-
-| Action               | Parameter             | Input                            | Description                                                                                                                         |
-| -------------------- | --------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Deposit to Solana    | `recipient`           | User's Solana Address            | Must be a valid Solana address. Do **not** use an Ethereum wallet address. _Case Sensitive_                                         |
-|                      | `destinationChainId`  | `792703809`                      | Chain ID assigned to access Solana for Relay's tools.                                                                               |
-|                      | `destinationCurrency` | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
-| Withdraw from Solana | `user`                | User's Solana Address            | Must be a valid Solana address. Do **not** use an Ethereum wallet address. _Case Sensitive_                                         |
-|                      | `originChainId`       | `792703809`                      | Chain ID assigned to access Solana for Relay's tools.                                                                               |
-|                      | `originCurrency`      | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
-
 ### Solana Tokens
 
 In the table, we have provided the most frequently used Solana tokens & their
@@ -66,6 +55,19 @@ contract addresses. We do support all tradeable tokens on
 
 ## API
 
+### Params
+
+| Action               | Parameter             | Input                            | Description                                                                                                                         |
+| -------------------- | --------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Deposit to Solana    | `recipient`           | User's Solana Address            | Must be a valid Solana address. Do **not** use an Ethereum wallet address. _Case Sensitive_                                         |
+|                      | `destinationChainId`  | `792703809`                      | Chain ID assigned to access Solana for Relay's tools.                                                                               |
+|                      | `destinationCurrency` | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
+| Withdraw from Solana | `user`                | User's Solana Address            | Must be a valid Solana address. Do **not** use an Ethereum wallet address. _Case Sensitive_                                         |
+|                      | `originChainId`       | `792703809`                      | Chain ID assigned to access Solana for Relay's tools.                                                                               |
+|                      | `originCurrency`      | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
+
+### Execution
+
 Once you have the necessary information, you can start utilizing our API for
 full Solana withdrawal and deposit support. To get started, check out the
 [execution steps](/references/api/api_core_concepts/step-execution) of our API. Then when you're
@@ -75,12 +77,153 @@ endpoint.
 Please note that instead of the usual calldata returned with EVM transactions,
 there’s different calldata that needs to be handled accordingly.
 
+### Example: Deposit to Solana from Base
+
+```bash Request
+curl -X POST "https://api.relay.link/quote/v2" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
+    "originChainId": 8453,
+    "originCurrency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "destinationChainId": 792703809,
+    "destinationCurrency": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "recipient": "GTtzwxqy67xx9DVESJjx28TgXqpc8xTqtiytgNMaQBTE",
+    "tradeType": "EXACT_INPUT",
+    "amount": "10000000"
+  }'
+```
+```json Response expandable
+{
+  "steps": [
+    {
+      "id": "approve",
+      "action": "Confirm transaction in your wallet",
+      "description": "Sign an approval for USDC",
+      "kind": "transaction",
+      "requestId": "0x44c1ba1053b2403c5e7024140b73e4a08a7c9d7d0bf985a9755d55d8a9d771f5",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
+            "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "chainId": 8453
+          }
+        }
+      ]
+    },
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the relayer to execute the swap for USDC",
+      "kind": "transaction",
+      "requestId": "0x44c1ba1053b2403c5e7024140b73e4a08a7c9d7d0bf985a9755d55d8a9d771f5",
+      "depositAddress": "",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
+            "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+            "chainId": 8453
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0x44c1ba1053b2403c5e7024140b73e4a08a7c9d7d0bf985a9755d55d8a9d771f5",
+            "method": "GET"
+          }
+        }
+      ]
+    }
+  ],
+  "fees": {
+    "gas": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "286882212616",
+      "amountFormatted": "0.000000286882212616",
+      "amountUsd": "0.000614",
+      "minimumAmount": "286882212616"
+    },
+    "relayer": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "metadata": {
+          "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+          "verified": true
+        }
+      },
+      "amount": "261358",
+      "amountFormatted": "0.261358",
+      "amountUsd": "0.261273",
+      "minimumAmount": "261358"
+    }
+  },
+  "details": {
+    "operation": "swap",
+    "sender": "0x03508bb71268bba25ecacc8f620e01866650532c",
+    "recipient": "GTtzwxqy67xx9DVESJjx28TgXqpc8xTqtiytgNMaQBTE",
+    "currencyIn": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "metadata": {
+          "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+          "verified": true
+        }
+      },
+      "amount": "10000000",
+      "amountFormatted": "10.0",
+      "amountUsd": "9.996730",
+      "minimumAmount": "10000000"
+    },
+    "currencyOut": {
+      "currency": {
+        "chainId": 792703809,
+        "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "metadata": {
+          "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+          "verified": true
+        }
+      },
+      "amount": "9738642",
+      "amountFormatted": "9.738642",
+      "amountUsd": "9.735457",
+      "minimumAmount": "9543870"
+    },
+    "timeEstimate": 1
+  }
+}
+```
+
 ## SDK
 
-You'll need the information shared in the tables above to utilize the SDK to
-deposit or withdraw from Solana. In addition to that you'll also need to install
-and configure the
-[relay solana adapter](/references/relay-kit/sdk/adapters#what-adapters-are-available-out-of-the-box).
-To get started, learn how to set up our
-[SDK client](/references/relay-kit/sdk/installation). Afterwards, explore our
-[getQuote](/references/relay-kit/sdk/actions/getQuote) SDK action to start swapping.
+To use the SDK with Solana, install and configure the
+[SVM wallet adapter](/references/relay-kit/sdk/adapters#what-adapters-are-available-out-of-the-box).
+The adapter handles transaction signing and broadcasting.
+
+```bash
+npm install @relayprotocol/relay-svm-wallet-adapter
+```
+
+For implementation details and code samples, see the
+[Adapters documentation](/references/relay-kit/sdk/adapters).
