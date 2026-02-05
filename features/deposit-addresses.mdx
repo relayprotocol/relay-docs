@@ -25,6 +25,16 @@ Once a deposit occurs, the quote will automatically be generated post-deposit to
 
 All Relay EVM deposit addresses begin and end with the character `d` (not case-sensitive). This is to help us with reducing the indexing search space.
 
+## Important Considerations
+
+### Fee Sponsorship
+
+When using fee sponsorship with deposit addresses, the `user` and `depositFeePayer` addresses **cannot be the same wallet address**. This restriction is particularly important for same-chain Solana transactions.
+
+- For same-chain transactions (origin and destination on the same chain), do not pass the `depositFeePayer` parameter
+- Ensure the `user` and `depositFeePayer` are different addresses when fee sponsorship is required
+- Violating this constraint will result in transaction failures during quote execution
+
 ## Edge Cases
 
 We have automatic handling for common edge cases that can occur when using deposit addresses:
@@ -40,6 +50,7 @@ We have automatic handling for common edge cases that can occur when using depos
 - Calldata execution on destination is not allowed.
 - Only exact input bridging is allowed. Specifying exact output will not work.
 - When non-supported currency or NFTs are sent to the deposit address, we currently do not support recovering of those assets.
+- The `user` and `depositFeePayer` cannot be the same wallet address when using fee sponsorship.
 
 ## Debugging
 
