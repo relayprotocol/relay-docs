@@ -49,8 +49,8 @@ Unlike EVM chains that track account balances directly, Bitcoin uses a **UTXO
 unspent outputs it has received minus outputs it has spent.
 
 To calculate a Bitcoin address balance, query the
-[mempool.space API](https://mempool.space) and compute the difference between
-funded and spent transaction outputs:
+[mempool.space API](https://mempool.space/docs/api/rest#get-address) and
+compute the difference between funded and spent transaction outputs:
 
 ```typescript
 async function getBitcoinBalance(address: string) {
@@ -100,6 +100,7 @@ documentation, then use the [Get Quote](/references/api/get-quote-v2) endpoint.
 
 ### Example: Withdraw from Bitcoin to Base
 
+<CodeGroup>
 ```bash Request
 curl -X POST "https://api.relay.link/quote/v2" \
   -H "Content-Type: application/json" \
@@ -216,9 +217,11 @@ curl -X POST "https://api.relay.link/quote/v2" \
   }
 }
 ```
+</CodeGroup>
 
 ### Example: Deposit to Bitcoin from Base
 
+<CodeGroup>
 ```bash Request
 curl -X POST "https://api.relay.link/quote/v2" \
   -H "Content-Type: application/json" \
@@ -354,6 +357,7 @@ curl -X POST "https://api.relay.link/quote/v2" \
   }
 }
 ```
+</CodeGroup>
 
 <Info>
 	Amounts are specified in the smallest unit of the currency. For BTC,
@@ -402,6 +406,7 @@ When using `useDepositAddress: true` with Bitcoin as origin:
 - For indicative quotes, use a known high-balance address ("whale address").
   The actual deposit can originate from any address.
 
+<CodeGroup>
 ```bash Request
 curl -X POST "https://api.relay.link/quote/v2" \
   -H "Content-Type: application/json" \
@@ -520,3 +525,4 @@ curl -X POST "https://api.relay.link/quote/v2" \
   }
 }
 ```
+</CodeGroup>
