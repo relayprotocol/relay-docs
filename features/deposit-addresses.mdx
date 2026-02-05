@@ -8,6 +8,14 @@ We are now launching deposit addresses to allow users to bridge without connecti
 and Relay will instantly deposit the correct tokens on the destination chain in the user's wallet. This is a great way for users to quickly
 start transacting on a new chain!
 
+## Use Cases
+
+Deposit addresses are particularly useful in the following scenarios:
+
+- **CEX-to-DeFi Bridging**: When users are already transferring funds from a centralized exchange and want to bridge to a destination chain without additional wallet interactions
+- **Onboarding Flows from Fiat Rails**: Enabling seamless bridging as part of fiat-to-crypto onboarding without requiring complex wallet setup
+- **Wallet Connection Issues**: When wallet connection or signing is problematic, such as when wallet providers don't support the origin chain
+
 ## How It Works
 
 Once generated, a single deposit address can be reused so long as the origin currency, origin chain, destination currency, and destination chain all remain the same. To enable using a deposit address for your bridge, you will need to set the `useDepositAddress` body parameter to `true` in the [quote request](https://docs.relay.link/references/api/get-quote-v2).
