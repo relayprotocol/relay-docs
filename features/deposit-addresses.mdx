@@ -119,3 +119,11 @@ curl -X POST \
 .
 .
 ```
+
+## Common Use Cases
+
+Deposit addresses are particularly useful in the following scenarios:
+
+- **CEX-to-DeFi Bridging** -- When users are already performing a withdrawal from a centralized exchange and want to bridge to a different chain without an additional transaction.
+- **Onboarding Flows from Fiat Rails** -- For applications that need to seamlessly move funds from fiat onramps to specific destination chains without requiring users to understand intermediate bridging steps.
+- **Wallet Connection Issues** -- In situations where wallet connection or transaction signing is problematic, such as when the wallet provider doesn't support the origin chain or when building headless/automated bridging systems.

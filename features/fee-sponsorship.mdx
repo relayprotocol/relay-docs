@@ -267,15 +267,16 @@ For transactions originating from Solana, you can designate an alternative accou
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `depositFeePayer` | `string` | A Solana address that will pay the transaction fees and rent for deposit transactions on Solana. This account must have sufficient SOL to cover these costs. |
+| `depositFeePayer` | `string` | A Solana address that will pay the transaction fees and rent for deposit transactions on Solana. This account must have sufficient SOL to cover these costs. **Must be different from the `user` address.** |
 
 <Note>
 The `depositFeePayer` parameter operates independently from the `subsidizeFees` and `subsidizeRent` parameters. It applies specifically to Solana origin transactions and does not draw from your app balance.
 </Note>
 
 <Warning>
-**Security considerations for `depositFeePayer`:**
+**Important restrictions and security considerations for `depositFeePayer`:**
 
+- **The `depositFeePayer` and `user` addresses must be different.** You cannot use the same wallet address for both parameters.
 - **Signing order is critical.** Relay returns a transaction that requires the integrator's sponsoring wallet to sign **first**. The integrator must sign the transaction before passing it to the user. If the user receives an unsigned transaction, they could potentially modify it to drain the sponsoring wallet.
 - **Avoid same-chain swaps with untrusted users.** The `depositFeePayer` parameter is exploitable when used for same-chain swaps on Solana. Only use it for same-chain operations when the wallet is under your control.
 </Warning>
@@ -368,4 +369,3 @@ For more details on the fee structure, see [Relay Fees](/references/api/api_core
 - [Get Quote](/references/api/get-quote) — API reference for quote requests
 - [Relay Fees](/references/api/api_core_concepts/fees) — Understanding Relay's fee structure
 - [Solana Support](/references/api/api_guides/solana) — Guide to depositing and withdrawing on Solana
-
