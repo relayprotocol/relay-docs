@@ -109,6 +109,7 @@
                     "pages": [
                       "references/api/api_guides/testnet",
                       "references/api/api_guides/solana",
+                      "references/api/api_guides/bitcoin",
                       "references/api/api_guides/hyperliquid-support",
                       "references/api/api_guides/lighter-support"
                     ]
