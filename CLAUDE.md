@@ -1,6 +1,80 @@
-# Documentation Writing Standards
+# Relay Documentation Site
 
-This document outlines the standards and best practices for writing documentation in this repository.
+## About This Repository
+
+This is the official documentation site for **Relay**, a multichain payments network that enables fast, low-cost bridging, swapping, and transacting across 85+ blockchain networks. The site is built with [Mintlify](https://mintlify.com) and deployed automatically from the default branch.
+
+**Live site**: [docs.relay.link](https://docs.relay.link)
+
+## About Relay
+
+Relay combines two core components:
+
+- **Cross-chain intents** powered by the Relay Protocol (solver network for instant fills)
+- **DEX Meta-Aggregation** across 85+ chains (EVM, Solana, Bitcoin, Sui, Tron, and more)
+
+The Relay stack consists of:
+
+- **Relay App** - Consumer-facing swap interface at [relay.link](https://relay.link)
+- **Relay API** - REST + WebSocket API for developers (`https://api.relay.link`)
+- **Relay Protocol** - The decentralized network layer (Depository, Oracle, Hub, Vaults)
+- **RelayKit** - TypeScript SDK, React hooks, and pre-built UI components
+
+## Repository Structure
+
+```
+relay-docs/
+├── docs.json              # Mintlify configuration (theme, nav, API settings)
+├── index.mdx              # Homepage
+├── what-is-relay.mdx      # Product overview
+├── solutions/             # Audience-specific docs (wallets, multichain apps, chains)
+├── use-cases/             # Use case guides (bridging, swaps, calling)
+├── features/              # Feature docs (app fees, fee sponsorship, deposit addresses)
+├── security/              # Security & compliance (audits, bounties, MEV protection)
+├── resources/             # Supported chains, enterprise, brand assets
+├── references/
+│   ├── api/               # REST API docs
+│   │   ├── api_core_concepts/  # Fees, refunds, errors, step execution
+│   │   ├── api_guides/         # Integration guides (bridging, calling, Solana, Bitcoin)
+│   │   └── api_resources/      # Contract addresses, supported chains/routes
+│   ├── relay-kit/         # Client SDK docs
+│   │   ├── sdk/           # TypeScript SDK (createClient, actions, adapters)
+│   │   ├── hooks/         # React hooks (useQuote, useRelayChains, etc.)
+│   │   └── ui/            # UI components (swap widget, theming)
+│   └── protocol/          # Protocol technical docs
+│       ├── depository/    # Deposit contracts and architecture
+│       ├── oracle/        # Cross-chain verification
+│       ├── hub/           # Order tracking
+│       └── vaults/        # Liquidity pools and rebalancing
+├── snippets/              # Reusable MDX components
+├── images/                # Image assets
+└── logo/                  # Logo assets
+```
+
+## Local Development
+
+Install the Mintlify CLI and start the dev server:
+
+```bash
+npm i -g mintlify
+mintlify dev
+```
+
+The site runs at `http://localhost:3000`. If `mintlify dev` fails, run `mintlify install` to reinstall dependencies.
+
+## Key Configuration
+
+- **`docs.json`** - Main Mintlify config: navigation structure, theme colors, API settings, redirects
+- **API spec** - OpenAPI spec is loaded from `https://api.relay.link/documentation/json`
+- **Redirects** - 60+ URL redirects are defined at the bottom of `docs.json` for legacy paths
+
+## Publishing
+
+Changes pushed to the default branch auto-deploy to production via the Mintlify GitHub app. Always open a PR for review before merging.
+
+---
+
+# Documentation Writing Standards
 
 ## Purpose
 
