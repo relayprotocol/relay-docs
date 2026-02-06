@@ -1,0 +1,87 @@
+---
+title: Security & Audits
+description: "Trust model, security architecture, and audit history"
+sidebarTitle: Security & Audits
+---
+
+## Trust Model
+
+Relay Settlement is designed to be **non-custodial** — no single entity can unilaterally access user funds. Each component has different trust properties:
+
+### Depository (Minimal Trust)
+
+The Depository contracts are the most trust-minimized component:
+
+- **Non-upgradable** — Contract logic is immutable after deployment
+- **Single authorization path** — Only the registered Allocator can authorize withdrawals
+- **Short custody duration** — Funds are typically held for seconds to minutes, not hours or days
+- **No admin withdrawal** — There is no backdoor function for the contract owner to withdraw user funds
+
+The Depository's security relies on the Allocator's signing authority. If the Allocator is compromised, it could authorize unauthorized withdrawals — but it cannot create balances that don't exist on the Hub.
+
+### Oracle (Trust-Critical)
+
+The Oracle determines which deposits and fills are considered valid:
+
+- **Can attribute balances** — The Oracle controls what gets minted, transferred, or burned on the Hub
+- **Cannot steal Depository funds** — Even an incorrect attestation only affects Hub balances. The Allocator independently verifies Hub balances before authorizing any withdrawal.
+- **Consensus-based** — Designed for multi-operator consensus, where multiple independent parties must agree on attestations
+
+<Info>
+The Oracle is the main trust-bearing component. A compromised Oracle could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the Security Council's ability to pause the system.
+</Info>
+
+### Hub (Smart Contract)
+
+The Hub is a deterministic smart contract on the [Relay Chain](/references/protocol/relay-chain):
+
+- **Rule-based** — Balance changes only occur through Oracle-attested actions (MINT, TRANSFER, BURN)
+- **Idempotent** — The same attestation cannot be processed twice
+- **Transparent** — All balance changes are visible on the Relay Chain block explorer
+
+### Allocator (Trust-Critical, MPC-Mitigated)
+
+The Allocator controls withdrawal authorization:
+
+- **MPC signatures** — No single entity holds the full signing key
+- **Balance-bounded** — Can only authorize withdrawals up to a solver's Hub balance
+- **Governed by Security Council** — A multisig can pause or replace the Allocator
+- **Replay-protected** — Nonces and expirations prevent proof reuse
+
+## Security Council
+
+The Security Council is a multisig composed of multiple independent parties across different timezones. It governs the Allocator with tiered thresholds:
+
+| Action | Threshold | Purpose |
+|--------|-----------|---------|
+| **Pause** | 1-of-N | Any member can immediately halt all withdrawals |
+| **Unpause** | Majority | Resume operations after investigation |
+| **Replace Allocator** | Supermajority | Upgrade or fix the Allocator contract |
+| **Change Membership** | Supermajority | Add or remove council members |
+
+The low pause threshold (1-of-N) ensures rapid response to emergencies, while the high thresholds for structural changes prevent unilateral action.
+
+## Global Pause Mechanism
+
+Because all withdrawals across all 80+ chains flow through a single Allocator, the entire protocol can be **paused with a single transaction**. This is a significant advantage over protocols where each chain's escrow contract must be individually paused — a process that takes time and could miss chains during an active exploit.
+
+## Audits
+
+The protocol has been audited by leading security firms:
+
+| Date | Scope | Auditor | Report |
+|------|-------|---------|--------|
+| February 2025 | Relay Depository (EVM) | [Spearbit](https://spearbit.com/) | [View Report](https://github.com/relayprotocol/relay-depository/blob/main/packages/ethereum-vm/audit/report.pdf) |
+| June 2025 | Relay Depository (EVM) | [Certora](https://www.certora.com/) | [View Report](/references/protocol/depository/relay-escrow-report-certora.pdf) |
+| November 2025 | Settlement Protocol | [Zellic](https://www.zellic.io/) | [View Report](https://github.com/relayprotocol/settlement-protocol/blob/main/smart-contracts/audit/report.pdf) |
+
+## Bug Bounty
+
+Details of the Relay bug bounty program can be found on the [Relay GitHub](https://github.com/relayprotocol/).
+
+## Source Code
+
+All protocol contracts are open source:
+
+- [`settlement-protocol`](https://github.com/relayprotocol/settlement-protocol) — Hub, Oracle, Allocator contracts
+- [`relay-depository`](https://github.com/relayprotocol/relay-depository) — Depository contracts (EVM + Solana)

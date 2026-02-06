@@ -227,70 +227,61 @@
         "tab": "Relay Protocol",
         "groups": [
           {
-            "group": "Relay Protocol",
+            "group": "Settlement",
             "pages": [
               "references/protocol/overview",
-              "references/protocol/audits",
+              "references/protocol/how-it-works",
+              "references/protocol/relay-chain",
               {
-                "group": "Depository",
+                "group": "Components",
                 "pages": [
-                  "references/protocol/depository/overview",
-                  "references/protocol/depository/architecture",
-                  "references/protocol/depository/security",
-                  {
-                    "group": "Guides",
-                    "pages": [
-                      "references/protocol/depository/guides/integrating"
-                    ]
-                  },
-                  {
-                    "group": "Contracts Reference",
-                    "pages": [
-                      "references/protocol/depository/contracts/Solana-Relay-Depository",
-                      "references/protocol/depository/contracts/Evm-Relay-Depository"
-                    ]
-                  },
-                  "references/protocol/depository/addresses"
+                  "references/protocol/components/depository",
+                  "references/protocol/components/oracle",
+                  "references/protocol/components/hub",
+                  "references/protocol/components/allocator"
+                ]
+              },
+              "references/protocol/design",
+              "references/protocol/security",
+              {
+                "group": "Guides",
+                "pages": [
+                  "references/protocol/guides/for-solvers",
+                  "references/protocol/guides/for-apps"
                 ]
               },
               {
-                "group": "Oracle",
+                "group": "Contract Reference",
                 "pages": [
-                  "references/protocol/oracle/overview",
-                  "references/protocol/oracle/architecture"
+                  "references/protocol/contracts/evm-depository",
+                  "references/protocol/contracts/solana-depository"
+                ]
+              },
+              "references/protocol/addresses"
+            ]
+          },
+          {
+            "group": "Vaults",
+            "pages": [
+              "references/protocol/vaults/overview",
+              "references/protocol/vaults/architecture",
+              "references/protocol/vaults/security",
+              "references/protocol/vaults/backend",
+              {
+                "group": "Guides",
+                "pages": [
+                  "references/protocol/vaults/guides/bridging",
+                  "references/protocol/vaults/guides/interacting"
                 ]
               },
               {
-                "group": "Hub",
+                "group": "Contracts Reference",
                 "pages": [
-                  "references/protocol/hub/overview",
-                  "references/protocol/hub/architecture"
-                ]
-              },
-              {
-                "group": "Vaults",
-                "pages": [
-                  "references/protocol/vaults/overview",
-                  "references/protocol/vaults/architecture",
-                  "references/protocol/vaults/security",
-                  "references/protocol/vaults/backend",
-                  {
-                    "group": "Guides",
-                    "pages": [
-                      "references/protocol/vaults/guides/bridging",
-                      "references/protocol/vaults/guides/interacting"
-                    ]
-                  },
-                  {
-                    "group": "Contracts Reference",
-                    "pages": [
-                      "references/protocol/vaults/contracts/RelayPoolFactory",
-                      "references/protocol/vaults/contracts/RelayPool",
-                      "references/protocol/vaults/contracts/RelayPoolNativeGateway",
-                      "references/protocol/vaults/contracts/RelayBridgeFactory",
-                      "references/protocol/vaults/contracts/RelayBridge"
-                    ]
-                  }
+                  "references/protocol/vaults/contracts/RelayPoolFactory",
+                  "references/protocol/vaults/contracts/RelayPool",
+                  "references/protocol/vaults/contracts/RelayPoolNativeGateway",
+                  "references/protocol/vaults/contracts/RelayBridgeFactory",
+                  "references/protocol/vaults/contracts/RelayBridge"
                 ]
               }
             ]
@@ -457,6 +448,54 @@
     {
       "source": "/references/api/api_core_concepts/quote-errors",
       "destination": "/references/api/api_core_concepts/handling-errors"
+    },
+    {
+      "source": "/references/protocol/audits",
+      "destination": "/references/protocol/security"
+    },
+    {
+      "source": "/references/protocol/depository/overview",
+      "destination": "/references/protocol/components/depository"
+    },
+    {
+      "source": "/references/protocol/depository/architecture",
+      "destination": "/references/protocol/components/depository"
+    },
+    {
+      "source": "/references/protocol/depository/security",
+      "destination": "/references/protocol/security"
+    },
+    {
+      "source": "/references/protocol/depository/guides/integrating",
+      "destination": "/references/protocol/guides/for-apps"
+    },
+    {
+      "source": "/references/protocol/depository/contracts/Evm-Relay-Depository",
+      "destination": "/references/protocol/contracts/evm-depository"
+    },
+    {
+      "source": "/references/protocol/depository/contracts/Solana-Relay-Depository",
+      "destination": "/references/protocol/contracts/solana-depository"
+    },
+    {
+      "source": "/references/protocol/depository/addresses",
+      "destination": "/references/protocol/addresses"
+    },
+    {
+      "source": "/references/protocol/oracle/overview",
+      "destination": "/references/protocol/components/oracle"
+    },
+    {
+      "source": "/references/protocol/oracle/architecture",
+      "destination": "/references/protocol/components/oracle"
+    },
+    {
+      "source": "/references/protocol/hub/overview",
+      "destination": "/references/protocol/components/hub"
+    },
+    {
+      "source": "/references/protocol/hub/architecture",
+      "destination": "/references/protocol/components/hub"
     }
   ]
 }

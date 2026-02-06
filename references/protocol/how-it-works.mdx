@@ -1,0 +1,182 @@
+---
+title: How It Works
+description: "End-to-end walkthrough of the settlement protocol flows"
+sidebarTitle: How It Works
+---
+
+Every crosschain order in Relay passes through three sequential flows: **Execution**, **Settlement**, and **Withdrawal**. This page walks through each in detail, followed by how reverts are handled when a solver fails to fill.
+
+## Execution Flow
+
+Execution is the user-facing part of the process. The user deposits funds on the origin chain, and a solver fills their order on the destination chain.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Depository as Depository (Origin)
+    participant Solver
+    participant Dest as Destination Chain
+
+    User->>+Depository: 1. Deposit funds (orderId)
+    Note over Depository: ~21,000 gas
+    Depository-->>-User: Deposit confirmed
+    Solver->>Depository: 2. Detect deposit
+    Solver->>+Dest: 3. Fill order (own capital)
+    Dest-->>-User: Action executed
+```
+
+**Step by step:**
+
+1. **User requests a quote** — The user specifies what they want (e.g., bridge 1 ETH from Optimism to Base). The Relay API returns quotes from available solvers.
+
+2. **User deposits into Depository** — The user sends funds to the [Depository](/references/protocol/components/depository) contract on the origin chain. The deposit is tagged with an **orderId** that links it to the solver's commitment. This costs approximately 21,000 gas — close to a simple transfer.
+
+3. **Solver fills on destination** — The solver detects the deposit and executes the user's requested action on the destination chain using their own capital. The fill can be a simple transfer, a swap, or any arbitrary onchain action.
+
+<Tip>
+Because deposits go to the Depository (not to the solver directly), user funds are protected. If the solver fails to fill, the user can reclaim their deposit.
+</Tip>
+
+## Settlement Flow
+
+Settlement is the process of verifying that the solver correctly filled the order, and crediting them on the Hub.
+
+```mermaid
+sequenceDiagram
+    participant Origin as Origin Chain
+    participant Oracle
+    participant Dest as Destination Chain
+    participant Hub as Hub (Relay Chain)
+
+    Oracle->>Origin: 1. Read deposit data
+    Oracle->>Dest: 2. Read fill data
+    Note over Oracle: Verify deposit + fill match
+    Oracle->>Hub: 3. Submit EIP-712 attestation
+    Hub->>Hub: MINT (user balance)
+    Hub->>Hub: TRANSFER (user → solver)
+    Note over Hub: Solver balance updated
+```
+
+**Step by step:**
+
+1. **Oracle reads origin chain** — The [Oracle](/references/protocol/components/oracle) reads the origin chain to verify that the user's deposit occurred and matches the expected order.
+
+2. **Oracle reads destination chain** — The Oracle reads the destination chain to verify that the solver's fill matches the user's intent (correct destination, amount, and action).
+
+3. **Oracle attests to the Hub** — The Oracle signs an EIP-712 attestation and submits it to the [Hub](/references/protocol/components/hub) contract on the [Relay Chain](/references/protocol/relay-chain). This attestation triggers two actions:
+   - **MINT** — The user's deposit is represented as a token balance on the Hub
+   - **TRANSFER** — That balance is transferred from the user to the solver
+
+4. **Solver balance updated** — The solver's balance on the Hub increases, reflecting the payment they are owed for the fill.
+
+<Info>
+Settlement happens in real-time, per-order. There is no batching window. As soon as the Oracle verifies a fill, the solver's balance is updated on the Hub.
+</Info>
+
+## Withdrawal Flow
+
+Withdrawal is how solvers extract funds from the Depository to replenish their capital. Solvers accumulate balances on the Hub and can withdraw from any origin chain at any time.
+
+```mermaid
+sequenceDiagram
+    participant Solver
+    participant Allocator
+    participant Hub as Hub (Relay Chain)
+    participant MPC as NEAR MPC
+    participant Depository as Depository (Origin)
+
+    Solver->>Allocator: 1. Request withdrawal
+    Allocator->>Hub: 2. Check solver balance
+    Hub-->>Allocator: Balance confirmed
+    Allocator->>MPC: 3. Request MPC signature
+    MPC-->>Allocator: Signed proof
+    Allocator-->>Solver: 4. Return signed proof
+    Solver->>+Depository: 5. Submit proof
+    Depository->>Depository: Verify signature + nonce
+    Depository-->>-Solver: 6. Release funds
+```
+
+**Step by step:**
+
+1. **Solver requests withdrawal** — The solver specifies which chain and asset they want to withdraw from, and the amount.
+
+2. **Allocator verifies balance** — The [Allocator](/references/protocol/components/allocator) checks the solver's balance on the Hub to confirm they have sufficient funds.
+
+3. **Allocator generates proof** — The Allocator creates a chain-specific cryptographic proof (EIP-712 signature for EVM chains, Ed25519 for Solana) authorizing the withdrawal from the Depository on the target chain.
+
+4. **Solver submits proof** — The solver submits the signed proof to the [Depository](/references/protocol/components/depository) contract on the target chain.
+
+5. **Depository releases funds** — The Depository verifies the signature, confirms the nonce hasn't been used, and transfers the funds to the solver.
+
+6. **Hub balance reduced** — The Hub burns the corresponding token balance (via a BURN action from the Oracle), keeping the ledger in sync.
+
+<Tip>
+Solvers choose their own withdrawal strategy. They can withdraw frequently to maximize capital velocity, or batch withdrawals to minimize transaction costs. The Hub balance accrues in real-time regardless.
+</Tip>
+
+## Revert Flow
+
+If a solver fails to fill an order within the expected timeframe, the user's funds are protected and can be returned.
+
+```mermaid
+sequenceDiagram
+    participant Solver
+    participant Oracle
+    participant Hub as Hub (Relay Chain)
+    participant Depository as Depository (Origin)
+    participant User
+
+    Note over Solver: Fill window expires
+    Oracle->>Hub: 1. Attest revert
+    Hub->>Hub: 2. Restore user balance
+    User->>Depository: 3. Withdraw deposit
+    Depository-->>User: 4. Funds returned
+```
+
+**Step by step:**
+
+1. **Order expires** — If the solver doesn't fill within the commitment window, the order is marked as expired.
+
+2. **Oracle attests revert** — The Oracle verifies that the fill did not occur and attests a revert to the Hub.
+
+3. **User balance restored** — The Hub restores the user's token balance, effectively unlocking their deposit.
+
+4. **User withdraws** — The user (or the protocol on their behalf) can trigger a withdrawal from the Depository to reclaim their funds.
+
+## Comparison: Settlement Approaches
+
+```mermaid
+graph TD
+    subgraph P2P["Point-to-Point"]
+        U1[User] -->|Direct transfer| S1[Solver]
+        style P2P fill:#f9f9f9
+    end
+
+    subgraph Batch["Batch Settlement"]
+        U2[User] -->|Deposit ~77k gas| E2[Escrow]
+        E2 -->|Batch every ~4hrs| S2[Solver]
+        style Batch fill:#f9f9f9
+    end
+
+    subgraph RelayHub["Relay Hub"]
+        U3[User] -->|Deposit ~21k gas| D3[Depository]
+        D3 -.->|Attest| H3[Hub]
+        H3 -->|Real-time credit| S3[Solver]
+        style RelayHub fill:#f0f0ff
+    end
+```
+
+Different intent protocols handle settlement in different ways. Here's how Relay compares:
+
+| | **Point-to-Point** | **Batch Settlement** | **Relay Hub** |
+|---|---|---|---|
+| **Example** | Direct transfer | Across | Relay |
+| **Settlement location** | Origin chain | Origin chain (batched) | Relay Chain |
+| **Deposit gas** | ~21,000 | ~77,000 | ~21,000 |
+| **Fill overhead** | None | ~120,000 gas | None |
+| **Settlement cost** | N/A | Amortized | ~$0.005 on Relay Chain |
+| **Time to payment** | Instant | ~4 hours (batch window) | Seconds (real-time) |
+| **Capital efficiency** | High (but no protection) | Low (long lock-up) | High (real-time + protected) |
+| **Chain expansion** | Easy | Requires bridge integration | Deploy Depository only |
+
+The key innovation is that by moving settlement to a dedicated low-cost chain, Relay achieves the capital efficiency of direct transfers with the security guarantees of an escrow system.
