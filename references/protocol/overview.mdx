@@ -1,56 +1,101 @@
 ---
 title: The Relay Protocol
-description: "Learn about the Relay Protocol"
+description: "A cross-chain payments protocol that minimizes gas costs, enables rapid chain expansion, and maximizes capital efficiency"
 sidebarTitle: Overview
 ---
 
 ## Introduction
 
-The Relay Protocol is a cross-chain payments system that connects users to relayers willing to perform onchain actions on their behalf. Relay's design minimizes gas costs, enables rapid chain expansion, and maximizes capital efficiency all while remaining open and trustless. Such a system is particularly well-suited for low-value, high frequency cross-chain actions such as those expected in a world of chain abstraction.
+The Relay Protocol is a cross-chain payments system that connects users to solvers (also called relayers) willing to perform onchain actions on their behalf. Relay's architecture separates the concerns of deposit, market making, liquidity providing, and intent filling, enabling significant cost and speed advantages over traditional bridges. The protocol is designed to be open and trustless, making it particularly well-suited for low-value, high-frequency cross-chain actions common in a world of chain abstraction.
 
-## Background: Cross-Chain Relaying
+You can interact with the Relay Protocol through the [Relay App](https://relay.link), and find the source code for all components on [GitHub](https://github.com/relayprotocol/).
 
-In its current state, the Relay API is similar to other “intent-based” protocols like Across, where liquidity providers known as _Relayers_ use their own capital to “fast fill” user requests to move between chains, and then rebalance using slow, expensive bridges under the hood.
+## The Problem: Cross-Chain Bridging Costs
 
-This design has two key advantages over typical bridging:
+Traditional bridges require users to lock funds on one chain and wait for a message or proof to be verified on another chain before receiving funds. This is slow (minutes to hours) and expensive (high gas costs for verification).
 
-- **Speed** - Because relayers are fronting their own capital, they can take on confirmation risk and fill optimistically, without waiting for global consensus
-- **Cost** - Because rebalancing is done infrequently and in batches, the security cost of using bridges is amortized across many users
+Intent-based protocols like Across improved on this by introducing **relayers** (also called **solvers**) who front their own capital to fill user requests immediately:
 
-The typical flow for intent-based protocols is as follows:
+1. User **escrows** funds on the origin chain
+2. Relayer **fills** the order on the destination chain using their own capital
+3. Relayer later **settles** on the origin chain to claim the user's escrowed funds as payment
 
-1. User _escrows_ funds on the origin chain
-2. Relayer _fills_ the order on the destination chain
-3. Relayer later _settles_ the order on the origin, to claim _payment_
+![Cross-chain relaying flow](/images/flow1.png)
 
-![title](/images/flow1.png)
+This design provides two key advantages:
 
-Each of these steps has a cost, which different protocols minimize in different ways. Across, which pioneered this design, reduces the cost of settlement with two optimizations:
+- **Speed** - Relayers front their own capital and fill optimistically without waiting for global consensus
+- **Cost** - Rebalancing happens infrequently and in batches, amortizing the security cost of bridge usage across many users
 
-- Instead of proving every fill with an oracle or cross-chain message, settlement is done optimistically, by assuming it is correct, and having a challenge period
-- Settlement is done in large batches across the whole protocol, every 4 hours
+However, significant costs remain in the **deposit** (~77,000 gas) and **fill** (~120,000 gas) steps. The Relay Protocol targets these remaining costs with a novel architecture.
 
-As a result, the vast majority of the remaining cost comes from the _Deposit_ (~77,000 gas) and _Fill_ (~120,000 gas). This is where **Relay** is able to achieve significant improvements:
+## Protocol Architecture
 
-## Overview of the Relay Protocol
+The Relay Protocol separates cross-chain payment operations into four independent but composable components. Each can work standalone or together, and each is open-source.
 
-The Relay protocol is designed to minimize the cost of deposits and fills by using a novel architecture that separates the concerns of deposit, market making, liquidity providing and intent filling on the destination chain. We design the protocol with the goal of suppressing any need for trusted intermediaries, including the need to prove and settle fills.
+### Depository
 
-This overview was designed to give a high level summary, and did not go into technical detail or discuss how adversarial scenarios are handled. These will be addressed in a future whitepaper.
+The [Depository](./depository/) is the user's entry point into the protocol. It consists of smart contracts deployed across supported chains (both EVM and Solana) that accept user deposits of native tokens and ERC-20/SPL tokens. Each deposit can carry an optional order ID that links it to a specific cross-chain intent.
 
-The protocol will eventually be made of various components which can work independently or together. As of today, some of these components are already implemented and in use, while others are still in development. The ones that are currently implemented include:
+From the protocol's perspective, depositing funds into a Depository contract represents a deposit into the Relay Hub. The Depository also handles withdrawals via allocator-signed messages.
 
-- [Relay Depository](./depository/)
-- [Relay Oracle](./oracle/)
-- [Relay Hub](./hub/)
-- [Relay Vaults](./vaults/)
+- Supports EVM chains (native + ERC-20) and Solana (native + SPL tokens)
+- Open-source: [GitHub](https://github.com/relayprotocol/relay-protocol-contracts)
 
-These components will also evolve over time to support the overall protocol architecture and their current implementation may not reflect the final design, but rather provide a good intermediate state that enables us to evolve from a simple intent filling API to a fully trustless cross-chain payments system.
+### Oracle
 
-You can interact with the Relay Protocol through our [Relay](https://relay.link) app, which provides a reference UI. You can also find the source code for all the components of the Relay Protocol on [GitHub](https://github.com/relayprotocol/).
+The [Oracle](./oracle/) serves as the communication channel between external chains and the Relay Hub. Since the Hub has no direct access to external chain state, the Oracle attests to key events:
 
-### Basic Flow of the current implementation
+- **Depository deposits** - Verifies that a user deposited funds on an external chain
+- **Depository withdrawals** - Tracks whether allocator withdrawal signatures have been executed, are pending, or have expired
+- **Solver fills** - Confirms that a solver successfully filled a user's order on the destination chain
+- **Solver refunds** - Confirms that a solver refunded an order it could not fill
 
-Alice sends her funds to the Depository contract on the origin chain. The [Relayer](/how-it-works/the-relay-solver) fills Alice's request on the destination chain. The [Hub](./hub/) keeps track of that deposit. The Relayer can then trigger the [Oracle](./oracle/) to verify that the intent was correctly filled. If so, the Relayer can then settle the payment and access their user's deposited funds.
+Reference implementation: [GitHub](https://github.com/relayprotocol/relay-protocol-oracle)
 
-In order to fill on multiple chains, the Relayer needs to keep balances on every supported network. The [Vaults](./vaults/) are used to rebalance the Relayer's balances across chains.
+### Hub
+
+The [Hub](./hub/) is the core component that tracks ownership of funds across the protocol. It processes oracle attestations of external actions and updates its internal state accordingly. The Hub also supports direct user actions:
+
+- **Withdrawals** - Users request withdrawal of available funds, which are held in a lock until an oracle attestation confirms the withdrawal on the destination chain
+- **Unlocks** - If a solver neither fills nor refunds an order before expiry, anyone can trigger an unlock to release the order-locked balance
+
+The current Hub implementation is a centralized service, with plans to evolve toward a decentralized design (e.g., the Hub as its own chain).
+
+Reference implementation: [GitHub](https://github.com/relayprotocol/relay-protocol-hub)
+
+### Vaults
+
+[Vaults](./vaults/) are permissionless, ERC-4626 compliant, yield-bearing liquidity pools that solvers use to rebalance capital across chains. Depositors earn a **base yield** from lending protocols (e.g., Aave) while their funds are idle, plus a **boost yield** when solvers utilize the funds for cross-chain rebalancing.
+
+Vaults solve the solver capital efficiency problem: instead of locking up capital on every supported chain, solvers can tap into shared liquidity pools for instant rebalancing.
+
+- Deployed on Ethereum Mainnet and Arbitrum
+- Open-source: [GitHub](https://github.com/relayprotocol/relay-vaults)
+
+## End-to-End Flow
+
+A typical cross-chain transaction through the Relay Protocol:
+
+1. **Deposit** - Alice sends funds to the [Depository](./depository/) contract on the origin chain, with an order ID attached
+2. **Fill** - The [solver](/how-it-works/the-relay-solver) detects the deposit and fills Alice's order on the destination chain using its own capital
+3. **Track** - The [Hub](./hub/) records the deposit and associates it with the order ID
+4. **Verify** - The solver triggers the [Oracle](./oracle/) to verify the fill was completed correctly
+5. **Settle** - Once verified, the solver claims the deposited funds from the Hub as payment
+6. **Rebalance** - The solver replenishes its capital on destination chains using [Vaults](./vaults/), which batch rebalancing through slow bridges for cost efficiency
+
+## Security
+
+The protocol is developed and deployed incrementally, with each component audited by leading security firms. See the [Audits](./audits) page for a full list of completed security reviews.
+
+## Current State and Roadmap
+
+The protocol components listed above are implemented and in production. They continue to evolve toward a fully trustless cross-chain payments system:
+
+- **Today** - The Relay Solver operates as a trusted relayer, minimizing gas costs to approximately 42,000 gas total (origin transfer + destination transfer)
+- **In progress** - The Depository, Oracle, Hub, and Vaults provide the building blocks for decentralized settlement, removing the need for trusted intermediaries
+- **Future** - Full decentralization of the solver network and Hub, eliminating any single point of trust
+
+<Info>
+These components will evolve over time. The current implementations provide an intermediate state that enables Relay to progress from a simple intent-filling API to a fully trustless cross-chain payments system.
+</Info>
