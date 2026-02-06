@@ -4,9 +4,49 @@ description: "End-to-end walkthrough of the settlement protocol flows"
 sidebarTitle: How It Works
 ---
 
-Every crosschain order in Relay passes through three sequential flows: **Execution**, **Settlement**, and **Withdrawal**. This page walks through each in detail, followed by how reverts are handled when a solver fails to fill.
+## Architecture
 
-## Execution Flow
+The protocol consists of four core components:
+
+| Component | Role | Location |
+|-----------|------|----------|
+| [**Depository**](/references/protocol/components/depository) | Holds user deposits on each origin chain | Every supported chain (80+) |
+| [**Oracle**](/references/protocol/components/oracle) | Verifies deposits and fills, attests to the Hub | Off-chain service |
+| [**Hub**](/references/protocol/components/hub) | Tracks token ownership and solver balances | Relay Chain |
+| [**Allocator**](/references/protocol/components/allocator) | Generates withdrawal proofs for solvers | Relay Chain / MPC |
+
+These components are supported by the [Relay Chain](/references/protocol/components/relay-chain), a purpose-built settlement chain where the Hub contract lives and all settlement operations are processed. The [Security Council](/references/protocol/components/security-council) governs the Allocator with the ability to pause, unpause, or replace it in an emergency.
+
+## Flows
+
+Every crosschain order in Relay passes through three sequential flows: **Execution**, **Settlement**, and **Withdrawal**.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Solver
+    participant O as Origin Chain
+    participant D as Destination Chain
+    participant R as Relay Chain
+
+    rect rgb(240, 240, 255)
+    Note over User,D: Execution
+    User->>O: 1. Deposit into Depository
+    Solver->>D: 2. Fill order
+    end
+
+    rect rgb(240, 255, 240)
+    Note over Solver,R: Settlement
+    Solver->>R: 3. Oracle attests fill to Hub
+    end
+
+    rect rgb(255, 240, 240)
+    Note over Solver,O: Withdrawal
+    Solver->>O: 4. Submit proof, claim funds
+    end
+```
+
+### Execution Flow
 
 Execution is the user-facing part of the process. The user deposits funds on the origin chain, and a solver fills their order on the destination chain.
 
@@ -37,7 +77,7 @@ sequenceDiagram
 Because deposits go to the Depository (not to the solver directly), user funds are protected. If the solver fails to fill, the user can reclaim their deposit.
 </Tip>
 
-## Settlement Flow
+### Settlement Flow
 
 Settlement is the process of verifying that the solver correctly filled the order, and crediting them on the Hub.
 
@@ -63,7 +103,7 @@ sequenceDiagram
 
 2. **Oracle reads destination chain** — The Oracle reads the destination chain to verify that the solver's fill matches the user's intent (correct destination, amount, and action).
 
-3. **Oracle attests to the Hub** — The Oracle signs an EIP-712 attestation and submits it to the [Hub](/references/protocol/components/hub) contract on the [Relay Chain](/references/protocol/relay-chain). This attestation triggers two actions:
+3. **Oracle attests to the Hub** — The Oracle signs an EIP-712 attestation and submits it to the [Hub](/references/protocol/components/hub) contract on the [Relay Chain](/references/protocol/components/relay-chain). This attestation triggers two actions:
    - **MINT** — The user's deposit is represented as a token balance on the Hub
    - **TRANSFER** — That balance is transferred from the user to the solver
 
@@ -73,7 +113,7 @@ sequenceDiagram
 Settlement happens in real-time, per-order. There is no batching window. As soon as the Oracle verifies a fill, the solver's balance is updated on the Hub.
 </Info>
 
-## Withdrawal Flow
+### Withdrawal Flow
 
 Withdrawal is how solvers extract funds from the Depository to replenish their capital. Solvers accumulate balances on the Hub and can withdraw from any origin chain at any time.
 
@@ -114,7 +154,7 @@ sequenceDiagram
 Solvers choose their own withdrawal strategy. They can withdraw frequently to maximize capital velocity, or batch withdrawals to minimize transaction costs. The Hub balance accrues in real-time regardless.
 </Tip>
 
-## Revert Flow
+### Revert Flow
 
 If a solver fails to fill an order within the expected timeframe, the user's funds are protected and can be returned.
 
@@ -142,41 +182,3 @@ sequenceDiagram
 3. **User balance restored** — The Hub restores the user's token balance, effectively unlocking their deposit.
 
 4. **User withdraws** — The user (or the protocol on their behalf) can trigger a withdrawal from the Depository to reclaim their funds.
-
-## Comparison: Settlement Approaches
-
-```mermaid
-graph TD
-    subgraph P2P["Point-to-Point"]
-        U1[User] -->|Direct transfer| S1[Solver]
-        style P2P fill:#f9f9f9
-    end
-
-    subgraph Batch["Batch Settlement"]
-        U2[User] -->|Deposit ~77k gas| E2[Escrow]
-        E2 -->|Batch every ~4hrs| S2[Solver]
-        style Batch fill:#f9f9f9
-    end
-
-    subgraph RelayHub["Relay Hub"]
-        U3[User] -->|Deposit ~21k gas| D3[Depository]
-        D3 -.->|Attest| H3[Hub]
-        H3 -->|Real-time credit| S3[Solver]
-        style RelayHub fill:#f0f0ff
-    end
-```
-
-Different intent protocols handle settlement in different ways. Here's how Relay compares:
-
-| | **Point-to-Point** | **Batch Settlement** | **Relay Hub** |
-|---|---|---|---|
-| **Example** | Direct transfer | Across | Relay |
-| **Settlement location** | Origin chain | Origin chain (batched) | Relay Chain |
-| **Deposit gas** | ~21,000 | ~77,000 | ~21,000 |
-| **Fill overhead** | None | ~120,000 gas | None |
-| **Settlement cost** | N/A | Amortized | ~$0.005 on Relay Chain |
-| **Time to payment** | Instant | ~4 hours (batch window) | Seconds (real-time) |
-| **Capital efficiency** | High (but no protection) | Low (long lock-up) | High (real-time + protected) |
-| **Chain expansion** | Easy | Requires bridge integration | Deploy Depository only |
-
-The key innovation is that by moving settlement to a dedicated low-cost chain, Relay achieves the capital efficiency of direct transfers with the security guarantees of an escrow system.

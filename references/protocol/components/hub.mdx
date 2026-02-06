@@ -6,7 +6,7 @@ sidebarTitle: Hub
 
 ## Overview
 
-The Hub is a smart contract on the [Relay Chain](/references/protocol/relay-chain) that serves as the central ledger for the protocol. It tracks the ownership of all funds deposited into [Depository](/references/protocol/components/depository) contracts across every supported chain.
+The Hub is a smart contract on the [Relay Chain](/references/protocol/components/relay-chain) that serves as the central ledger for the protocol. It tracks the ownership of all funds deposited into [Depository](/references/protocol/components/depository) contracts across every supported chain.
 
 Implemented as an [ERC6909](https://eips.ethereum.org/EIPS/eip-6909) multi-token contract, the Hub can represent any deposited asset (ETH, USDC, SOL, etc.) from any chain as a token balance. When the [Oracle](/references/protocol/components/oracle) attests that a deposit or fill occurred, the Hub updates balances accordingly.
 

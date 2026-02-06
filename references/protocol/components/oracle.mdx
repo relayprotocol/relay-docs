@@ -6,7 +6,7 @@ sidebarTitle: Oracle
 
 ## Overview
 
-The Oracle is the verification engine of the protocol. It reads events from origin and destination chains, verifies that deposits and fills occurred correctly, and submits signed attestations to the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/relay-chain).
+The Oracle is the verification engine of the protocol. It reads events from origin and destination chains, verifies that deposits and fills occurred correctly, and submits signed attestations to the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/components/relay-chain).
 
 Unlike push-based oracles that continuously stream data crosschain, Relay uses a **pull-based** model. The Oracle reads historical chain data on-demand when attestation is needed. This keeps costs low and avoids the overhead of maintaining persistent message channels to every chain.
 

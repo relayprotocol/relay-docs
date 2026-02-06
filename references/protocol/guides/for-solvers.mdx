@@ -10,27 +10,24 @@ Solvers (also called relayers) are the liquidity providers that fill crosschain 
 
 This page explains the solver lifecycle and how each protocol component fits into the solver's workflow.
 
-<Info>
-Most solvers interact with Relay through the Relay API, which abstracts the protocol details. This page describes the underlying protocol flow for solvers who want to understand how settlement works, or who want to integrate directly.
-</Info>
-
 ## Solver Lifecycle
 
-### 1. Receive Orders
+### 1. Monitor Deposits
 
-Solvers receive order information through the Relay API. Each order specifies:
+Solvers watch [Depository](/references/protocol/components/depository) contracts across supported chains for new deposits. Each deposit includes:
 
-- **Origin chain and asset** — What the user is depositing
+- **Origin chain and asset** — What the user deposited
 - **Destination chain and action** — What the user wants executed
 - **Amount and fees** — The deposit amount and solver compensation
+- **Order ID** — A unique identifier linking the deposit to the order
 
 ### 2. Fill Orders
 
-When a solver commits to an order, they execute the user's requested action on the destination chain. This can be a simple transfer, a swap, or any arbitrary onchain action. Fills can be as gas-efficient as a standard transfer — no routing through protocol contracts is required on the destination.
+When a solver decides to fill an order, they execute the user's requested action on the destination chain using their own capital. This can be a simple transfer, a swap, or any arbitrary onchain action. Fills can be as gas-efficient as a standard transfer — no routing through protocol contracts is required on the destination.
 
 ### 3. Settlement
 
-After filling, the solver waits for the [Oracle](/references/protocol/components/oracle) to attest both the user's deposit and the solver's fill. The Oracle submits attestations to the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/relay-chain), which credits the solver's balance.
+After filling, the solver waits for the [Oracle](/references/protocol/components/oracle) to attest both the user's deposit and the solver's fill. The Oracle submits attestations to the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/components/relay-chain), which credits the solver's balance.
 
 Settlement happens in real-time — there is no batching window. The solver's Hub balance updates as soon as the Oracle processes the attestation.
 
@@ -68,13 +65,10 @@ Solver compensation is determined during the quoting phase, before the order is 
 
 Settlement fees on the Relay Chain are paid by the solver but are minimal (~$0.005 per order).
 
-## Direct Integration
+## Contract References
 
-While the Relay API provides the simplest integration path, solvers can interact with the protocol directly:
+For contract-level integration details, see:
 
-- **Monitor deposits** — Watch Depository contracts for new deposits
-- **Submit fills** — Execute fills on destination chains
-- **Request settlement** — Trigger Oracle attestation
-- **Withdraw funds** — Request proofs from the Allocator and submit to Depositories
-
-For contract-level details, see the [EVM Depository Reference](/references/protocol/contracts/evm-depository) and [Solana Depository Reference](/references/protocol/contracts/solana-depository).
+- [EVM Depository Reference](/references/protocol/contracts/evm-depository)
+- [SVM Depository Reference](/references/protocol/contracts/solana-depository)
+- [Addresses](/references/protocol/addresses)

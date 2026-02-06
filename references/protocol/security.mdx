@@ -28,12 +28,12 @@ The Oracle determines which deposits and fills are considered valid:
 - **Consensus-based** — Designed for multi-operator consensus, where multiple independent parties must agree on attestations
 
 <Info>
-The Oracle is the main trust-bearing component. A compromised Oracle could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the Security Council's ability to pause the system.
+The Oracle is the main trust-bearing component. A compromised Oracle could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the [Security Council's](/references/protocol/components/security-council) ability to pause the system.
 </Info>
 
 ### Hub (Smart Contract)
 
-The Hub is a deterministic smart contract on the [Relay Chain](/references/protocol/relay-chain):
+The Hub is a deterministic smart contract on the [Relay Chain](/references/protocol/components/relay-chain):
 
 - **Rule-based** — Balance changes only occur through Oracle-attested actions (MINT, TRANSFER, BURN)
 - **Idempotent** — The same attestation cannot be processed twice
@@ -41,29 +41,18 @@ The Hub is a deterministic smart contract on the [Relay Chain](/references/proto
 
 ### Allocator (Trust-Critical, MPC-Mitigated)
 
-The Allocator controls withdrawal authorization:
+The [Allocator](/references/protocol/components/allocator) controls withdrawal authorization:
 
-- **MPC signatures** — No single entity holds the full signing key
+- **[MPC signatures](/references/protocol/components/allocator#mpc-signing)** — No single entity holds the full signing key
 - **Balance-bounded** — Can only authorize withdrawals up to a solver's Hub balance
-- **Governed by Security Council** — A multisig can pause or replace the Allocator
+- **Governed by [Security Council](/references/protocol/components/security-council)** — A multisig can pause or replace the Allocator
 - **Replay-protected** — Nonces and expirations prevent proof reuse
 
 ## Security Council
 
-The Security Council is a multisig composed of multiple independent parties across different timezones. It governs the Allocator with tiered thresholds:
+The [Security Council](/references/protocol/components/security-council) is a multisig that governs the Allocator. Any single member can immediately pause all withdrawals, while structural changes (replacing the Allocator, changing membership) require a supermajority. Because all withdrawals flow through a single Allocator, the entire protocol across 80+ chains can be paused with a single transaction.
 
-| Action | Threshold | Purpose |
-|--------|-----------|---------|
-| **Pause** | 1-of-N | Any member can immediately halt all withdrawals |
-| **Unpause** | Majority | Resume operations after investigation |
-| **Replace Allocator** | Supermajority | Upgrade or fix the Allocator contract |
-| **Change Membership** | Supermajority | Add or remove council members |
-
-The low pause threshold (1-of-N) ensures rapid response to emergencies, while the high thresholds for structural changes prevent unilateral action.
-
-## Global Pause Mechanism
-
-Because all withdrawals across all 80+ chains flow through a single Allocator, the entire protocol can be **paused with a single transaction**. This is a significant advantage over protocols where each chain's escrow contract must be individually paused — a process that takes time and could miss chains during an active exploit.
+See the full [Security Council](/references/protocol/components/security-council) page for details on tiered thresholds and scope.
 
 ## Audits
 

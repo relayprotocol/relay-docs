@@ -231,17 +231,17 @@
             "pages": [
               "references/protocol/overview",
               "references/protocol/how-it-works",
-              "references/protocol/relay-chain",
               {
                 "group": "Components",
                 "pages": [
+                  "references/protocol/components/relay-chain",
                   "references/protocol/components/depository",
                   "references/protocol/components/oracle",
                   "references/protocol/components/hub",
-                  "references/protocol/components/allocator"
+                  "references/protocol/components/allocator",
+                  "references/protocol/components/security-council"
                 ]
               },
-              "references/protocol/design",
               "references/protocol/security",
               {
                 "group": "Guides",
@@ -251,13 +251,13 @@
                 ]
               },
               {
-                "group": "Contract Reference",
+                "group": "Contracts",
                 "pages": [
+                  "references/protocol/addresses",
                   "references/protocol/contracts/evm-depository",
                   "references/protocol/contracts/solana-depository"
                 ]
-              },
-              "references/protocol/addresses"
+              }
             ]
           },
           {

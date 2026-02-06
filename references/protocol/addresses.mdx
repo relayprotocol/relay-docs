@@ -1,10 +1,32 @@
 ---
-title: Contracts Addresses
-description: Addresses of Relay Depository contracts
-sidebarTitle: Contracts Addresses
+title: Addresses
+description: Contract addresses for the Relay Settlement Protocol
+sidebarTitle: Addresses
 ---
 
+## Relay Chain
+
+Core settlement contracts deployed on the [Relay Chain](/references/protocol/components/relay-chain) (Chain ID `537713`).
+
+| Contract | Address |
+|----------|---------|
+| **Hub** | `TBD` |
+| **Oracle** | `TBD` |
+
+## Aurora
+
+The [Allocator](/references/protocol/components/allocator) and [Security Council](/references/protocol/components/security-council) multisig are deployed on Aurora for integration with the NEAR MPC network.
+
+| Contract | Address |
+|----------|---------|
+| **Allocator** | `TBD` |
+| **Security Council Multisig** | `TBD` |
+
+## Depository Contracts
+
 {/* Generated using: "curl https://api.relay.link/chains | jq '.chains[] | "|\(.protocol.v2.chainId)|\(.protocol.v2.depository)|\(.vmType)|\(.id)"" */}
+
+[Depository](/references/protocol/components/depository) contracts are deployed on every supported origin chain.
 
 | Chain          | Address                                      | VM Type     | EVM Chain Id |
 | -------------- | -------------------------------------------- | ----------- | ------------ |
