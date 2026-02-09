@@ -557,7 +557,7 @@ The response includes two steps that must be executed in order.
 
 ### Step 1: Authorize (Nonce-Mapping Signature)
 
-The first step (`id: authorize`) requires signing an EIP-712 message that maps the nonce to the request ID. This signature can be executed on any EVM chain.
+The first step (`id: authorize`) requires signing an EIP-712 message that maps the nonce to the request ID. This signature must be executed on an EVM chain that is not Hyperliquid (such as Ethereum, Base, or Optimism).
 
 <Note>
   When signing on a different chain than the default, update both
