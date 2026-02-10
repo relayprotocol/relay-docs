@@ -269,23 +269,32 @@ For transactions originating from Solana, you can designate an alternative accou
 |-----------|------|-------------|
 | `depositFeePayer` | `string` | A Solana address that will pay the transaction fees and rent for deposit transactions on Solana. This account must have sufficient SOL to cover these costs. **Must be different from the `user` address.** |
 
+The `depositFeePayer` parameter provides a gasless experience for users when depositing from Solana. This is particularly useful for onboarding new users who may not have sufficient SOL to cover transaction fees.
+
 <Note>
 The `depositFeePayer` parameter operates independently from the `subsidizeFees` and `subsidizeRent` parameters. It applies specifically to Solana origin transactions and does not draw from your app balance.
 </Note>
 
-<Warning>
-**Important restrictions and security considerations for `depositFeePayer`:**
+#### Security Considerations and Limitations
 
-- **The `depositFeePayer` and `user` addresses must be different.** You cannot use the same wallet address for both parameters.
-- **Signing order is critical.** Relay returns a transaction that requires the integrator's sponsoring wallet to sign **first**. The integrator must sign the transaction before passing it to the user. If the user receives an unsigned transaction, they could potentially modify it to drain the sponsoring wallet.
-- **Avoid same-chain swaps with untrusted users.** The `depositFeePayer` parameter is exploitable when used for same-chain swaps on Solana. Only use it for same-chain operations when the wallet is under your control.
+<Warning>
+**Critical security requirements when using `depositFeePayer`:**
+
+- **Different addresses required:** The `depositFeePayer` and `user` addresses must be different. You cannot use the same wallet address for both parameters.
+
+- **Signing order is critical:** Relay returns a transaction that requires the integrator's sponsoring wallet (`depositFeePayer`) to sign **first**. The integrator must sign the transaction before passing it to the user. If the user receives an unsigned transaction, they could potentially modify it to drain the sponsoring wallet.
+
+- **Avoid same-chain swaps with untrusted users:** The `depositFeePayer` parameter is exploitable when used for same-chain swaps on Solana with untrusted users. Only use it for same-chain operations when the user wallet is under your control.
+
+- **Cross-chain transactions are safer:** The exploitation risk is significantly reduced for cross-chain transactions, as the user cannot easily manipulate the destination chain execution.
 </Warning>
 
-**When to use `depositFeePayer`:**
+**When to safely use `depositFeePayer`:**
 
-- When you want to provide a gasless experience for users depositing from Solana
-- When your application maintains a dedicated fee-paying wallet for Solana transactions
-- When you want to abstract away the complexity of SOL requirements from your users
+- Cross-chain transactions where the user is bridging from Solana to another chain
+- Same-chain operations where you control both the user wallet and fee payer wallet
+- Applications with trusted user relationships and proper access controls
+- When implementing proper transaction signing workflows where you sign first
 
 #### Example Request
 
@@ -307,7 +316,19 @@ curl -X POST \
   }'
 ```
 
-In this example, a user bridges USDC from Solana to Base. The `depositFeePayer` address will cover the Solana transaction fees for the deposit, allowing the user to transact without holding SOL.
+In this example, a user bridges USDC from Solana to Base. The `depositFeePayer` address will cover the Solana transaction fees for the deposit, allowing the user to transact without holding SOL. This is a cross-chain transaction, which reduces exploitation risk.
+
+### Implementation Best Practices for `depositFeePayer`
+
+1. **Implement proper signing order:** Always ensure your `depositFeePayer` wallet signs the transaction before passing it to the user.
+
+2. **Limit same-chain usage:** Only use `depositFeePayer` for same-chain Solana operations when you have strict controls over user wallets.
+
+3. **Monitor fee payer balances:** Set up automated monitoring to ensure your `depositFeePayer` wallets maintain sufficient SOL balances.
+
+4. **Consider user trust levels:** Implement different sponsorship levels based on user trust scores or authentication levels.
+
+5. **Test transaction flows:** Thoroughly test your signing and transaction submission workflows to prevent security gaps.
 
 ### Solana Sponsorship Summary
 
@@ -359,6 +380,8 @@ For more details on the fee structure, see [Relay Fees](/references/api/api_core
 3. **Consider Auto-Topup** — For production applications, consider implementing an auto-topup system using the direct on-chain deposit method.
 
 4. **Track Sponsored Transactions** — Use the [Get Requests](/references/api/get-requests) API to monitor your sponsored transaction history and costs.
+
+5. **Secure `depositFeePayer` Implementation** — When using `depositFeePayer`, always implement proper signing order and limit same-chain operations to trusted scenarios.
 
 ---
 
