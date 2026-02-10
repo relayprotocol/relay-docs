@@ -152,9 +152,6 @@
               {
                 "group": "Deprecated",
                 "pages": [
-                  "references/api/execute-call",
-                  "references/api/execute-bridge",
-                  "references/api/execute-swap",
                   "references/api/get-price",
                   "references/api/get-config",
                   "references/api/get-intents-status",
