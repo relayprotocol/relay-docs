@@ -94,7 +94,7 @@ function enhanceGetQuotePage() {
 
     addLearnMore(
       "body-app-fees",
-      "/references/api/api_core_concepts/fees#app-fees",
+      "/features/relay-fees-and-app-fees#app-fees",
       "Learn more about app fees",
       "learn-more-app-fees",
     );
@@ -108,7 +108,7 @@ function enhanceGetQuotePage() {
 
     addLearnMore(
       "response-fees",
-      "/references/api/api_core_concepts/fees",
+      "/features/relay-fees-and-app-fees",
       "Learn more about fees",
       "learn-more-fees",
       "before",
