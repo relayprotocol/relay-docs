@@ -324,6 +324,7 @@ Fee sponsorship is designed to cover relay and execution costs, but certain fees
 
 - **Origin chain gas fees** — Users must pay the gas required to submit their transaction on the origin chain (unless using `depositFeePayer` for Solana origins).
 - **App fees** — Fees configured via the `appFees` parameter are not deducted from your sponsor balance. These are separate charges that accrue to the specified recipient addresses.
+- **First-time approval transactions when using `usePermit`** — The initial approval transaction required for permit-based flows is not covered by fee sponsorship. However, all subsequent requests after the approval will be sponsored.
 
 ---
 
