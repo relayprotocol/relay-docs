@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .wheel-container {
+    @apply relative w-80 h-80 mx-auto;
+  }
+
+  .wheel {
+    @apply w-full h-full rounded-full border-4 border-relay-purple shadow-lg shadow-relay-purple/30;
+    transition: none;
+  }
+
+  .wheel-pointer {
+    @apply absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10;
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 28px solid #4615c8;
+    filter: drop-shadow(0 2px 4px rgba(70, 21, 200, 0.5));
+  }
+
+  .status-dot {
+    @apply w-2.5 h-2.5 rounded-full;
+  }
+
+  .status-dot-active {
+    @apply bg-green-400 animate-pulse;
+  }
+
+  .status-dot-pending {
+    @apply bg-yellow-400 animate-pulse;
+  }
+
+  .status-dot-inactive {
+    @apply bg-gray-600;
+  }
+}
