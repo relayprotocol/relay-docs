@@ -3,3 +3,7 @@ yarn.lock
 
 .DS_Store
 .env
+
+# BD/Customer tracking with actual customer data
+bd-customer-tracking-live.md
+bd-pipeline-*.md
