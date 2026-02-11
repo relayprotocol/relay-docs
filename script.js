@@ -94,7 +94,7 @@ function enhanceGetQuotePage() {
 
     addLearnMore(
       "body-app-fees",
-      "/features/app-fees",
+      "/references/api/api_core_concepts/fees#app-fees",
       "Learn more about app fees",
       "learn-more-app-fees",
     );
