@@ -7,9 +7,9 @@ sidebarTitle: Architecture
 A Relay Vault is a smart contract ([RelayPool.sol](./contracts/RelayPool)) that
 implements the
 [ERC4626](https://ethereum.org/en/developers/docs/standards/tokens/erc-4626/)
-standard. It is deployed on specific EVM network, for a specific currency,
+standard. It is deployed on specific EVM network, for a specific asset,
 represented by an ERC20. It is possible to use wrapped tokens (such as WETH) to
-handle native currencies (we provide a
+handle native assets (Relay provides a
 [Native Gateway](./contracts/RelayPoolNativeGateway) for this purpose).
 
 Each vault has a base yield pool, in which funds are instantly deposited and
@@ -23,14 +23,14 @@ to a bridge, they can receive the same amount (minus fees) of funds from the
 vault on the destination chain. In order to achieve this, the RelayBridge
 contracts uses [Hyperlane](https://hyperlane.xyz/) to send a message to the
 vault. As soon as the message reaches the vault, the funds are pulled from the
-yield pool and sent to the recipient. At the same time, the vault initiates the
+yield pool and sent to the destination address. At the same time, the vault initiates the
 transfer of funds using an underlying bridge (e.g. native bridges, ... ).
 
 > The Relay Vaults can be considered to be an "accelerator" where funds are
 > "dispersed" without requiring to wait for the full resolution of the bridge,
 > in exchange for a small fee.
 
-In order to abstract the underlying bridges, we rely on the concept of
+In order to abstract the underlying bridges, Relay relies on the concept of
 [`BridgeProxy`](./contracts/RelayBridge). A BridgeProxy contract is deployed on
 both the origin chain and the vault's chain and implements the specificities of
 the underlying bridge.

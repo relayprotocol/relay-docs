@@ -1,6 +1,6 @@
 ---
 title: "Call Execution Integration Guide"
-description: "How to execute cross-chain calls using Relay"
+description: "How to execute crosschain calls using Relay"
 ---
 
 import GetAnApiKey from "/snippets/GetAnApiKey.mdx";
@@ -8,7 +8,7 @@ import QuickstartCallout from "/snippets/QuickstartCallout.mdx";
 
 <QuickstartCallout />
 
-You can use Relay cross-chain execution to perform any action (tx) on any chain. This works by specifying the transaction data you wish to execute on the destination chain as part of the initial quoting process.
+You can use Relay crosschain execution to perform any action (tx) on any chain. This works by specifying the transaction data you wish to execute on the destination chain as part of the initial quoting process.
 
 ## Before you start
 
@@ -22,7 +22,7 @@ While not mandatory for integration, doing the following will improve the UX for
 <Steps>
   <Step title="Get a Quote">
     ## Get a Quote
-    To execute a cross-chain transaction, you need to specify the origin chain for payment, the destination chain where the contract is deployed, and the transaction data to execute. Use the [quote endpoint](/references/api/get-quote-v2) with specific parameters for cross-chain calling.
+    To execute a crosschain transaction, you need to specify the origin chain for payment, the destination chain where the contract is deployed, and the transaction data to execute. Use the [quote endpoint](/references/api/get-quote-v2) with specific parameters for crosschain calling.
 
     <CodeGroup>
     ```bash Request
@@ -420,7 +420,7 @@ While not mandatory for integration, doing the following will improve the UX for
 
     ### Contract Compatibility
 
-    Before integrating cross-chain calls, ensure your contract is compatible with Relay. Review our [Contract Compatibility](/references/api/api_core_concepts/contract-compatibility) overview to make any necessary changes to your smart contracts.
+    Before integrating crosschain calls, ensure your contract is compatible with Relay. Review the [Contract Compatibility](/references/api/api_core_concepts/contract-compatibility) overview to make any necessary changes to your smart contracts.
     ​
 
     ### Contract Interaction with Web3
@@ -778,7 +778,7 @@ While not mandatory for integration, doing the following will improve the UX for
     4. **Verify contract addresses**: Use the correct token contract for each chain
     5. **Handle allowances**: Some tokens require setting allowance to 0 before setting a new amount
 
-    ### Quote Parameters for Cross-Chain Calls
+    ### Quote Parameters for Crosschain Calls
 
     | Parameter             | Type   | Description                                                                                                                          |
     | --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -797,9 +797,9 @@ While not mandatory for integration, doing the following will improve the UX for
   \
     Learn more about step execution using the API [here](/references/api/api_core_concepts/step-execution).
   </Step>
-  <Step title="Monitor Cross-Chain Call Status">
-    ## Monitor Cross-Chain Call Status
-    Track the progress of your cross-chain call using the status endpoint:
+  <Step title="Monitor Crosschain Call Status">
+    ## Monitor Crosschain Call Status
+    Track the progress of your crosschain call using the status endpoint:
 
     <CodeGroup>
     ```bash Request
@@ -831,13 +831,13 @@ While not mandatory for integration, doing the following will improve the UX for
 
 ## Preflight Checklist
 
-<input className="relay-checkbox" type="checkbox" name="contract-compatibility" value="yes"/> **Contract compatibility** - Before integrating cross-chain calls, ensure your contract is compatible with Relay. Review our [Contract Compatibility](/references/api/api_core_concepts/contract-compatibility) overview to make any necessary changes to your smart contracts.
+<input className="relay-checkbox" type="checkbox" name="contract-compatibility" value="yes"/> **Contract compatibility** - Before integrating crosschain calls, ensure your contract is compatible with Relay. Review the [Contract Compatibility](/references/api/api_core_concepts/contract-compatibility) overview to make any necessary changes to your smart contracts.
 
 <input className="relay-checkbox" type="checkbox" name="approvals" value="yes"/> **ERC20 approvals** - Include approval transactions before any ERC20 spending calls
 
 <input className="relay-checkbox" type="checkbox" name="transaction-data" value="yes"/> **Verify transaction data** - Confirm `amount` equals the sum of all `txs[].value` fields
 
-<input className="relay-checkbox" type="checkbox" name="trade-type" value="yes"/> **Check tradeType** - Must be set to `"EXACT_OUTPUT"` for cross-chain calls
+<input className="relay-checkbox" type="checkbox" name="trade-type" value="yes"/> **Check tradeType** - Must be set to `"EXACT_OUTPUT"` for crosschain calls
 
 <input className="relay-checkbox" type="checkbox" name="call-data" value="yes"/> **Validate call data** - Ensure contract function calls are properly encoded
 
@@ -847,7 +847,7 @@ While not mandatory for integration, doing the following will improve the UX for
 
 ## Common Use Cases
 
-Below are some common use cases for cross-chain calls.
+Below are some common use cases for crosschain calls.
 
 * **NFT Minting with ETH**: Mint NFTs on L2s while paying from L1
 * **NFT Minting with ERC20**: Mint NFTs using USDC

@@ -3,9 +3,9 @@ title: "Deposit Addresses"
 description: "Learn how to use Relay with a deposit address for instant bridging."
 ---
 
-Relay supports instantly and cheaply bridging from a variety of EVM and non-EVM chain to any token.
-We are now launching deposit addresses to allow users to bridge without connecting a wallet. Users can send funds to a designated address
-and Relay will instantly deposit the correct tokens on the destination chain in the user's wallet. This is a great way for users to quickly
+Relay supports instantly and cheaply bridging from a variety of EVM and non-EVM chains to any token.
+Deposit addresses allow users to bridge without connecting a wallet. Users can send funds to a designated address
+and the protocol will instantly deposit the correct tokens on the destination chain in the user's wallet. This is a great way for users to quickly
 start transacting on a new chain!
 
 ## How It Works
@@ -14,16 +14,16 @@ Once generated, a single deposit address can be reused so long as the origin cur
 
 When using deposit addresses, the `user` parameter can be any valid address, including the zero address (`0x0000000000000000000000000000000000000000`). This provides flexibility in how you structure your deposit address requests.
 
-Failures via deposit addresses are extremely rare, but are still possible. If something goes wrong, we will default to manually handling refunds. If you wish to automatically receive refunds on the origin chain, specify the `refundTo` address. This will mean refunds will automatically be issued on origin in case of any filling failures.
+Failures via deposit addresses are extremely rare, but are still possible. If something goes wrong, the protocol will default to manually handling reversions. If you wish to automatically receive reversed funds on the origin chain, specify the `refundTo` address. This will mean reversions will automatically be issued on origin in case of any filling failures.
 
 The deposit transaction requires no calldata. You just need to send any value to the address specified in the API request response data. As long as this amount is enough to cover any gas or relay fees, it will be automatically bridged based on the route requested in the initial quote.
 
 When using deposit addresses, there are more relayer gas fees associated with bridges. Typically about
-33,000 extra gas is required than regular native bridges, and about 70,000 more for ERC-20 bridges. For very small bridges, we don't recommend using deposit addresses since so much gas is required.
+33,000 extra gas is required than regular native bridges, and about 70,000 more for ERC-20 bridges. For very small bridges, deposit addresses are not recommended since so much gas is required.
 
-Once a deposit occurs, the quote will automatically be generated post-deposit to account for gas fluctuation and recompute all fees. This can change the amount received to be different than the quoted value but will always be at least the minimum rate. If the minimum rate cannot be achieved, the deposit amount will be refunded.
+Once a deposit occurs, the quote will automatically be generated post-deposit to account for gas fluctuation and recompute all fees. This can change the amount received to be different than the quoted value but will always be at least the minimum rate. If the minimum rate cannot be achieved, the deposit amount will revert.
 
-All Relay EVM deposit addresses begin and end with the character `d` (not case-sensitive). This is to help us with reducing the indexing search space.
+All Relay EVM deposit addresses begin and end with the character `d` (not case-sensitive). This helps reduce the indexing search space.
 
 ## Supported Currencies
 
@@ -31,10 +31,10 @@ To determine which currencies support deposit addresses on a specific chain, use
 
 ## Edge Cases
 
-We have automatic handling for common edge cases that can occur when using deposit addresses:
+Relay has automatic handling for common edge cases that can occur when using deposit addresses:
 
 - Depositing to the Wrong Chain -- For example, if the bridge request requires a deposit on Base but the funds
-  are deposited on Optimism, this amount is bridged to the destination chain originally requested as long as its enough to cover the fees and gas associated with the bridge. Please note that this will mean a new quote will be generated in-flight. NOTE: This is only supported for relay supported cross-chain currencies, see limitations.
+  are deposited on Optimism, this amount is bridged to the destination chain originally requested as long as its enough to cover the fees and gas associated with the bridge. Please note that this will mean a new quote will be generated in-flight. NOTE: This is only supported for Relay-supported crosschain assets, see limitations.
 - Extra Funds are Received -- If the user deposits more funds than what is quoted, the quote will be
   regenerated to account for this surplus amount and the bridge will still be filled.
 - Less Funds are Received -- If the user deposits less funds than what is quoted, a new quote will be generated to account for the lower amount, and the bridge will be filled.
@@ -43,11 +43,11 @@ We have automatic handling for common edge cases that can occur when using depos
 
 - Calldata execution on destination is not allowed.
 - Only exact input bridging is allowed. Specifying exact output will not work.
-- When non-supported currency or NFTs are sent to the deposit address, we currently do not support recovering of those assets.
+- When non-supported assets or NFTs are sent to the deposit address, Relay currently does not support recovering of those assets.
 
 ## Debugging
 
-When looking up the status of a bridge or fetching the request data, please use the `requestId` and our [Get Execution Status API](/references/api/get-intents-status-v3).
+When looking up the status of a bridge or fetching the request data, please use the `requestId` and the [Get Execution Status API](/references/api/get-intents-status-v3).
 The transaction hash of the deposit transaction cannot be used to lookup the status of the bridge for deposit address bridges.
 To help with debugging transactions, make sure to store the `requestId` along with other data (quotes, transactions,
 bridges, etc). The `requestId` is unique to Relay's database and will be returned with the quote.
@@ -80,7 +80,7 @@ curl -X POST \
 - `useDepositAddress` must be set to `true` <br />
 - `user` can be any valid address, including the zero address <br />
 - `refundTo` can be optionally set when `useDepositAddress` is being used.
-  This is the address that refunds will be sent to in case of an issue. If not specified then manual refund is required.
+  This is the address that reversed funds will be sent to in case of an issue. If not specified then manual reversion is required.
 
 ## Example Response
 

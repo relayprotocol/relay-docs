@@ -2,7 +2,7 @@
 
 ## RelayPool
 
-ERC4626 vault that enables cross-chain asset bridging and yield generation
+ERC4626 vault that enables crosschain asset bridging and yield generation
 
 _Receives bridged assets via Hyperlane, provides instant liquidity, and deposits idle funds into yield pools_
 
@@ -221,7 +221,7 @@ address HYPERLANE_MAILBOX
 
 The address of the Hyperlane mailbox
 
-_Used to receive cross-chain messages_
+_Used to receive crosschain messages_
 
 ### WETH
 
@@ -760,7 +760,7 @@ _Internal function that withdraws from yield pool to recipient_
 function handle(uint32 chainId, bytes32 bridgeAddress, bytes data) external payable
 ```
 
-Handles incoming cross-chain messages from Hyperlane
+Handles incoming crosschain messages from Hyperlane
 
 _Only callable by Hyperlane mailbox, provides instant liquidity to recipients_
 

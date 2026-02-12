@@ -1,9 +1,9 @@
 ---
 title: "Fast Fill"
-description: "Accelerate the destination fill of a cross-chain request"
+description: "Accelerate the destination fill of a crosschain request"
 ---
 
-Fast Fill is a feature that allows you to accelerate the destination fill of a cross-chain request. This is useful if you want to speed up the completion of a bridge or swap operation before it's landed onchain.
+Fast Fill is a feature that allows you to accelerate the destination fill of a crosschain request. This is useful if you want to speed up the completion of a bridge or swap operation before it's landed onchain.
 
 ## Requirements
 
@@ -198,4 +198,4 @@ if (status.status === "success") {
 ## Caveats
 
 * Slippage may lead to a surplus or shortage in your outstanding balance. This may eventually max out your outstanding balance. In order to clear this reach out to the Relay team to resolve this. If you have a good estimate of the final amount you can use the `solverInputCurrencyAmount` parameter to specify the exact amount of input currency you want to use for the fill, thus minimizing slippage.
-* We recommend protecting your API key on the backend by not exposing it to the client.
+* It is recommended to protect your API key on the backend by not exposing it to the client.

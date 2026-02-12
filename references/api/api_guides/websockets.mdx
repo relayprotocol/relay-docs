@@ -3,11 +3,11 @@ title: "Status Websockets"
 description: "Remove Indexing Latency from your App using Relay Websockets"
 ---
 
-Our goal at Relay is to make multichain payments feel instant. Even when transactions confirm quickly onchain, API polling latency can degrade user experience. Connecting your app to Relay Websockets means your users get streamed updates of the status of their Relays for a speedier experience.
+The goal of Relay is to make multichain payments feel instant. Even when transactions confirm quickly onchain, API polling latency can degrade user experience. Connecting your app to Relay Websockets means your users get streamed updates of the status of their Relays for a speedier experience.
 
 ## Relay Status Websockets
 
-Relay Status Websockets specifically stream transaction statuses for both cross and same-chain status, though the stages differ slightly.
+Relay Status Websockets specifically stream transaction statuses for both crosschain and same-chain status, though the stages differ slightly.
 
 | **status** | **indication**                                          |
 | ---------- | ------------------------------------------------------- |
@@ -16,7 +16,7 @@ Relay Status Websockets specifically stream transaction statuses for both cross 
 | submitted  | fill submitted on destination chain                     |
 | success    | fill succeeded                                          |
 | failure    | fill failed                                             |
-| refund     | refunded                                                |
+| refund     | reverted                                                |
 
 ## Integrating Relay Websockets
 

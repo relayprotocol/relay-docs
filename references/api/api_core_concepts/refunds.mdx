@@ -1,22 +1,22 @@
 ---
-title: 'Refunds'
-description: 'Learn how Relay handles refunds.'
+title: 'Reversions'
+description: 'Learn about how Relay coordinates transaction reversions.'
 ---
 
-Relay strives for 100% successful bridges & swaps. Occasionally, due to a variety of 
-possible circumstances, a bridge or swap might be refunded instead of completed. 
-Learn more about Relay's refund logic and how it works. 
+Relay strives for 100% successful bridges & swaps. Occasionally, due to a variety of
+possible circumstances, a bridge or swap might revert instead of completing.
+Learn more about Relay's reversion logic and how it works.
 
-## What is a refund?
-A refund is returned funds to a user due to a failed swap or bridge.
-Relay will refund the user's funds on the destination chain. 
-If the destination chain is unavailable, Relay will refund the user's funds on the deposit chain. 
+## What is a reversion?
+A reversion is returned funds to a user due to a failed swap or bridge.
+Relay will return the user's funds on the destination chain.
+If the destination chain is unavailable, Relay will return the user's funds on the deposit chain.
 The destination chain might be unavailable for a variety of reasons like a network outage.
 
-## What causes refunds to happen?
-A refund is triggered when the swap or bridge fails to complete.
+## What causes reversions to happen?
+A reversion is triggered when the swap or bridge fails to complete.
 A failure can occur for a variety of reasons including but not exclusive to:
-- *Transactions Reverting:* Before giving a quote, we simulate the transaction to ensure it will succeed.
+- *Transactions Reverting:* Before giving a quote, Relay simulates the transaction to ensure it will succeed.
 Between the time the quote is given and the user accepts & deposits funds, the transaction could revert.
 Transactions reverting could be caused by if there is a contested mint or execution was delayed.
 - *User's Wallet Address is Different Than Transaction Depositing Address:* This happens when the user
@@ -24,29 +24,29 @@ switches wallets right before signing the transaction. Users must execute the tr
 address that received the quote.
 - *User Deposits Too Little:* There are two cases for how this can happen.
   1. The user explicitly deposits a lower amount than Relay requested.
-  2. The user sent the deposit we requested but did so delayed so the original quote is no longer valid.
-  Quotes expire after 1 minute then a new quote is generated. 
+  2. The user sent the deposit Relay requested but did so delayed so the original quote is no longer valid.
+  Quotes expire after 1 minute then a new quote is generated.
 - *Destination Chain is Unavailable:* Occasionally, the destination chain will
-have a network outage beyond our control. An example could be an RPC that is down or 
+have a network outage beyond anyone's control. An example could be an RPC that is down or
 the chain is experiencing a large reorganization.
 - *User Sends Deposits With the Same Request ID in the Calldata Multiple Times*
 - *User Send Deposits Without a Request ID in the Calldata*
 
-## When is there no refund given?
-If the refund amount is not enough to cover the cost of gas, Relay will 
-mark the bridge or swap as failed & no refund will be sent.
+## When is there no reversion given?
+If the reversion amount is not enough to cover the cost of gas, Relay will
+mark the bridge or swap as failed & no reversion will be sent.
 
-## What currency is used for refunds?
-The refund currency can vary by route. Relay will always attempt to refund the user in the original currency they sent. Usually this is one of the currencies in the `solverCurrencies` in the [chain api response](/references/api/get-chains), which are native or stable coins.
+## What asset is used for reversions?
+The reversion asset can vary by route. Relay will always attempt to return funds to the user in the original asset they sent. Usually this is one of the assets in the `solverCurrencies` in the [chain api response](/references/api/get-chains), which are native or stable coins.
 
 
-## Are refunds automatic & instant?
-Yes, refunds happen automatically when swaps or bridges fail to complete.
-If a failure occurs, Relay will refund the user's funds almost instantly. Please 
-remember no refund is given if the refund amount cannot cover the cost of gas.
+## Are reversions automatic & instant?
+Yes, reversions happen automatically when swaps or bridges fail to complete.
+If a failure occurs, Relay will return the user's funds almost instantly. Please
+remember no reversion is given if the reversion amount cannot cover the cost of gas.
 
-## How can I force a refund for testing purposes?
-You can force a refund by passing `debug-force-refund` as the referrer.
+## How can I force a reversion for testing purposes?
+You can force a reversion by passing `debug-force-refund` as the referrer.
 
 ```bash cURL
 curl -X POST \

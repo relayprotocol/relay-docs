@@ -12,10 +12,10 @@ Additionally, for vaults curated by the Relay team, the curator is a **multisig 
 
 Another threat is one where a specific origin (and its bridge) gets compromised. This can take multiple forms, such as a bridge being exploited, or an origin chain reorg that would lead to funds that had been previously bridged, not actually being sent to the vault.
 
-In order to mitigate these risks, each origin has a **maximum debt** setting which specifies the maximum amount of funds that can be bridged from that origin at any given time (capping the loss that a vault can endure). The origins also have a specific **cool down** period which is the minimum delay between a bridging transaction and the dispersion of funds to the recipient.
+In order to mitigate these risks, each origin has a **maximum debt** setting which specifies the maximum amount of funds that can be bridged from that origin at any given time (capping the loss that a vault can endure). The origins also have a specific **cool down** period which is the minimum delay between a bridging transaction and the dispersion of funds to the destination address.
 
 Finally, each origin has a specific **curator** who can instantly pause the origin in case of an emergency. This allows the Relay team to quickly react to any potential issues with a specific origin.
 
 ## Audits
 
-The Relay Vault contracts have been audited by [Spearbit](https://spearbit.com/) and you can find the [audit reports in our Github repo](https://github.com/relayprotocol/relay-vaults/blob/main/docs/README.md).
+The Relay Vault contracts have been audited by [Spearbit](https://spearbit.com/) and you can find the [audit reports in the Relay Github repo](https://github.com/relayprotocol/relay-vaults/blob/main/docs/README.md).

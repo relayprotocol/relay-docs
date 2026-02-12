@@ -42,7 +42,7 @@ The following adapters are officially maintained and developed by the Relay team
 
 ### How can I use an adapter?
 
-You can either make your own adapter, as long as it adheres to the interface above or you can use one of the officials adapters developed and maintained by the Relay team. All of our sdk methods handle a viem wallet or adapted wallet. The viem wallet adapter is used by default when a [viem wallet](https://viem.sh/docs/clients/wallet.html) is passed in for convenience. Refer below for implementation details:
+You can either make your own adapter, as long as it adheres to the interface above or you can use one of the officials adapters developed and maintained by the Relay team. All SDK methods handle a viem wallet or adapted wallet. The viem wallet adapter is used by default when a [viem wallet](https://viem.sh/docs/clients/wallet.html) is passed in for convenience. Refer below for implementation details:
 
 <CodeGroup>
 ```typescript Solana
@@ -51,7 +51,7 @@ import { adaptSolanaWallet } from '@relayprotocol/relay-solana-wallet-adapter'
 import { Connection, Keypair, clusterApiUrl, SystemProgram, Transaction } from '@solana/web3.js';
 ...
 
-//In this example we are loading a keypair as the wallet, but if you have a connector like dynamic you can just fetch the connection from that library
+//In this example a keypair is loaded as the wallet, but if you have a connector like dynamic you can just fetch the connection from that library
 const wallet = Keypair.generate();
 const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
 const walletAddress = wallet.publicKey.toString()
@@ -218,7 +218,7 @@ import { TronWallet } from 'tronweb'
 import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk"
 import { adaptTronWallet } from '@relayprotocol/relay-tron-wallet-adapter'
 
-// Create a TronWeb instance, we recommend using a provider like dynamiclabs if using this on the frontend
+// Create a TronWeb instance, using a provider like dynamiclabs is recommended if using this on the frontend
 // Note: you should never share your private key with anyone or use on the frontend
 const tronWeb = new TronWeb({fullHost: 'xxx', privateKey: 'privateKey'});
 const walletAddress = tronWeb.defaultAddress.base58

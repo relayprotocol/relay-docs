@@ -3,11 +3,11 @@ title: "Understanding Relay"
 description: "Learn How Relay Works Today"
 ---
 
-Relay is a cross-chain payments system that leverages third-party relayers for low-cost, low-latency cross-chain payments. When users wish to make cross-chain actions (bridging, minting, buying, arbitrary executions), they come to agreement with a relayer, who executes their wishes in exchange for payment on the desired chain.
+Relay is crosschain infrastructure that leverages third-party relayers for low-cost, low-latency crosschain transactions. When users wish to make crosschain actions (bridging, minting, buying, arbitrary executions), they come to agreement with a relayer, who executes their wishes in exchange for a fee on the desired chain.
 
 ## How it Works
 
-This section describes how Relay works. We use the example of instant bridging here for simplicity:
+This section describes how Relay works, using the example of instant bridging for simplicity:
 
 ### Initial Set up
 
@@ -21,18 +21,18 @@ In order to enable instant bridging, a trusted third party relayer (today Relay)
 
 3. Alice agrees to the quote, and Relay publishes their intent to fulfill the quote to Relay, with a corresponding order id.
 
-4. Alice submits a transfer tx (1 Eth) to the solver _directly_ with the order id appended in the tx calldata. The tx is indexed by Relay as an instant bridge initiation and triggers the assignment of 1 Eth of escrowed value in the Relay protocol to Alice (this is her assurance that she will receive either her desired outcome or a refund).
+4. Alice submits a transfer tx (1 Eth) to the solver _directly_ with the order id appended in the tx calldata. The tx is indexed by Relay as an instant bridge initiation and triggers the assignment of 1 Eth of escrowed value in the Relay protocol to Alice (this is her assurance that she will receive either her desired outcome or a reversion).
 
 5. The relayer pays Alice 1 Eth minus fees on Zora. The payment is indexed by Relay, when confirmed, reassigns the 1 Eth escrow balance from Alice to Relay.
 
-### Cross-chain balances & withdrawals
+### Crosschain balances & withdrawals
 
 Users may hold Relay protocol balance. This may occur in two scenarios:
 
-- Alice wishes to hold cross-chain balance to easily (and more cheaply) execute cross-chain actions
-- Alice attempts a just-in-time cross-chain action that fails, in which case she is left with cross-chain balance
+- Alice wishes to hold crosschain balance to easily (and more cheaply) execute crosschain actions
+- Alice attempts a just-in-time crosschain action that fails, in which case she is left with crosschain balance
 
-In the case that Alice holds cross-chain balance, it can be used in _any_ Relay action as a payment method, or withdrawn to Alice's wallet.
+In the case that Alice holds crosschain balance, it can be used in _any_ Relay action, or withdrawn to Alice's wallet.
 
 ## Further Decentralization
 

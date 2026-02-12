@@ -42,8 +42,8 @@ The state of progress is updated as users are moved through the flow. The onProg
 * __steps__: This is the full steps object as it's returned by the api and enhanced with some additional properties on the client. Notably the step status has been updated as well as any errors have been attached.
 * __fees__: This is the full fees object as it's returned by the api
 * __breakdown__: This is the full breakdown object as it's returned by the api
-* __currentStep__: We've conveniently pinpointed the current step that's being processed and made it accessible in this callback.
-* __currentStepItem__: Similarly to the step we've hoisted the current step item that is being processed so it's more easily accessible. A step can contain multiple items that are processed in parallel as a batch.
+* __currentStep__: The current step that's being processed, made conveniently accessible in this callback.
+* __currentStepItem__: Similarly, the current step item that is being processed, made easily accessible. A step can contain multiple items that are processed in parallel as a batch.
 * __txHashes__: A full list of all the transaction hashes that have been processed so far during execution.
 * __details__: A summary of the swap action that will be performed. This includes information pertinent to the swap: currencyIn, currencyOut, swap rate, etc.
 

@@ -1,9 +1,9 @@
 ---
 title: "ERC-4337"
-description: "How to use ERC-4337 to execute cross-chain transactions"
+description: "How to use ERC-4337 to execute crosschain transactions"
 ---
 
-One can use ERC-4337 user operations to execute cross-chain transactions. There are three possible interactions that one can have:
+One can use ERC-4337 user operations to execute crosschain transactions. There are three possible interactions that one can have:
 
 - Relaying only on the origin chain
 - Relaying only on the destination chain
@@ -21,7 +21,7 @@ One slightly different thing in the way the Solver accepts user operations is th
 
 If using an external Bundler, you might need to send non-zero `maxFeePerGas` and `maxPriorityFeePerGas` as two different parties are being paid in this case.
 
-In the following example, we demonstrate how to use a Safe Smart Account with a Pimlico Paymaster and use Relay to get the quotes and submit the user operation.
+In the following example, a Safe Smart Account is used with a Pimlico Paymaster, leveraging Relay to get the quotes and submit the user operation.
 
 The script makes use of Viem’s `privateKeyToAccount` to create an owner but any other owner creation method is applicable.
 

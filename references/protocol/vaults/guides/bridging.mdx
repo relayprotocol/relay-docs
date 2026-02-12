@@ -1,7 +1,7 @@
 ---
 title: Bridging
 description:
-        In this guide, we will learn how to successfully bridge funds from an
+        This guide covers how to successfully bridge funds from an
         origin to a vault.
 sidebarTitle: Bridging
 ---
@@ -9,16 +9,16 @@ sidebarTitle: Bridging
 ## Identifying the vault and origin
 
 The first step is to identify the vault you want to bridge to. This is based on
-the currency and chain on which you want to receive the funds. You can chose to
+the asset and chain on which you want to receive the funds. You can chose to
 _hardcode_ trusted vault addresses (like the ones deployed by the Relay team),
-or use our [Backend API](../backend) to query the vaults available on a specific
-chain and currency.
+or use the [Backend API](../backend) to query the vaults available on a specific
+chain and asset.
 
 Once you have identified the vault, you need to identify the origin on which you
-want to perform your deposit. There again, you can use our Backend API to query
+want to perform your deposit. There again, you can use the Backend API to query
 the origins available for a specific vault. You can filter these origins by
-their chain and currency. Please note that a vault may have "different"
-currencies than the ones you deposit. This is for example the case for deposits
+their chain and asset. Please note that a vault may have "different"
+assets than the ones you deposit. This is for example the case for deposits
 of native tokens (Ethereum) who are in fact going to a wrapped token (WETH)
 vault.
 

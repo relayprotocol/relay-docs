@@ -1,11 +1,11 @@
 ---
 title: 'Quickstart'
-description: 'Execute your first cross-chain transaction in under 5 minutes.'
+description: 'Execute your first crosschain transaction in under 5 minutes.'
 ---
 
 import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
 
-Relay is a multichain payments network. You define the **Intent** (what the user wants), and Relay handles the **Execution** (how to get there).
+Relay is multichain payments infrastructure. You define the **Intent** (what the user wants), and Relay coordinates the **Execution** (how to get there).
 
 Follow this 5-step flow to integrate Relay into your application:
 
@@ -13,7 +13,7 @@ Follow this 5-step flow to integrate Relay into your application:
 
 <Steps>
   <Step title="Configure">
-    To see how fast and simple Relay makes transacting cross-chain, let’s bridge real assets between inexpensive L2s—Base and Arbitrum.
+    To see how fast and simple Relay makes transacting crosschain, let's bridge real assets between inexpensive L2s—Base and Arbitrum.
 
     **Prerequisites:**
 
@@ -30,7 +30,7 @@ Follow this 5-step flow to integrate Relay into your application:
   <Step title="Quote">
     Every action in Relay starts with a Quote. 
 
-    The [quote endpoint](/references/api/get-quote-v2) handles all of your use cases, whether it’s a [**bridge**](/use-cases/bridging), [**swap**](/use-cases/cross-chain-swaps), or [**cross-chain call**](/use-cases/calling). It calculates fees, finds the best route, and generates the transaction data.
+    The [quote endpoint](/references/api/get-quote-v2) handles all of your use cases, whether it’s a [**bridge**](/use-cases/bridging), [**swap**](/use-cases/cross-chain-swaps), or [**crosschain call**](/use-cases/calling). It calculates fees, finds the best route, and generates the transaction data.
 
     ## **Request**
 
@@ -232,19 +232,19 @@ Follow this 5-step flow to integrate Relay into your application:
     <StatusWebsockets />
 
     ## Status Lifecycle
-    The diagram below illustrates the journey of a cross-chain transaction through Relay's infrastructure and the corresponding API statuses. Below are descriptions for each status. Refer to the [Get Status](/references/api/get-intents-status-v3) endpoint for a full list of statuses and what they mean.
+    The diagram below illustrates the journey of a crosschain transaction through Relay's infrastructure and the corresponding API statuses. Below are descriptions for each status. Refer to the [Get Status](/references/api/get-intents-status-v3) endpoint for a full list of statuses and what they mean.
 
     - `waiting`: The user is submitting or has submitted the deposit transaction to the Relay Depository contract on the origin chain, but it has not yet been indexed by the system.
     - `pending`: The deposit was successfully indexed. The Relay Solver is now monitoring the request and preparing the fill transaction on the destination chain.
-    - `success`: The Relay Solver successfully executed the "Fill Tx", and the funds have reached the recipient.
+    - `success`: The Relay Solver successfully executed the "Fill Tx", and the funds have reached the destination.
     
     ![Status Lifecycle](/images/status-lifecycle.png)
 
-    The diagram also depicts paths where a transaction may end up in a failure or refund state if the fill cannot be completed. Learn more about how Relay helps you handle [refunds](https://docs.relay.link/references/api/api_core_concepts/refunds).
+    The diagram also depicts paths where a transaction may end up in a failure or reversion state if the fill cannot be completed. Learn more about how Relay helps you handle [reversions](https://docs.relay.link/references/api/api_core_concepts/refunds).
   </Step>
   <Step title="Optimize">
-    You have successfully executed your first cross-chain transaction with Relay!
-    Check out some of the advanced features we offer to customize the experience:
+    You have successfully executed your first crosschain transaction with Relay!
+    Check out some of the advanced features Relay offers to customize the experience:
 
     - [**App Fees**](/features/app-fees): Monetize your integration by adding a fee (in bps) to every quote. Revenue is collected automatically in USDC.
     - [**Smart Accounts**](/references/api/api_guides/smart_accounts/smart-accounts): Use [ERC-4337](/references/api/api_guides/smart_accounts/erc-4337) and [EIP-7702](/references/api/api_guides/smart_accounts/eip-7702) to enable *Gas Sponsorship* and *Atomic Batching* (e.g., Approve + Swap in one click).
@@ -256,9 +256,9 @@ Follow this 5-step flow to integrate Relay into your application:
 
 ## Try it in a Sandbox
 
-Experiment with the Quickstart code in our [interactive sandbox](https://codesandbox.io/p/sandbox/github/GiselleNessi/relay-demo). You can fork or clone it to build your own project with Relay.
+Experiment with the Quickstart code in the [interactive sandbox](https://codesandbox.io/p/sandbox/github/GiselleNessi/relay-demo). You can fork or clone it to build your own project with Relay.
 
 ### See Also
-- [**Bridging & Onboarding**](/use-cases/bridging): Learn more about instant cross-chain deposits and withdrawals.
+- [**Bridging & Onboarding**](/use-cases/bridging): Learn more about instant crosschain deposits and withdrawals.
 - [**Swaps**](/use-cases/cross-chain-swaps): Combine bridging with DEX meta-aggregation for any-to-any token swaps.
 - [**Call Execution**](/use-cases/calling): Execute arbitrary transactions on any chain, paying with any token.

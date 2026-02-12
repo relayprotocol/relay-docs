@@ -5,16 +5,16 @@ description: "Relay offers a suite of tools to help developers build chain-abstr
 
 ## Best-In-Class Liquidity
 
-Chain abstraction is like magic: in order to make all chains feel like one, you need a perfectly executed combination of low latency, low cost, high success and wide asset support. If you miss any of these, the “illusion” breaks. This is why Relay is maniacally focused on having the best possible liquidity. [60\+ chains](https://docs.relay.link/resources/supported-chains). 5 VMs. DEX Aggregation. Solver inventory expansion. It’s what we are 100% focused on. Without it, chain abstraction isn’t possible.
+Chain abstraction is like magic: in order to make all chains feel like one, you need a perfectly executed combination of low latency, low cost, high success and wide asset support. If you miss any of these, the "illusion" breaks. This is why Relay is maniacally focused on having the best possible liquidity. [60\+ chains](https://docs.relay.link/resources/supported-chains). 5 VMs. DEX Aggregation. Solver inventory expansion. It is what Relay is 100% focused on. Without it, chain abstraction isn't possible.
 
 ## Multi-Input
 
-A key feature of chain abstraction is “unified balances”. Over time, a user may accrue USDC or USDT on multiple different chains, but you want to be able to show them a unified USD balance. To make this possible, they need to be able to spend from multiple chains / currencies in a single action. Relay supports this through our [Multi Input API](https://docs.relay.link/references/api/swap-multi-input)
+A key feature of chain abstraction is "unified balances". Over time, a user may accrue USDC or USDT on multiple different chains, but you want to be able to show them a unified USD balance. To make this possible, they need to be able to spend from multiple chains / assets in a single action. Relay supports this through the [Multi Input API](https://docs.relay.link/references/api/swap-multi-input).
 
 ## Transaction Execution
 
-Relay is more than just bridging and swaps. We allow you to execute any call on any chain. Importantly, if the user has a smart wallet (or 7702-powered EOA), transactions can be executed with the user wallet as the msg.sender, allowing users to freely interact on any chain, as if they were using it directly. For best results, use a small wallet with [multi-chain signing](https://docs.zerodev.app/sdk/advanced/multi-chain-signing) like ZeroDev, so that users can do cross chain actions with a single signature.
+Relay is more than just bridging and swaps. It allows you to execute any call on any chain. Importantly, if the user has a smart wallet (or 7702-powered EOA), transactions can be executed with the user wallet as the msg.sender, allowing users to freely interact on any chain, as if they were using it directly. For best results, use a small wallet with [multi-chain signing](https://docs.zerodev.app/sdk/advanced/multi-chain-signing) like ZeroDev, so that users can do crosschain actions with a single signature.
 
 ## Resources Locks
 
-While not required, resource locks allow cross chain fill time to reduce from seconds to truly instant. We already support Resource Locks from a number of providers like [OneBalance](https://www.onebalance.io/) and will expand to support more over time.
+While not required, resource locks allow crosschain fill time to reduce from seconds to truly instant. Relay already supports Resource Locks from a number of providers like [OneBalance](https://www.onebalance.io/) and will expand to support more over time.

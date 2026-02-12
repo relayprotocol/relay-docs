@@ -7,7 +7,7 @@ Relay allows a user to pay on Chain A for an arbitrary set of transactions to be
 
 ## General overview
 
-When Relayers execute transactions on behalf of users, they do so via a multicall contract (to be specific, we use Vectorized's gas-optimized [Multicaller](https://github.com/Vectorized/multicaller) contract). This protects the Relayer from malicious transactions.
+When Relayers execute transactions on behalf of users, they do so via a multicall contract (to be specific, Relay uses Vectorized's gas-optimized [Multicaller](https://github.com/Vectorized/multicaller) contract). This protects the Relayer from malicious transactions.
 
 One exception is simple bridge transactions, where the `data` is empty. For these, the Relayer will execute them directly to avoid the gas overhead of using Multicaller.
 
@@ -33,7 +33,7 @@ Some contracts don't require authentication, but also don't have native delegati
 
 #### Authenticated Delegation
 
-For authenticated actions, you can do those by passing in proof that the user authenticated the action. Currently, you need to build custom signature authentication into your contract, however, in the near future we will be adding support for more standardized flows, such as:
+For authenticated actions, you can do those by passing in proof that the user authenticated the action. Currently, you need to build custom signature authentication into your contract, however, in the near future Relay will be adding support for more standardized flows, such as:
 
 - Selling tokens with permit signatures
 - MulticallerWithSigner
@@ -43,7 +43,7 @@ For authenticated actions, you can do those by passing in proof that the user au
 
 Alternatively, you can simply bridge a small amount of gas and have the user execute the transaction themselves. This is viable because of how fast and cheap Relay is, and is backwards compatible with any contract.
 
-We will soon add functionality to our SDK to handle this flow completely automatically, but until then, you can do it manually like this:
+Relay will soon add functionality to the SDK to handle this flow completely automatically, but until then, you can do it manually like this:
 
 - Estimate the cost of the transaction on destination
 - Get a quote to bridge enough gas (small buffer recommended to handle fluctuation)

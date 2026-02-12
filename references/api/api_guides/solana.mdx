@@ -3,8 +3,7 @@ title: Solana Support
 description: How to Deposit or Withdraw on Solana from an EVM Chain
 ---
 
-Relay now fully supports depositing & withdrawing to Solana from any EVM chain
-we support. This is a great way to get users funds on Solana to complete
+Relay now fully supports depositing & withdrawing to Solana from any supported EVM chain. This is a great way to get users funds on Solana to complete
 transactions. You can onboard users funds from Blast ETH to Solana USDC to make
 transactions on a game. You could also swap funds from Solana SOL to Zora ETH
 for users to mint. The possibilities are limitless when you use Relay embedded
@@ -24,9 +23,9 @@ your input is Solana specific.
 | -------------------- | ------------ | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Deposit to Solana    | `toChainId`  | `792703809`                      | Chain ID assigned to access Solana for Relay's tools.                                                                               |
 |                      | `recipient`  | User's Solana Address            | Must be a valid Solana address. Do **not** use an Ethereum wallet address. _Case Sensitive_                                         |
-|                      | `toCurrency` | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
+|                      | `toCurrency` | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. Relay supports all tokens tradeable on [Jupiter](https://jup.ag/). |
 | Withdraw from Solana | `chainId`    | `792703809`                      | Chain ID assigned to access Solana for Relay's tools.                                                                               |
-|                      | `currency`   | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
+|                      | `currency`   | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. Relay supports all tokens tradeable on [Jupiter](https://jup.ag/). |
 
 <Info>
   When withdrawing from Solana using the SDK, you will not need to specify the
@@ -35,8 +34,8 @@ your input is Solana specific.
 
 ### Solana Tokens
 
-In the table, we have provided the most frequently used Solana tokens & their
-contract addresses. We do support all tradeable tokens on
+The table below lists the most frequently used Solana tokens & their
+contract addresses. Relay supports all tradeable tokens on
 [Jupiter](https://jup.ag/).
 
 <Warning>Solana token addresses are case sensitive. </Warning>
@@ -61,16 +60,16 @@ contract addresses. We do support all tradeable tokens on
 | -------------------- | --------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Deposit to Solana    | `recipient`           | User's Solana Address            | Must be a valid Solana address. Do **not** use an Ethereum wallet address. _Case Sensitive_                                         |
 |                      | `destinationChainId`  | `792703809`                      | Chain ID assigned to access Solana for Relay's tools.                                                                               |
-|                      | `destinationCurrency` | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
+|                      | `destinationCurrency` | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. Relay supports all tokens tradeable on [Jupiter](https://jup.ag/). |
 | Withdraw from Solana | `user`                | User's Solana Address            | Must be a valid Solana address. Do **not** use an Ethereum wallet address. _Case Sensitive_                                         |
 |                      | `originChainId`       | `792703809`                      | Chain ID assigned to access Solana for Relay's tools.                                                                               |
-|                      | `originCurrency`      | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. We support all tokens tradeable on [Jupiter](https://jup.ag/). |
+|                      | `originCurrency`      | Contract Address of Solana Token | Must be a valid Solana token address. Do **not** use an EVM address. Relay supports all tokens tradeable on [Jupiter](https://jup.ag/). |
 
 ### Execution
 
-Once you have the necessary information, you can start utilizing our API for
+Once you have the necessary information, you can start utilizing the Relay API for
 full Solana withdrawal and deposit support. To get started, check out the
-[execution steps](/references/api/api_core_concepts/step-execution) of our API. Then when you're
+[execution steps](/references/api/api_core_concepts/step-execution) of the API. Then when you're
 ready to swap, head over to the [Get Quote](/references/api/get-quote-v2) API
 endpoint.
 

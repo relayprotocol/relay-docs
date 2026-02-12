@@ -4,7 +4,7 @@
 
 Interface for the RelayBridge contract
 
-_Defines the bridge function for cross-chain asset transfers_
+_Defines the bridge function for crosschain asset transfers_
 
 ### bridge
 
@@ -32,7 +32,7 @@ Bridges an asset (ERC20 token or native currency) from the origin chain to a poo
 
 ## RelayBridge
 
-RelayBridge contract enabling cross-chain bridging via Hyperlane
+RelayBridge contract enabling crosschain bridging via Hyperlane
 
 _Bridges assets from an origin chain to a configured pool chain_
 
@@ -133,7 +133,7 @@ _Uses delegatecall to execute custom bridge logic_
 address HYPERLANE_MAILBOX
 ```
 
-Hyperlane Mailbox contract for cross-chain messaging
+Hyperlane Mailbox contract for crosschain messaging
 
 _Used to dispatch messages to the pool chain_
 
@@ -213,9 +213,9 @@ _All parameters are immutable after deployment_
 function getFee(uint256 amount, address recipient, uint256 poolGas) external view returns (uint256 fee)
 ```
 
-Calculates the fee required in native currency to dispatch a cross-chain message
+Calculates the fee required in native currency to dispatch a crosschain message
 
-_Uses Hyperlane's quoteDispatch to estimate the cross-chain messaging fee_
+_Uses Hyperlane's quoteDispatch to estimate the crosschain messaging fee_
 
 #### Parameters
 
@@ -239,11 +239,11 @@ function bridge(uint256 amount, address recipient, address poolAsset, uint256 po
 
 Bridges an asset (ERC20 token or native currency) from the origin chain to a pool chain
 
-_Executes a cross-chain bridge transaction with the following steps:
+_Executes a crosschain bridge transaction with the following steps:
      1. Validates sufficient payment for fees (and asset amount if native)
      2. Transfers the asset from sender to this contract (if ERC20)
      3. Executes bridge logic via delegatecall to BRIDGE_PROXY
-     4. Dispatches cross-chain message via Hyperlane
+     4. Dispatches crosschain message via Hyperlane
      5. Refunds any excess native currency to sender_
 
 #### Parameters

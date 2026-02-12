@@ -3,7 +3,7 @@ title: "Understanding Step Execution"
 ---
 
 <Tip>
-  Tip: For advanced integrations, we recommend using Relay APIs. For simpler use
+  Tip: For advanced integrations, it is recommended to use the Relay APIs. For simpler use
   cases, the [Relay SDK](/references/relay-kit/sdk/installation) automates steps and
   provides helpful callbacks, reducing manual effort.
 </Tip>
@@ -41,7 +41,7 @@ The flow looks like this:
 
 ### Signature Step
 
-A message that needs to be signed. Every signature comes with sign data and post data. The first action we need to take is to sign the message, keep in mind the signatureKind and use the appropriate signing method. Refer to your crypto library of choice on how to sign (viem, web3, etc).
+A message that needs to be signed. Every signature comes with sign data and post data. The first action is to sign the message, keeping in mind the signatureKind and using the appropriate signing method. Refer to your crypto library of choice on how to sign (viem, web3, etc).
 
 <CodeGroup>
 
@@ -211,7 +211,7 @@ const data = {
 
 **Posting the data**
 
-After the message is signed the second action is to submit the `post` body to the `endpoint` provided in the `post` data. You'll also need to provide the signature that was generated from the sign data as a query parameter. If the request is successful we can mark the step item as complete locally.
+After the message is signed the second action is to submit the `post` body to the `endpoint` provided in the `post` data. You'll also need to provide the signature that was generated from the sign data as a query parameter. If the request is successful the step item can be marked as complete locally.
 
 The design pattern of this API is completely generic, allowing for automatic support of new types of liquidity without needing to update the app. This data can be fed directly into an Ethereum library such as viem, making it easy to sign and submit the exact data that is needed.
 
@@ -229,7 +229,7 @@ Each step has a unique `id` that identifies the type of action required. Underst
 
 | Step ID                   | Description                                            | When Used                                                                           |
 | ------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| [`deposit`](#deposit)     | Deposit funds to the relayer for cross-chain execution | Used for cross-chain swaps and bridges.                                             |
+| [`deposit`](#deposit)     | Deposit funds to the relayer for crosschain execution | Used for crosschain swaps and bridges.                                             |
 | [`approve`](#approve)     | Approve the transfer of an ERC20 token                 | Required before `deposit` or `swap` steps for ERC20 tokens the solver doesn't hold. |
 | `approval`                | Approve token for deposit                              | Token approval for deposit operations.                                              |
 | `swap`                    | Execute a same-chain token swap                        | For same-chain swaps. May require an approval step first for EVM swaps.             |
@@ -240,7 +240,7 @@ Each step has a unique `id` that identifies the type of action required. Underst
 | Step ID                       | Description                                | When Used                                                                                                                                                                                                      |
 | ----------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`authorize`](#authorize)     | Sign authorization for specific operations | Used for: (1) Claiming [app fees](/features/app-fees) - EIP-191 signature to verify wallet ownership, (2) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits - nonce-mapping signature. |
-| [`authorize1`](#authorize1)   | Sign to approve swap of tokens             | Main flow for cross-chain permits Permit/Permit2.                                                                                                                                                              |
+| [`authorize1`](#authorize1)   | Sign to approve swap of tokens             | Main flow for crosschain permits Permit/Permit2.                                                                                                                                                              |
 | [`authorize2`](#authorize2)   | Sign to approve transfer of tokens         | Same-chain swap permits.                                                                                                                                                                                       |
 
 ### Common Step Flows
@@ -249,11 +249,11 @@ Depending on the action and tokens involved, Relay chains steps together. Here a
 
 | Flow                                                | Description                                     |
 | --------------------------------------------------- | ----------------------------------------------- |
-| [`deposit`](#deposit)                               | Single step for cross-chain swaps/bridges       |
+| [`deposit`](#deposit)                               | Single step for crosschain swaps/bridges       |
 | `swap`                                              | Single step for same-chain swaps                |
 | [`approve`](#approve) → [`deposit`](#deposit)       | Approval needed before deposit for ERC20 tokens |
 | [`approve`](#approve) → `swap`                      | Same-chain swap requiring approval              |
-| [`authorize1`](#authorize1)                         | Cross-chain permit-based transfer (gasless)     |
+| [`authorize1`](#authorize1)                         | Crosschain permit-based transfer (gasless)     |
 
 ---
 
@@ -393,7 +393,7 @@ Sign authorization for specific operations. This step is used in two scenarios:
 
 ### authorize1
 
-The main flow for cross-chain permits. Uses Permit2 or TransferWithAuthorization (EIP-3009).
+The main flow for crosschain permits. Uses Permit2 or TransferWithAuthorization (EIP-3009).
 
   ```json expandable
   {

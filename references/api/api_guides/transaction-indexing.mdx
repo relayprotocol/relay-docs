@@ -83,7 +83,7 @@ Call this API immediately after submitting a transaction, before waiting for con
 
 | Transaction Type            | API Endpoint          | Reason                                             |
 | --------------------------- | --------------------- | -------------------------------------------------- |
-| Cross-chain transactions    | `transactions/index`  | Accelerates indexing before validation             |
+| Crosschain transactions    | `transactions/index`  | Accelerates indexing before validation             |
 | Proxy contract transactions | `transactions/index`  | Detects internal deposits via trace analysis       |
 | Same-chain swaps            | `transactions/index`  | Accelerates indexing and detects internal deposits |
 | Same-chain token transfers  | `transactions/single` | Not actively monitored by default indexer          |

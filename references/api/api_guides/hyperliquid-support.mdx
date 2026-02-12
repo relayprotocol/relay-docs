@@ -20,15 +20,15 @@ Hyperliquid can be accessed using the standard Relay API flow. To get started, r
 
 These parameters are specific to Hyperliquid interactions. All other standard API parameters remain required. Note that `protocolVersion: v2` is mandatory for withdrawals.
 
-## Supported Currencies
+## Supported Assets
 
-Relay supports the following Hyperliquid currencies:
+Relay supports the following Hyperliquid assets:
 
 - **Perps USDC**: Treated with a custom address `0x00000000000000000000000000000000`
 - **Spot USDC**: Address `0x6d1e7cde53ba9467b783cb7c530ce054`
-- **Other Spot currencies**: Including USDe, USDH, and other tokens returned by the Hyperliquid RPC
+- **Other Spot assets**: Including USDe, USDH, and other tokens returned by the Hyperliquid RPC
 
-For a complete and up-to-date list of supported currencies, check the [Chains API](https://docs.relay.link/references/api/get-chains) response for Hyperliquid (chainId: 1337).
+For a complete and up-to-date list of supported assets, check the [Chains API](https://docs.relay.link/references/api/get-chains) response for Hyperliquid (chainId: 1337).
 
 ## Currency Addresses
 
@@ -776,4 +776,4 @@ Important considerations:
 - The action data must exactly match what was signed
 - A successful response returns status `200` with `data.status: "ok"`
 
-For a complete implementation example, refer to our [publicly available SDK](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/hyperliquid.ts).
+For a complete implementation example, refer to the [publicly available SDK](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/hyperliquid.ts).

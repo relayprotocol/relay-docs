@@ -16,11 +16,11 @@ relay fees, app fees, and gas fees.
 
 The second supported type is `EXPECTED_OUTPUT`. In this order type, the user quotes via specifying the general amount of output currency they expected to receive from the swap or bridge. The user is then told how much of the origin token this will require. The resulting output amount received can be less or more than what is requested, depending on slippage. 
 This trade type automatically accounts for any associated fees including relay fees, app fees, and gas fees.
-We recommend using `EXPECTED_OUTPUT` for when an exact output amount is not necessary, or if calls do not need to be executed on destination.
+`EXPECTED_OUTPUT` is recommended for when an exact output amount is not necessary, or if calls do not need to be executed on destination.
 
 ## Exact Output
 
 The third supported type is `EXACT_OUTPUT`. In this order type, the user specifies exactly how much of the output currency they want to receive from the swap or bridge. 
-The user is told how much of the origin token this will require to receive exactly the output amount. If the exact requested amount out cannot be filled, the request is failed and the user is refunded on origin. 
+The user is told how much of the origin token this will require to receive exactly the output amount. If the exact requested amount out cannot be filled, the request fails and the transaction reverts on origin. 
 This trade type automatically accounts for any associated fees including relay fees, app fees, and gas fees.
-We recommend using `EXACT_OUTPUT` for bridge requests that involve destination calls, like minting using an exact erc20 amount
+`EXACT_OUTPUT` is recommended for bridge requests that involve destination calls, like minting using an exact erc20 amount
