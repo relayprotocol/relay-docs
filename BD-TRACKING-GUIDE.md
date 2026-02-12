@@ -2,7 +2,7 @@
 
 ## Overview
 
-This system helps the Business Development team track, rank, and prioritize enterprise partnership applications received through the [Enterprise Partnership Program form](https://forms.gle/XNeELYavjwoJwPEf7).
+This system helps the Business Development team track, rank, and prioritize enterprise partnership applications received through the [Enterprise Partnership Program form](https://docs.google.com/forms/d/1uxudSoAUdBT8Xb991I72fCnu05n111C8ZjlP91_5aIg/viewform).
 
 ## Files
 

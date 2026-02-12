@@ -7,7 +7,7 @@ Last Updated: 2026-02-11
 
 ## Active Pipeline
 
-Track and prioritize enterprise partnership applications from the [Enterprise Partnership Program form](https://forms.gle/XNeELYavjwoJwPEf7).
+Track and prioritize enterprise partnership applications from the [Enterprise Partnership Program form](https://docs.google.com/forms/d/1uxudSoAUdBT8Xb991I72fCnu05n111C8ZjlP91_5aIg/viewform).
 
 ### Priority Rankings
 
