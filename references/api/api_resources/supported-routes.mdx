@@ -149,25 +149,7 @@ Here, `tokenSupport` is `"Limited"`, meaning only specific tokens can be bridged
 
 ## Gas Top-Up
 
-Gas top-up automatically includes a small amount of the destination chain's native gas token (e.g., ETH) with the bridged tokens. This ensures recipients have gas to interact with their received tokens immediately.
-
-### Enabling Gas Top-Up
-
-To enable gas top-up in your quote request:
-- Set `topupGas` to `true` 
-- Optionally specify the gas amount using `topupGasAmount`
-
-### Checking Gas Top-Up Support
-
-A chain supports gas top-up when **all** of the following are true:
-
-1. **EVM chain only** - The chain's `vmType` must be `"evm"`
-2. **Non-native currency** - You cannot top up gas when bridging the chain's native token (e.g., ETH on Ethereum)
-3. **Bridging enabled** - Either:
-   - `tokenSupport` is `"All"`, OR
-   - `currency.supportsBridging` is `true`
-
-You can verify support by checking the **Gas Top Up Supported** column in the table above or by querying the [Chains API](https://api.relay.link/chains).
+For full documentation on enabling gas top-up and checking support requirements, see [Gas Top-Up](/features/gas-top-up).
 
 
 ## API Reference

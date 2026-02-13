@@ -101,7 +101,7 @@ function enhanceGetQuotePage() {
 
     addLearnMore(
       "body-topup-gas",
-      "/references/api/api_resources/supported-routes#gas-top-up",
+      "/features/gas-top-up",
       "Learn more about topping up gas",
       "learn-more-topup-gas",
     );
