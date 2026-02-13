@@ -41,6 +41,7 @@
               "features/app-fees",
               "features/fee-sponsorship",
               "features/deposit-addresses",
+              "features/gas-top-up",
               "features/sponsored-execution",
               "features/fast-fill"
             ]
