@@ -1,0 +1,56 @@
+# Relay
+
+> Relay is a multichain payments network for instant cross-chain bridging, swapping, and transaction execution across 85+ chains. It uses an intent-based architecture where users specify desired outcomes and solvers compete to fulfill requests.
+
+## Core Documentation
+
+- [What is Relay](https://docs.relay.link/what-is-relay): Overview of Relay's multichain payments network
+- [API Quickstart](https://docs.relay.link/references/api/quickstart): Execute your first cross-chain transaction in 5 steps
+- [RelayKit SDK Overview](https://docs.relay.link/references/relay-kit/overview): TypeScript SDK with React hooks for frontend integration
+
+## Use Cases
+
+- [Bridging](https://docs.relay.link/use-cases/bridging): Instant cross-chain asset transfers
+- [Cross-Chain Swaps](https://docs.relay.link/use-cases/cross-chain-swaps): Any-to-any token swaps across chains
+- [Calling](https://docs.relay.link/use-cases/calling): Execute arbitrary transactions on any chain, paying with any token
+
+## API Reference
+
+- [API Overview](https://docs.relay.link/references/api/overview): REST API documentation
+- [Get Quote](https://docs.relay.link/references/api/get-quote-v2): Quote endpoint for bridges, swaps, and calls
+- [Intent Status](https://docs.relay.link/references/api/get-intents-status-v3): Track transaction status
+- [Step Execution](https://docs.relay.link/references/api/api_core_concepts/step-execution): Understanding the steps array from quotes
+- [Handling Errors](https://docs.relay.link/references/api/api_core_concepts/handling-errors): Error handling patterns
+- [Fees](https://docs.relay.link/references/api/api_core_concepts/fees): Understanding Relay's fee structure
+
+## SDK Reference (RelayKit)
+
+- [Installation](https://docs.relay.link/references/relay-kit/sdk/installation): Install the RelayKit SDK
+- [Create Client](https://docs.relay.link/references/relay-kit/sdk/createClient): Initialize the Relay client
+- [getQuote Action](https://docs.relay.link/references/relay-kit/sdk/actions/getQuote): Fetch quotes programmatically
+- [execute Action](https://docs.relay.link/references/relay-kit/sdk/actions/execute): Execute transactions
+- [useQuote Hook](https://docs.relay.link/references/relay-kit/hooks/useQuote): React hook for quotes
+
+## Features
+
+- [App Fees](https://docs.relay.link/features/app-fees): Monetize your integration with custom fees
+- [Fee Sponsorship](https://docs.relay.link/features/fee-sponsorship): Sponsor transaction fees for users
+- [Deposit Addresses](https://docs.relay.link/features/deposit-addresses): Generate deposit addresses for bridging
+- [Gas Top-Up](https://docs.relay.link/features/gas-top-up): Fund destination chain gas
+
+## Chain Support
+
+- [Supported Chains](https://docs.relay.link/resources/supported-chains): List of 85+ supported networks
+- [Solana Guide](https://docs.relay.link/references/api/api_guides/solana): Solana-specific integration
+- [Bitcoin Guide](https://docs.relay.link/references/api/api_guides/bitcoin): Bitcoin support
+
+## AI Development
+
+- [Developing with AI](https://docs.relay.link/resources/developing-with-ai): Prompts and tools for AI-assisted development
+- [Full Documentation](https://docs.relay.link/llms-full.txt): Complete docs in plain text format
+
+## Optional
+
+- [Smart Accounts](https://docs.relay.link/references/api/api_guides/smart_accounts/smart-accounts): ERC-4337 and EIP-7702 support
+- [WebSockets](https://docs.relay.link/references/api/api_guides/websockets): Real-time status updates
+- [Protocol Overview](https://docs.relay.link/references/protocol/overview): Technical architecture details

@@ -1,0 +1,231 @@
+---
+title: "Developing with AI"
+description: "Use AI coding assistants to build with Relay faster"
+sidebarTitle: Developing with AI
+---
+
+Relay documentation is optimized for AI coding assistants. Whether you're using Claude, ChatGPT, Cursor, GitHub Copilot, or other AI tools, you can reference our docs directly to get accurate, up-to-date information about the Relay API and SDK.
+
+## LLM-Optimized Documentation
+
+### llms.txt Files
+
+Relay docs support the [llms.txt standard](https://llmstxt.org/), making our documentation easily accessible to AI tools:
+
+| File | URL | Description |
+|------|-----|-------------|
+| **llms.txt** | `https://docs.relay.link/llms.txt` | Navigation structure with page summaries |
+| **llms-full.txt** | `https://docs.relay.link/llms-full.txt` | Complete documentation content in plain text |
+
+These files are automatically kept in sync with our documentation and provide a clean, token-efficient format for LLMs.
+
+### Per-Page Markdown
+
+Every documentation page can be accessed as markdown for use with AI assistants. Click the **"Copy page"** button on any page to:
+- View the page as markdown
+- Copy the content directly
+- Open in Claude, ChatGPT, or Perplexity with the page as context
+
+---
+
+## Relay Prompt for AI Assistants
+
+Use this prompt to give your AI coding assistant context about Relay. Paste it at the start of your conversation or add it to your custom instructions.
+
+<Tip>
+This prompt helps AI assistants understand Relay's architecture and avoid common mistakes. Copy it and use it with Claude, ChatGPT, Cursor, or any other AI coding tool.
+</Tip>
+
+```markdown expandable
+# Relay Protocol Context
+
+## What is Relay?
+Relay is a multichain payments network for instant cross-chain bridging, swapping, and transaction execution. It uses an intent-based architecture where users specify what they want, and solvers compete to fulfill requests.
+
+## Core Concepts
+
+### Intent-Based Architecture
+- Users submit intents (desired outcomes), not specific transaction paths
+- Relay solvers fill intents by executing transactions on destination chains
+- Intents are tracked via `requestId` returned in quote responses
+
+### Quote → Execute → Monitor Flow
+1. **Quote**: Call `/quote/v2` with origin/destination chains, currencies, and amount
+2. **Execute**: Submit the transaction(s) from `steps` array to the user's wallet
+3. **Monitor**: Poll `/intents/status/v3?requestId=...` or use WebSockets
+
+### Key API Endpoints
+- `POST /quote/v2` - Get quote for bridge/swap/call
+- `GET /intents/status/v3` - Check transaction status
+- `GET /chains` - List supported chains with metadata
+- `GET /currencies/v2` - List supported tokens
+
+### Chain IDs
+- EVM chains use standard chain IDs (e.g., Base = 8453, Arbitrum = 42161)
+- Solana uses custom ID: 792703809
+- Bitcoin uses custom ID: 8253038
+
+### Address Formats
+- Native currency (ETH, etc.): `0x0000000000000000000000000000000000000000`
+- ERC-20 tokens: Contract address (e.g., USDC on Base = `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913`)
+- Solana tokens: Base58 addresses (e.g., USDC = `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`)
+
+## Common Patterns
+
+### Basic Bridge (TypeScript)
+```typescript
+const quote = await fetch('https://api.relay.link/quote/v2', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    user: walletAddress,
+    originChainId: 8453, // Base
+    destinationChainId: 42161, // Arbitrum
+    originCurrency: '0x0000000000000000000000000000000000000000', // ETH
+    destinationCurrency: '0x0000000000000000000000000000000000000000',
+    amount: '100000000000000', // 0.0001 ETH in wei
+    tradeType: 'EXACT_INPUT'
+  })
+}).then(r => r.json())
+
+// Execute the transaction from steps
+const txData = quote.steps[0].items[0].data
+```
+
+### Status Polling
+```typescript
+const status = await fetch(
+  `https://api.relay.link/intents/status/v3?requestId=${requestId}`
+).then(r => r.json())
+
+// status.status can be: 'waiting', 'pending', 'success', 'failure', 'refund'
+```
+
+## Common Errors & Solutions
+
+1. **"Invalid currency"**: Ensure token addresses are checksummed for EVM or valid Base58 for Solana
+
+2. **"Insufficient balance"**: The user needs enough tokens + gas on origin chain
+
+3. **"Route not found"**: Try a different token pair or check if the chains support the requested route
+
+4. **Status stuck on "waiting"**: The origin transaction may not be confirmed yet - wait for blockchain confirmation
+
+5. **ERC-20 transfers failing**: User may need to approve the Relay contract first - check if `steps` includes an approval step
+
+## SDK vs API
+- **RelayKit SDK**: TypeScript SDK with React hooks, recommended for most integrations
+- **REST API**: Direct HTTP access, useful for backend services or non-JS environments
+
+## Documentation
+- API Reference: https://docs.relay.link/references/api/overview
+- SDK (RelayKit): https://docs.relay.link/references/relay-kit/overview
+- Full docs: https://docs.relay.link/llms-full.txt
+```
+
+---
+
+## IDE Integrations
+
+### Cursor
+
+[Cursor](https://cursor.com) can access Relay documentation directly. Add our docs to your project:
+
+1. Open Cursor Settings → Features → Docs
+2. Add `https://docs.relay.link` as a documentation source
+3. Reference with `@Docs` in chat or use `Ctrl/Cmd + Shift + Enter` to search docs
+
+### VS Code with Continue
+
+For [Continue](https://continue.dev) users, add Relay docs to your context:
+
+1. Install the Continue extension
+2. Add to your `.continuerc.json`:
+```json
+{
+  "docs": [
+    {
+      "name": "Relay",
+      "startUrl": "https://docs.relay.link",
+      "faviconUrl": "https://docs.relay.link/favicon.png"
+    }
+  ]
+}
+```
+
+### GitHub Copilot
+
+When using Copilot Chat, paste the relevant documentation section or use the prompt above to give Copilot context about Relay's API.
+
+---
+
+## MCP Server
+
+Relay docs are accessible via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), enabling AI agents to fetch documentation programmatically.
+
+Configure your MCP client to use:
+
+```json
+{
+  "mcpServers": {
+    "relay-docs": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-fetch"],
+      "env": {
+        "ALLOWED_DOMAINS": "docs.relay.link,api.relay.link"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Tips for Using AI with Relay
+
+### Be Specific About Your Use Case
+
+When asking AI for help, specify:
+- **Operation type**: Bridge, swap, or cross-chain call
+- **Chains involved**: Origin and destination chain names or IDs
+- **Token details**: Native currency or specific ERC-20/SPL tokens
+- **Integration type**: SDK (RelayKit) or direct API
+
+**Example prompt:**
+> "Help me integrate Relay to bridge USDC from Base to Solana using the RelayKit SDK. I'm building a React app with wagmi for wallet connection."
+
+### Reference Specific Documentation
+
+Point the AI to relevant docs pages:
+- For API integration: `https://docs.relay.link/references/api/quickstart`
+- For SDK/hooks: `https://docs.relay.link/references/relay-kit/overview`
+- For fee sponsorship: `https://docs.relay.link/features/fee-sponsorship`
+
+### Verify Generated Code
+
+Always verify AI-generated code against the official documentation. Key things to check:
+- Correct API endpoint URLs (`api.relay.link` for mainnet, `api.testnets.relay.link` for testnets)
+- Proper chain IDs (especially for non-EVM chains like Solana)
+- Correct handling of the `steps` array from quote responses
+
+---
+
+## Troubleshooting LLM Responses
+
+If an AI assistant gives you incorrect information about Relay:
+
+1. **Share this page**: Copy the URL `https://docs.relay.link/resources/developing-with-ai` and ask the AI to reference it
+
+2. **Use llms-full.txt**: For comprehensive context, ask the AI to fetch `https://docs.relay.link/llms-full.txt`
+
+3. **Copy specific docs**: Use the "Copy page" button on relevant documentation pages and paste into your conversation
+
+4. **Report issues**: If you find consistent AI misunderstandings about Relay, let us know on [Discord](https://discord.com/invite/relayprotocol) so we can improve our documentation
+
+---
+
+## Related Resources
+
+- [API Quickstart](/references/api/quickstart) — Execute your first cross-chain transaction
+- [RelayKit SDK](/references/relay-kit/overview) — TypeScript SDK with React hooks
+- [Support](/resources/support) — Get help from the Relay team
