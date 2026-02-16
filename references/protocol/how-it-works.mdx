@@ -1,25 +1,29 @@
 ---
-title: How It Works
+title: Architecture
 description: "End-to-end walkthrough of the settlement protocol flows"
-sidebarTitle: How It Works
+sidebarTitle: Architecture
 ---
 
-## Architecture
+Relay is a crosschain intents protocol. Users express what they want (e.g., bridge 1 ETH from Optimism to Base), and third-party solvers fill those orders using their own capital. The protocol then settles solvers — verifying fills and reimbursing them from the user's escrowed deposit.
 
-The protocol consists of four core components:
+What makes Relay different is how settlement works. It's designed from the ground up for maximum efficiency & compatibility:
+- A dedicated low-cost settlement chain ([Relay Chain](/references/protocol/components/relay-chain))
+- A custom [Oracle](/references/protocol/components/oracle) that can _read_ data from any chain / VM
+- Programmable MPC signatures to _write_ back to any chain / VM 
 
-| Component | Role | Location |
+## Contracts
+
+The protocol is coordinated through 3 main smart contracts:
+
+| Contract | Role | Location |
 |-----------|------|----------|
 | [**Depository**](/references/protocol/components/depository) | Holds user deposits on each origin chain | Every supported chain (80+) |
-| [**Oracle**](/references/protocol/components/oracle) | Verifies deposits and fills, attests to the Hub | Validator set + Relay Chain contract |
 | [**Hub**](/references/protocol/components/hub) | Tracks token ownership and solver balances | Relay Chain |
-| [**Allocator**](/references/protocol/components/allocator) | Generates withdrawal proofs for solvers | Aurora / MPC |
-
-These components are supported by the [Relay Chain](/references/protocol/components/relay-chain), a purpose-built settlement chain where the Hub and Allocator contracts live and all settlement operations are processed. The [Security Council](/references/protocol/components/security-council) governs the Allocator with the ability to pause, unpause, or replace it in an emergency.
+| [**Allocator**](/references/protocol/components/allocator) | Generates MPC withdrawal payloads | Aurora (NEAR) |
 
 ## Flows
 
-Every crosschain order in Relay passes through three sequential flows: **Execution**, **Settlement**, and **Withdrawal**. If the solver can't fill, a **Refund** or **Forced Exit** flow returns funds to the user.
+Every crosschain order in Relay passes through three sequential flows: **Execution**, **Settlement**, and **Withdrawal**. 
 
 ```mermaid
 sequenceDiagram
@@ -47,7 +51,7 @@ sequenceDiagram
     end
 ```
 
-### Execution Flow
+### 1. Execution Flow
 
 Execution is the user-facing part of the process. The user deposits funds on the origin chain, and a solver fills their order on the destination chain.
 
@@ -78,7 +82,7 @@ sequenceDiagram
 Because deposits go to the Depository (not to the solver directly), user funds are protected. If the solver fails to fill, the user can reclaim their deposit.
 </Tip>
 
-### Settlement Flow
+### 2. Settlement Flow
 
 Settlement is the process of verifying that the solver correctly filled the order, and crediting them on the Hub.
 
@@ -119,7 +123,7 @@ sequenceDiagram
 Settlement happens in real-time, per-order. There is no batching window. As soon as the Oracle verifies a fill, the solver's balance is updated on the Hub.
 </Info>
 
-### Withdrawal Flow
+### 3. Withdrawal Flow
 
 Withdrawal is how solvers extract funds from the Depository to replenish their capital. Solvers accumulate balances on the Hub and can withdraw from any origin chain at any time.
 
@@ -132,86 +136,143 @@ sequenceDiagram
     participant Depository as Depository (Origin)
 
     Solver->>Hub: 1. Initiate withdrawal
-    Solver->>Oracle: 2. Request withdrawal proof
-    Oracle-->>Allocator: 3. Verify + forward
-    Allocator-->>Oracle: 4. Return MPC-signed proof
-    Oracle-->>Solver: 5. Return proof
-    Solver->>+Depository: 6. Submit proof
+    Solver->>Oracle: 2. Request attestation
+    Oracle->>Hub: 3. Read withdrawal data
+    Oracle-->>Solver: 4. Return signed attestation
+    Solver->>Allocator: 5. Request proof
+    Allocator-->>Solver: 6. Return MPC-signed proof
+    Solver->>+Depository: 7. Submit proof
     Depository->>Depository: Verify signature + nonce
-    Depository-->>-Solver: 7. Release funds
-    Solver->>Oracle: 8. Request burn attestation
-    Oracle-->>Solver: 9. Return signed attestation
-    Solver->>Hub: 10. Submit attestation (BURN)
+    Depository-->>-Solver: 8. Release funds
 ```
 
 **Step by step:**
 
 1. **Solver initiates withdrawal** — The solver transfers their Hub balance to a deterministic **withdrawal address** — a virtual address derived from the withdrawal parameters (target chain, depository, currency, recipient, nonce). This transfer on the Hub signals the intent to withdraw.
 
-2. **Solver requests withdrawal proof** — The solver calls the [Oracle](/references/protocol/components/oracle) to request a withdrawal proof. The Oracle reads the Hub, verifies the transfer to the withdrawal address, and decodes the withdrawal parameters.
+2. **Solver requests attestation** — The solver calls the [Oracle](/references/protocol/components/oracle) to request a withdrawal attestation.
 
-3. **Oracle verifies and forwards** — The Oracle verifies the withdrawal request and forwards it to the [Allocator](/references/protocol/components/allocator) on Aurora, which constructs a chain-specific payload via the appropriate Payload Builder.
+3. **Oracle reads Hub** — The Oracle reads the Hub to verify the transfer to the withdrawal address and decodes the withdrawal parameters.
 
-4. **Allocator generates proof** — The [Allocator](/references/protocol/components/allocator) generates an MPC-signed cryptographic proof (EIP-712 for EVM, Ed25519 for Solana) that authorizes the withdrawal.
+4. **Oracle returns attestation** — Oracle validators each verify the data and return a signed attestation to the solver.
 
-5. **Proof returned to solver** — The signed proof is returned to the solver via the Oracle.
+5. **Solver requests proof** — The solver calls the [Allocator](/references/protocol/components/allocator) with the attestation to request a withdrawal proof. The Allocator constructs a chain-specific payload via the appropriate Payload Builder.
 
-6. **Solver submits proof** — The solver submits the signed proof to the [Depository](/references/protocol/components/depository) contract on the target chain.
+6. **Allocator returns proof** — The [Allocator](/references/protocol/components/allocator) generates an MPC-signed cryptographic proof (EIP-712 for EVM, Ed25519 for Solana) that authorizes the withdrawal, and returns it to the solver.
 
-7. **Depository releases funds** — The Depository verifies the signature, confirms the nonce hasn't been used, and transfers the funds to the solver.
+7. **Solver submits proof** — The solver submits the signed proof to the [Depository](/references/protocol/components/depository) contract on the target chain.
 
-8. **Solver requests burn attestation** — The solver calls the Oracle to attest the completed withdrawal.
+8. **Depository releases funds** — The Depository verifies the signature, confirms the nonce hasn't been used, and transfers the funds to the solver.
 
-8. **Oracle returns attestation** — The Oracle verifies the withdrawal occurred on the target chain and returns a signed attestation.
-
-9. **Hub balance burned** — The solver submits the attestation to the Hub as a **BURN** action, keeping the ledger in sync.
 
 <Tip>
 Solvers choose their own withdrawal strategy. They can withdraw frequently to maximize capital velocity, or batch withdrawals to minimize transaction costs. The Hub balance accrues in real-time regardless.
 </Tip>
 
-### Refund Flow
+## Refunds
 
-If a solver can't fill an order on the destination, they can instantly refund the user on the origin chain. This is a variation of the execution flow — instead of filling on the destination, the solver sends funds directly to the user on the origin. The refund is then settled like a fill, and the solver gets reimbursed on the Hub.
+Inevitably, some orders cannot be filled, and the user needs to be refilled. Relay is designed to make this experience as smooth as possible, with multiple supported pathways, depending on the circumstances:
+
+### Fast Refund
+
+If a solver can't fill an order on the destination, they can instantly refund the user on the origin chain. The refund mirrors the execution flow — the solver detects the deposit and acts — but instead of filling on the destination, they return funds to the user on the origin. The refund is then settled like any other fill.
 
 ```mermaid
 sequenceDiagram
     participant User
+    participant Depository as Depository (Origin)
     participant Solver
-    participant Origin as Origin Chain
+    participant Dest as Destination Chain
     participant Oracle
     participant Hub as Hub (Relay Chain)
 
-    Solver->>Origin: 1. Send funds to user on origin
-    Origin-->>User: 2. Funds returned
-    Solver->>Oracle: 3. Request refund attestation
-    Oracle->>Origin: 4. Verify refund
-    Oracle-->>Solver: 5. Return signed attestation
-    Solver->>Hub: 6. Submit attestation
+    User->>+Depository: 1. Deposit funds (orderId)
+    Depository-->>-User: Deposit confirmed
+    Solver->>Depository: 2. Detect deposit
+    Solver->>Dest: 3. Simulate fill
+    Note over Solver,Dest: Fill not possible
+    Solver->>+Depository: 4. Refund user on origin
+    Depository-->>-User: Funds returned
+    Solver->>Oracle: 5. Request refund attestation
+    Oracle->>Depository: 6. Read refund data
+    Oracle-->>Solver: 7. Return signed attestation
+    Solver->>Hub: 8. Submit attestation
     Hub->>Hub: MINT + TRANSFER (solver reimbursed)
 ```
 
 **Step by step:**
 
-1. **Solver refunds on origin** — The solver sends funds directly to the user on the origin chain, returning them immediately.
+1. **User deposits into Depository** — The user deposits funds into the [Depository](/references/protocol/components/depository) on the origin chain, tagged with an **orderId**.
 
-2. **User receives funds** — The user gets their deposit back on the origin chain without waiting for any expiry window.
+2. **Solver detects deposit** — The solver detects the deposit and evaluates whether it can fill the order.
 
-3. **Solver requests attestation** — The solver calls the [Oracle](/references/protocol/components/oracle) to request a refund attestation.
+3. **Solver simulates fill** — The solver simulates the fill on the destination chain and determines it can't be completed (e.g., insufficient liquidity, contract error).
 
-4. **Oracle verifies refund** — The Oracle reads the origin chain to verify the refund occurred and matched the order's requirements.
+4. **Solver refunds on origin** — Instead of filling, the solver sends funds directly to the user on the origin chain, returning them immediately.
+
+5. **Solver requests attestation** — The solver calls the [Oracle](/references/protocol/components/oracle) to request a refund attestation.
+
+6. **Oracle reads origin chain** — The Oracle reads the origin chain to verify the refund occurred and matched the order's requirements.
+
+7. **Oracle returns attestation** — Validators sign and return the attestation to the solver.
+
+8. **Solver submits to Hub** — The solver submits the attestation to the [Hub](/references/protocol/components/hub), which mints and transfers the balance to the solver — the same settlement process as a fill.
+
+<Tip>
+Fast refunds are the quickest way to return user funds. Because the solver acts immediately on the origin chain, the user doesn't need to wait for any expiry window.
+</Tip>
+
+### Slow Refund
+
+If a solver can't fill but the deposit hasn't finalized yet on the origin chain, the solver waits for finalization before triggering the refund on the user's behalf. This is slower than a fast refund but still doesn't require user action.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Depository as Depository (Origin)
+    participant Solver
+    participant Oracle
+    participant Hub as Hub (Relay Chain)
+
+    User->>+Depository: 1. Deposit funds (orderId)
+    Depository-->>-User: Deposit confirmed
+    Solver->>Depository: 2. Detect deposit
+    Note over Solver: Fill not possible
+    Note over Solver,Depository: Wait for deposit to finalize
+    Solver->>Oracle: 3. Request refund attestation
+    Oracle->>Depository: 4. Read deposit data
+    Oracle-->>Solver: 5. Return signed attestation
+    Solver->>Hub: 6. Submit attestation
+    Hub->>Hub: Restore user balance
+    Solver->>Depository: 7. Withdraw on user's behalf
+    Depository-->>User: 8. Funds returned
+```
+
+**Step by step:**
+
+1. **User deposits into Depository** — The user deposits funds into the [Depository](/references/protocol/components/depository) on the origin chain, tagged with an **orderId**.
+
+2. **Solver detects deposit** — The solver detects the deposit and determines it can't fill the order.
+
+3. **Solver requests refund attestation** — After the deposit finalizes on the origin chain, the solver calls the [Oracle](/references/protocol/components/oracle) to request a refund attestation.
+
+4. **Oracle reads origin chain** — The Oracle reads the origin chain to verify the deposit and confirm the order was not filled.
 
 5. **Oracle returns attestation** — Validators sign and return the attestation to the solver.
 
-6. **Solver submits to Hub** — The solver submits the attestation to the [Hub](/references/protocol/components/hub), which mints and transfers the balance to the solver — the same settlement process as a fill.
+6. **Solver submits to Hub** — The solver submits the attestation to the [Hub](/references/protocol/components/hub), which restores the user's balance.
 
-<Tip>
-Refunds are the fastest way to return user funds. Because the solver acts immediately on the origin chain, the user doesn't need to wait for any expiry window.
-</Tip>
+7. **Solver withdraws on user's behalf** — The solver triggers a withdrawal from the [Depository](/references/protocol/components/depository), returning the user's original deposit.
 
-### Forced Exit Flow
+8. **User receives funds** — The funds are returned to the user on the origin chain.
 
-If a solver fails to fill **and** doesn't refund, the user's funds are still protected. After the order's fill window expires, the user can trigger a forced exit to reclaim their deposit. Solvers can also **abandon** an order early, which shortens the expiry window and allows the forced exit to happen faster.
+<Info>
+Slow refunds require the solver to wait for the deposit to finalize on the origin chain before initiating the refund. This adds latency but the user doesn't need to take any action.
+</Info>
+
+### Self Refund
+
+If a solver fails to fill **and** doesn't refund, the user's funds are still protected. After the order's fill window expires, the user can trigger a self refund to reclaim their deposit. Solvers can also **abandon** an order early, which shortens the expiry window and allows the self refund to happen faster.
 
 ```mermaid
 sequenceDiagram
@@ -223,7 +284,7 @@ sequenceDiagram
 
     Note over Solver: Abandon order (optional)
     Note over Solver: Fill window expires
-    User->>Oracle: 1. Request forced exit attestation
+    User->>Oracle: 1. Request refund attestation
     Oracle-->>User: 2. Return signed attestation
     User->>Hub: 3. Submit attestation
     Hub->>Hub: Restore user balance
@@ -233,7 +294,7 @@ sequenceDiagram
 
 **Step by step:**
 
-1. **User requests forced exit** — After the fill window expires (or after the solver abandons), the user calls the [Oracle](/references/protocol/components/oracle) to request a forced exit attestation. If the solver knows they can't fill, they can **abandon** the order early — this signals intent to not fill and shortens the expiry window so the user gets their funds back faster.
+1. **User requests refund** — After the fill window expires (or after the solver abandons), the user calls the [Oracle](/references/protocol/components/oracle) to request a refund attestation. If the solver knows they can't fill, they can **abandon** the order early — this signals intent to not fill and shortens the expiry window so the user gets their funds back faster.
 
 2. **Oracle returns attestation** — The Oracle verifies that the fill did not occur and returns a signed attestation to the user.
 

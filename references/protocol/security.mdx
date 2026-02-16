@@ -8,7 +8,7 @@ sidebarTitle: Security & Audits
 
 Relay Settlement is designed to be **non-custodial** — no single entity can unilaterally access user funds. Each component has different trust properties:
 
-### Depository (Minimal Trust)
+### Depository
 
 The Depository contracts are the most trust-minimized component:
 
@@ -19,7 +19,7 @@ The Depository contracts are the most trust-minimized component:
 
 The Depository's security relies on the Allocator's signing authority. If the Allocator is compromised, it could authorize unauthorized withdrawals — but it cannot create balances that don't exist on the Hub.
 
-### Oracle (Trust-Critical)
+### Oracle
 
 The [Oracle](/references/protocol/components/oracle) determines which deposits and fills are considered valid:
 
@@ -31,7 +31,7 @@ The [Oracle](/references/protocol/components/oracle) determines which deposits a
 The Oracle is the main trust-bearing component. A compromised minority of validators cannot submit false attestations. A compromised majority could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the [Security Council's](/references/protocol/components/security-council) ability to pause the system.
 </Info>
 
-### Hub (Smart Contract)
+### Hub
 
 The Hub is a deterministic smart contract on the [Relay Chain](/references/protocol/components/relay-chain):
 
@@ -39,7 +39,7 @@ The Hub is a deterministic smart contract on the [Relay Chain](/references/proto
 - **Idempotent** — The same attestation cannot be processed twice
 - **Transparent** — All balance changes are visible on the Relay Chain block explorer
 
-### Allocator (Trust-Critical, MPC-Mitigated)
+### Allocator
 
 The [Allocator](/references/protocol/components/allocator) controls withdrawal authorization:
 
