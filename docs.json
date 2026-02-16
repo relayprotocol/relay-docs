@@ -236,6 +236,7 @@
                 "pages": [
                   "references/protocol/components/relay-chain",
                   "references/protocol/components/depository",
+                  "references/protocol/components/deposit-addresses",
                   "references/protocol/components/oracle",
                   "references/protocol/components/hub",
                   "references/protocol/components/allocator",
