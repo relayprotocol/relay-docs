@@ -21,14 +21,14 @@ The Depository's security relies on the Allocator's signing authority. If the Al
 
 ### Oracle (Trust-Critical)
 
-The Oracle determines which deposits and fills are considered valid:
+The [Oracle](/references/protocol/components/oracle) determines which deposits and fills are considered valid:
 
 - **Can attribute balances** — The Oracle controls what gets minted, transferred, or burned on the Hub
 - **Cannot steal Depository funds** — Even an incorrect attestation only affects Hub balances. The Allocator independently verifies Hub balances before authorizing any withdrawal.
-- **Consensus-based** — Designed for multi-operator consensus, where multiple independent parties must agree on attestations
+- **Consensus threshold** — Attestations require signatures from a threshold of independent validators. The onchain Oracle contract verifies the threshold is met before executing any action on the Hub.
 
 <Info>
-The Oracle is the main trust-bearing component. A compromised Oracle could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the [Security Council's](/references/protocol/components/security-council) ability to pause the system.
+The Oracle is the main trust-bearing component. A compromised minority of validators cannot submit false attestations. A compromised majority could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the [Security Council's](/references/protocol/components/security-council) ability to pause the system.
 </Info>
 
 ### Hub (Smart Contract)

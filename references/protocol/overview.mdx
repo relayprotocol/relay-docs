@@ -10,7 +10,7 @@ Relay Settlement is a hyper-optimized intents protocol, designed for high-perfor
 - **Cost** — Minimal overhead on top of raw transfers
 - **Capital Efficiency** — Flexible batching for maximum inventory re-use
 - **Coverage** — Works on any chain, with minimal effort to deploy to new chains and VMs
-- **UX** — Simple transfer flows + fast reverts
+- **UX** — Simple transfer flows + fast refunds
 
 Unlike other intent protocols, Relay Settlement does not attempt to be a solver marketplace, or offer any sort of orderflow auction. It's a pure utility, designed to be used by solvers that already have their own orderflow and just need efficient settlement.
 
@@ -76,4 +76,4 @@ Users don't want to make two transactions to approve and deposit. Gasless flows 
 
 **Failure UX**
 
-For most intent protocols, failures are an afterthought. If something goes wrong, the user is forced to manually collect their funds out of escrow, often after a delay. Relay allows solvers to instantly revert once they determine an order can't be filled, abstracting complexity and giving users a UX that feels similar to using a single chain.
+For most intent protocols, failures are an afterthought. If something goes wrong, the user is forced to manually collect their funds out of escrow, often after a delay. Relay allows solvers to instantly refund once they determine an order can't be filled, abstracting complexity and giving users a UX that feels similar to using a single chain.

@@ -16,7 +16,7 @@ The Hub maintains a global balance sheet:
 
 - When a user **deposits** into a Depository, the Oracle attests this, and the Hub **mints** a corresponding token balance for the user
 - When a solver **fills** an order, the Oracle attests this, and the Hub **transfers** the balance from the user to the solver
-- When a solver **withdraws** from a Depository, the Oracle attests this, and the Hub **burns** the corresponding balance
+- When a solver **withdraws**, they transfer their balance to a [withdrawal address](#withdrawal-addresses) on the Hub. After funds are claimed from the Depository, the Oracle attests the withdrawal and the Hub **burns** the corresponding balance
 
 This means the Hub always reflects the current state of all funds across all chains in real-time.
 
@@ -61,9 +61,18 @@ The Hub implements the full ERC6909 interface, including:
 - **Operator system** — Grant an address full control over all token balances
 - **EIP-712 permits** — Gasless approval signatures
 
-<Info>
-While the Hub supports direct transfers between addresses, in practice most balance changes come from Oracle attestations (MINT, TRANSFER, BURN) rather than user-initiated transfers.
-</Info>
+## Withdrawal Addresses
+
+Solvers initiate withdrawals by transferring their Hub balance to a **withdrawal address** — a deterministic virtual address derived from the withdrawal parameters:
+
+- Target chain and depository
+- Currency and amount
+- Recipient address
+- Withdrawal nonce
+
+The withdrawal address is computed by hashing these parameters together. It doesn't correspond to a real contract — it's a signal. The [Oracle](/references/protocol/components/oracle) monitors the Hub for transfers to these addresses, decodes the parameters, and forwards the request to the [Allocator](/references/protocol/components/allocator) for proof generation.
+
+This pattern keeps the Hub simple — it's pure ERC6909 with no custom withdrawal logic. The withdrawal semantics are layered on top by convention.
 
 ## Source Code
 

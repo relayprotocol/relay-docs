@@ -15,29 +15,28 @@ The Allocator uses **MPC chain signatures** for signing, meaning no single entit
 ```mermaid
 sequenceDiagram
     participant Solver
-    participant Allocator
-    participant Hub
+    participant Hub as Hub (Relay Chain)
+    participant Oracle
+    participant Allocator as Allocator (Aurora)
     participant PB as Payload Builder
-    participant MPC as NEAR MPC
     participant Depository
 
-    Solver->>Allocator: 1. Request withdrawal (chain, asset, amount)
-    Allocator->>Hub: 2. Verify solver balance
-    Hub-->>Allocator: Balance confirmed
-    Allocator->>PB: 3. Construct chain-specific payload
+    Solver->>Hub: 1. Transfer to withdrawal address
+    Oracle->>Hub: 2. Detect withdrawal transfer
+    Oracle->>Allocator: 3. Submit withdrawal request
+    Allocator->>PB: 4. Construct chain-specific payload
     PB-->>Allocator: Withdrawal request (e.g. CallRequest)
-    Allocator->>MPC: 4. Request MPC signature
-    MPC-->>Allocator: Signed proof
-    Allocator-->>Solver: 5. Return signed withdrawal proof
-    Solver->>Depository: 6. Submit proof to target chain
+    Allocator->>Allocator: 5. Generate MPC signature
+    Allocator-->>Solver: 6. Return signed withdrawal proof
+    Solver->>Depository: 7. Submit proof to target chain
     Depository-->>Solver: Funds released
 ```
 
 The withdrawal authorization process:
 
-1. **Solver requests withdrawal** — The solver specifies the target chain, asset, and amount they want to withdraw
+1. **Solver initiates withdrawal** — The solver transfers their [Hub](/references/protocol/components/hub) balance to a deterministic [withdrawal address](/references/protocol/components/hub#withdrawal-addresses) that encodes the withdrawal parameters (target chain, asset, amount, recipient)
 
-2. **Balance check** — The Allocator reads the solver's balance on the Hub to confirm sufficient funds are available
+2. **Oracle detects transfer** — The [Oracle](/references/protocol/components/oracle) monitors the Hub for transfers to withdrawal addresses, decodes the parameters, and forwards the request to the Allocator
 
 3. **Payload construction** — A chain-specific **Payload Builder** constructs the withdrawal request in the format the target chain's Depository expects
 
