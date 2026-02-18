@@ -34,7 +34,7 @@ flowchart TD
 
 ## Permit-based Gasless
 
-Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an off-chain EIP-2612 permit message, and Relay's solver handles everything else — no approval transaction, no gas.
+Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an off-chain EIP-3009 or EIP-2612 permit message, and Relay's solver handles everything else — no approval transaction, no gas.
 
 <Warning>
   Support is limited to USDC, erc20 tokens require a one time approval transaction.
@@ -61,7 +61,7 @@ Use this approach when your app does **not** control the user's wallet (e.g. Met
 
 You can choose to subsidize all destination fees by passing `subsidizeFees: true` to the quote api (this effectively subsidizes the first time approval). The user still needs to pay for the origin gas fee.
 
-_See the full working example: [<Icon icon="github" size={16} /> byo-eoa-permit](https://github.com/pedromcunha/relay-gasless-examples/tree/main/byo-eoa-permit)_
+_See the full working example: [<Icon icon="github" size={16} /> byo-eoa-permit](https://github.com/relayprotocol/relay-gasless-examples/tree/main/byo-eoa-permit)_
 
 ---
 
@@ -100,7 +100,7 @@ You can choose to subsidize destination fees: pass `subsidizeFees: true` to the 
 
 You can choose to subsidize both or none of these. If not subsidized the user pays from the output token.
 
-_See the full working example: [<Icon icon="github" size={16} /> 4337-gasless](https://github.com/pedromcunha/relay-gasless-examples/tree/main/4337-gasless)_
+_See the full working example: [<Icon icon="github" size={16} /> 4337-gasless](https://github.com/relayprotocol/relay-gasless-examples/tree/main/4337-gasless)_
 
 ---
 
@@ -136,4 +136,4 @@ You can choose to subsidize destination fees: pass `subsidizeFees: true` to the 
 
 You can choose to subsidize both or none of these. If not subsidized the user pays from the output token.
 
-_See the full working example: [<Icon icon="github" size={16} /> 7702-batch-executor](https://github.com/pedromcunha/relay-gasless-examples/tree/main/7702-batch-executor)_
+_See the full working example: [<Icon icon="github" size={16} /> 7702-batch-executor](https://github.com/relayprotocol/relay-gasless-examples/tree/main/7702-batch-executor)_
