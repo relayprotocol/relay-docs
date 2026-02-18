@@ -4,13 +4,15 @@ title: "Handling Quote Errors"
 
 When calling the `/quote/v2` endpoint, various errors may be returned depending on request conditions, user input, or internal routing logic. This guide outlines the possible error codes, their meanings, and how to handle them.
 
+Expected errors return **HTTP 400** (Bad Request) and indicate issues with the request itself. Unexpected errors return **HTTP 500** (Internal Server Error) and indicate infrastructure or downstream failures.
+
 ## Expected Errors
 
-These are known validation and routing issues that developers should gracefully handle in their integrations:
+These are known validation and routing issues that developers should gracefully handle in their integrations. These errors return **HTTP 400**:
 
 | Error Code                                    | Description                                                                |
 | --------------------------------------------- | -------------------------------------------------------------------------- |
-| `AMOUNT_TOO_LOW`                              | The amount provided is below the minimum threshold required for a quote.   |
+| `AMOUNT_TOO_LOW`                              | The swap output amount is too small to cover fees required to execute the swap. This can occur when chain-specific fees (e.g. Hyperliquid's deposit fee) exceed the output amount. |
 | `CHAIN_DISABLED`                              | The origin or destination chain is currently disabled or unsupported.      |
 | `EXTRA_TXS_NOT_SUPPORTED`                     | Extra transactions are not supported for this trade type.                  |
 | `FORBIDDEN`                                   | User does not have the required role or permission.                        |
@@ -40,7 +42,7 @@ These are known validation and routing issues that developers should gracefully 
 
 ## Unexpected Errors
 
-These indicate infrastructure or downstream failures and are not common:
+These indicate infrastructure or downstream failures and are not common. These errors return **HTTP 500**:
 
 | Error Code                       | Description                                                               |
 | -------------------------------- | ------------------------------------------------------------------------- |
@@ -53,6 +55,15 @@ These indicate infrastructure or downstream failures and are not common:
 ---
 
 ## Example Error Responses
+
+### Amount Too Low
+
+```json
+{
+  "message": "Swap output amount is too small to cover fees required to execute swap",
+  "errorCode": "AMOUNT_TOO_LOW"
+}
+```
 
 **Invalid Input Currency**
 
