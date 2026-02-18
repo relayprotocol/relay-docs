@@ -1,45 +1,35 @@
 ---
 title: "Gasless Swaps"
-description: "Learn how to implement gasless swaps via Relay"
 ---
+
+Gas fees add layers of complexity to swapping. Holding the native token, on the right network, at the right time to pay for gas adds friction for users. A gasless swap means that the user only pays with the input token, and this covers all fees. This means someone else is executing the transaction and paying the gas.
 
 ## What solution is right for me?
 
-There are many different solutions when it comes to implementing a gasless swap experience. You might find yourself wondering which solution is right for me? We've put together a decision tree below to help you arrive at the solution that best fits your application.
+There are many different solutions when it comes to implementing a gasless swap experience. We've put together a decision tree below to help you arrive at the solution that best fits your application.
 
 ```mermaid placement="top-right"
 flowchart TD
     Start([Which gasless flow should I use?]) --> WalletControl
-
     WalletControl{Does your app control<br/>the user's wallet?}
-
     WalletControl -->|No — BYO wallet| Permit
     WalletControl -->|Yes — embedded or custodial| Has4337
-
     Has4337{Are you already<br/>using ERC-4337?}
-
     Has4337 -->|Yes| Smart4337
-    Has4337 -->|No| FeePayer
+    Has4337 -->|No| BatchExecutor
 
-    FeePayer{Who pays fees?}
-
-    FeePayer -->|App pays all fees| FullSubsidy
-    FeePayer -->|Recoup from output| AppFees
-
-    Permit[/"**Permit-based Gasless**<br/><br/>/quote/v2 → permit signature → submit<br/><br/>Limitation: not all ERC-20s support permit"/]
-    Smart4337[/"**ERC-4337 Gasless**<br/><br/>Build UserOp with zero gas fields<br/>Submit handleOps via /execute<br/>subsidizeFees: true<br/><br/>Works with existing smart accounts"/]
-    FullSubsidy[/"**7702 BatchExecutor + Full Subsidy**<br/><br/>7702 delegate → BatchExecutor<br/>/quote/v2 → sign batch → /execute<br/>subsidizeFees: true<br/><br/>Works with any ERC-20"/]
-    AppFees[/"**7702 BatchExecutor + App Fees**<br/><br/>7702 delegate → BatchExecutor<br/>/quote/v2 → sign batch → /execute<br/>subsidizeFees: false + appFees<br/><br/>Recoup origin gas via app fee"/]
+    Permit[/"**Permit-based Gasless**<br/><br/>_Limitation: not all ERC-20s support permit_"/]
+    Smart4337[/"**ERC-4337 Gasless**"/]
+    BatchExecutor[/"**7702 BatchExecutor**"/]
 
     click Permit "#permit-based-gasless" _blank
     click Smart4337 "#erc-4337-gasless" _blank
-    click FullSubsidy "#7702-batchexecutor" _blank
-    click AppFees "#7702-batchexecutor" _blank
+    click BatchExecutor "#7702-batchexecutor" _blank
 
     style Permit fill:#f9e3e3,stroke:#c44,color:#000
     style Smart4337 fill:#e3e9f9,stroke:#44c,color:#000
-    style FullSubsidy fill:#e3f9e6,stroke:#4a4,color:#000
-    style AppFees fill:#f5f0e3,stroke:#a84,color:#000
+    style BatchExecutor fill:#e3f9e6,stroke:#4a4,color:#000
+
   ```
 
 ## Permit-based Gasless
