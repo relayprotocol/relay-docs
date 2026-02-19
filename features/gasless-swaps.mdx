@@ -69,11 +69,15 @@ _See the full working example: [<Icon icon="github" size={16} /> byo-eoa-permit]
 
 Use this approach if your app already uses ERC-4337 smart accounts. ERC-4337 UserOperations normally require gas fees, either paid by the sender or a paymaster. With Relay, you set all gas fee fields to 0 and submit the `handleOps` call via Relay's [/execute](/references/api/execute) endpoint instead of directly to the EntryPoint. Relay's relayer submits the transaction and covers the gas.
 
+### `originGasOverhead`
+
+Pass **`originGasOverhead: 300000`** in the `/quote/v2` request. This tells Relay how much additional gas the UserOperation adds over a normal EOA transaction, used during simulation to accurately price the fee.
+
 ### How it works
 
 <Steps>
   <Step title="Get a quote">
-    Call `/quote/v2` to get deposit transaction details
+    Call `/quote/v2` with `originGasOverhead: 300000` to get deposit transaction details
   </Step>
   <Step title="Build the UserOperation">
     Build a UserOperation that batches `approve` + `deposit` calls via `executeBatch`
@@ -108,6 +112,14 @@ _See the full working example: [<Icon icon="github" size={16} /> 4337-gasless](h
 
 Use this approach when your app controls an embedded or custodial wallet and you want gasless execution with **any** ERC-20 token — not just permit-compatible ones. This leverages EIP-7702 to delegate the user's EOA to a BatchExecutor contract ([Calibur](https://github.com/Uniswap/calibur) or similar), enabling atomic approve + deposit in a single call.
 
+### `originGasOverhead`
+
+Pass **`originGasOverhead: 80000`** in the `/quote/v2` request. This tells Relay how much additional gas the Calibur `execute()` wrapper adds over the raw inner calls (EIP-712 signature verification, batch dispatch, nonce check). This is lower than ERC-4337's `300000` because there's no EntryPoint or UserOp validation overhead.
+
+<Info>
+  The `80000` value is specific to [Calibur](https://github.com/Uniswap/calibur). Different BatchExecutor contracts may have different gas overheads — adjust this value based on the implementation you use.
+</Info>
+
 ### How it works
 
 <Steps>
@@ -115,7 +127,7 @@ Use this approach when your app controls an embedded or custodial wallet and you
     Check if the user's EOA is already delegated to the BatchExecutor via EIP-7702
   </Step>
   <Step title="Get a quote">
-    Call `/quote/v2` to get deposit transaction details
+    Call `/quote/v2` with `originGasOverhead: 80000` to get deposit transaction details
   </Step>
   <Step title="Build the batch">
     Build a `BatchedCall` that atomically combines `approve()` and `deposit()`
