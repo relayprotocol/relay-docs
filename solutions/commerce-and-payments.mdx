@@ -1,0 +1,77 @@
+---
+title: "Commerce & Payments"
+description: "Crosschain payments infrastructure to connect users and merchants. One seamless experience."
+---
+
+Relay is crosschain payments infrastructure that enables seamless payments between users and merchants. Users pay in any token on any chain. Merchants receive any token or stablecoin as settlement. One integration to facilitate it all — instant, transparent, and low-fee.
+
+<Columns cols={4}>
+  <Card title="85+ Chains" icon="link">
+    Connect users on every major network
+  </Card>
+  <Card title="< 3s Settlement" icon="bolt">
+    P50 fill time across all routes
+  </Card>
+  <Card title="$20B+" icon="chart-line">
+    Volume enabled to date
+  </Card>
+  <Card title="100M+ Txs" icon="receipt">
+    Processed across the network
+  </Card>
+</Columns>
+
+## Who Builds with Relay
+
+**Payment processors** — Add crosschain acceptance to your payment stack through a single integration. Rather than building 85+ chain connections, use Relay as the crosschain layer to connect your merchants with users on any network.
+
+**Wallets and neobanks** — Let your users pay merchants directly from their existing holdings on any chain. No bridging, no chain-switching. One tap to pay, regardless of what chain the user or merchant is on.
+
+**Commerce platforms** — Give your merchants onchain payment acceptance without requiring buyers to hold specific assets on specific chains. Connect any buyer to any merchant across the entire onchain ecosystem.
+
+## Integration Paths
+
+### Connected Wallet Checkout
+
+For applications where users connect a wallet directly — web apps, mobile apps, or embedded wallets. Use the standard Relay [execute flow](/references/api/api_core_concepts/step-execution) with `tradeType: EXACT_OUTPUT` to guarantee merchants receive the exact amount requested.
+
+Users connect their wallet, review the transaction, and confirm. Relay handles crosschain routing in the background. Compatible with WalletConnect and all major wallet providers.
+
+### Deposit Address
+
+For flows where no wallet connection is needed. Generate a unique [deposit address](/features/deposit-addresses) per transaction and present it as a QR code, payment link, or in an invoice. Users send funds from any wallet on any chain, and Relay routes settlement to the merchant.
+
+## Commerce Features
+
+**[Exact Output Settlement](/references/api/api_core_concepts/trade-types)** — Use `tradeType: EXACT_OUTPUT` to guarantee merchants receive precisely the configured amount. No slippage, no shortfalls. If the exact amount cannot be filled, the transaction reverts and the user is refunded on the origin chain. This eliminates partial payment edge cases and removes the need for reconciliation logic.
+
+**[Fee Sponsorship](/features/fee-sponsorship)** — Cover destination chain fees for users to create a frictionless checkout experience. Set a `maxSubsidizationAmount` to cap your exposure.
+
+**[Fast Fill](/features/fast-fill)** — Accelerate settlement by having Relay solvers pre-fill requests before the origin transaction finalizes onchain. Users and merchants see near-instant completion.
+
+**[App Fees](/features/app-fees)** — Collect a fee on every transaction that flows through your platform. Fees are automatically settled in USDC on Base.
+
+**[Transaction Tracking](/references/api/get-requests)** — Monitor all transactions through the Relay [Request API](/references/api/get-requests). Track status, amounts, routes, and settlement in real time via API or [WebSockets](/references/api/api_guides/websockets).
+
+## What You Build on Top
+
+Relay provides crosschain routing, settlement guarantees, deposit addresses, real-time status tracking, and exact output fills. Relay does not include a merchant management system, order management, or invoicing — it empowers you to build these solutions on top.
+
+- Merchant onboarding and management
+- Order IDs and payment lifecycle management
+- Checkout UI and product catalog
+- Payment confirmation and receipts
+- Invoicing and subscription logic
+
+## Compliance and Security
+
+Relay is decentralized infrastructure. Users initiate transactions. Users maintain control of their assets throughout the payment flow. Funds are held in onchain escrow — not by Relay. The protocol coordinates execution through smart contracts. No single entity controls the network. Relay never takes custody of user funds.
+
+All transactions are screened in real time against professional-grade sanctions and risk databases, including Chainalysis. Addresses linked to malicious activity are automatically blocked to ensure regulatory compliance. Learn more about [Relay's compliance practices](/security/compliance).
+
+## Trusted by Leading Teams
+
+Relay powers crosschain transactions for MetaMask, OpenSea, Coinbase Commerce, and other leading platforms. The protocol operates with 99.9%+ transaction reliability across 85+ networks with sub-3-second settlement on most routes.
+
+## Get Started
+
+Add crosschain payments to your platform through a single integration. Whether you are building a wallet checkout, a scan-to-pay flow, or a full payment processing layer, the [Quote API](/references/api/get-quote-v2) is the primary interface. Check out the [Quickstart Guide](/references/api/quickstart) to get started, or [reach out](https://forms.gle/XNeELYavjwoJwPEf7) to discuss your use case.
