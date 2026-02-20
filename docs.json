@@ -44,7 +44,8 @@
               "features/deposit-addresses",
               "features/gas-top-up",
               "features/sponsored-execution",
-              "features/fast-fill"
+              "features/fast-fill",
+              "features/gasless-swaps"
             ]
           },
           {
@@ -151,6 +152,7 @@
               "references/api/swap-multi-input",
               "references/api/fast-fill",
               "references/api/get-swap-sources",
+              "references/api/execute",
               {
                 "group": "Deprecated",
                 "pages": [
