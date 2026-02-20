@@ -1,6 +1,6 @@
 ---
 title: "Commerce & Payments"
-description: "Crosschain payments infrastructure to connect users and merchants. One seamless experience."
+description: "Use Relay to facilitate seamless payments between users and merchants across any chain"
 ---
 
 Relay is crosschain payments infrastructure that enables seamless payments between users and merchants. Users pay in any token on any chain. Merchants receive any token or stablecoin as settlement. One integration to facilitate it all — instant, transparent, and low-fee.
@@ -34,9 +34,9 @@ Relay is crosschain payments infrastructure that enables seamless payments betwe
 
 For applications where users connect a wallet directly — web apps, mobile apps, or embedded wallets. Use the standard Relay [execute flow](/references/api/api_core_concepts/step-execution) with `tradeType: EXACT_OUTPUT` to guarantee merchants receive the exact amount requested.
 
-Users connect their wallet, review the transaction, and confirm. Relay handles crosschain routing in the background. Compatible with WalletConnect and all major wallet providers.
+Users connect their wallet, review the transaction, and confirm. Relay handles crosschain routing in the background. Compatible with all major wallet providers.
 
-### Deposit Address
+### Deposit Addresses
 
 For flows where no wallet connection is needed. Generate a unique [deposit address](/features/deposit-addresses) per transaction and present it as a QR code, payment link, or in an invoice. Users send funds from any wallet on any chain, and Relay routes settlement to the merchant.
 
@@ -45,6 +45,8 @@ For flows where no wallet connection is needed. Generate a unique [deposit addre
 **[Exact Output Settlement](/references/api/api_core_concepts/trade-types)** — Use `tradeType: EXACT_OUTPUT` to guarantee merchants receive precisely the configured amount. No slippage, no shortfalls. If the exact amount cannot be filled, the transaction reverts and the user is refunded on the origin chain. This eliminates partial payment edge cases and removes the need for reconciliation logic.
 
 **[Fee Sponsorship](/features/fee-sponsorship)** — Cover destination chain fees for users to create a frictionless checkout experience. Set a `maxSubsidizationAmount` to cap your exposure.
+
+**[Sponsored Execution](/features/sponsored-execution)** — Submit transactions on behalf of users and cover gas costs entirely. Users sign a payload — your platform handles submission. Works with Permit2, ERC-4337 smart accounts, and EIP-7702, making payments completely gasless for end users.
 
 **[Fast Fill](/features/fast-fill)** — Accelerate settlement by having Relay solvers pre-fill requests before the origin transaction finalizes onchain. Users and merchants see near-instant completion.
 
@@ -70,7 +72,7 @@ All transactions are screened in real time against professional-grade sanctions 
 
 ## Trusted by Leading Teams
 
-Relay powers crosschain transactions for MetaMask, OpenSea, Coinbase Commerce, and other leading platforms. The protocol operates with 99.9%+ transaction reliability across 85+ networks with sub-3-second settlement on most routes.
+Relay powers crosschain transactions for MetaMask, OpenSea, Coinbase, and other leading platforms. The protocol operates with 99.9%+ transaction reliability across 85+ networks with sub-3-second settlement on most routes.
 
 ## Get Started
 
