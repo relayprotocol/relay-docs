@@ -12,9 +12,13 @@ You can use Relay cross-chain execution to perform any action (tx) on any chain.
 
 ## Before you start
 
+<Warning>
+  **Origin chain gas required**: The user must have a small amount of native gas token (e.g., ETH) on the origin chain to submit the deposit transaction. While Relay handles destination chain execution and deducts fees from the user's tokens, the initial on-chain deposit still requires native gas — this is an EVM-level requirement. If your users have **zero native tokens**, you'll need to use [Smart Accounts](/references/api/api_guides/smart_accounts/smart-accounts) (EIP-7702 or ERC-4337) or [Sponsored Execution](/features/sponsored-execution) for a fully gasless flow.
+</Warning>
+
 While not mandatory for integration, doing the following will improve the UX for your users considerably:
 
-* **Verify user balance** - Confirm user has sufficient funds for amount \+ fees
+* **Verify user balance** - Confirm user has sufficient funds for amount \+ fees, including native gas on the origin chain for the deposit transaction
 * **Check chain support** - Confirm both origin and destination chains are supported
 * **Validate quote** - Quotes are revalidated when being filled, keep your quotes as fresh as possible.
 * **Handle errors** - Implement proper error handling for API requests and transaction failures
@@ -967,6 +971,8 @@ const txs = [
 
 ## See Also
 
+- [**Smart Accounts**](/references/api/api_guides/smart_accounts/smart-accounts): Enable fully gasless transactions where users hold zero native tokens, using EIP-7702 or ERC-4337.
+- [**Sponsored Execution**](/features/sponsored-execution): Execute gasless transactions where the transaction signer and gas payer are different addresses.
 - [**App Fees**](/features/app-fees): Monetize your integration by adding a fee (in bps) to every quote.
 - [**Fee Sponsorship**](/features/fee-sponsorship): Sponsor fees for your users to reduce friction and improve the user experience.
 - [**Handling Errors**](/references/api/api_core_concepts/errors): Handle quote errors when using the Relay API.
