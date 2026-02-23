@@ -8,7 +8,7 @@ description: "Execute transactions across any chain, pay with any token"
 Relay supports cross-chain transaction execution for arbitrary cross-chain transactions. This means a user can execute any call on any chain and pay with any token on any other chain. This feature is perfect for cross-chain checkout experiences as well as full chain abstraction.
 
 <Note>
-  **Gas requirement**: With standard EOA wallets, the user still needs a small amount of native gas token (e.g., ETH) on the **origin chain** to broadcast the initial deposit transaction. Relay handles all destination chain gas and deducts fees from the user's tokens, but the origin chain submission requires native gas. For a fully gasless experience where users hold **zero native tokens**, see [Smart Accounts](/references/api/api_guides/smart_accounts/smart-accounts) (EIP-7702 or ERC-4337). These require a [partner account](/features/sponsored-execution).
+  **Gas requirement**: With standard EOA wallets, the user still needs a small amount of native gas token (e.g., ETH) on the **origin chain** to broadcast the initial deposit transaction. Relay handles all destination chain gas and deducts fees from the user's tokens, but the origin chain submission requires native gas. For a fully gasless experience where users hold **zero native tokens**, see [Gasless Swaps](/features/gasless-swaps) to find the right approach for your app, or explore [Smart Accounts](/references/api/api_guides/smart_accounts/smart-accounts) (EIP-7702 or ERC-4337) directly.
 </Note>
 
 ## How it Works
