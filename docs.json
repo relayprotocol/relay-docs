@@ -98,14 +98,7 @@
                   "references/api/api_guides/bridging-integration-guide",
                   "references/api/api_guides/calling-integration-guide",
                   "references/api/api_guides/transaction-indexing",
-                  {
-                    "group": "Smart Account Support",
-                    "pages": [
-                      "references/api/api_guides/smart_accounts/smart-accounts",
-                      "references/api/api_guides/smart_accounts/erc-4337",
-                      "references/api/api_guides/smart_accounts/eip-7702"
-                    ]
-                  },
+                  "references/api/api_guides/smart_accounts/smart-accounts",
                   {
                     "group": "Chain Support Guides",
                     "pages": [
@@ -458,6 +451,14 @@
     {
       "source": "/references/api/api_core_concepts/quote-errors",
       "destination": "/references/api/api_core_concepts/handling-errors"
+    },
+    {
+      "source": "/references/api/api_guides/smart_accounts/erc-4337",
+      "destination": "/features/gasless-swaps"
+    },
+    {
+      "source": "/references/api/api_guides/smart_accounts/eip-7702",
+      "destination": "/features/gasless-swaps"
     }
   ]
 }
