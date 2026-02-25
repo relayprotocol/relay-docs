@@ -98,7 +98,7 @@
                   "references/api/api_guides/bridging-integration-guide",
                   "references/api/api_guides/calling-integration-guide",
                   "references/api/api_guides/transaction-indexing",
-                  "references/api/api_guides/smart_accounts/smart-accounts",
+                  "references/api/api_guides/smart-accounts",
                   {
                     "group": "Chain Support Guides",
                     "pages": [
@@ -459,6 +459,10 @@
     {
       "source": "/references/api/api_guides/smart_accounts/eip-7702",
       "destination": "/features/gasless-swaps"
+    },
+    {
+      "source": "/references/api/api_guides/smart_accounts/smart-accounts",
+      "destination": "references/api/api_guides/smart-accounts"
     }
   ]
 }
