@@ -59,7 +59,7 @@ Use this approach when your app does **not** control the user's wallet (e.g. Met
 
 ### Fees
 
-You can choose to subsidize all destination fees by passing `subsidizeFees: true` to the quote api (this effectively subsidizes the first time approval). The user still needs to pay for the origin gas fee.
+You can choose to subsidize all destination fees by passing `subsidizeFees: true` to the quote api (this effectively subsidizes the first time approval). The user still needs to pay for the origin gas fee. For subsidizing fees you'll need to make sure you have [fee sponsorship](/features/fee-sponsorship) set up.
 
 _See the full working example: [<Icon icon="github" size={16} /> byo-eoa-permit](https://github.com/relayprotocol/relay-gasless-examples/tree/main/byo-eoa-permit)_
 
@@ -104,6 +104,8 @@ You can choose to subsidize destination fees: pass `subsidizeFees: true` to the 
 
 You can choose to subsidize both or none of these. If not subsidized the user pays from the output token.
 
+For subsidizing fees you'll need to make sure you have [fee sponsorship](/features/fee-sponsorship) set up.
+
 _See the full working example: [<Icon icon="github" size={16} /> 4337-gasless](https://github.com/relayprotocol/relay-gasless-examples/tree/main/4337-gasless)_
 
 ---
@@ -146,6 +148,8 @@ You can choose to subsidize origin fees: pass `subsidizeFees: true` to the execu
 
 You can choose to subsidize destination fees: pass `subsidizeFees: true` to the quote api.
 
-You can choose to subsidize both or none of these. If not subsidized the user pays from the output token.
+You can choose to subsidize both or none of these. If not subsidized the user pays from the output token. 
+
+For subsidizing fees you'll need to make sure you have [fee sponsorship](/features/fee-sponsorship) set up.
 
 _See the full working example: [<Icon icon="github" size={16} /> 7702-batch-executor](https://github.com/relayprotocol/relay-gasless-examples/tree/main/7702-batch-executor)_
