@@ -34,10 +34,10 @@ flowchart TD
 
 ## Permit-based Gasless
 
-Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an off-chain EIP-3009 or EIP-2612 permit message, and Relay's solver handles everything else — no approval transaction, no gas.
+Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an off-chain EIP-3009 or Permit2 message, and Relay's solver handles everything else — no approval transaction, no gas.
 
 <Warning>
-  Support is limited to USDC, erc20 tokens require a one time approval transaction.
+  USDC is fully gasless. Other ERC-20 tokens require a one-time approval transaction.
 </Warning>
 
 ### How it works
