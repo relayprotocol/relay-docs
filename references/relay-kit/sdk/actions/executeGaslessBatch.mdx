@@ -1,0 +1,70 @@
+---
+title: executeGaslessBatch
+description: Execute a gasless batch transaction using EIP-7702 delegation
+---
+
+The `executeGaslessBatch` action takes a quote from [getQuote](/references/relay-kit/sdk/actions/getQuote), delegates the user's EOA to a batch executor using EIP-7702, batches the quote's transaction steps atomically, and submits via Relay's execute API with the sponsor covering gas costs. This means the user pays no gas fees.
+
+<Note>An API key is required for gasless batch execution. Configure it via `createClient({ apiKey: "..." })`.</Note>
+
+### Parameters
+
+| Property               | Description                                                                                                                                              | Required |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| **quote**              | A valid quote retrieved using the [getQuote](/references/relay-kit/sdk/actions/getQuote) action                                                          | ✅       |
+| **walletClient**       | A valid WalletClient from [viem](https://viem.sh) with an account attached                                                                              | ✅       |
+| **executor**           | Batch executor configuration. Defaults to the Calibur executor.                                                                                          | ❌       |
+| **subsidizeFees**      | Whether the sponsor pays all fees. Defaults to `false`.                                                                                                  | ❌       |
+| **originGasOverhead**  | Gas overhead for the origin chain gasless transaction. Overrides the executor's default if provided (Calibur default: 80,000).                           | ❌       |
+| **onProgress**         | Callback for each stage of the execution flow. Returns `status`, `requestId`, and `details`. See [onProgress statuses](#handling-onprogress-updates) below. | ❌       |
+
+### Example
+
+```typescript
+import { getClient, getQuote, executeGaslessBatch } from "@relayprotocol/relay-sdk";
+import { createWalletClient, custom } from "viem";
+
+const walletClient = createWalletClient({
+  account: "0x...",
+  chain: mainnet,
+  transport: custom(window.ethereum),
+});
+
+const quote = await getClient().actions.getQuote({
+  // ...quote options
+});
+
+const result = await executeGaslessBatch({
+  quote,
+  walletClient,
+  onProgress: ({ status, requestId, details }) => {
+    console.log(`Status: ${status}`, requestId);
+  },
+});
+
+console.log("Request ID:", result.requestId);
+```
+
+### Example with Subsidized Fees
+
+```typescript
+const result = await executeGaslessBatch({
+  quote,
+  walletClient,
+  subsidizeFees: true,
+  onProgress: ({ status }) => {
+    console.log(`Status: ${status}`);
+  },
+});
+```
+
+### Handling onProgress updates
+
+The `onProgress` callback fires at each stage of the gasless batch execution. The `status` field indicates which stage is currently active:
+
+* __signing_authorization__: The user is being prompted to sign the EIP-7702 authorization to delegate their EOA to the batch executor. This step is skipped if the EOA is already delegated.
+* __signing_batch__: The user is being prompted to sign the EIP-712 typed data for the batched calls.
+* __submitting__: The signed batch is being submitted to the Relay API.
+* __polling__: The request has been submitted and is being polled for completion.
+* __success__: The batch execution completed successfully. The `details` field contains the full status response.
+* __failure__: The batch execution failed or was refunded. The `details` field contains the full status response.
