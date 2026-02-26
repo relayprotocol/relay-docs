@@ -47,16 +47,78 @@ We have automatic handling for common edge cases that can occur when using depos
 
 ## Debugging
 
-When looking up the status of a bridge or fetching the request data, please use the `requestId` and our [Get Execution Status API](/references/api/get-intents-status-v3).
-The transaction hash of the deposit transaction cannot be used to lookup the status of the bridge for deposit address bridges.
-To help with debugging transactions, make sure to store the `requestId` along with other data (quotes, transactions,
-bridges, etc). The `requestId` is unique to Relay's database and will be returned with the quote.
+The transaction hash of the deposit transaction cannot be used to lookup the status of the bridge for deposit address flows.
 
-## Example Request
+### Tracking Deposit Address Transactions
+
+For deposit address flows, the most reliable way to detect and track requests is to poll the [Get Requests API](/references/api/get-requests) with the **deposit address** passed as the `user` query parameter:
+
+<CodeGroup>
+```bash Request
+curl -X GET "https://api.relay.link/requests/v2?user=<DEPOSIT_ADDRESS>&sortBy=updatedAt&sortDirection=desc&limit=20"
+```
+```json Response expandable
+{
+  "requests": [
+    {
+      "id": "0x8bc200f95ee7cb2af30085fd0a7ecfdd2f3bcfef78d5d441f5dadfdfde95ab7f",
+      "status": "pending",
+      "user": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
+      "recipient": "0xf0ae622e463fa757cf72243569e18be7df1996cd",
+      "data": {
+        "isDepositAddressRequest": true,
+        "inTxs": [
+          {
+            "hash": "0xabc123...",
+            "chainId": 8453,
+            "timestamp": 1769988962
+          }
+        ],
+        "outTxs": []
+      },
+      "createdAt": "2026-02-05T15:33:25.302Z",
+      "updatedAt": "2026-02-05T15:34:10.000Z"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+This returns requests associated with that deposit address, including:
+
+- `id` (`requestId`)
+- `status`
+- `data.isDepositAddressRequest`
+- Transaction metadata (`inTxs`, `outTxs`, timestamps, fees)
+
+Once you have the active `requestId`, you can optionally use [Get Status](/references/api/get-intents-status-v3) for request-level status polling:
+
+<CodeGroup>
+```bash Request
+curl -X GET "https://api.relay.link/intents/status/v3?requestId=<REQUEST_ID>"
+```
+```json Response expandable
+{
+  "status": "pending",
+  "inTxHashes": [
+    "0xabc123..."
+  ],
+  "txHashes": [],
+  "updatedAt": 1769988962883,
+  "originChainId": 8453,
+  "destinationChainId": 10
+}
+```
+</CodeGroup>
+
+If you already have the `requestId` from the quote response, you can still use it directly. For resilient tracking across deposit-address request regeneration, poll `/requests/v2` with `user=<DEPOSIT_ADDRESS>`.
+
+## Example Request and Response
 
 You will find an example below of sending 0.01 ETH from Base to Optimism.
 
-```bash cURL
+<CodeGroup>
+```bash Request
 curl -X POST \
   'https://api.relay.link/quote/v2' \
   -H 'Content-Type: application/json' \
@@ -76,51 +138,44 @@ curl -X POST \
 	"refundTo": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd"
 }'
 ```
+```json Response expandable
+{
+  "steps": [
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Deposit funds for executing the calls",
+      "kind": "transaction",
+      "depositAddress": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
+      "requestId": "0xa1dea21f62a85b9ede98b7a6442b7b9574bdfd71adabc03397242adf122038de",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "from": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+            "to": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
+            "data": "0x",
+            "value": "100000000000000000",
+            "maxFeePerGas": "4222843",
+            "maxPriorityFeePerGas": "987146",
+            "chainId": 8453
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0xa1dea21f62a85b9ede98b7a6442b7b9574bdfd71adabc03397242adf122038de",
+            "method": "GET"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+</CodeGroup>
 
 - `useDepositAddress` must be set to `true` <br />
 - `user` can be any valid address, including the zero address <br />
 - `refundTo` can be optionally set when `useDepositAddress` is being used.
   This is the address that refunds will be sent to in case of an issue. If not specified then manual refund is required.
-
-## Example Response
-
-```curl
-	"steps": [
-		{
-			"id": "deposit",
-			"action": "Confirm transaction in your wallet",
-			"description": "Deposit funds for executing the calls",
-			"kind": "transaction",
-			"depositAddress": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
-			"requestId": "0xa1dea21f62a85b9ede98b7a6442b7b9574bdfd71adabc03397242adf122038de",
-			"items": [
-				{
-					"status": "incomplete",
-					"data": {
-						"from": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
-						"to": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
-						"data": "0x",
-						"value": "100000000000000000",
-						"maxFeePerGas": "4222843",
-						"maxPriorityFeePerGas": "987146",
-						"chainId": 8453
-					},
-					"check": {
-						"endpoint": "/intents/status?requestId=0xa1dea21f62a85b9ede98b7a6442b7b9574bdfd71adabc03397242adf122038de",
-						"method": "GET"
-					}
-				}
-			]
-		}
-	],
-.
-.
-.
-(other metadata associated with the quote, such as fees, rate, etc, omitted for brevity)
-.
-.
-.
-```
 
 ## Common Use Cases
 
