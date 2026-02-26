@@ -38,7 +38,7 @@ The refund amount may be less than what you originally deposited due to several 
 - **Gas costs are deducted:** The gas cost of processing the refund transaction is deducted from the refunded amount.
 - **Origin swaps:** If your transaction included an origin swap, you will only receive what the depository contract actually received after the swap, not your original deposit amount.
 
-For example, if you deposit 100 USDC that gets swapped to 95 USDC before the bridge fails, your refund will be based on the 95 USDC (minus gas costs), not your original 100 USDC deposit.
+For example, if you send us a memecoin it will be swapped to USDC as a part of the deposit transaction. In the case of a refund we will refund in USDC for the amount the deposit contract received after the swap into USDC minus the cost of gas.
 
 ## When is there no refund given?
 If the refund amount is not enough to cover the cost of gas, Relay will 
