@@ -3,7 +3,7 @@ title: "Commerce & Payments"
 description: "Use Relay to facilitate seamless payments between users and merchants across any chain"
 ---
 
-Relay is crosschain payments infrastructure that enables seamless payments between users and merchants. Users pay in any token on any chain. Merchants receive any token or stablecoin as settlement. One integration to facilitate it all — instant, transparent, and low-fee.
+Relay is crosschain payments infrastructure that enables seamless payments between users and merchants. Users pay in any token on any chain. Merchants configure exactly which token they receive as settlement — any stablecoin, native asset, or token on any supported chain. One integration to facilitate it all — instant, transparent, and low-fee.
 
 <Columns cols={4}>
   <Card title="85+ Chains" icon="link">
@@ -48,8 +48,6 @@ For flows where no wallet connection is needed. Generate a unique [deposit addre
 
 **[Sponsored Execution](/features/sponsored-execution)** — Submit transactions on behalf of users and cover gas costs entirely. Users sign a payload — your platform handles submission. Works with Permit2, ERC-4337 smart accounts, and EIP-7702, making payments completely gasless for end users.
 
-**[Fast Fill](/features/fast-fill)** — Accelerate settlement by having Relay solvers pre-fill requests before the origin transaction finalizes onchain. Users and merchants see near-instant completion.
-
 **[App Fees](/features/app-fees)** — Collect a fee on every transaction that flows through your platform. Fees are automatically settled in USDC on Base.
 
 **[Transaction Tracking](/references/api/get-requests)** — Monitor all transactions through the Relay [Request API](/references/api/get-requests). Track status, amounts, routes, and settlement in real time via API or [WebSockets](/references/api/api_guides/websockets).
@@ -63,12 +61,6 @@ Relay provides crosschain routing, settlement guarantees, deposit addresses, rea
 - Checkout UI and product catalog
 - Payment confirmation and receipts
 - Invoicing and subscription logic
-
-## Compliance and Security
-
-Relay is decentralized infrastructure. Users initiate transactions. Users maintain control of their assets throughout the payment flow. Funds are held in onchain escrow — not by Relay. The protocol coordinates execution through smart contracts. No single entity controls the network. Relay never takes custody of user funds.
-
-All transactions are screened in real time against professional-grade sanctions and risk databases, including Chainalysis. Addresses linked to malicious activity are automatically blocked to ensure regulatory compliance. Learn more about [Relay's compliance practices](/security/compliance).
 
 ## Trusted by Leading Teams
 
