@@ -27,9 +27,9 @@ import { useQuote } from '@relayprotocol/relay-kit-hooks'
 import { useWalletClient } from 'wagmi'
 import { getClient } from '@relayprotocol/relay-sdk'
 
-const queryOptions = {...}
+const queryOptions = {...} // Query options from tanstack
 const walletClient = useWalletClient()
-const relayClient = getClient()
+const relayClient = getClient() // Either use getClient, createClient or useRelayClient from the ui kit
 
 const {
   data: quote,
