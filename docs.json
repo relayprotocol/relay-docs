@@ -248,7 +248,8 @@
                 "group": "Guides",
                 "pages": [
                   "references/protocol/guides/for-solvers",
-                  "references/protocol/guides/for-apps"
+                  "references/protocol/guides/for-apps",
+                  "references/protocol/guides/third-party-oracle"
                 ]
               },
               {
@@ -449,6 +450,10 @@
     {
       "source": "/references/api/api_core_concepts/quote-errors",
       "destination": "/references/api/api_core_concepts/handling-errors"
+    },
+    {
+      "source": "/third-party-operator-guide",
+      "destination": "/references/protocol/guides/third-party-oracle"
     },
     {
       "source": "/references/protocol/audits",
