@@ -448,22 +448,6 @@
       "destination": "/security/mev-protection"
     },
     {
-      "source": "/references/api/api_core_concepts/quote-errors",
-      "destination": "/references/api/api_core_concepts/handling-errors"
-    },
-    {
-      "source": "/references/api/api_guides/smart_accounts/erc-4337",
-      "destination": "/features/gasless-swaps"
-    },
-    {
-      "source": "/references/api/api_guides/smart_accounts/eip-7702",
-      "destination": "/features/gasless-swaps"
-    },
-    {
-      "source": "/references/api/api_guides/smart_accounts/smart-accounts",
-      "destination": "/references/api/api_guides/smart-accounts"
-    },
-    {
       "source": "/third-party-operator-guide",
       "destination": "/references/protocol/guides/third-party-oracle"
     },
@@ -514,6 +498,10 @@
     {
       "source": "/references/protocol/hub/architecture",
       "destination": "/references/protocol/components/hub"
+    },
+    {
+      "source": "/references/api/api_core_concepts/quote-errors",
+      "destination": "/references/api/api_core_concepts/handling-errors"
     }
   ]
 }
