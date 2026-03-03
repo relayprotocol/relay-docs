@@ -239,7 +239,7 @@ Each step has a unique `id` that identifies the type of action required. Underst
 
 | Step ID                       | Description                                | When Used                                                                                                                                                                                                      |
 | ----------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`authorize`](#authorize)     | Sign authorization for specific operations | Used for: (1) Claiming [app fees](/features/app-fees) - EIP-191 signature to verify wallet ownership, (2) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits - nonce-mapping signature. |
+| [`authorize`](#authorize)     | Sign authorization for specific operations | Used for: (1) Claiming [app fees](/features/relay-fees-and-app-fees#app-fees) - EIP-191 signature to verify wallet ownership, (2) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits - nonce-mapping signature. |
 | [`authorize1`](#authorize1)   | Sign to approve swap of tokens             | Main flow for cross-chain permits Permit/Permit2.                                                                                                                                                              |
 | [`authorize2`](#authorize2)   | Sign to approve transfer of tokens         | Same-chain swap permits.                                                                                                                                                                                       |
 
@@ -616,7 +616,7 @@ Sign authorization for same-chain swap permits using PermitBatchWitnessTransferF
 }
 ```
 
-Along with the steps you'll see that the following objects are returned: `fees`, `breakdown` and `balances`. Information about fees is detailed [here](/references/api/api_core_concepts/fees). `breakdown` pertains to time estimation for the execution, broken down by value. The `balances` object is in regards to the user and how much they require to solve for the execution.
+Along with the steps you'll see that the following objects are returned: `fees`, `breakdown` and `balances`. Information about fees is detailed [here](/features/relay-fees-and-app-fees). `breakdown` pertains to time estimation for the execution, broken down by value. The `balances` object is in regards to the user and how much they require to solve for the execution.
 
 ### Checking the fill status
 

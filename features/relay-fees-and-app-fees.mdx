@@ -1,13 +1,79 @@
 ---
-title: "App Fees"
-description: "Add App Fees on any route and collect in stablecoins "
+title: "Relay Fees & App Fees"
+description: "Comprehensive guide to Relay's fee structure and App Fees"
 ---
 
-## What are App Fees?
+## Overview
 
-App fees are additional fees set by third-party developers on top of existing fees. These fees are specified when generating a quote. To improve the gas costs of fee setting, App fees are not paid out in real-time. Rather, App Fees accrue in an offchain base _USDC,_ balance and can be withdrawn as desired at your convenience.
+Relay transactions involve multiple fee components that cover different aspects of the bridging and swapping process. Understanding these fees helps you provide transparency to your users and optimize your integration.
 
-## Setting App Fees
+## Fee Types
+
+In any given Relay transaction, there are four potential fee types:
+
+### Execution Fees
+
+Fees to cover execution costs including network gas on the origin and/or destination chain.
+- Fill gas estimate (and origin gas estimate for gasless transactions)
+- $0.02 flat fee
+
+### Swap Fees
+
+Fees to liquidity providers that facilitate cross-asset and cross-chain token swaps.
+- DEX fees
+- DEX swap impact
+- Solver cross-chain rebalancing fees
+
+### Relay Fees
+
+Fees charged for using the Relay API gateway and related services.
+- 25% of swap fees and app fee
+
+### App Fees
+
+Fees added on top of a Relay by you, the integrator. These are custom fees set by third-party developers on top of existing fees. See [App Fees](#app-fees) section below for detailed information.
+
+<Info>
+The above fee structure applies to standard cases. In certain cases, such as route-specific campaigns or promotions, different fees may apply.
+</Info>
+
+## Fees in the API
+
+### Fees Object
+
+The Fees object is returned from the quote API and the requests API. These fees are only the Relay related fee, and are segmented as the following fees:
+
+**relayerService**: The service fee paid to the relayer to facilitate execution.
+
+**relayerGas**: The gas fee given to the solver to pay gas fees on the destination chain.
+
+**relayer**: The sum of the relayerService and the relayerGas.
+
+**app**: Third party fees added on top of the existing fees, this fee is added by app developers and accrues offchain to minimize gas costs.
+
+**subsidized**: The Fees in the order that are subsidized by the integrator. Learn more about [Fee Sponsorship](/features/fee-sponsorship).
+
+### Price Impact
+
+If you are interested in understanding or showing your user the fees of the order more broadly, it's best to look at the `expanded price impact` object which reports:
+
+**execution** - the price impact that results from execution fees.
+
+**swap** - the price impact that results from cross-currency and cross-chain token exchange
+
+**relay** - the price impact that results from the relay api fee (if applicable)
+
+**app** - the price impact that results from the app fees (if applicable)
+
+## App Fees
+
+App fees allow you to monetize your Relay integration by adding custom fees on top of existing Relay fees. These fees are specified when generating a quote and accrue in an offchain USDC balance for easy withdrawal.
+
+### What are App Fees?
+
+App fees are additional fees set by third-party developers on top of existing fees. To improve the gas costs of fee setting, App Fees are not paid out in real-time. Rather, App Fees accrue in an offchain base _USDC_ balance and can be withdrawn as desired at your convenience.
+
+### Setting App Fees
 
 App Fees are measured in basis points (bps) based on the input value of an order. When setting an app fee, an EVM-based claim address must be provided, which will be used for withdrawing accumulated fees. A single quote can include multiple App fees. You can accrue fees by including `AppFees` in the Quote API:
 
@@ -20,22 +86,22 @@ App Fees are measured in basis points (bps) based on the input value of an order
   ]
 ```
 
-### Additional Considerations
+#### Additional Considerations
 
 - On same-chain operations where the solver holds neither the input or output currency, an extra swap is added within the transaction to swap from the input currency into a currency accepted by the solver for App Fees
   - For this to occur, the fee to be taken needs to be greater than $0.025. This is to prevent the situation where the action of taking the app fee will consume more in gas than the fee itself.
 - App Fee Recipients _must_ be an EVM compatible wallet address, even for non-EVM chains.
 - App fees _can_ be an array, for setting multiple fees at once
 
-## Withdrawing App Balance
+### Withdrawing App Balance
 
 App balance accrue in USDC from app fees, and can be claimed on any chain. The balance is free to claim on Base, and Relay app balance apply to claim on any other chain or in any other currency.
 
-The easiest way to claim your App Balance is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App Balance page also supports withdrawing via a multisig. Here’s how you can withdraw via the API:
+The easiest way to claim your App Balance is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App Balance page also supports withdrawing via a multisig. Here's how you can withdraw via the API:
 
-### Get App Balance
+#### Get App Balance
 
-To check your accrued App Balance, use the App fee balances API. Here’s an example curl command and response. The response includes the `balances.currency` field reflecting your off-chain balance for each currency accumulated.
+To check your accrued App Balance, use the App fee balances API. Here's an example curl command and response. The response includes the `balances.currency` field reflecting your off-chain balance for each currency accumulated.
 
 <CodeGroup>
 ```bash cURL
@@ -65,7 +131,7 @@ curl --location 'https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e0
 
 To learn more about this api, see the [Get App Fee Balance](/references/api/get-app-fee-balances) API reference.
 
-### How to withdraw your off-chain balance?
+#### How to withdraw your off-chain balance?
 
 To withdraw your app fees, use the app fees claim API. If using the API, the response will guide you through signing and submitting a message to the `/execute/permit` endpoint to verify ownership of your claim address. The SDK automates this process for you.
 
@@ -143,12 +209,21 @@ curl -X POST \
 
 Once done, you can check your balance again to verify the withdrawal. To learn more about this api, see the [Claim App Fee Balance](/references/api/claim-app-fees) API reference.
 
-### Withdrawing via a smart contract
+#### Withdrawing via a smart contract
 
-In some cases you may want to accrue fees into a smart contract instead of an EOA. This can easily be done by setting the app fees recipient. The challenge is in claiming the fees to the contract. The claim API requires a signature to claim app fees but contracts cannot sign messages. To solve this, the API supports [EIP-1271](https://eips.ethereum.org/EIPS/eip-1271) which allows a smart contract to validate a signature using arbitrary logic. Once implemented our backend will check if the contract implements `isValidSignature` and use that method to verify the signature. 
+In some cases you may want to accrue fees into a smart contract instead of an EOA. This can easily be done by setting the app fees recipient. The challenge is in claiming the fees to the contract. The claim API requires a signature to claim app fees but contracts cannot sign messages. To solve this, the API supports [EIP-1271](https://eips.ethereum.org/EIPS/eip-1271) which allows a smart contract to validate a signature using arbitrary logic. Once implemented our backend will check if the contract implements `isValidSignature` and use that method to verify the signature.
 
 Here is an example of how this might work in practice:
 
 * Wallet A (owner by contract owner), signs the message
 * Then our backend gets the posted signature and calls the contract's `isValidSignature` method to verify the signature
 * If the signature is valid, the funds get sent to the recipient. Let's say in this case the contract's `isValidSignature` method returns true if the signature was generated by wallet A.
+
+---
+
+## Related Resources
+
+- [Fee Sponsorship](/features/fee-sponsorship) — Learn how to sponsor user transaction fees
+- [Get App Fee Balances](/references/api/get-app-fee-balances) — API reference for checking balances
+- [Claim App Fees](/references/api/claim-app-fees) — API reference for claiming fees
+- [Get Quote](/references/api/get-quote) — API reference for quote requests

@@ -38,7 +38,7 @@
           {
             "group": "Features",
             "pages": [
-              "features/app-fees",
+              "features/relay-fees-and-app-fees",
               "features/fee-sponsorship",
               "features/deposit-addresses",
               "features/gas-top-up",
@@ -83,7 +83,6 @@
                 "pages": [
                   "references/api/api_core_concepts/step-execution",
                   "references/api/api_core_concepts/wallet-detection",
-                  "references/api/api_core_concepts/fees",
                   "references/api/api_core_concepts/refunds",
                   "references/api/api_core_concepts/input-validation",
                   "references/api/api_core_concepts/trade-types",
@@ -362,7 +361,7 @@
     },
     {
       "source": "/how-it-works/fees",
-      "destination": "/references/api/api_core_concepts/fees"
+      "destination": "/features/relay-fees-and-app-fees"
     },
     {
       "source": "/references/sdk/bridging/executing-a-bridge",
