@@ -41,8 +41,10 @@
               "features/app-fees",
               "features/fee-sponsorship",
               "features/deposit-addresses",
+              "features/gas-top-up",
               "features/sponsored-execution",
-              "features/fast-fill"
+              "features/fast-fill",
+              "features/gasless-swaps"
             ]
           },
           {
@@ -60,7 +62,7 @@
             "pages": [
               "resources/supported-chains",
               "resources/enterprise",
-              "resources/bounties",
+              "resources/developing-with-ai",
               "resources/support",
               "resources/brand-assets"
             ]
@@ -96,14 +98,7 @@
                   "references/api/api_guides/bridging-integration-guide",
                   "references/api/api_guides/calling-integration-guide",
                   "references/api/api_guides/transaction-indexing",
-                  {
-                    "group": "Smart Account Support",
-                    "pages": [
-                      "references/api/api_guides/smart_accounts/smart-accounts",
-                      "references/api/api_guides/smart_accounts/erc-4337",
-                      "references/api/api_guides/smart_accounts/eip-7702"
-                    ]
-                  },
+                  "references/api/api_guides/smart-accounts",
                   {
                     "group": "Chain Support Guides",
                     "pages": [
@@ -149,12 +144,10 @@
               "references/api/swap-multi-input",
               "references/api/fast-fill",
               "references/api/get-swap-sources",
+              "references/api/execute",
               {
                 "group": "Deprecated",
                 "pages": [
-                  "references/api/execute-call",
-                  "references/api/execute-bridge",
-                  "references/api/execute-swap",
                   "references/api/get-price",
                   "references/api/get-config",
                   "references/api/get-intents-status",
@@ -189,7 +182,8 @@
                       "references/relay-kit/sdk/actions/execute",
                       "references/relay-kit/sdk/actions/getAppFees",
                       "references/relay-kit/sdk/actions/claimAppFees",
-                      "references/relay-kit/sdk/actions/fastFill"
+                      "references/relay-kit/sdk/actions/fastFill",
+                      "references/relay-kit/sdk/actions/executeGaslessBatch"
                     ]
                   },
                   "references/relay-kit/sdk/adapters",
@@ -502,6 +496,18 @@
     {
       "source": "/references/api/api_core_concepts/quote-errors",
       "destination": "/references/api/api_core_concepts/handling-errors"
+    },
+    {
+      "source": "/references/api/api_guides/smart_accounts/erc-4337",
+      "destination": "/features/gasless-swaps"
+    },
+    {
+      "source": "/references/api/api_guides/smart_accounts/eip-7702",
+      "destination": "/features/gasless-swaps"
+    },
+    {
+      "source": "/references/api/api_guides/smart_accounts/smart-accounts",
+      "destination": "references/api/api_guides/smart-accounts"
     }
   ]
 }

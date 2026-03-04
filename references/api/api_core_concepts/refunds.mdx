@@ -32,6 +32,14 @@ the chain is experiencing a large reorganization.
 - *User Sends Deposits With the Same Request ID in the Calldata Multiple Times*
 - *User Send Deposits Without a Request ID in the Calldata*
 
+## Refund amounts and costs
+The refund amount may be less than what you originally deposited due to several factors:
+
+- **Gas costs are deducted:** The gas cost of processing the refund transaction is deducted from the refunded amount.
+- **Origin swaps:** If your transaction included an origin swap, you will only receive what the depository contract actually received after the swap, not your original deposit amount.
+
+For example, if you send us a memecoin it will be swapped to USDC as a part of the deposit transaction. In the case of a refund we will refund in USDC for the amount the deposit contract received after the swap into USDC minus the cost of gas.
+
 ## When is there no refund given?
 If the refund amount is not enough to cover the cost of gas, Relay will 
 mark the bridge or swap as failed & no refund will be sent.

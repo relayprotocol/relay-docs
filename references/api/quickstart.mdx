@@ -26,6 +26,111 @@ Follow this 5-step flow to integrate Relay into your application:
     You can find a self-serve form to request API keys [here](/references/api/api-keys#how-to-get-an-api-key). <br/>
     Having an API key will allow you to use the API at a higher rate limit.
     </Callout>
+
+    ## Chain Configuration
+    For chain metadata we recommend querying the [chains API](/references/api/get-chains) in your application. This will return some valuable information about the chain, we've provided a sample below:
+
+    <CodeGroup>
+      ```json Response expandable highlight={3,12,14,74}
+      {
+        "chains": [{
+            "id":10,
+            "name":"optimism",
+            "displayName":"Optimism",
+            "httpRpcUrl":"https://optimism.publicnode.com",
+            "wsRpcUrl":"wss://optimism.publicnode.com",
+            "explorerUrl":"https://optimistic.etherscan.io",
+            "explorerName":"Optimism Etherscan",
+            "depositEnabled":true,
+            "tokenSupport":"All",
+            "disabled":false,
+            "partialDisableLimit":0,
+            "blockProductionLagging":false,
+            "currency":{
+                "id":"eth",
+                "symbol":"ETH",
+                "name":"Ether",
+                "address":"0x0000000000000000000000000000000000000000",
+                "decimals":18,
+                "supportsBridging":true
+            },
+            "withdrawalFee":1,
+            "depositFee":0,
+            "surgeEnabled":false,
+            "featuredTokens":[
+                {
+                  "id":"eth",
+                  "symbol":"ETH",
+                  "name":"Ether",
+                  "address":"0x0000000000000000000000000000000000000000",
+                  "decimals":18,
+                  "supportsBridging":true,
+                  "metadata":{
+                      "logoURI":"https://assets.relay.link/icons/1/light.png"
+                  }
+                }
+            ],
+            "erc20Currencies":[
+                {
+                  "id":"sipher",
+                  "symbol":"SIPHER",
+                  "name":"Sipher",
+                  "address":"0xb94944669f7967e16588e55ac41be0d5ef399dcd",
+                  "decimals":18,
+                  "supportsBridging":true,
+                  "withdrawalFee":1,
+                  "depositFee":0,
+                  "surgeEnabled":false
+                }
+            ],
+            "solverCurrencies":[
+              {
+                "id":"sipher",
+                "symbol":"SIPHER",
+                "name":"Sipher",
+                "address":"0xb94944669f7967e16588e55ac41be0d5ef399dcd",
+                "decimals":18
+              },
+            ],
+            "iconUrl":"https://assets.relay.link/icons/10/light.png",
+            "contracts":{
+              "multicall3":"0xca11bde05977b3631167028862be2a173976ca11",
+              "multicaller":"0x0000000000002bdbf1bf3279983603ec279cc6df",
+              "onlyOwnerMulticaller":"0xb90ed4c123843cbfd66b11411ee7694ef37e6e72",
+              "relayReceiver":"0xa5f565650890fba1824ee0f21ebbbf660a179934",
+              "erc20Router":"0xf5042e6ffac5a625d4e7848e0b01373d8eb9e222",
+              "approvalProxy":"0xbbbfd134e9b44bfb5123898ba36b01de7ab93d98",
+              "v3":{
+                "erc20Router":"0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+                "approvalProxy":"0xccc88a9d1b4ed6b0eaba998850414b24f1c315be"
+              }
+            },
+            "vmType":"evm",
+            "baseChainId":1,
+            "solverAddresses":[
+                "0xf70da97812cb96acdf810712aa562db8dfa3dbef"
+            ],
+            "tags":[],
+            "protocol":{
+                "v2":{
+                  "chainId":"optimism",
+                  "depository":"0x4cd00e387622c35bddb9b4c962c136462338bc31"
+                }
+            }
+        }]
+      }
+      ```
+      ```json Request 
+      curl -X GET "https://api.relay.link/chains"
+      ```
+    </CodeGroup>
+    
+    The endpoint exposes a vast amount of chain metadata but the important things to note are:
+
+    - `vmType`: This is the type of virtual machine that the chain uses (SVM, EVM, BVM, etc).
+    - `id`: This is the chain id of the chain. Some chains like Bitcoin/Solana/Tron have a custom id that the Relay team chose upon deployment.
+    - `disabled`: This is a boolean that indicates if the chain is disabled. When incidents arise we may disable a chain to prevent users from interacting with it.
+    - `blockProductionLagging`: This boolean indicates if the chain is lagging in block production. You can use this to let your users know about degraded Relay performance in real time.
   </Step>
   <Step title="Quote">
     Every action in Relay starts with a Quote. 
@@ -253,6 +358,10 @@ Follow this 5-step flow to integrate Relay into your application:
 </Steps>
 
 ---
+
+## Try it in a Sandbox
+
+Experiment with the Quickstart code in our [interactive sandbox](https://codesandbox.io/p/sandbox/github/GiselleNessi/relay-demo). You can fork or clone it to build your own project with Relay.
 
 ### See Also
 - [**Bridging & Onboarding**](/use-cases/bridging): Learn more about instant cross-chain deposits and withdrawals.
