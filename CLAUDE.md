@@ -1,3 +1,7 @@
+---
+noindex: true
+---
+
 # Documentation Writing Standards
 
 This document outlines the standards and best practices for writing documentation in this repository.
