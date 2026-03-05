@@ -19,7 +19,7 @@
         "groups": [
           {
             "group": "Introduction",
-            "pages": ["llms-meta", "what-is-relay"]
+            "pages": ["what-is-relay"]
           },
           {
             "group": "Solutions",
