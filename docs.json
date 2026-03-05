@@ -9,6 +9,9 @@
   },
   "favicon": "/favicon.png",
   "homepage": "index",
+  "seo": {
+    "indexing": "all"
+  },
   "navigation": {
     "tabs": [
       {
