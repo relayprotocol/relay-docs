@@ -9,6 +9,9 @@
   },
   "favicon": "/favicon.png",
   "homepage": "index",
+  "seo": {
+    "indexing": "all"
+  },
   "navigation": {
     "tabs": [
       {
@@ -16,7 +19,7 @@
         "groups": [
           {
             "group": "Introduction",
-            "pages": ["what-is-relay"]
+            "pages": ["llms-meta", "what-is-relay"]
           },
           {
             "group": "Solutions",
