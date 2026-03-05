@@ -143,7 +143,7 @@ function enhanceFeeSponsorshipPage() {
 }
 
 function enhanceSponsoredExecutionPage() {
-  waitForElementId("#page-title", "Sponsored Execution", () => {
+  waitForElementId("#page-title", "Gasless Execution", () => {
     if (!document.getElementById("enterprise-link")) {
       const enterpriseLink = document.createElement("a");
       enterpriseLink.textContent = "Enterprise";
@@ -187,7 +187,7 @@ function onPageChange() {
     startPageObserver(enhanceGetChainsPage);
   } else if (path.includes("/features/fee-sponsorship")) {
     startPageObserver(enhanceFeeSponsorshipPage);
-  } else if (path.includes("/features/sponsored-execution")) {
+  } else if (path.includes("/features/gasless-execution")) {
     startPageObserver(enhanceSponsoredExecutionPage);
   } else if (path.includes("/features/fast-fill")) {
     startPageObserver(enhanceFastFillPage);
