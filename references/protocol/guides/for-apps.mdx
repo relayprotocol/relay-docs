@@ -1,0 +1,69 @@
+---
+title: For Apps
+description: "How application integrators interact with the settlement protocol"
+sidebarTitle: For Apps
+---
+
+## Overview
+
+Application developers typically interact with Relay through the [Relay API](/api-reference), which abstracts the settlement protocol entirely. However, understanding the protocol flow can help when debugging transactions or building advanced integrations.
+
+This page explains how the protocol surfaces in API responses and how to trace an order through the settlement flow.
+
+## Protocol Deposits via the API
+
+When requesting a quote using the Relay API's `/quote/v2` endpoint, the response includes a **`protocol`** field when the order will be settled through the Relay Settlement protocol:
+
+```json
+{
+  "steps": [...],
+  "protocol": {
+    "orderId": "0x1234...abcd",
+    "depositChainId": 10,
+    "paymentDetails": {
+      "recipient": "0xDepositoryAddress...",
+      "amount": "1000000",
+      "token": "0xUSDCAddress..."
+    }
+  }
+}
+```
+
+The key fields:
+
+- **`orderId`** — A unique identifier for this order, used to track it through the settlement flow
+- **`depositChainId`** — The chain where the user's deposit will go
+- **`paymentDetails`** — The Depository address, token, and amount for the deposit
+
+<Info>
+The `protocol` field only appears when the order uses the settlement protocol. Some routes may use alternative execution paths.
+</Info>
+
+## Tracing an Order
+
+Once an order is submitted, you can trace it through the settlement flow:
+
+### 1. Deposit Transaction
+
+The user's deposit transaction is a standard transfer to the [Depository](/references/protocol/components/depository) contract on the origin chain. You can find this on the origin chain's block explorer.
+
+### 2. Settlement on Relay Chain
+
+After the solver fills the order, the [Oracle](/references/protocol/components/oracle) attests the deposit and fill on the [Relay Chain](/references/protocol/components/relay-chain). These attestation transactions are visible on the [Relay Chain Explorer](https://explorer.chain.relay.link).
+
+### 3. Fill Transaction
+
+The solver's fill transaction is on the destination chain. This is the transaction that delivers the user's requested action (transfer, swap, etc.).
+
+## When to Use Direct Protocol Integration
+
+Most applications should use the Relay API. Consider direct protocol integration only if you need to:
+
+- Build custom deposit flows outside the standard API
+- Monitor settlement status at the protocol level
+- Implement custom order management
+
+For direct integration details, see the [Depository](/references/protocol/components/depository) component documentation and contract references:
+
+- [EVM Depository Reference](/references/protocol/contracts/evm-depository)
+- [Solana Depository Reference](/references/protocol/contracts/solana-depository)

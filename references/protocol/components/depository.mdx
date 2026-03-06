@@ -1,0 +1,75 @@
+---
+title: Depository
+description: "The escrow contract deployed on every supported chain"
+sidebarTitle: Depository
+---
+
+## Overview
+
+The Depository is a smart contract deployed on every chain that Relay supports. It serves as the entry point for user funds — accepting deposits and releasing withdrawals when authorized by the [Allocator](/references/protocol/components/allocator).
+
+There are currently 80+ Depository contracts deployed, one per supported chain. Each contract is **non-upgradable**, meaning its logic cannot be changed after deployment. See [Contract Addresses](/references/protocol/addresses) for the full list.
+
+## How It Works
+
+The Depository has two core responsibilities:
+
+1. **Accept deposits** — Users send funds to the Depository, tagged with an **orderId** that ties the deposit to a specific solver commitment
+2. **Execute withdrawals** — When a solver presents a valid proof from the Allocator, the Depository releases funds
+
+The Depository does not track orders, verify fills, or manage balances. It is intentionally minimal — a secure vault that holds funds and releases them only when presented with a valid cryptographic proof.
+
+## Deposits
+
+Deposits are designed to be as gas-efficient as possible. On EVM chains, a deposit costs approximately **21,000 gas** — close to a raw ETH transfer.
+
+### EVM Chains
+
+The EVM Depository supports two deposit methods:
+
+- **`depositNative(depositor, id)`** — Deposit native ETH (or the chain's native asset)
+- **`depositErc20(depositor, token, amount, id)`** — Deposit any ERC20 token
+
+Both methods emit events that the [Oracle](/references/protocol/components/oracle) monitors to verify deposits.
+
+### Solana
+
+The Solana Depository is an Anchor program that supports:
+
+- **`deposit_native(amount, id)`** — Deposit native SOL
+- **`deposit_token(amount, id)`** — Deposit SPL tokens (including Token-2022)
+
+Funds are held in a program-derived address (PDA) vault.
+
+## Withdrawals
+
+Withdrawals are triggered by solvers who have accumulated balances on the [Hub](/references/protocol/components/hub). The process:
+
+1. Solver requests a withdrawal from the [Allocator](/references/protocol/components/allocator)
+2. Allocator generates a signed **CallRequest** (EVM) or **TransferRequest** (Solana)
+3. Solver submits the signed request to the Depository's `execute` function
+4. Depository verifies the signature against the registered allocator address
+5. Funds are transferred to the solver
+
+Each withdrawal request includes a **nonce** and **expiration** to prevent replay attacks and stale proofs.
+
+<Warning>
+Only the registered Allocator can authorize withdrawals. The Allocator address is set at deployment and can only be changed by the contract owner (a security council multisig).
+</Warning>
+
+## Security
+
+The Depository is designed with minimal trust assumptions:
+
+- **Non-upgradable** — Contract logic cannot change after deployment
+- **Single authority** — Only the registered Allocator can authorize fund movements
+- **Short custody** — Funds are held briefly. Most orders fill within 2 seconds, and solvers withdraw funds every few minutes
+- **Audited** — Reviewed by [Spearbit](/references/protocol/security) (February 2025) and [Certora](/references/protocol/security) (June 2025)
+
+## Contract References
+
+For full API documentation of the Depository contracts:
+
+- [EVM Depository Reference](/references/protocol/contracts/evm-depository)
+- [Solana Depository Reference](/references/protocol/contracts/solana-depository)
+- [Contract Addresses](/references/protocol/addresses)
