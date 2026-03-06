@@ -26,6 +26,44 @@ App Fees are measured in basis points (bps) based on the input value of an order
   - For this to occur, the fee to be taken needs to be greater than $0.025. This is to prevent the situation where the action of taking the app fee will consume more in gas than the fee itself.
 - App Fee Recipients _must_ be an EVM compatible wallet address, even for non-EVM chains.
 - App fees _can_ be an array, for setting multiple fees at once
+- App fees work the same way with deposit address flows as with regular quote requests.
+
+<Warning>
+If you include the `appFees` parameter on an unsupported transaction type (such as sends, transfers, multi-input, or gasless requests), the API will not return an error — but no fees will be collected. Always verify fee collection is working using the [monitoring endpoints](#verifying-fee-collection) described below.
+</Warning>
+
+## Supported Transaction Types
+
+App fees are supported on the following transaction types:
+
+| Transaction Type | Supported |
+|---|---|
+| Swaps (cross-chain) | ✅ All chain combinations (EVM, SVM, SUI, BTC) |
+| Swaps (same-chain) | ✅ See chain-specific notes below |
+| Bridges | ✅ |
+| Calls | ✅ |
+| Wraps / Unwraps | ✅ |
+| Sends / Transfers | ❌ |
+| Multi-input | ❌ |
+| Gasless | ❌ |
+
+### Chain-Specific Notes
+
+**EVM (same-chain):** Fully supported. Fees can be collected from the input currency, the output currency, or via a parallel swap to USDC.
+
+**SVM (same-chain):** Supported with input-currency collection only. Output-currency fee collection is not available — this applies to all output currencies, not just SOL. If the input currency is not a solver-held currency, the fee is collected via a secondary swap into USDC.
+
+**SUI (same-chain):** Supported with input-currency collection only. No output-currency collection or parallel swap fallback. App fees will only be collected when the input is a solver-held currency.
+
+**Cross-chain (all combinations):** Fully supported. Same-chain limitations do not apply to cross-chain swaps — fees are calculated based on the solver's deposit currency on the origin chain.
+
+## Verifying Fee Collection
+
+You can verify that app fees are being collected correctly using the following endpoints:
+
+**Per-transaction:** Use `/requests/v2` which returns both `appFees` (the fee quoted to the user) and `paidAppFees` (the fee actually collected). If `appFees` is present but `paidAppFees` is empty or zero, the fee was not collected for that transaction.
+
+**Accumulated balance:** Use `/app-fees/{address}/balances` to check your total accumulated app fee balance available for withdrawal.
 
 ## Withdrawing App Balance
 
