@@ -42,7 +42,7 @@
               "features/fee-sponsorship",
               "features/deposit-addresses",
               "features/gas-top-up",
-              "features/sponsored-execution",
+              "features/gasless-execution",
               "features/fast-fill",
               "features/gasless-swaps"
             ]
@@ -463,6 +463,10 @@
     {
       "source": "/references/api/api_guides/smart_accounts/smart-accounts",
       "destination": "references/api/api_guides/smart-accounts"
+    },
+    {
+      "source": "/features/sponsored-execution",
+      "destination": "/features/gasless-execution"
     }
   ]
 }
