@@ -217,6 +217,47 @@ curl -X POST "https://api.relay.link/quote/v2" \
 ```
 </CodeGroup>
 
+## Transaction Size Optimization
+
+Solana transactions have a hard **1232-byte** size limit. If you append custom
+instructions to the transaction (e.g., for tracking, fee collection, or other
+logic), the combined transaction can exceed this limit and fail.
+
+Pass **`maxRouteLength`** in your quote request to limit the number of hops in
+the Solana swap routing. Fewer hops means a smaller transaction.
+
+**Recommended values:**
+
+| `maxRouteLength` | When to use |
+| ---------------- | ----------- |
+| `4` | Start here. Works for most integrations. |
+| `3` | Use if transactions are still too large with `4`. |
+
+<Tip>
+  As a last resort, you can also pass **`"includedOriginSwapSources": ["jupiter"]`** in the
+  quote request. Jupiter tends to return smaller instructions, but this may limit
+  available routes.
+</Tip>
+
+```bash
+curl -X POST "https://api.relay.link/quote/v2" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
+    "originChainId": 8453,
+    "originCurrency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "destinationChainId": 792703809,
+    "destinationCurrency": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "recipient": "GTtzwxqy67xx9DVESJjx28TgXqpc8xTqtiytgNMaQBTE",
+    "tradeType": "EXACT_INPUT",
+    "amount": "10000000",
+    "maxRouteLength": 4
+  }'
+```
+
+For the full list of quote parameters, see the
+[Get Quote](/references/api/get-quote-v2) API reference.
+
 ## SDK
 
 To use the SDK with Solana, install and configure the
