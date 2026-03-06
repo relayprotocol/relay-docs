@@ -22,15 +22,13 @@ Transactions reverting could be caused by if there is a contested mint or execut
 - *User's Wallet Address is Different Than Transaction Depositing Address:* This happens when the user
 switches wallets right before signing the transaction. Users must execute the transaction with the wallet
 address that received the quote.
-- *User Deposits Too Little:* There are two cases for how this can happen.
-  1. The user explicitly deposits a lower amount than Relay requested.
-  2. The user sent the deposit we requested but did so delayed so the original quote is no longer valid.
-  Quotes expire after 1 minute then a new quote is generated. 
+- *User Deposits Too Little:* The user explicitly deposits a lower amount than Relay requested.
 - *Destination Chain is Unavailable:* Occasionally, the destination chain will
 have a network outage beyond our control. An example could be an RPC that is down or 
 the chain is experiencing a large reorganization.
 - *User Sends Deposits With the Same Request ID in the Calldata Multiple Times*
 - *User Send Deposits Without a Request ID in the Calldata*
+- *Quote Regeneration leads to high slippage*: Quotes are regenerated upon execution. Each quote contains a `currencyOut.minimumAmount` which details the minimum a user will receive, if regeneration leads to a lower `currencyOut.minimumAmount`, the user will be refunded.
 
 ## Refund amounts and costs
 The refund amount may be less than what you originally deposited due to several factors:
