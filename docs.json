@@ -23,7 +23,8 @@
             "pages": [
               "solutions/wallets-and-wallet-providers",
               "solutions/multichain-apps",
-              "solutions/chains"
+              "solutions/chains",
+              "solutions/commerce-and-payments"
             ]
           },
           {
