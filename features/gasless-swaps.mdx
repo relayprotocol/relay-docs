@@ -32,6 +32,10 @@ flowchart TD
 
   ```
 
+<Warning>
+  Same-chain gasless swaps are only supported if you sponsor the fees. Same-chain swaps route directly through DEXes, due to this the solver never has an opportunity to deduct the gas fees before the user gets the destination token.
+</Warning>
+
 ## Permit-based Gasless
 
 Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an off-chain EIP-3009 or Permit2 message, and Relay's solver handles everything else — no approval transaction, no gas.
