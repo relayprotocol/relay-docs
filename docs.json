@@ -135,6 +135,7 @@
               "references/api/get-requests",
               "references/api/utilities",
               "references/api/get-chains",
+              "references/api/get-chains-liquidity",
               "references/api/get-currencies-v2",
               "references/api/get-token-price",
               "references/api/transactions-index",
