@@ -340,6 +340,7 @@ Follow this 5-step flow to integrate Relay into your application:
     The diagram below illustrates the journey of a cross-chain transaction through Relay's infrastructure and the corresponding API statuses. Below are descriptions for each status. Refer to the [Get Status](/references/api/get-intents-status-v3) endpoint for a full list of statuses and what they mean.
 
     - `waiting`: The user is submitting or has submitted the deposit transaction to the Relay Depository contract on the origin chain, but it has not yet been indexed by the system.
+    - `depositing`: The origin chain deposit has been confirmed via the /execute API. The system is preparing to fill on the destination chain.
     - `pending`: The deposit was successfully indexed. The Relay Solver is now monitoring the request and preparing the fill transaction on the destination chain.
     - `success`: The Relay Solver successfully executed the "Fill Tx", and the funds have reached the recipient.
     
