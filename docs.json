@@ -243,6 +243,7 @@
                 "pages": [
                   "references/protocol/guides/for-solvers",
                   "references/protocol/guides/for-apps",
+                  "references/protocol/guides/forced-exits",
                   "references/protocol/guides/third-party-oracle"
                 ]
               },
