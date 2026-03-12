@@ -1,0 +1,55 @@
+---
+title: The Relay Chain
+description: "A purpose-built settlement chain for crosschain intent processing"
+sidebarTitle: Relay Chain
+---
+
+## Overview
+
+The Relay Chain is a dedicated blockchain purpose-built for settlement of crosschain intents. It serves as the home of the [Hub](/references/protocol/components/hub) contract — the central ledger that tracks all token ownership and solver balances in the protocol.
+
+By running settlement on a dedicated chain, Relay avoids competing for blockspace on congested networks and keeps settlement costs minimal, regardless of how expensive the origin or destination chains are.
+
+## Why a Dedicated Chain
+
+Intent protocols typically settle on the origin chain, which means settlement competes with all other activity on that chain. This creates several problems:
+
+- **Cost** — Gas prices on popular chains (Ethereum, Base, Arbitrum) fluctuate with demand, making settlement costs unpredictable
+- **Throughput** — High-volume order flow can be bottlenecked by chain congestion
+- **Complexity** — Each origin chain requires its own settlement logic and proof verification
+
+The Relay Chain solves these by providing:
+
+- **Predictable, low-cost gas** — Settlement costs ~$0.005 per order, regardless of origin/destination chain gas prices
+- **Dedicated throughput** — No competition with external traffic. The chain is optimized for settlement operations
+- **Single settlement point** — All orders across all chains settle in one place, simplifying the protocol and reducing the number of moving parts
+
+<Info>
+Users and app developers never interact with the Relay Chain directly. It operates entirely in the background — deposits and fills happen on the origin/destination chains, while settlement is handled automatically.
+</Info>
+
+## Technical Details
+
+| Property | Value |
+|----------|-------|
+| **Chain ID** | `537713` |
+| **RPC** | `https://rpc.chain.relay.link` |
+| **Block Explorer** | [explorer.chain.relay.link](https://explorer.chain.relay.link) |
+| **Native Asset** | ETH |
+| **Stack** | Sovereign Stack (rollup) |
+| **Data Availability** | Celestia |
+| **VM** | EVM-compatible |
+
+## What Lives on the Relay Chain
+
+The Relay Chain hosts the core settlement contracts:
+
+- **[Hub](/references/protocol/components/hub)** — The ERC6909 multi-token ledger that tracks all balances
+- **[Oracle](/references/protocol/components/oracle)** — The contract that processes oracle attestations (mint, burn, transfer)
+- **[Allocator](/references/protocol/components/allocator)** — The contract that manages withdrawal proof generation
+
+All settlement activity — deposit attestations, fill verifications, balance transfers, and withdrawal authorizations — is processed as transactions on this chain.
+
+## Exploring Settlement Activity
+
+Every settlement transaction is visible on the [Relay Chain Block Explorer](https://explorer.chain.relay.link). You can trace the full lifecycle of any order by looking at the Oracle contract's attestation transactions, which record deposits, fills, and withdrawals.

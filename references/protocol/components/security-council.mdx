@@ -1,0 +1,37 @@
+---
+title: Security Council
+description: "The multisig governance body that protects the protocol"
+sidebarTitle: Security Council
+---
+
+## Overview
+
+The Security Council is a multisig composed of multiple independent parties across different timezones. It serves as the protocol's emergency response and governance mechanism, with the authority to pause, unpause, and replace the [Allocator](/references/protocol/components/allocator).
+
+## Tiered Thresholds
+
+The Security Council uses tiered thresholds to balance rapid response with governance safety:
+
+| Action | Threshold | Purpose |
+|--------|-----------|---------|
+| **Pause** | 1-of-N | Any member can immediately halt all withdrawals |
+| **Unpause** | Majority | Resume operations after investigation |
+| **Replace Allocator** | Supermajority | Upgrade or fix the Allocator contract |
+| **Change Membership** | Supermajority | Add or remove council members |
+
+The low pause threshold (1-of-N) ensures rapid response to emergencies, while the high thresholds for structural changes prevent unilateral action.
+
+## Global Pause
+
+Because all withdrawals across all 80+ chains flow through a single [Allocator](/references/protocol/components/allocator), the entire protocol can be **paused with a single transaction**. This is a significant advantage over protocols where each chain's escrow contract must be individually paused — a process that takes time and could miss chains during an active exploit.
+
+## Scope
+
+The Security Council governs the Allocator only. It cannot:
+
+- Modify the [Hub](/references/protocol/components/hub) ledger or create balances
+- Withdraw user funds from the [Depository](/references/protocol/components/depository)
+- Alter Oracle attestations
+- Access funds held in any contract
+
+Its authority is limited to controlling the flow of withdrawals — pausing them in emergencies and replacing the Allocator if necessary.
