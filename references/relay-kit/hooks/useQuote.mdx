@@ -27,63 +27,61 @@ import { useQuote } from '@relayprotocol/relay-kit-hooks'
 import { useWalletClient } from 'wagmi'
 import { getClient } from '@relayprotocol/relay-sdk'
 
-const queryOptions = {...} //Query options from tanstack
+const queryOptions = {...} // Query options from tanstack
 const walletClient = useWalletClient()
-const relayClient = getClient() //Either use getClient, createClient or useRelayClient from the ui kit
+const relayClient = getClient() // Either use getClient, createClient or useRelayClient from the ui kit
 
 const {
-data: quote,
-isLoading: isFetchingQuote,
-executeQuote,
-error
+  data: quote,
+  isLoading: isFetchingQuote,
+  executeQuote,
+  error
 } = useQuote(
-relayClient ? relayClient : undefined,
-walletClient.data,
-{
-user: address,
-originChainId: 1,
-destinationChainId: 10,
-originCurrency: "0x0000000000000000000000000000000000000000",
-destinationCurrency: "0x0000000000000000000000000000000000000000",
-tradeType: "EXACT_INPUT",
-amount: "10000000"
-},
-() => {
-console.log("Request Triggered!")
-},
-() => {
-console.log("Response Returned!")
-},
-queryOptions
+  relayClient ? relayClient : undefined,
+  walletClient.data,
+  {
+    user: address,
+    originChainId: 1,
+    destinationChainId: 10,
+    originCurrency: "0x0000000000000000000000000000000000000000",
+    destinationCurrency: "0x0000000000000000000000000000000000000000",
+    tradeType: "EXACT_INPUT",
+    amount: "10000000"
+  },
+  () => {
+    console.log("Request Triggered!")
+  },
+  () => {
+    console.log("Response Returned!")
+  },
+  queryOptions
 )
+```
 
-````
 ```typescript Executing a Quote
 import { useQuote } from '@relayprotocol/relay-kit-hooks'
 import { useWalletClient } from 'wagmi'
 import { getClient } from '@relayprotocol/relay-sdk'
 
-const queryOptions = {...} //Query options from tanstack
+const queryOptions = {...} // Query options from tanstack
 const walletClient = useWalletClient()
-const relayClient = getClient() //Either use getClient, createClient or useRelayClient from the ui kit
+const relayClient = getClient() // Either use getClient, createClient or useRelayClient from the ui kit
 
 const {
-    data: quote,
-    isLoading: isFetchingQuote,
-    executeQuote,
-    error
-  } = useQuote( ... ) //Refer to the previous example
+  data: quote,
+  isLoading: isFetchingQuote,
+  executeQuote,
+  error
+} = useQuote( ... ) // Refer to the previous example
 
-...
-
-//Then use the executeQuote function on a button for example
+// Then use the executeQuote function on a button for example
 <button onClick={() => {
   executeQuote(({ steps, currentStep, currentStepItem, txHashes, details }) => {
-    //Handle the callback function
+    // Handle the callback function
   })
 }}>Execute Quote</button>
 
-````
+```
 
 </CodeGroup>
 
