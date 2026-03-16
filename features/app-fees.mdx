@@ -20,6 +20,14 @@ App Fees are measured in basis points (bps) based on the input value of an order
   ]
 ```
 
+### Fee Sponsorship
+
+You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees:
+
+```tsx
+"sponsoredFeeComponents": ["gas", "relayer"]
+```
+
 ### Additional Considerations
 
 - On same-chain operations where the solver holds neither the input or output currency, an extra swap is added within the transaction to swap from the input currency into a currency accepted by the solver for App Fees
@@ -70,11 +78,11 @@ You can verify that app fees are being collected correctly using the following e
 
 App balance accrue in USDC from app fees, and can be claimed on any chain. The balance is free to claim on Base, and Relay app balance apply to claim on any other chain or in any other currency.
 
-The easiest way to claim your App Balance is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App Balance page also supports withdrawing via a multisig. Here’s how you can withdraw via the API:
+The easiest way to claim your App Balance is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App Balance page also supports withdrawing via a multisig. Here's how you can withdraw via the API:
 
 ### Get App Balance
 
-To check your accrued App Balance, use the App fee balances API. Here’s an example curl command and response. The response includes the `balances.currency` field reflecting your off-chain balance for each currency accumulated.
+To check your accrued App Balance, use the App fee balances API. Here's an example curl command and response. The response includes the `balances.currency` field reflecting your off-chain balance for each currency accumulated.
 
 <CodeGroup>
 ```bash cURL
