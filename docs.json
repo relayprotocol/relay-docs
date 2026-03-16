@@ -23,7 +23,8 @@
             "pages": [
               "solutions/wallets-and-wallet-providers",
               "solutions/multichain-apps",
-              "solutions/chains"
+              "solutions/chains",
+              "solutions/commerce-and-payments"
             ]
           },
           {
@@ -42,7 +43,7 @@
               "features/fee-sponsorship",
               "features/deposit-addresses",
               "features/gas-top-up",
-              "features/sponsored-execution",
+              "features/gasless-execution",
               "features/fast-fill",
               "features/gasless-swaps"
             ]
@@ -134,6 +135,7 @@
               "references/api/get-requests",
               "references/api/utilities",
               "references/api/get-chains",
+              "references/api/get-chains-liquidity",
               "references/api/get-currencies-v2",
               "references/api/get-token-price",
               "references/api/transactions-index",
@@ -508,6 +510,10 @@
     {
       "source": "/references/api/api_guides/smart_accounts/smart-accounts",
       "destination": "references/api/api_guides/smart-accounts"
+    },
+    {
+      "source": "/features/sponsored-execution",
+      "destination": "/features/gasless-execution"
     }
   ]
 }

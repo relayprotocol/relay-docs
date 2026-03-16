@@ -103,3 +103,18 @@ createClient({
   //other parameters
 });
 ```
+
+## Keeping Your API Key Secure
+
+Your API key is sensitive — treat it like a password. It is tied to your account, controls your rate limits, and all requests made with it are attributed to you.
+
+<Warning>
+If your API key is leaked, unauthorized parties could consume your rate limits or make requests on your behalf. Contact us immediately if you suspect your key has been compromised and we will rotate it for you.
+</Warning>
+
+**Best practices:**
+
+- **Keep it server-side only** — never expose it in client-side or frontend code. Use a [proxy API](#proxy-api) if calling Relay from the browser.
+- **Use environment variables** — store your key in environment variables, not hardcoded in source code.
+- **Don't commit it to version control** — add it to `.gitignore` or use a secrets manager.
+- **Restrict access** — only share the key with team members who need it.

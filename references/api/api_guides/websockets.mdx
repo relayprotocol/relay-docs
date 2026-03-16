@@ -12,6 +12,7 @@ Relay Status Websockets specifically stream transaction statuses for both cross 
 | **status** | **indication**                                          |
 | ---------- | ------------------------------------------------------- |
 | waiting    | waiting for origin chain deposit                        |
+| depositing | origin deposit confirmed via /execute API, fill pending |
 | pending    | origin chain deposit confirmed, fill pending submission |
 | submitted  | fill submitted on destination chain                     |
 | success    | fill succeeded                                          |
