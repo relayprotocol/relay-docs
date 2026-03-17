@@ -20,14 +20,6 @@ App Fees are measured in basis points (bps) based on the input value of an order
   ]
 ```
 
-### Fee Sponsorship
-
-You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees:
-
-```tsx
-"sponsoredFeeComponents": ["gas", "relayer"]
-```
-
 ### Additional Considerations
 
 - On same-chain operations where the solver holds neither the input or output currency, an extra swap is added within the transaction to swap from the input currency into a currency accepted by the solver for App Fees
