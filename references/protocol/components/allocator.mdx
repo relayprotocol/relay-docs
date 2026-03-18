@@ -64,7 +64,7 @@ The Allocator uses **Multi-Party Computation (MPC) chain signatures** for withdr
 Key properties:
 
 - **No single key holder** — The private key is split across multiple MPC nodes, and a threshold must cooperate to produce a signature
-- **Programmable authorization** — The Allocator enforces rules (balance checks, rate limits) before requesting any signature
+- **Programmable authorization** — The Allocator enforces rules (balance checks) before requesting any signature
 - **Chain-agnostic** — MPC signing can produce signatures for any curve or format (ECDSA, Ed25519, etc.), enabling support for EVM, Solana, Bitcoin, Sui, and other VMs
 - **Auditable** — All signing requests flow through an onchain contract, creating a transparent record
 
