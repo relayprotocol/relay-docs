@@ -3,3 +3,27 @@ title: "Transactions Index"
 description: "Notify the backend in order to fetch the traces and detect any internal deposits"
 openapi: post /transactions/index
 ---
+
+## Utilities
+
+### Deposit Address Reindex
+
+<Card title="Reindex Deposit Address" icon="refresh">
+  Reindex a specific deposit address to refresh transaction data and detect any missed internal deposits.
+</Card>
+
+```http
+POST /transactions/deposit-address/reindex
+```
+
+**Description:** Reindexes deposit addresses for a specific chain and address pair. This endpoint triggers a refresh of transaction data to ensure all deposits are properly detected and indexed.
+
+**Rate Limiting:**
+- **Global rate limiter**: 200 requests per minute per IP (Tier 1 wildcard)
+- **Per-address cooldown**: 60-second cooldown per `(chainId, depositAddress)` pair to prevent redundant processing
+
+**Parameters:**
+- `chainId` (required): The blockchain network ID
+- `depositAddress` (required): The deposit address to reindex
+
+**Response:** Returns confirmation of reindexing request initiation.
