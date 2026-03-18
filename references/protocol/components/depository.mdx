@@ -40,7 +40,11 @@ The Solana Depository is an Anchor program that supports:
 - **`deposit_token(amount, id)`** — Deposit SPL tokens (including Token-2022)
 
 Funds are held in a program-derived address (PDA) vault.
+Funds are held in a program-derived address (PDA) vault.
 
+### Bitcoin
+
+On Bitcoin, the Depository is an MPC-controlled address rather than a smart contract. Deposits are standard Bitcoin transactions to this address, and withdrawals are authorized by the [Allocator](/references/protocol/components/allocator) via ECDSA (secp256k1) MPC signatures.
 ## Withdrawals
 
 Withdrawals are triggered by solvers who have accumulated balances on the [Hub](/references/protocol/components/hub). The process:
