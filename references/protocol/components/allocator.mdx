@@ -34,6 +34,11 @@ sequenceDiagram
 
 The withdrawal authorization process:
 
+<Info>
+While solvers are the primary users of the withdrawal flow, any address that holds a balance on the Hub can withdraw using the same mechanism.
+</Info>
+
+
 1. **Solver initiates withdrawal** — The solver transfers their [Hub](/references/protocol/components/hub) balance to a deterministic [withdrawal address](/references/protocol/components/hub#withdrawal-addresses) that encodes the withdrawal parameters (target chain, asset, amount, recipient)
 
 2. **Oracle detects transfer** — The [Oracle](/references/protocol/components/oracle) monitors the Hub for transfers to withdrawal addresses, decodes the parameters, and forwards the request to the Allocator
