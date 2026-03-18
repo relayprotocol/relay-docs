@@ -26,9 +26,6 @@ When requested, the Oracle verifies that a solver's fill on the destination chai
 
 If a solver can't fill an order, they can send funds directly to the user on the origin chain. The solver then requests an attestation from the Oracle, which verifies the refund occurred and returns a signed attestation. The solver submits this to the Hub to get reimbursed — the same settlement process as a fill.
 
-### Forced Exits
-
-If a solver fails to fill **and** doesn't refund, the user can request a forced exit attestation after the order's fill window expires. The Oracle verifies the fill did not occur and returns a signed attestation. The user submits this to the Hub to restore their balance and reclaim their deposit.
 
 ### Withdrawals
 
