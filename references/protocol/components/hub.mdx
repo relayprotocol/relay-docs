@@ -61,7 +61,11 @@ The Hub implements the full ERC6909 interface, including:
 - **Operator system** — Grant an address full control over all token balances
 - **EIP-712 permits** — Gasless approval signatures
 
-## Withdrawal Addresses
+This pattern keeps the Hub simple — it's pure ERC6909 with no custom withdrawal logic. The withdrawal semantics are layered on top by convention.
+
+<Info>
+The Hub also uses **order addresses** — deterministic virtual addresses derived from order parameters. When a user deposits with an orderId, the Hub tracks the order through these addresses, linking deposits to solver fills using the same address-based convention as withdrawals.
+</Info>
 
 Solvers initiate withdrawals by transferring their Hub balance to a **withdrawal address** — a deterministic virtual address derived from the withdrawal parameters:
 
