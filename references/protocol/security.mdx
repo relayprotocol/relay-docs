@@ -25,10 +25,10 @@ The [Oracle](/references/protocol/components/oracle) determines which deposits a
 
 - **Can attribute balances** — The Oracle controls what gets minted, transferred, or burned on the Hub
 - **Cannot steal Depository funds** — Even an incorrect attestation only affects Hub balances. The Allocator independently verifies Hub balances before authorizing any withdrawal.
-- **Consensus threshold** — Attestations require signatures from a threshold of independent validators. The onchain Oracle contract verifies the threshold is met before executing any action on the Hub.
+- **Authorized signer model** — Attestations must be signed by an authorized oracle signer. If a signer contract such as `RelayOracleMultisig` is used, any thresholding is enforced there rather than in the `RelayOracle` contract itself.
 
 <Info>
-The Oracle is the main trust-bearing component. A compromised minority of validators cannot submit false attestations. A compromised majority could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the [Security Council's](/references/protocol/components/security-council) ability to halt all withdrawal proof generation.
+The Oracle is the main trust-bearing component. A compromised unauthorized signer cannot submit false attestations. A compromised authorized oracle signer, or a compromised threshold behind an oracle signer contract, could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the [Security Council's](/references/protocol/components/security-council) ability to halt all withdrawal proof generation.
 </Info>
 
 ### Hub

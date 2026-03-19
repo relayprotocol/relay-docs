@@ -27,7 +27,7 @@ When a solver decides to fill an order, they execute the user's requested action
 
 ### 3. Settlement
 
-After filling, the solver waits for the [Oracle](/references/protocol/components/oracle) to attest both the user's deposit and the solver's fill. The Oracle submits attestations to the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/components/relay-chain), which credits the solver's balance.
+After filling, the solver waits for the [Oracle](/references/protocol/components/oracle) to attest both the user's deposit and the solver's fill. The solver then submits the signed execution to the Oracle contract on the [Relay Chain](/references/protocol/components/relay-chain), which updates the [Hub](/references/protocol/components/hub) and credits the solver's balance.
 
 Settlement happens in real-time — there is no batching window. The solver's Hub balance updates as soon as the Oracle processes the attestation.
 
@@ -38,9 +38,10 @@ Solvers accrue balances on the Hub and can withdraw from any [Depository](/refer
 1. Ask the [Oracle](/references/protocol/components/oracle) to initiate the withdrawal and return the signed Hub execution
 2. Execute that Hub transfer to the deterministic withdrawal address on the [Relay Chain](/references/protocol/components/relay-chain)
 3. Request the withdrawal payload params from the Oracle
-4. Request a withdrawal proof from the [Allocator](/references/protocol/components/allocator)
-5. Submit the signed proof to the Depository on the target chain
-6. Receive funds from the Depository
+4. Submit the Oracle-signed payload params to `RelayAllocatorSpender`, which verifies the Oracle signature and forwards the request to the [Allocator](/references/protocol/components/allocator)
+5. Receive the signed withdrawal proof
+6. Submit the signed proof to the Depository on the target chain
+7. Receive funds from the Depository
 
 ## Managing Balances
 

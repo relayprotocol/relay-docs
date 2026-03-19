@@ -50,7 +50,7 @@ The Relay Chain hosts the core settlement contracts:
 
 The [Allocator](/references/protocol/components/allocator) is deployed on **Aurora** (NEAR ecosystem) rather than on the Relay Chain, for direct integration with the NEAR MPC network used for withdrawal proof generation.
 
-All settlement activity — deposit attestations, fill verifications, balance transfers, and withdrawal authorizations — is processed as transactions on this chain.
+Settlement activity on the Relay Chain includes deposit attestations, fill and refund settlement executions, balance transfers, and withdrawal-burn executions. Withdrawal proof generation itself happens on Aurora via the [Allocator](/references/protocol/components/allocator), not on the Relay Chain.
 
 ## Exploring Settlement Activity
 

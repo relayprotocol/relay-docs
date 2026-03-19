@@ -1,6 +1,6 @@
 ---
 title: Oracle
-description: "The decentralized validator set that verifies deposits and fills"
+description: "The oracle service and onchain verifier that process settlement attestations"
 sidebarTitle: Oracle
 ---
 
@@ -8,8 +8,8 @@ sidebarTitle: Oracle
 
 The Oracle witnesses crosschain activity and produces signed attestations for the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/components/relay-chain). It has two components:
 
-1. **Oracle Service** (offchain) — A set of independent validators that read chain data, witness what has already happened onchain, and return cryptographically signed EIP-712 attestations to the caller
-2. **Oracle Contract** (on Relay Chain) — Accepts attestation submissions, verifies that a signature threshold from registered validators is met, and executes the corresponding actions on the Hub. Each attestation can only be processed once.
+1. **Oracle Service** (offchain) — One or more oracle operators that read chain data, witness what has already happened onchain, and return cryptographically signed EIP-712 attestations to the caller
+2. **Oracle Contract** (on Relay Chain) — Accepts attestation submissions, verifies that the submitted signature is valid for an authorized oracle signer or oracle signer contract, and executes the corresponding actions on the Hub. Each attestation can only be processed once.
 
 The Oracle only acts in response to requests. Solvers and users call the Oracle when they need verification or withdrawal initiation, and the Oracle returns signed attestations or executions that the caller then submits onchain. This **pull-based** model keeps costs low and avoids the overhead of maintaining persistent message channels to every chain.
 
@@ -27,7 +27,7 @@ When requested, the Oracle verifies that a solver's fill on the destination chai
 
 ### Refunds
 
-If a solver can't fill an order, they can send funds directly to the user on the origin chain. The solver then requests an attestation from the Oracle, which verifies the refund occurred and returns a signed attestation. The solver submits this to the Hub to get reimbursed — the same settlement process as a fill.
+If a solver can't fill an order, they can send funds directly to the user on the origin chain. The solver then requests an attestation from the Oracle, which verifies the refund occurred and returns a signed attestation. The solver submits this to the Oracle contract to get reimbursed — the same settlement process as a fill.
 
 
 ### Withdrawals
@@ -45,27 +45,27 @@ The Oracle plays three roles in the withdrawal flow:
 ```mermaid
 sequenceDiagram
     participant Caller as Caller (Solver / User)
-    participant V as Oracle Validators
+    participant V as Oracle Service
     participant Chains as Supported Chains
     participant OC as Oracle Contract (Relay Chain)
     participant Hub as Hub (Relay Chain)
 
     Caller->>V: 1. Request attestation
     V->>Chains: 2. Read and verify chain data
-    Note over V: 3. Each validator signs EIP-712 attestation
+    Note over V: 3. Oracle signer signs EIP-712 attestation
     V-->>Caller: 4. Return signed attestation
-    Caller->>OC: 5. Submit with threshold signatures
-    OC->>OC: 6. Verify signature threshold
+    Caller->>OC: 5. Submit signed execution
+    OC->>OC: 6. Verify authorized signer
     OC->>Hub: 7. Execute actions (MINT / TRANSFER / BURN)
 ```
 
 The Oracle operates as a request-response pipeline:
 
 1. **Request** — A solver or user calls the Oracle to request verification of a crosschain event
-2. **Verify** — Each validator independently reads chain data to confirm event details
-3. **Sign** — Each validator creates an EIP-712 typed data signature over the attestation
-4. **Aggregate** — An Oracle instance has awareness of `PEERS` (other Oracle instances) and triggers attestations from them, as the Oracle contract requires multiple attestations from different validators before validating an execution
-5. **Return** — The signed attestations are returned to the caller, who submits them to the Oracle contract on the Relay Chain. The contract verifies the threshold is met and executes the actions on the Hub
+2. **Verify** — The oracle service reads chain data to confirm event details
+3. **Sign** — An authorized oracle signer creates an EIP-712 typed data signature over the execution or payload parameters
+4. **Optional peer collection** — Oracle instances can request additional peer signatures when configured, but the onchain `RelayOracle` contract itself verifies one authorized signer address per submitted execution
+5. **Return** — The signed attestation or execution is returned to the caller, who submits it to the Oracle contract on the Relay Chain. The contract verifies the signer and executes the actions on the Hub
 
 ### Pull-Based Verification
 
@@ -83,15 +83,15 @@ If an individual attestation in a batch has already been processed, it is skippe
 
 ## Oracle Contract
 
-The Oracle contract on the Relay Chain is a thin verification layer. It receives batches of signed attestations, verifies that each attestation has the required number of valid signatures from registered validators, and calls the corresponding action on the Hub. The contract itself does not perform any crosschain verification — it trusts the validator set's signatures and enforces the threshold requirement.
+The Oracle contract on the Relay Chain is a thin verification layer. It receives signed executions, verifies that the submitted signature is valid for an authorized oracle address, and calls the corresponding action on the Hub. That authorized oracle address can itself be an EOA or an EIP-1271 contract such as `RelayOracleMultisig`. The contract itself does not perform any crosschain verification — it trusts the configured oracle signer.
 
-The contract manages the validator set via role-based access control, and ensures idempotency so that the same attestation cannot be processed twice.
+The contract manages authorized oracle signers via role-based access control, and ensures idempotency so that the same attestation cannot be processed twice.
 
 ## Security
 
 The Oracle is a trust-critical component — it determines which deposits and fills are considered valid. Several properties limit the impact of a compromise:
 
-- **Consensus threshold** — Attestations require signatures from multiple independent validators, preventing any single validator from submitting false attestations
+- **Signer-controlled** — The onchain Oracle accepts attestations only from authorized oracle signers. If a multisig signer such as `RelayOracleMultisig` is used, any thresholding happens behind that signer contract rather than inside `RelayOracle`
 - **Cannot steal funds** — Even a compromised Oracle can only incorrectly attribute balances on the Hub. User funds in the Depository remain protected by the [Allocator's](/references/protocol/components/allocator) independent withdrawal authorization.
 - **Bounded impact** — The [Security Council](/references/protocol/components/security-council) can halt all withdrawal proof generation if anomalous attestations are detected
 
