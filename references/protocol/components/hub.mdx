@@ -64,7 +64,7 @@ The Hub implements the full ERC6909 interface, including:
 This pattern keeps the Hub simple — it's pure ERC6909 with no custom withdrawal logic. The withdrawal semantics are layered on top by convention.
 
 <Info>
-The Hub also uses **order addresses** — deterministic virtual addresses derived from order parameters. When a user deposits with an orderId, the Hub tracks the order through these addresses, linking deposits to solver fills using the same address-based convention as withdrawals.
+The Hub also uses **order addresses** — deterministic virtual addresses derived from deposit parameters, not from `orderId` alone. In the settlement SDK, the order address is derived from the deposit `chainId`, encoded `depositor`, `timestamp`, and `depositId`. When a user deposits, the Hub tracks the order through these addresses, linking deposits to solver fills using the same address-based convention as withdrawals.
 </Info>
 
 ## Withdrawal Addresses

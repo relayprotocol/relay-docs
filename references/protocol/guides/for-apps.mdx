@@ -51,7 +51,33 @@ The user's deposit transaction is a standard transfer to the [Depository](/refer
 
 After the solver fills the order, the [Oracle](/references/protocol/components/oracle) attests the deposit and fill on the [Relay Chain](/references/protocol/components/relay-chain). These attestation transactions are visible on the [Relay Chain Explorer](https://explorer.chain.relay.link).
 
-To find the settlement transaction for a specific order, derive the **intent address** on the Relay Chain from the `orderId`. This deterministic address represents the order on the Hub, and can be looked up on the [Relay Chain Explorer](https://explorer.chain.relay.link) to see all related attestation activity (deposit, fill, and settlement).
+For application debugging, treat the **`orderId`** as the stable correlation key across the whole lifecycle:
+
+- Use `paymentDetails.recipient` and `depositChainId` to find the origin-chain deposit transaction
+- Use your destination-chain execution transaction to confirm the solver fill
+- Use the Relay Chain attestation submitted after the fill to confirm settlement
+
+If you need to trace the Hub's internal **order address** directly, note that it is **not** derived from `orderId` alone. The settlement SDK derives it from:
+
+- `chainId` as a string
+- `depositor` encoded for its VM type
+- `timestamp`
+- `depositId`
+
+The formula used in the settlement SDK is:
+
+```ts
+const hash = keccak256(
+  encodePacked(
+    ["string", "bytes", "uint256", "bytes32"],
+    [chainId, encodeAddress(depositor, vmType), timestamp, depositId]
+  )
+)
+
+const orderAddress = `0x${hash.slice(2).slice(-40)}`
+```
+
+In practice, most app integrators should only rely on this if they already have the full deposit parameters. If you only have `orderId`, use it as a correlation identifier rather than assuming it can be converted directly into the Hub order address.
 
 ### 3. Fill Transaction
 
