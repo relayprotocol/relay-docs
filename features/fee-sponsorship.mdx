@@ -50,6 +50,7 @@ Add these parameters to your [Get Quote](/references/api/get-quote) API request:
 | `maxSubsidizationAmount` | `string` | _(Optional)_ The maximum amount to subsidize in USDC with 6 decimal places (e.g., `"1000000"` = $1.00). If the total fees exceed this threshold, the entire request will **not** be subsidized. |
 | `subsidizeRent` | `boolean` | _(Optional)_ Set to `true` to sponsor Solana ATA rent fees. Requires `subsidizeFees` to also be enabled. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 | `depositFeePayer` | `string` | _(Optional)_ A Solana address to pay deposit transaction fees for Solana origin transactions. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
+| `sponsoredFeeComponents` | `string[]` | _(Optional)_ You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees.
 
 ### Example Request
 
