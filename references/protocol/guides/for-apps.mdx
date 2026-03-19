@@ -51,6 +51,8 @@ The user's deposit transaction is a standard transfer to the [Depository](/refer
 
 After the solver fills the order, the [Oracle](/references/protocol/components/oracle) attests the deposit and fill on the [Relay Chain](/references/protocol/components/relay-chain). These attestation transactions are visible on the [Relay Chain Explorer](https://explorer.chain.relay.link).
 
+To find the settlement transaction for a specific order, derive the **intent address** on the Relay Chain from the `orderId`. This deterministic address represents the order on the Hub, and can be looked up on the [Relay Chain Explorer](https://explorer.chain.relay.link) to see all related attestation activity (deposit, fill, and settlement).
+
 ### 3. Fill Transaction
 
 The solver's fill transaction is on the destination chain. This is the transaction that delivers the user's requested action (transfer, swap, etc.).
