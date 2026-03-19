@@ -15,7 +15,7 @@ The Oracle never initiates actions — it only responds to requests. Solvers and
 
 ## What the Oracle Attests
 
-The Oracle can attest to five types of events:
+The Oracle supports deposits, fills, refunds, and several withdrawal-related attestations:
 
 ### Deposits
 
@@ -32,11 +32,13 @@ If a solver can't fill an order, they can send funds directly to the user on the
 
 ### Withdrawals
 
-The Oracle plays two roles in the withdrawal flow:
+The Oracle plays three roles in the withdrawal flow:
 
-1. **Proof generation** — When a solver requests a withdrawal, the Oracle verifies the solver's transfer to a [withdrawal address](/references/protocol/components/hub#withdrawal-addresses) on the Hub, decodes the withdrawal parameters, and forwards the request to the [Allocator](/references/protocol/components/allocator) on Aurora for proof generation.
+1. **Initiation** — The Oracle computes the deterministic [withdrawal address](/references/protocol/components/hub#withdrawal-addresses) for the request and returns a signed Hub execution that transfers the requested balance to that address.
 
-2. **Burn attestation** — After the solver claims funds from the Depository, the solver requests a burn attestation. The Oracle verifies the withdrawal occurred on the target chain and returns a signed attestation that the solver submits to the Hub as a **BURN** action.
+2. **Payload authorization** — Once the withdrawal address holds the requested balance, the Oracle returns signed payload parameters that can be used with the [Allocator](/references/protocol/components/allocator) withdrawal flow to obtain a chain-specific proof.
+
+3. **Completion / burn** — After the solver claims funds from the Depository, the solver requests a withdrawal attestation. The Oracle verifies the target-chain withdrawal and returns a signed execution that burns the corresponding Hub balance (or refunds it back if the withdrawal expires).
 
 ## How It Works
 

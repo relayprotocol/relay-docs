@@ -21,7 +21,7 @@ The Depository does not track orders, verify fills, or manage balances. It is in
 
 ## Deposits
 
-Deposits are designed to be as gas-efficient as possible. On EVM chains, a deposit costs approximately **21,000 gas** — close to a raw ETH transfer.
+Deposits are designed to be as gas-efficient as possible. On EVM chains, **native-token deposits** can be close to a raw ETH transfer (~21,000 gas). ERC20 deposits are more expensive because they also perform a token `transferFrom`.
 
 ### EVM Chains
 

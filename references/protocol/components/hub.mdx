@@ -16,7 +16,7 @@ The Hub maintains a global balance sheet:
 
 - When a user **deposits** into a Depository, the Oracle attests this, and the Hub **mints** a corresponding token balance for the user
 - When a solver **fills** an order, the Oracle attests this, and the Hub **transfers** the balance from the user to the solver
-- When a solver **withdraws**, they transfer their balance to a [withdrawal address](#withdrawal-addresses) on the Hub. After funds are claimed from the Depository, the Oracle attests the withdrawal and the Hub **burns** the corresponding balance
+- When a withdrawal is **initiated**, an Oracle-signed execution moves the balance to a [withdrawal address](#withdrawal-addresses) on the Hub. After funds are claimed from the Depository, the Oracle attests the withdrawal and the Hub **burns** the corresponding balance
 
 This means the Hub reflects the current state of all finalized funds across all chains, updated as Oracle attestations are processed.
 
@@ -69,14 +69,14 @@ The Hub also uses **order addresses** — deterministic virtual addresses derive
 
 ## Withdrawal Addresses
 
-Solvers initiate withdrawals by transferring their Hub balance to a **withdrawal address** — a deterministic virtual address derived from the withdrawal parameters:
+Withdrawal addresses are deterministic virtual addresses derived from the withdrawal parameters:
 
 - Target chain and depository
 - Currency and amount
 - Recipient address
 - Withdrawal nonce
 
-The withdrawal address is computed by hashing these parameters together. It doesn't correspond to a real contract — it's a signal. The [Oracle](/references/protocol/components/oracle) monitors the Hub for transfers to these addresses, decodes the parameters, and forwards the request to the [Allocator](/references/protocol/components/allocator) for proof generation.
+The withdrawal address is computed by hashing these parameters together. It doesn't correspond to a real contract — it's a routing alias on the Hub. In the current withdrawal flow, the [Oracle](/references/protocol/components/oracle) returns a signed Hub execution that transfers funds from the owner alias to this withdrawal address. Once that balance is in place, the Oracle can verify it and produce the payload parameters used to obtain a withdrawal proof from the [Allocator](/references/protocol/components/allocator).
 
 ## Source Code
 

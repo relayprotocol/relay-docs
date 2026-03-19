@@ -6,7 +6,7 @@ sidebarTitle: Deposit Addresses
 
 ## Overview
 
-Deposit Addresses allow users to bridge funds by sending tokens to a pre-computed address — no wallet connection, no calldata, and no approval transactions required. Under the hood, Relay uses **counterfactual smart contracts** to generate deterministic deposit addresses for each order. Funds sent to these addresses are swept into the [Depository](/references/protocol/components/depository) and attributed to the correct order.
+Deposit Addresses allow users to bridge funds by sending tokens to a pre-computed address — no wallet connection, no calldata, and no approval transactions required. Under the hood, Relay uses **counterfactual smart contracts** to generate deterministic deposit addresses for each `(orderId, depositor)` pair. Funds sent to these addresses are swept into the [Depository](/references/protocol/components/depository) and attributed to the correct order and depositor.
 
 This is powered by two contracts: a **DepositFactory** (deployed once per chain) and a **DepositSweeper** (a stateless implementation contract that proxies delegate to).
 
@@ -25,18 +25,18 @@ sequenceDiagram
     participant DA as Deposit Address
     participant D as Depository
 
-    API->>F: 1. computeDepositAddress(orderId)
+    API->>F: 1. computeDepositAddress(orderId, depositor)
     F-->>API: 2. Return deterministic address
     Note over API: 3. Return address to user
     Note over DA: 4. User sends funds to address
-    API->>F: 5. deployAndSweep(orderId, depositor, tokens)
+    API->>F: 5. sweep(orderId, depositor, tokens)
     F->>DA: 6. Deploy EIP-1167 proxy via CREATE2
     DA->>D: 7. Sweep funds to Depository
 ```
 
 ### Address Computation
 
-Each deposit address is deterministically derived from the **orderId** using CREATE2 and [EIP-1167](https://eips.ethereum.org/EIPS/eip-1167) minimal proxy clones. Because the address depends only on the factory address, the implementation address, and the orderId salt, the address can be computed **before any contract is deployed** there.
+Each deposit address is deterministically derived from the **orderId** and **depositor** using CREATE2 and [EIP-1167](https://eips.ethereum.org/EIPS/eip-1167) minimal proxy clones. The factory computes a salt as `keccak256(orderId, depositor)`, so the address depends on the factory address, the implementation address, and that combined salt. This means the address can be computed **before any contract is deployed** there.
 
 This is what makes deposit addresses "counterfactual" — the address is valid and can receive funds even though no contract exists at that address yet.
 
@@ -46,22 +46,21 @@ The user sends ERC20 tokens or native ETH directly to the computed address. No c
 
 ### Sweep
 
-Once funds arrive, the Relay backend calls `deployAndSweep` on the DepositFactory. This atomically:
+Once funds arrive, the Relay backend calls `sweep` on the DepositFactory. This atomically:
 
 1. **Deploys** an EIP-1167 minimal proxy at the pre-computed address (using CREATE2)
 2. **Calls** the proxy's `sweep` function via delegatecall to the DepositSweeper implementation
 3. **Transfers** all funds from the deposit address into the Depository, tagged with the correct `orderId` and `depositor`
 
-If the proxy has already been deployed (e.g., from a previous deposit to the same orderId), the factory calls `sweep` directly on the existing proxy — no redeployment needed.
+If the proxy has already been deployed (e.g., from a previous deposit for the same `(orderId, depositor)` pair), the factory calls `sweep` directly on the existing proxy — no redeployment needed.
 
 ## Contracts
 
 ### DepositFactory
 
-The factory is deployed once per supported chain. It has three key functions:
+The factory is deployed once per supported chain. It has two key functions:
 
-- **`computeDepositAddress(orderId)`** — Returns the deterministic address where a user should send funds for a given order. This is a view function that requires no gas.
-- **`deployAndSweep(orderId, depositor, tokens)`** — Deploys the proxy (if needed) and sweeps all specified tokens to the Depository. The `tokens` array supports sweeping multiple token types in a single transaction.
+- **`computeDepositAddress(orderId, depositor)`** — Returns the deterministic address where a user should send funds for a given order and credited depositor. This is a view function that requires no gas.
 - **`sweep(orderId, depositor, tokens)`** — Sweeps funds from an already-deployed proxy. Used for re-sweeping if additional funds arrive after the initial sweep.
 
 The factory holds two immutable references:
@@ -80,12 +79,12 @@ The sweeper includes a `receive()` function to handle edge cases where ETH is se
 
 ## Multi-Token Support
 
-A single deposit address can receive multiple token types. The `deployAndSweep` and `sweep` functions accept an array of token addresses, sweeping each one to the Depository in a single transaction. The zero address (`0x0000000000000000000000000000000000000000`) represents native ETH.
+A single deposit address can receive multiple token types. The `sweep` function accepts an array of token addresses, sweeping each one to the Depository in a single transaction. The zero address (`0x0000000000000000000000000000000000000000`) represents native ETH.
 
 ## Security
 
-- **Deterministic and verifiable** — Anyone can independently compute a deposit address from the orderId and verify it matches what the API returned
-- **Atomic operations** — `deployAndSweep` is atomic: if any part fails, the entire transaction reverts and funds remain safe at the deposit address
+- **Deterministic and verifiable** — Anyone can independently compute a deposit address from the `orderId` and `depositor` and verify it matches what the API returned
+- **Atomic operations** — `sweep` is atomic: if any part fails, the entire transaction reverts and funds remain safe at the deposit address
 - **No approval risk** — Users send funds via simple transfers. No token approvals are granted to third parties
 - **Non-upgradable** — Both the factory and sweeper are immutable contracts
 - **Re-sweep safe** — If additional funds are sent to an address after the initial sweep, they can be recovered by calling `sweep` again

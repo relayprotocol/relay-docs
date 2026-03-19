@@ -46,7 +46,7 @@ sequenceDiagram
 
     rect rgb(255, 240, 240)
     Note over Solver,R: Withdrawal
-    Solver->>R: 4. Transfer to withdrawal address
+    Solver->>R: 4. Move balance to withdrawal address
     Solver->>O: 5. Submit proof, claim funds
     end
 ```
@@ -63,7 +63,7 @@ sequenceDiagram
     participant Dest as Destination Chain
 
     User->>+Depository: 1. Deposit funds (orderId)
-    Note over Depository: ~21,000 gas
+    Note over Depository: Native deposits can be ~21,000 gas
     Depository-->>-User: Deposit confirmed
     Solver->>Depository: 2. Detect deposit
     Solver->>+Dest: 3. Fill order (own capital)
@@ -130,39 +130,42 @@ Withdrawal is how solvers extract funds from the Depository to replenish their c
 ```mermaid
 sequenceDiagram
     participant Solver
-    participant Hub as Hub (Relay Chain)
     participant Oracle
+    participant Hub as Hub (Relay Chain)
     participant Allocator as Allocator (Aurora)
     participant Depository as Depository (Origin)
 
-    Solver->>Hub: 1. Initiate withdrawal
-    Solver->>Oracle: 2. Request attestation
-    Oracle->>Hub: 3. Read withdrawal data
-    Oracle-->>Solver: 4. Return signed attestation
-    Solver->>Allocator: 5. Request proof
-    Allocator-->>Solver: 6. Return MPC-signed proof
-    Solver->>+Depository: 7. Submit proof
+    Solver->>Oracle: 1. Request withdrawal initiation
+    Oracle-->>Solver: 2. Return signed Hub execution
+    Solver->>Hub: 3. Move balance to withdrawal address
+    Solver->>Oracle: 4. Request payload params
+    Oracle-->>Solver: 5. Return signed payload params
+    Solver->>Allocator: 6. Request proof
+    Allocator-->>Solver: 7. Return MPC-signed proof
+    Solver->>+Depository: 8. Submit proof
     Depository->>Depository: Verify signature + nonce
-    Depository-->>-Solver: 8. Release funds
+    Depository-->>-Solver: 9. Release funds
 ```
 
 **Step by step:**
 
-1. **Solver initiates withdrawal** — The solver transfers their Hub balance to a deterministic **withdrawal address** — a virtual address derived from the withdrawal parameters (target chain, depository, currency, recipient, nonce). This transfer on the Hub signals the intent to withdraw.
+1. **Solver requests withdrawal initiation** — The solver asks the [Oracle](/references/protocol/components/oracle) to initiate a withdrawal, providing the target chain, depository, currency, amount, recipient, and nonce.
 
-2. **Solver requests attestation** — The solver calls the [Oracle](/references/protocol/components/oracle) to request a withdrawal attestation.
+2. **Oracle returns Hub execution** — The Oracle computes the deterministic **withdrawal address** for those parameters and returns a signed Hub execution that moves the requested balance to that address.
 
-3. **Oracle reads Hub** — The Oracle reads the Hub to verify the transfer to the withdrawal address and decodes the withdrawal parameters.
+3. **Solver moves balance on Hub** — The solver submits that execution on the [Relay Chain](/references/protocol/components/relay-chain), so the withdrawal address now holds the requested Hub balance.
 
-4. **Oracle returns attestation** — Oracle validators each verify the data and return a signed attestation to the solver.
+4. **Solver requests payload params** — The solver calls the [Oracle](/references/protocol/components/oracle) again to request the signed payload parameters for the withdrawal.
 
-5. **Solver requests proof** — The solver calls the [Allocator](/references/protocol/components/allocator) with the attestation to request a withdrawal proof. The Allocator constructs a chain-specific payload via the appropriate Payload Builder.
+5. **Oracle returns payload params** — The Oracle verifies that the withdrawal address holds the requested balance and returns the payload parameters needed for the next step.
 
-6. **Allocator returns proof** — The [Allocator](/references/protocol/components/allocator) generates an MPC-signed cryptographic proof (EIP-712 for EVM, Ed25519 for Solana) that authorizes the withdrawal, and returns it to the solver.
+6. **Solver requests proof** — The solver calls the [Allocator](/references/protocol/components/allocator) with those payload parameters to request a withdrawal proof.
 
-7. **Solver submits proof** — The solver submits the signed proof to the [Depository](/references/protocol/components/depository) contract on the target chain.
+7. **Allocator returns proof** — The [Allocator](/references/protocol/components/allocator) generates an MPC-signed cryptographic proof (EIP-712 for EVM, Ed25519 for Solana) that authorizes the withdrawal, and returns it to the solver.
 
-8. **Depository releases funds** — The Depository verifies the signature, confirms the nonce hasn't been used, and transfers the funds to the solver.
+8. **Solver submits proof** — The solver submits the signed proof to the [Depository](/references/protocol/components/depository) contract on the target chain.
+
+9. **Depository releases funds** — The Depository verifies the signature, confirms the nonce hasn't been used, and transfers the funds to the solver.
 
 
 <Tip>

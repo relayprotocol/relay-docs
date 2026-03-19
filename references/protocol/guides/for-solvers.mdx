@@ -35,9 +35,12 @@ Settlement happens in real-time — there is no batching window. The solver's Hu
 
 Solvers accrue balances on the Hub and can withdraw from any [Depository](/references/protocol/components/depository) on any chain at any time. The withdrawal process:
 
-1. Request a withdrawal proof from the [Allocator](/references/protocol/components/allocator)
-2. Submit the signed proof to the Depository on the target chain
-3. Receive funds from the Depository
+1. Ask the [Oracle](/references/protocol/components/oracle) to initiate the withdrawal and return the signed Hub execution
+2. Execute that Hub transfer to the deterministic withdrawal address on the [Relay Chain](/references/protocol/components/relay-chain)
+3. Request the withdrawal payload params from the Oracle
+4. Request a withdrawal proof from the [Allocator](/references/protocol/components/allocator)
+5. Submit the signed proof to the Depository on the target chain
+6. Receive funds from the Depository
 
 ## Managing Balances
 

@@ -15,20 +15,23 @@ The Allocator uses **MPC chain signatures** for signing, meaning no single entit
 ```mermaid
 sequenceDiagram
     participant Solver
-    participant Hub as Hub (Relay Chain)
     participant Oracle
+    participant Hub as Hub (Relay Chain)
     participant Allocator as Allocator (Aurora)
     participant PB as Payload Builder
     participant Depository
 
-    Solver->>Hub: 1. Transfer to withdrawal address
-    Oracle->>Hub: 2. Detect withdrawal transfer
-    Oracle->>Allocator: 3. Submit withdrawal request
-    Allocator->>PB: 4. Construct chain-specific payload
+    Solver->>Oracle: 1. Request withdrawal initiation
+    Oracle-->>Solver: 2. Return signed Hub execution
+    Solver->>Hub: 3. Execute transfer to withdrawal address
+    Solver->>Oracle: 4. Request payload params
+    Oracle-->>Solver: 5. Return signed payload params
+    Solver->>Allocator: 6. Request proof
+    Allocator->>PB: 7. Construct chain-specific payload
     PB-->>Allocator: Withdrawal request (e.g. CallRequest)
-    Allocator->>Allocator: 5. Generate MPC signature
-    Allocator-->>Solver: 6. Return signed withdrawal proof
-    Solver->>Depository: 7. Submit proof to target chain
+    Allocator->>Allocator: 8. Generate MPC signature
+    Allocator-->>Solver: 9. Return signed withdrawal proof
+    Solver->>Depository: 10. Submit proof to target chain
     Depository-->>Solver: Funds released
 ```
 
@@ -39,15 +42,21 @@ While solvers are the primary users of the withdrawal flow, any address that hol
 </Info>
 
 
-1. **Solver initiates withdrawal** — The solver transfers their [Hub](/references/protocol/components/hub) balance to a deterministic [withdrawal address](/references/protocol/components/hub#withdrawal-addresses) that encodes the withdrawal parameters (target chain, asset, amount, recipient)
+1. **Solver requests withdrawal initiation** — The solver requests a withdrawal from the [Oracle](/references/protocol/components/oracle), including the withdrawal parameters and owner authorization.
 
-2. **Oracle detects transfer** — The [Oracle](/references/protocol/components/oracle) monitors the Hub for transfers to withdrawal addresses, decodes the parameters, and forwards the request to the Allocator
+2. **Oracle returns Hub execution** — The Oracle computes the deterministic [withdrawal address](/references/protocol/components/hub#withdrawal-addresses) for the request and returns a signed execution that transfers the corresponding Hub balance to that address.
 
-3. **Payload construction** — A chain-specific **Payload Builder** constructs the withdrawal request in the format the target chain's Depository expects
+3. **Solver executes transfer on Hub** — The solver submits that execution on the Relay Chain so the withdrawal address now holds the requested Hub balance.
 
-4. **MPC signing** — The Allocator requests an MPC signature from the NEAR chain signatures network. This generates a valid signature without any single party having access to the full private key
+4. **Solver requests payload params** — Once the transfer is reflected on the Hub, the solver calls the Oracle again to obtain the signed payload parameters for the withdrawal.
 
-5. **Proof delivery** — The signed withdrawal proof is returned to the solver, who submits it to the Depository contract on the target chain
+5. **Oracle returns payload params** — The Oracle verifies the withdrawal address balance and returns the payload parameters that the Allocator flow will use.
+
+6. **Payload construction** — A chain-specific **Payload Builder** constructs the withdrawal request in the format the target chain's Depository expects.
+
+7. **MPC signing** — The Allocator requests an MPC signature from the NEAR chain signatures network. This generates a valid signature without any single party having access to the full private key.
+
+8. **Proof delivery** — The signed withdrawal proof is returned to the solver, who submits it to the Depository contract on the target chain.
 
 ## Payload Builders
 

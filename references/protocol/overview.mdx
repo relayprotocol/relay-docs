@@ -42,7 +42,7 @@ Crosschain intent systems can consume significant gas: passing order objects in 
 
 Relay keeps gas consumption to an absolute minimum, as close to raw transfers as possible:
 
-- **~21,000 gas deposits** — Users pay close to a raw transfer cost (vs ~77,000 for typical escrow)
+- **Low-overhead deposits** — Native-token deposits can be close to a raw transfer cost (~21,000 gas), while ERC20 deposits still avoid the heavier escrow patterns common in other protocols
 - **Zero-overhead fills** — Solvers can fill with a simple transfer, no contract interaction needed on destination
 - **~$0.005 settlement** — Orders settle on a dedicated low-cost chain, not the origin
 
