@@ -94,7 +94,7 @@ Key properties:
 
 - **No single key holder** — The private key is split across multiple MPC nodes, and a threshold must cooperate to produce a signature
 - **Programmable authorization** — The Allocator enforces rules (balance checks) before requesting any signature
-- **Chain-agnostic** — MPC signing can produce signatures for any curve or format (ECDSA, Ed25519, etc.), enabling support for EVM, Solana, Bitcoin, Sui, and other VMs
+- **Chain-agnostic** — MPC signing can produce signatures for any curve or format (ECDSA, Ed25519, etc.), enabling support for EVM, Solana, Bitcoin, and other VMs
 - **Auditable** — All signing requests flow through an onchain contract, creating a transparent record
 
 The protocol currently uses **NEAR MPC chain signatures** for its signing infrastructure. The Allocator contract is deployed on **Aurora** (NEAR ecosystem) for direct integration with the NEAR MPC network.

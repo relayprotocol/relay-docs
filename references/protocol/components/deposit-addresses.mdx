@@ -69,13 +69,13 @@ The factory holds two immutable references:
 
 ### DepositAddress
 
-The sweeper is a stateless implementation contract. It is never called directly — instead, EIP-1167 minimal proxies delegate to it. When called via a proxy, it:
+The DepositAddress is a stateless implementation contract. It is never called directly — instead, EIP-1167 minimal proxies delegate to it. When called via a proxy, it:
 
 1. Reads the token balance at the proxy address
 2. For **ERC20 tokens**: approves the Depository and calls `depositErc20(depositor, token, amount, orderId)`
 3. For **native ETH**: calls `depositNative(depositor, orderId)` with the ETH value
 
-The sweeper includes a `receive()` function to handle edge cases where ETH is sent to the proxy via `selfdestruct` or block rewards, preventing griefing attacks that could block proxy deployment.
+The DepositAddress includes a `receive()` function to handle edge cases where ETH is sent to the proxy via `selfdestruct` or block rewards, preventing griefing attacks that could block proxy deployment.
 
 ## Multi-Token Support
 
@@ -86,7 +86,7 @@ A single deposit address can receive multiple token types. The `sweep` function 
 - **Deterministic and verifiable** — Anyone can independently compute a deposit address from the `orderId` and `depositor` and verify it matches what the API returned
 - **Atomic operations** — `sweep` is atomic: if any part fails, the entire transaction reverts and funds remain safe at the deposit address
 - **No approval risk** — Users send funds via simple transfers. No token approvals are granted to third parties
-- **Non-upgradable** — Both the factory and sweeper are immutable contracts
+- **Non-upgradable** — Both the factory and DepositAddress are immutable contracts
 - **Re-sweep safe** — If additional funds are sent to an address after the initial sweep, they can be recovered by calling `sweep` again
 
 ## Source Code
