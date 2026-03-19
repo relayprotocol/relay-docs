@@ -28,7 +28,7 @@ The [Oracle](/references/protocol/components/oracle) determines which deposits a
 - **Consensus threshold** — Attestations require signatures from a threshold of independent validators. The onchain Oracle contract verifies the threshold is met before executing any action on the Hub.
 
 <Info>
-The Oracle is the main trust-bearing component. A compromised minority of validators cannot submit false attestations. A compromised majority could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the [Security Council's](/references/protocol/components/security-council) ability to pause the system.
+The Oracle is the main trust-bearing component. A compromised minority of validators cannot submit false attestations. A compromised majority could incorrectly attribute balances, but the damage is bounded by the Allocator's balance checks and the [Security Council's](/references/protocol/components/security-council) ability to suspend withdrawers.
 </Info>
 
 ### Hub
@@ -45,12 +45,12 @@ The [Allocator](/references/protocol/components/allocator) controls withdrawal a
 
 - **[MPC signatures](/references/protocol/components/allocator#mpc-signing)** — No single entity holds the full signing key
 - **Balance-bounded** — Can only authorize withdrawals up to a solver's Hub balance
-- **Governed by [Security Council](/references/protocol/components/security-council)** — A multisig can pause or replace the Allocator
+- **Governed by [Security Council](/references/protocol/components/security-council)** — A multisig can suspend individual withdrawers or replace the Allocator
 - **Replay-protected** — Nonces and expirations prevent proof reuse
 
 ## Security Council
 
-The [Security Council](/references/protocol/components/security-council) is a multisig that governs the Allocator. Any single member can immediately pause all withdrawals, while structural changes (replacing the Allocator, changing membership) require a supermajority. Because all withdrawals flow through a single Allocator, the entire protocol across 80+ chains can be paused with a single transaction.
+The [Security Council](/references/protocol/components/security-council) is a multisig that governs the Allocator. Any single member can immediately **suspend** a specific withdrawer address by revoking its `APPROVED_WITHDRAWER_ROLE`, while structural changes (replacing the Allocator, changing membership) require a supermajority.
 
 See the full [Security Council](/references/protocol/components/security-council) page for details on tiered thresholds and scope.
 
