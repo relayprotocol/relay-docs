@@ -46,12 +46,12 @@ The [Allocator](/references/protocol/components/allocator) controls withdrawal a
 - **[MPC signatures](/references/protocol/components/allocator#mpc-signing)** — No single entity holds the full signing key
 - **Balance-bounded** — Can only authorize withdrawals up to a solver's Hub balance
 - **[Oracle-gated](/references/protocol/components/allocator#oracle-gated-access)** — Withdrawal proofs require a valid Oracle signature, verified by the `RelayAllocatorSpender` before the Allocator processes the request
-- **Governed by [Security Council](/references/protocol/components/security-council)** — A multisig where any single member can halt all withdrawals, and a supermajority can replace the Allocator
+- **Governed by [Security Council](/references/protocol/components/security-council)** — A multisig where any single member can suspend an approved withdrawer, and a supermajority can replace the Allocator
 - **Replay-protected** — Nonces and expirations prevent proof reuse
 
 ## Security Council
 
-The [Security Council](/references/protocol/components/security-council) is a multisig that governs the Allocator. Any single member can immediately halt all withdrawal proof generation by suspending the `RelayAllocatorSpender` — the sole contract authorized to trigger withdrawals on the Allocator. Structural changes (replacing the Allocator, changing membership) require a supermajority.
+The [Security Council](/references/protocol/components/security-council) is a multisig that governs the Allocator. Any single member can immediately suspend an approved withdrawer such as `RelayAllocatorSpender`. In the current deployment, that halts new withdrawal proof generation because withdrawals are routed through that contract. Structural changes (replacing the Allocator, changing membership) require a supermajority.
 
 See the full [Security Council](/references/protocol/components/security-council) page for details on tiered thresholds and scope.
 
