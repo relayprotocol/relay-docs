@@ -6,7 +6,7 @@ sidebarTitle: Depository
 
 ## Overview
 
-The Depository is a smart contract deployed on every chain that Relay supports. It serves as the entry point for user funds — accepting deposits and releasing withdrawals when authorized by the [Allocator](/references/protocol/components/allocator).
+The Depository is deployed on every chain that Relay supports — as a smart contract on EVM and Solana chains, and as an MPC-controlled address on Bitcoin. It serves as the entry point for user funds — accepting deposits and releasing withdrawals when authorized by the [Allocator](/references/protocol/components/allocator).
 
 There are currently 80+ Depository contracts deployed, one per supported chain. Each contract is **non-upgradable**, meaning its logic cannot be changed after deployment. See [Contract Addresses](/references/protocol/addresses) for the full list.
 
@@ -67,7 +67,7 @@ The Depository is designed with minimal trust assumptions:
 
 - **Non-upgradable** — Contract logic cannot change after deployment
 - **Single authority** — Only the registered Allocator can authorize fund movements
-- **Short custody** — Funds are held briefly. Most orders fill within 2 seconds, and solvers withdraw funds every few minutes
+- **Single authority** — Only the registered Allocator can authorize fund movements. The Allocator address can only be changed by the contract **owner**, which is the [Security Council](/references/protocol/components/security-council) multisig
 - **Audited** — Reviewed by [Spearbit](/references/protocol/security) (February 2025) and [Certora](/references/protocol/security) (June 2025)
 
 ## Contract References

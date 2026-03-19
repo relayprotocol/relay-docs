@@ -6,9 +6,12 @@ sidebarTitle: Oracle
 
 ## Overview
 
-The Oracle is a decentralized validator set that verifies crosschain activity and produces signed attestations for the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/components/relay-chain). Validators independently read origin and destination chains, verify that deposits and fills occurred correctly, and sign EIP-712 attestations. Attestations require signatures from a threshold of validators before the Hub will accept them.
+The Oracle witnesses crosschain activity and produces signed attestations for the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/components/relay-chain). It has two components:
 
-The Oracle never initiates actions — it only responds to requests. Solvers and users call the Oracle when they need verification, and the Oracle returns signed attestations that the caller then submits to the Hub. This **pull-based** model keeps costs low and avoids the overhead of maintaining persistent message channels to every chain.
+1. **Oracle Service** (offchain) — A set of independent validators that read chain data, witness what has already happened onchain, and return cryptographically signed EIP-712 attestations to the caller
+2. **Oracle Contract** (on Relay Chain) — Accepts attestation submissions, verifies that a signature threshold from registered validators is met, and executes the corresponding actions on the Hub. Each attestation can only be processed once.
+
+The Oracle never initiates actions — it only responds to requests. Solvers and users call the Oracle when they need verification, and the Oracle returns signed attestations that the caller then submits to the Oracle contract. This **pull-based** model keeps costs low and avoids the overhead of maintaining persistent message channels to every chain.
 The Oracle witnesses crosschain activity and produces signed attestations for the [Hub](/references/protocol/components/hub) on the [Relay Chain](/references/protocol/components/relay-chain). It has two components:
 
 1. **Oracle Service** (offchain) — A set of independent validators that read chain data, witness what has already happened onchain, and return cryptographically signed EIP-712 attestations to the caller
@@ -64,7 +67,8 @@ The Oracle operates as a request-response pipeline:
 1. **Request** — A solver or user calls the Oracle to request verification of a crosschain event
 2. **Verify** — Each validator independently reads chain data to confirm event details
 3. **Sign** — Each validator creates an EIP-712 typed data signature over the attestation
-4. **Return** — The signed attestation is returned to the caller, who submits it to the Oracle contract on the Relay Chain. The contract verifies the threshold is met and executes the actions on the Hub
+4. **Agregate**  — an Oracle instance has awareness of `PEERS` which are other Oracle instances and will trigger attestations from them as the Relay Oracle contract requires multiple attestations from different Oracle before validating an execution.
+6. **Return** — The signed attestation is returned to the caller, who submits it to the Oracle contract on the Relay Chain. The contract verifies the threshold is met and executes the actions on the Hub
 
 ### Pull-Based Verification
 
