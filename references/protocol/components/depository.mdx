@@ -40,7 +40,6 @@ The Solana Depository is an Anchor program that supports:
 - **`deposit_token(amount, id)`** — Deposit SPL tokens (including Token-2022)
 
 Funds are held in a program-derived address (PDA) vault.
-Funds are held in a program-derived address (PDA) vault.
 
 ### Bitcoin
 
@@ -66,7 +65,6 @@ Only the registered Allocator can authorize withdrawals. The Allocator address i
 The Depository is designed with minimal trust assumptions:
 
 - **Non-upgradable** — Contract logic cannot change after deployment
-- **Single authority** — Only the registered Allocator can authorize fund movements
 - **Single authority** — Only the registered Allocator can authorize fund movements. The Allocator address can only be changed by the contract **owner**, which is the [Security Council](/references/protocol/components/security-council) multisig
 - **Audited** — Reviewed by [Spearbit](/references/protocol/security) (February 2025) and [Certora](/references/protocol/security) (June 2025)
 
@@ -75,5 +73,5 @@ The Depository is designed with minimal trust assumptions:
 For full API documentation of the Depository contracts:
 
 - [EVM Depository Reference](/references/protocol/contracts/evm-depository)
-- [Solana Depository Reference](/references/protocol/contracts/solana-depository)
+- [SVM Depository Reference](/references/protocol/contracts/solana-depository)
 - [Contract Addresses](/references/protocol/addresses)
