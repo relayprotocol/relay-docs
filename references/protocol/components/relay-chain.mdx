@@ -46,6 +46,7 @@ The Relay Chain hosts the core settlement contracts:
 
 - **[Hub](/references/protocol/components/hub)** — The ERC6909 multi-token ledger that tracks all balances
 - **[Oracle](/references/protocol/components/oracle)** — The contract that processes oracle attestations (mint, burn, transfer)
+- **ERC20View** — A wrapper contract that exposes Hub token balances as standard ERC20 tokens for wallet compatibility
 
 The [Allocator](/references/protocol/components/allocator) is deployed on **Aurora** (NEAR ecosystem) rather than on the Relay Chain, for direct integration with the NEAR MPC network used for withdrawal proof generation.
 

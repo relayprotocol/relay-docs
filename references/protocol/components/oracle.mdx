@@ -11,7 +11,7 @@ The Oracle witnesses crosschain activity and produces signed attestations for th
 1. **Oracle Service** (offchain) — A set of independent validators that read chain data, witness what has already happened onchain, and return cryptographically signed EIP-712 attestations to the caller
 2. **Oracle Contract** (on Relay Chain) — Accepts attestation submissions, verifies that a signature threshold from registered validators is met, and executes the corresponding actions on the Hub. Each attestation can only be processed once.
 
-The Oracle never initiates actions — it only responds to requests. Solvers and users call the Oracle when they need verification, and the Oracle returns signed attestations that the caller then submits to the Oracle contract. This **pull-based** model keeps costs low and avoids the overhead of maintaining persistent message channels to every chain.
+The Oracle only acts in response to requests. Solvers and users call the Oracle when they need verification or withdrawal initiation, and the Oracle returns signed attestations or executions that the caller then submits onchain. This **pull-based** model keeps costs low and avoids the overhead of maintaining persistent message channels to every chain.
 
 ## What the Oracle Attests
 

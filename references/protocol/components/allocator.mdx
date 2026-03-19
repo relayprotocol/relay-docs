@@ -27,11 +27,11 @@ sequenceDiagram
     Solver->>Oracle: 4. Request payload params
     Oracle-->>Solver: 5. Return signed payload params
     Solver->>Allocator: 6. Request proof
-    Allocator->>PB: 7. Construct chain-specific payload
+    Allocator->>PB: Construct chain-specific payload
     PB-->>Allocator: Withdrawal request (e.g. CallRequest)
-    Allocator->>Allocator: 8. Generate MPC signature
-    Allocator-->>Solver: 9. Return signed withdrawal proof
-    Solver->>Depository: 10. Submit proof to target chain
+    Allocator->>Allocator: Generate MPC signature
+    Allocator-->>Solver: 7. Return signed withdrawal proof
+    Solver->>Depository: 8. Submit proof to target chain
     Depository-->>Solver: Funds released
 ```
 
@@ -67,7 +67,7 @@ Different chains require different transaction formats. The Allocator uses speci
 | **EVM Payload Builder** | Ethereum, Base, Arbitrum, Optimism, + all EVM chains | EIP-712 typed data |
 | **Solana Payload Builder** | Solana, Eclipse, Soon | Ed25519 |
 | **Bitcoin Payload Builder** | Bitcoin | ECDSA (secp256k1) |
-| **Sui Payload Builder** | Sui | Ed25519 |
+
 
 Each Payload Builder constructs the chain-specific request structure (e.g., `CallRequest` for EVM, `TransferRequest` for Solana) with the appropriate encoding (ABI for EVM, Borsh for Solana).
 

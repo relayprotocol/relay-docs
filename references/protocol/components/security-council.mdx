@@ -16,6 +16,8 @@ The Security Council uses tiered thresholds to balance rapid response with gover
 |--------|-----------|---------|
 | **Pause** | 1-of-N | Any member can immediately halt all withdrawals |
 | **Unpause** | Majority | Resume operations after investigation |
+| **Update Allocator** | Quorum | Add payload builders to add support for new chains |
+| **Add/Remove Oracle instances** | Quorum | Add or remove Oracles whose attestations are taken into account |
 | **Replace Allocator** | Supermajority | Upgrade or fix the Allocator contract |
 | **Change Membership** | Supermajority | Add or remove council members |
 
@@ -27,11 +29,9 @@ Because all withdrawals across all 80+ chains flow through a single [Allocator](
 
 ## Scope
 
-The Security Council governs the Allocator only. It cannot:
+The Security Council cannot:
 
 - Modify the [Hub](/references/protocol/components/hub) ledger or create balances
 - Withdraw user funds from the [Depository](/references/protocol/components/depository)
 - Alter Oracle attestations
 - Access funds held in any contract
-
-Its authority is limited to controlling the flow of withdrawals — pausing them in emergencies and replacing the Allocator if necessary.

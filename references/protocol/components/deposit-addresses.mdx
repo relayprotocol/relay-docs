@@ -8,7 +8,7 @@ sidebarTitle: Deposit Addresses
 
 Deposit Addresses allow users to bridge funds by sending tokens to a pre-computed address — no wallet connection, no calldata, and no approval transactions required. Under the hood, Relay uses **counterfactual smart contracts** to generate deterministic deposit addresses for each `(orderId, depositor)` pair. Funds sent to these addresses are swept into the [Depository](/references/protocol/components/depository) and attributed to the correct order and depositor.
 
-This is powered by two contracts: a **DepositFactory** (deployed once per chain) and a **DepositSweeper** (a stateless implementation contract that proxies delegate to).
+This is powered by two contracts: a **DepositAddressFactory** (deployed once per chain) and a **DepositAddress** (a stateless implementation contract that proxies delegate to).
 
 <Info>
 For API integration details and usage examples, see the [Deposit Addresses feature guide](/features/deposit-addresses).
@@ -21,7 +21,7 @@ The flow has three phases: address computation, deposit, and sweep.
 ```mermaid
 sequenceDiagram
     participant API as Relay API
-    participant F as DepositFactory
+    participant F as DepositAddressFactory
     participant DA as Deposit Address
     participant D as Depository
 
@@ -46,28 +46,28 @@ The user sends ERC20 tokens or native ETH directly to the computed address. No c
 
 ### Sweep
 
-Once funds arrive, the Relay backend calls `sweep` on the DepositFactory. This atomically:
+Once funds arrive, the Relay backend calls `sweep` on the DepositAddressFactory. This atomically:
 
 1. **Deploys** an EIP-1167 minimal proxy at the pre-computed address (using CREATE2)
-2. **Calls** the proxy's `sweep` function via delegatecall to the DepositSweeper implementation
+2. **Calls** the proxy's `sweep` function via delegatecall to the DepositAddress implementation
 3. **Transfers** all funds from the deposit address into the Depository, tagged with the correct `orderId` and `depositor`
 
 If the proxy has already been deployed (e.g., from a previous deposit for the same `(orderId, depositor)` pair), the factory calls `sweep` directly on the existing proxy — no redeployment needed.
 
 ## Contracts
 
-### DepositFactory
+### DepositAddressFactory
 
 The factory is deployed once per supported chain. It has two key functions:
 
 - **`computeDepositAddress(orderId, depositor)`** — Returns the deterministic address where a user should send funds for a given order and credited depositor. This is a view function that requires no gas.
-- **`sweep(orderId, depositor, tokens)`** — Sweeps funds from an already-deployed proxy. Used for re-sweeping if additional funds arrive after the initial sweep.
+- **`sweep(orderId, depositor, tokens)`** — Deploys the proxy (if needed) and sweeps all specified tokens to the Depository. The `tokens` array supports sweeping multiple token types in a single transaction.
 
 The factory holds two immutable references:
 - **DEPOSITORY** — The Depository contract on that chain
-- **IMPLEMENTATION** — The DepositSweeper implementation contract
+- **IMPLEMENTATION** — The DepositAddress implementation contract
 
-### DepositSweeper
+### DepositAddress
 
 The sweeper is a stateless implementation contract. It is never called directly — instead, EIP-1167 minimal proxies delegate to it. When called via a proxy, it:
 
@@ -91,4 +91,4 @@ A single deposit address can receive multiple token types. The `sweep` function 
 
 ## Source Code
 
-The DepositFactory and DepositSweeper contracts are part of the [`settlement-protocol`](https://github.com/relayprotocol/settlement-protocol) repository.
+The DepositAddressFactory and DepositAddress contracts are part of the [`settlement-protocol`](https://github.com/relayprotocol/settlement-protocol) repository.
