@@ -8,7 +8,7 @@ sidebarTitle: Allocator
 
 The Allocator is the component responsible for authorizing withdrawals from [Depository](/references/protocol/components/depository) contracts. When a solver wants to claim funds they've earned by filling orders, the Allocator verifies their [Hub](/references/protocol/components/hub) balance and generates a cryptographic proof that the Depository will accept.
 
-The Allocator uses **MPC chain signatures** for signing, meaning no single entity holds the private keys needed to authorize withdrawals. It is governed by the [Security Council](/references/protocol/components/security-council), which can suspend individual withdrawers or replace the Allocator in an emergency.
+The Allocator uses **MPC chain signatures** for signing, meaning no single entity holds the private keys needed to authorize withdrawals. It is governed by the [Security Council](/references/protocol/components/security-council), which can suspend withdrawals or replace the Allocator in an emergency.
 
 ## How It Works
 
@@ -17,6 +17,7 @@ sequenceDiagram
     participant Solver
     participant Oracle
     participant Hub as Hub (Relay Chain)
+    participant Spender as AllocatorSpender (Aurora)
     participant Allocator as Allocator (Aurora)
     participant PB as Payload Builder
     participant Depository
@@ -25,13 +26,15 @@ sequenceDiagram
     Oracle-->>Solver: 2. Return signed Hub execution
     Solver->>Hub: 3. Execute transfer to withdrawal address
     Solver->>Oracle: 4. Request payload params
-    Oracle-->>Solver: 5. Return signed payload params
-    Solver->>Allocator: 6. Request proof
+    Oracle-->>Solver: 5. Return signed payload params + Oracle signature
+    Solver->>Spender: 6. Request proof (with Oracle signature)
+    Spender->>Spender: Verify Oracle signature
+    Spender->>Allocator: 7. Forward to Allocator
     Allocator->>PB: Construct chain-specific payload
     PB-->>Allocator: Withdrawal request (e.g. CallRequest)
     Allocator->>Allocator: Generate MPC signature
-    Allocator-->>Solver: 7. Return signed withdrawal proof
-    Solver->>Depository: 8. Submit proof to target chain
+    Allocator-->>Solver: 8. Return signed withdrawal proof
+    Solver->>Depository: 9. Submit proof to target chain
     Depository-->>Solver: Funds released
 ```
 
@@ -50,13 +53,25 @@ While solvers are the primary users of the withdrawal flow, any address that hol
 
 4. **Solver requests payload params** — Once the transfer is reflected on the Hub, the solver calls the Oracle again to obtain the signed payload parameters for the withdrawal.
 
-5. **Oracle returns payload params** — The Oracle verifies the withdrawal address balance and returns the payload parameters that the Allocator flow will use.
+5. **Oracle returns payload params and signature** — The Oracle verifies the withdrawal address balance and returns the payload parameters along with an **EIP-712 signature** over the withdrawal request.
 
-6. **Payload construction** — A chain-specific **Payload Builder** constructs the withdrawal request in the format the target chain's Depository expects.
+6. **Solver submits to AllocatorSpender** — The solver calls the `RelayAllocatorSpender` contract on Aurora, passing the withdrawal parameters and the Oracle's signature.
 
-7. **MPC signing** — The Allocator requests an MPC signature from the NEAR chain signatures network. This generates a valid signature without any single party having access to the full private key.
+7. **AllocatorSpender verifies and forwards** — The `RelayAllocatorSpender` verifies that the Oracle signature is valid and from a registered Oracle (via `ORACLE_ROLE`), then forwards the request to the Allocator. Because the `RelayAllocatorSpender` holds `APPROVED_WITHDRAWER_ROLE` on the Allocator, the call is authorized.
 
-8. **Proof delivery** — The signed withdrawal proof is returned to the solver, who submits it to the Depository contract on the target chain.
+8. **MPC signing** — The Allocator constructs the chain-specific payload via a **Payload Builder** and requests an MPC signature from the NEAR chain signatures network.
+
+9. **Proof delivery** — The signed withdrawal proof is returned to the solver, who submits it to the Depository contract on the target chain.
+
+## Oracle-Gated Access
+
+The Allocator uses role-based access control — only addresses holding `APPROVED_WITHDRAWER_ROLE` can trigger withdrawal proof generation. Rather than granting this role to individual solvers, the protocol uses a gateway contract called `RelayAllocatorSpender`.
+
+The `RelayAllocatorSpender` is the sole holder of `APPROVED_WITHDRAWER_ROLE` on the Allocator. It requires a valid **EIP-712 signature from a registered Oracle** before forwarding any withdrawal request. This means:
+
+- **No withdrawal proof can be generated without Oracle authorization** — The Oracle must sign the withdrawal parameters, adding a verification layer on top of the MPC signing
+- **Oracles are managed via `ORACLE_ROLE`** — The [Security Council](/references/protocol/components/security-council) controls which Oracle instances are registered on the `RelayAllocatorSpender`
+- **Suspension halts all withdrawals** — Because the `RelayAllocatorSpender` is the only address with `APPROVED_WITHDRAWER_ROLE`, suspending it effectively halts all withdrawal proof generation across the protocol
 
 ## Payload Builders
 
@@ -93,8 +108,9 @@ The MPC signing layer is designed to be implementation-agnostic. While NEAR chai
 The Allocator is a trust-critical component — it controls access to funds in the Depository. Several safeguards protect against misuse:
 
 - **[MPC signing](#mpc-signing)** — No single entity holds the full signing key. A threshold of independent MPC nodes must cooperate to produce a valid signature.
+- **[Oracle-gated access](#oracle-gated-access)** — Withdrawal proofs require a valid Oracle signature, verified by the `RelayAllocatorSpender` before the Allocator processes the request.
 - **Balance-bounded** — The Allocator can only authorize withdrawals up to a solver's existing [Hub](/references/protocol/components/hub) balance. It cannot mint new balances or alter the ledger.
-- **[Security Council](/references/protocol/components/security-council)** — A multisig where any single member can suspend a specific withdrawer, and a supermajority can replace the Allocator entirely.
+- **[Security Council](/references/protocol/components/security-council)** — A multisig where any single member can suspend the `RelayAllocatorSpender`, halting all withdrawal proof generation. A supermajority can replace the Allocator entirely.
 - **Replay protection** — Every withdrawal proof includes a unique nonce and expiration timestamp, preventing reuse of stale proofs.
 
 <Warning>
@@ -103,4 +119,4 @@ The Allocator cannot mint new balances or alter the Hub ledger. It can only auth
 
 ## Source Code
 
-The Allocator contract (`RelayAllocator.sol`) is part of the [`settlement-protocol`](https://github.com/relayprotocol/settlement-protocol) repository.
+The Allocator contract (`RelayAllocator.sol`) and the gateway contract (`RelayAllocatorSpender.sol`) are part of the [`settlement-protocol`](https://github.com/relayprotocol/settlement-protocol) repository.

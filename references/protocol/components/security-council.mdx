@@ -6,7 +6,7 @@ sidebarTitle: Security Council
 
 ## Overview
 
-The Security Council is a multisig composed of multiple independent parties across different timezones. It serves as the protocol's emergency response and governance mechanism, with the authority to suspend withdrawers, manage roles, and replace the [Allocator](/references/protocol/components/allocator).
+The Security Council is a multisig composed of multiple independent parties across different timezones. It serves as the protocol's emergency response and governance mechanism, with the authority to suspend withdrawals, manage roles, and replace the [Allocator](/references/protocol/components/allocator).
 
 ## Tiered Thresholds
 
@@ -14,8 +14,8 @@ The Security Council uses tiered thresholds to balance rapid response with gover
 
 | Action | Threshold | Purpose |
 |--------|-----------|---------|
-| **Suspend withdrawer** | 1-of-N | Any member can immediately revoke a withdrawer's `APPROVED_WITHDRAWER_ROLE` |
-| **Unpause** | Majority | Restore a suspended withdrawer after investigation |
+| **Suspend withdrawals** | 1-of-N | Any member can halt all withdrawal proof generation |
+| **Restore withdrawals** | Majority | Re-grant `APPROVED_WITHDRAWER_ROLE` after investigation |
 | **Update Allocator** | Quorum | Add payload builders to add support for new chains |
 | **Add/Remove Oracle instances** | Quorum | Add or remove Oracles whose attestations are taken into account |
 | **Replace Allocator** | Supermajority | Upgrade or fix the Allocator contract |
@@ -25,9 +25,9 @@ The low suspend threshold (1-of-N) ensures rapid response to emergencies, while 
 
 ## Suspend Mechanism
 
-The Allocator uses role-based access control. Withdrawers must hold the `APPROVED_WITHDRAWER_ROLE` to process withdrawals. Any single Security Council member can call `suspend(address)` on the Allocator to immediately revoke this role from a specific address, blocking that withdrawer from obtaining further withdrawal proofs.
+All withdrawal proof generation flows through the [`RelayAllocatorSpender`](/references/protocol/components/allocator#oracle-gated-access) contract, which is the sole holder of `APPROVED_WITHDRAWER_ROLE` on the Allocator. Any single Security Council member can call `suspend(address)` on the Allocator to revoke this role from the `RelayAllocatorSpender`, immediately halting all withdrawal proof generation across the entire protocol.
 
-This is a **per-address** mechanism, not a global pause. To halt all withdrawals, the Security Council would need to suspend each approved withdrawer individually — or use the multisig quorum to replace the Allocator contract entirely.
+Because every withdrawal requires both an Oracle signature and the `RelayAllocatorSpender` to forward the request, suspending this single address is effectively a **global halt** — no new withdrawal proofs can be generated on any chain until the role is restored.
 
 ## Scope
 
