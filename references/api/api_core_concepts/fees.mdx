@@ -9,7 +9,7 @@ In any given Relay there are four potential fees:
 
    Fees to cover execution costs including network gas on the origin and/or destination chain.
    - Fill gas estimate (and origin gas estimate for gasless transactions)
-   - \$0.02 flat fee
+   - $0.02 flat fee
 2. **Swap Fees**
 
    Fees to liquidity providers that facilitate cross-asset and cross-chain token swaps.
@@ -18,7 +18,14 @@ In any given Relay there are four potential fees:
    - Solver cross-chain rebalancing fees
 3. **Relay Fees**
 
-   A flat basis point fee charged for using the Relay API gateway and related services. The fee varies by asset pair type and applies to both cross-chain and same-chain transactions.
+   A flat basis point fee charged for using the Relay API gateway and related services. The fee varies by asset pair type and volume tier.
+
+   | Volume Tier *(USD, trailing 30 days)* | Same token bridging | Stablecoin swaps | Major token swaps | Minor token swaps |
+   |---|---|---|---|---|
+   | Less than $10M | 0.00% | 0.01% | 0.06% | 0.15% |
+   | $10M – $100M | 0.00% | 0.0066% | 0.045% | 0.10% |
+   | $100M – $1B | 0.00% | 0.0033% | 0.03% | 0.05% |
+
 4. **App Fees**
 
    Fees added on top of a Relay by the integrator.
