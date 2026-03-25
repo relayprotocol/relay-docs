@@ -1,0 +1,96 @@
+---
+title: "Webhooks"
+description: "Simplify your Integration with Low-Latency Relay Webhooks"
+---
+
+Building applications at scale require integrating with Relay's system at instant speed. Rather than polling the API for status updates, webhooks push transaction lifecycle events directly to your server the moment they happen. Configure a webhook endpoint and Relay will notify your backend in real time as quotes are processed — lightweight, no polling, low latency.
+
+## Integrating Relay Webhooks
+
+Each API Key can have a single webhook endpoint configured. In order to configure a webhook you'll need the following:
+
+| **Field** | **Description** | **Example** |
+| --- | --- | --- |
+| API Key | Any requests tied to this API key will post events to the webhook endpoint | `your-api-key` |
+| Endpoint | An HTTPS endpoint to POST to when the status of a request changes | `https://my.server/receive-relay-event` |
+| Custom Headers | Any custom headers you wish to receive | `{"Authorization": "Bearer 0x123", "X-Hookdeck-Source-Id": "src_123"}` |
+
+Once you have this information reach out to Relay to configure your api key with a webhook endpoint.
+
+## Webhook Events
+
+Relay Webhooks specifically stream transaction statuses for both cross and same-chain status, though the stages differ slightly.
+
+
+| **status** | **indication**                                          |
+| ---------- | ------------------------------------------------------- |
+| waiting    | waiting for origin chain deposit                        |
+| depositing | origin deposit confirmed via /execute API, fill pending |
+| pending    | origin chain deposit confirmed, fill pending submission |
+| submitted  | fill submitted on destination chain                     |
+| success    | fill succeeded                                          |
+| failure    | fill failed                                             |
+| refund     | refunded                                                |
+
+#### Example Payload
+
+```json
+{
+  "event": "request.status.updated",
+  "timestamp": 1770923405561,
+  "data": {
+    "status": "success",
+    "inTxHashes": ["0x..."],
+    "txHashes": [],
+    "updatedAt": 1770923404946,
+    "originChainId": 42161,
+    "destinationChainId": 42161,
+    "requestId": "0x..."
+  }
+}
+```
+
+By default we post all status updates, if you're only interested in certain statuses you can filter on the `status` property in your endpoint.
+
+## Verification
+
+Each webhook request includes two headers for verification:
+
+| **Header** | **Description** |
+| --- | --- |
+| `X-Signature-Timestamp` | Unix timestamp of when the webhook was sent |
+| `X-Signature-SHA256` | HMAC-SHA256 signature of the request |
+
+To verify a webhook is authentic, compute the HMAC-SHA256 hash of `${timestamp}.${body}` using your API key as the secret, and compare it to the `X-Signature-SHA256` header value.
+
+```javascript Example Verification
+import crypto from 'crypto';
+
+function verifyWebhook(req, apiKey) {
+  const timestamp = req.headers['x-signature-timestamp'];
+  const signature = req.headers['x-signature-sha256'];
+  const body = JSON.stringify(req.body);
+
+  const expected = crypto
+    .createHmac('sha256', apiKey)
+    .update(`${timestamp}.${body}`)
+    .digest('hex');
+
+  return signature === expected;
+}
+```
+
+Requests that fail verification should be rejected with a non-2xx status code.
+
+## Webhook Delivery & Reliability
+
+Relay's built-in webhook service includes up to 10 retries with exponential backoff. For most integrations, this is sufficient.
+
+For production deployments requiring guaranteed delivery, routing, fan-out, or detailed observability, we recommend using a webhook gateway like [Hookdeck](https://hookdeck.com). A gateway sits between Relay and your server, giving you:
+
+- **Guaranteed delivery** with configurable retry policies
+- **Routing & fan-out** to multiple destinations from a single source
+- **Event inspection & replay** for debugging
+- **Rate limiting** to match your server's capacity
+
+To set this up, use your Hookdeck ingestion URL as the Relay webhook `endpoint` and route events to your server from there. See [Hookdeck's getting started guide](https://hookdeck.com/docs) for setup instructions.
