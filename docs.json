@@ -111,7 +111,8 @@
                     ]
                   },
                   "references/api/api_guides/deep-linking",
-                  "references/api/api_guides/websockets"
+                  "references/api/api_guides/websockets",
+                  "references/api/api_guides/webhooks"
                 ]
               },
               {
