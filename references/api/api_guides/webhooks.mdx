@@ -3,7 +3,7 @@ title: "Webhooks"
 description: "Simplify your Integration with Low-Latency Relay Webhooks"
 ---
 
-Building applications at scale require integrating with Relay's system at instant speed. Rather than polling the API for status updates, webhooks push transaction lifecycle events directly to your server the moment they happen. Configure a webhook endpoint and Relay will notify your backend in real time as quotes are processed — lightweight, no polling, low latency.
+Building applications at scale requires integrating with Relay's system at instant speed. Rather than polling the API for status updates, webhooks push transaction lifecycle events directly to your server the moment they happen. Configure a webhook endpoint and Relay will notify your backend in real time as quotes are processed — lightweight, no polling, low latency.
 
 ## Integrating Relay Webhooks
 
@@ -15,7 +15,7 @@ Each API Key can have a single webhook endpoint configured. In order to configur
 | Endpoint | An HTTPS endpoint to POST to when the status of a request changes | `https://my.server/receive-relay-event` |
 | Custom Headers | Any custom headers you wish to receive | `{"Authorization": "Bearer 0x123", "X-Hookdeck-Source-Id": "src_123"}` |
 
-Once you have this information reach out to Relay to configure your api key with a webhook endpoint.
+Once you have this information reach out to Relay to configure your API key with a webhook endpoint.
 
 ## Webhook Events
 
@@ -32,7 +32,7 @@ Relay Webhooks specifically stream transaction statuses for both cross and same-
 | failure    | fill failed                                             |
 | refund     | refunded                                                |
 
-#### Example Payload
+### Example Payload
 
 ```json
 {
@@ -50,7 +50,7 @@ Relay Webhooks specifically stream transaction statuses for both cross and same-
 }
 ```
 
-By default we post all status updates, if you're only interested in certain statuses you can filter on the `status` property in your endpoint.
+By default we post all status updates. If you're only interested in certain statuses you can filter on the `status` property in your endpoint.
 
 ## Verification
 
@@ -76,8 +76,15 @@ function verifyWebhook(req, apiKey) {
     .update(`${timestamp}.${body}`)
     .digest('hex');
 
-  return signature === expected;
+  const signatureBuffer = Buffer.from(signature, 'hex');
+  const expectedBuffer = Buffer.from(expected, 'hex');
+
+  return (
+    signatureBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+  );
 }
+
 ```
 
 Requests that fail verification should be rejected with a non-2xx status code.
