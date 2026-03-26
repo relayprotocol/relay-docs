@@ -84,7 +84,6 @@ function verifyWebhook(req, apiKey) {
     crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
   );
 }
-
 ```
 
 Requests that fail verification should be rejected with a non-2xx status code.
