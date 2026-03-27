@@ -29,7 +29,7 @@ App Fees are measured in basis points (bps) based on the input value of an order
 - App fees work the same way with deposit address flows as with regular quote requests.
 
 <Warning>
-If you include the `appFees` parameter on an unsupported transaction type (such as sends, transfers, multi-input, or gasless execution without a prior quote), the API will not return an error — but no fees will be collected. Always verify fee collection is working using the [monitoring endpoints](#verifying-fee-collection) described below.
+If you include the `appFees` parameter on an unsupported transaction type (such as sends, transfers, or gasless execution without a prior quote), the API will not return an error — but no fees will be collected. Always verify fee collection is working using the [monitoring endpoints](#verifying-fee-collection) described below.
 </Warning>
 
 ## Supported Transaction Types
@@ -44,7 +44,6 @@ App fees are supported on the following transaction types:
 | Calls | ✅ |
 | Wraps / Unwraps | ✅ |
 | Sends / Transfers | ❌ |
-| Multi-input | ❌ |
 | Gasless swaps | ✅ Fees from original quote are respected |
 | Gasless execution (no prior quote) | ❌ Same-chain only — e.g. 7702 wallet upgrades |
 

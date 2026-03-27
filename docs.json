@@ -145,7 +145,6 @@
               "references/api/get-app-fee-balances",
               "references/api/claim-app-fees",
               "references/api/advanced",
-              "references/api/swap-multi-input",
               "references/api/fast-fill",
               "references/api/get-swap-sources",
               "references/api/execute",
