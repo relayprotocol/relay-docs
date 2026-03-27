@@ -26,6 +26,12 @@ In any given Relay there are four potential fees:
    | $10M – $100M | 0.00% | 0.0066% | 0.045% | 0.10% |
    | $100M – $1B | 0.00% | 0.0033% | 0.03% | 0.05% |
 
+   **Relay Fee Categories:**
+   - **Same token bridging**: bridging with no swap, e.g. USDC on Arbitrum to USDC on Base.
+   - **Stablecoin swaps**: includes same and crosschain swaps between USDC, USDT, DAI, USDe and USDS.
+   - **Major token swaps**: includes same and crosschain swaps between ETH, WETH, BTC, WBTC, SOL, WSOL, POL, BNB, USDC including when paired with major stablecoins (USDT, DAI, USDe and USDs).
+   - **Minor token swaps**: includes same and crosschain swaps between any tokens not listed above, e.g. AVAX on Avalanche to Aster on Binance Smart Chain.
+
 4. **App Fees**
 
    Fees added on top of a Relay by the integrator.
