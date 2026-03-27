@@ -9,7 +9,7 @@ In any given Relay there are four potential fees:
 
    Fees to cover execution costs including network gas on the origin and/or destination chain.
    - Fill gas estimate (and origin gas estimate for gasless transactions)
-   - \$0.02 flat fee
+   - $0.02 flat fee
 2. **Swap Fees**
 
    Fees to liquidity providers that facilitate cross-asset and cross-chain token swaps.
@@ -18,11 +18,23 @@ In any given Relay there are four potential fees:
    - Solver cross-chain rebalancing fees
 3. **Relay Fees**
 
-   Fees charged for using the Relay API gateway and related services.
-   - 25% of swap fees and app fee
+   A flat basis point fee charged for using the Relay API gateway and related services. The fee varies by asset pair type and volume tier.
+
+   | Volume Tier *(USD, trailing 30 days)* | Same token bridging | Stablecoin swaps | Major token swaps | Minor token swaps |
+   |---|---|---|---|---|
+   | Less than $10M | 0.00% | 0.01% | 0.06% | 0.15% |
+   | $10M – $100M | 0.00% | 0.0066% | 0.045% | 0.10% |
+   | $100M – $1B | 0.00% | 0.0033% | 0.03% | 0.05% |
+
+   **Relay Fee Categories:**
+   - **Same token bridging**: bridging with no swap, e.g. USDC on Arbitrum to USDC on Base.
+   - **Stablecoin swaps**: includes same and crosschain swaps between USDC, USDT, DAI, USDe and USDS.
+   - **Major token swaps**: includes same and crosschain swaps between ETH, WETH, BTC, WBTC, SOL, WSOL, POL, BNB, USDC including when paired with major stablecoins (USDT, DAI, USDe and USDs).
+   - **Minor token swaps**: includes same and crosschain swaps between any tokens not listed above, e.g. AVAX on Avalanche to Aster on Binance Smart Chain.
+
 4. **App Fees**
 
-   Fees added on top of a Relay by you, the integrator.
+   Fees added on top of a Relay by the integrator.
 
 If you are interested in learning how app fees work, and how you can add them to your quotes please check out our [App Fees Doc](/features/app-fees).\
 \
@@ -44,12 +56,29 @@ The Fees object is returned from the quote API and the requests API. These fees 
 
 ## Price Impact
 
-If you are interested in understanding or showing your user the fees of the order more broadly, it's best to look at the `expanded price impact` object which reports:
+If you are interested in understanding or showing your user the fees of the order more broadly, it's best to look at the `expandedPriceImpact` object which reports:
 
-**execution** - the price impact that results from execution fees.
+**execution** - the price impact that results from execution fees (gas and flat fee). This covers the cost of executing the transaction on the origin and destination chains.
 
-**swap** - the price impact that results from cross-currency and cross-chain token exchange
+**swap** - the price impact that results from cross-currency and cross-chain token exchange. This includes DEX fees, swap slippage, and solver rebalancing costs.
 
-**relay** - the price impact that results from the relay api fee (if applicable)
+**relay** - the price impact that results from the Relay API fee. This is the flat bps fee charged by Relay for routing and meta-aggregation services.
 
-**app** - the price impact that results from the app fees (if applicable)
+**app** - the price impact that results from the app fees (if applicable).
+
+**sponsored** - the price impact that is covered by the integrator via [Fee Sponsorship](/features/fee-sponsorship). This reflects the portion of fees subsidized on behalf of the user.
+
+<Tip>
+When displaying fees to users, we recommend mapping the `expandedPriceImpact` fields as follows:
+- **relay** → Provider Fee
+- **app** → Your App's Fee
+- **swap** + **execution** → Swap Impact
+</Tip>
+
+## Fee Sponsorship
+
+Integrators with [Fee Sponsorship](/features/fee-sponsorship) enabled can subsidize fees for their users. By default, setting **`subsidizeFees`** to `true` sponsors all fee components.
+
+For more granular control, use the **`sponsoredFeeComponents`** parameter in the quote request to choose which specific fee components to sponsor. This allows you to sponsor some fees (e.g. execution and relay fees) while letting the user pay others (e.g. swap fees).
+
+See the [Fee Sponsorship Doc](/features/fee-sponsorship) for setup details.
