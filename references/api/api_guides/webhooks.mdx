@@ -37,14 +37,17 @@ Relay Webhooks specifically stream transaction statuses for both cross and same-
 ```json
 {
   "event": "request.status.updated",
-  "timestamp": 1770923405561,
+  "timestamp": 1774993296140,
   "data": {
-    "status": "success",
-    "inTxHashes": ["0x..."],
+    "status": "refund",
+    "inTxHashes": [
+      "0x..."
+    ],
     "txHashes": [],
-    "updatedAt": 1770923404946,
-    "originChainId": 42161,
+    "updatedAt": 1774993296121,
+    "originChainId": 8453,
     "destinationChainId": 42161,
+    "depositAddress": "0x..", //nullable
     "requestId": "0x..."
   }
 }
