@@ -14,7 +14,7 @@ Before you can start fast filling requests, you need:
 1. **An API Key** — Required to authenticate your fast fill requests. [Request an api key](/references/api/api-keys#how-to-get-an-api-key).
 2. **Enterprise Partnership** — Reach out to the Relay team to become an Enterprise Partner. Learn more about the [Enterprise Partner Program](/resources/enterprise).
 3. **A Linked Funding Address** — A wallet address must be linked to your API key. This is the address that will fund your app balance. [Reach out](https://forms.gle/XNeELYavjwoJwPEf7) to the Relay team to link your wallet address.
-4. **Sufficient App Balance** — Your app balance must have enough funds to cover fast fills. Fast fills draw from your app balance and restore it once transactions land onchain. App balance is also used for [fee sponsorship](/features/fee-sponsorship).
+4. **Sufficient App Balance** — Your app balance must have enough funds to cover fast fills and fee sponsorship. When a fast fill is triggered, a hold is placed against your app balance for the fill amount. This hold is released once the user's deposit lands onchain. While holds are active, they reduce the balance available for new fast fills and claims, but do not block [fee sponsorship](/features/fee-sponsorship) deductions.
 
 Once you're set up, you can begin fast filling requests.
 
@@ -22,7 +22,7 @@ Once you're set up, you can begin fast filling requests.
 
 ## How to use it?
 
-To Fast Fill a request you simply need to call the [Fast Fill API](/references/api/fast-fill) with the request ID of the request you want to fast fill after you've submitted it onchain but before it finalizes. The request will be instantly filled and the fill amount will be deducted from your app balance. Once the transaction lands onchain and Relay indexes it, the funds are restored to your app balance.
+To Fast Fill a request you simply need to call the [Fast Fill API](/references/api/fast-fill) with the request ID of the request you want to fast fill after you've submitted it onchain but before it finalizes. When a fast fill is triggered, the transaction is instantly filled on the destination chain and a hold is placed against your app balance for the fill amount. Once the user's deposit lands onchain and Relay indexes it, the hold is released.
 
 ### Example
 
@@ -212,3 +212,4 @@ You can use the **`maxFillAmountUsd`** parameter to set a maximum USD value for 
 
 * Slippage may lead to a surplus or shortage in your app balance. If you have a good estimate of the final amount you can use the **`solverInputCurrencyAmount`** parameter to specify the exact amount of input currency you want to use for the fill, thus minimizing slippage.
 * We recommend protecting your API key on the backend by not exposing it to the client.
+* Fast Fill holds, outstanding fast fills that are waiting to be indexed on the destination chain, reduce the balance available for new fast fills and claims, but do not block fee sponsorship.
