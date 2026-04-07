@@ -1,97 +1,1208 @@
 ---
 title: "Deposit Addresses"
-description: "Learn how to use Relay with a deposit address for instant bridging."
+description: "Bridge assets by sending funds to a deposit address — no wallet connection or signing required."
 ---
 
-Relay supports instantly and cheaply bridging from a variety of EVM and non-EVM chain to any token.
-We are now launching deposit addresses to allow users to bridge without connecting a wallet. Users can send funds to a designated address
-and Relay will instantly deposit the correct tokens on the destination chain in the user's wallet. This is a great way for users to quickly
-start transacting on a new chain!
+import { SolverCurrencies } from "/snippets/SolverCurrencies.mdx";
+
+Deposit addresses let users bridge or swap tokens by simply sending funds to an address — no wallet connection or signing required. The integrator requests a quote with `useDepositAddress: true`, receives a deposit address, and the user transfers funds there. Relay detects the deposit and fills on the destination chain.
+
+This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headless systems where the sender can't sign transactions. The user just sends to an address — same UX as a normal transfer.
 
 ## How It Works
 
-Once generated, a single deposit address can be reused so long as the origin currency, origin chain, destination currency, and destination chain all remain the same. To enable using a deposit address for your bridge, you will need to set the `useDepositAddress` body parameter to `true` in the [quote request](https://docs.relay.link/references/api/get-quote-v2).
+1. **Quote** — Integrator requests a quote with `useDepositAddress: true`. The response includes a `depositAddress` and `requestId`.
+2. **User Deposit** — User sends funds to the deposit address (wallet transfer or exchange withdrawal).
+3. **Detect + Sweep** — Relay detects the deposit on-chain and sweeps funds to the depository contract. The amount, currency, and chain are validated and the quote is regenerated if different from the original.
+4. **Fill** — Relay fills on the destination chain from pre-positioned liquidity. Funds are delivered to the recipient address.
 
-When using deposit addresses, the `user` parameter can be any valid address, including the zero address (`0x0000000000000000000000000000000000000000`). This provides flexibility in how you structure your deposit address requests.
+### Key Parameters
 
-Failures via deposit addresses are extremely rare, but are still possible. If something goes wrong, we will default to manually handling refunds. If you wish to automatically receive refunds on the origin chain, specify the `refundTo` address. This will mean refunds will automatically be issued on origin in case of any filling failures.
+| Parameter | Type | Details |
+|---|---|---|
+| `useDepositAddress` | boolean | Set to `true` to receive a deposit address instead of transaction calldata. |
+| `user` | address | The recipient wallet on the destination chain. Can be any valid address, including the zero address. |
+| `recipient` | address | The address that receives funds on the destination chain. |
+| `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses. See [Refund Behavior](#refund-behavior). |
+| `tradeType` | string | Must be `EXACT_INPUT`. Deposit addresses only support exact input trades — output varies based on market conditions at fill time. |
+| `amount` | string | The quoted amount in the origin token's smallest unit. User may send a different amount — Relay will regenerate the quote. |
+| `strict` | boolean | Set to `true` for a strict deposit address tied to a specific order. Omit or set to `false` for an open deposit address. |
 
-The deposit transaction requires no calldata. You just need to send any value to the address specified in the API request response data. As long as this amount is enough to cover any gas or relay fees, it will be automatically bridged based on the route requested in the initial quote.
+### Address Reuse
 
-When using deposit addresses, there are more relayer gas fees associated with bridges. Typically about
-33,000 extra gas is required than regular native bridges, and about 70,000 more for ERC-20 bridges. For very small bridges, we don't recommend using deposit addresses since so much gas is required.
+A single deposit address can be reused so long as the origin currency, origin chain, destination currency, and destination chain all remain the same. A new deposit to the same address triggers a fresh quote and fill.
 
-Once a deposit occurs, the quote will automatically be generated post-deposit to account for gas fluctuation and recompute all fees. This can change the amount received to be different than the quoted value but will always be at least the minimum rate. If the minimum rate cannot be achieved, the deposit amount will be refunded.
+## Open vs Strict Deposit Addresses
 
-All Relay EVM deposit addresses begin and end with the character `d` (not case-sensitive). This is to help us with reducing the indexing search space.
+Relay supports two deposit address modes that differ in how flexible they are when handling unexpected deposits.
 
-## Supported Currencies
+### Open Deposit Addresses
 
-To determine which currencies support deposit addresses on a specific chain, use the [chains API](https://docs.relay.link/references/api/get-chains) endpoint. Each chain's response includes a `solverCurrencies` array that contains all currencies available for deposit address bridging on that chain. This method provides the most straightforward way to check deposit address support without requiring additional queries.
+Open deposit addresses accept **any solver currency on any supported chain**. They provide maximum flexibility — if a user sends a different supported token or deposits on a different chain (same VM), Relay automatically regenerates the quote and fills.
 
-## Edge Cases
+- `refundTo` is optional. Relay sets an internal fallback address for rare failure cases.
+- Best for: general-purpose integrations where you want maximum tolerance for user error.
 
-We have automatic handling for common edge cases that can occur when using deposit addresses:
+### Strict Deposit Addresses
 
-- Depositing to the Wrong Chain -- For example, if the bridge request requires a deposit on Base but the funds
-  are deposited on Optimism, this amount is bridged to the destination chain originally requested as long as its enough to cover the fees and gas associated with the bridge. Please note that this will mean a new quote will be generated in-flight. NOTE: This is only supported for relay supported cross-chain currencies, see limitations.
-- Extra Funds are Received -- If the user deposits more funds than what is quoted, the quote will be
-  regenerated to account for this surplus amount and the bridge will still be filled.
-- Less Funds are Received -- If the user deposits less funds than what is quoted, a new quote will be generated to account for the lower amount, and the bridge will be filled.
+Strict deposit addresses are tied to a specific order. They are designed to accept **only the exact currency specified in the original quote**.
 
-## Limitations
+- `refundTo` is **required**. Since strict addresses have tighter conditions, the chance of a deposit needing a refund is higher.
+- Set `strict: true` in your `/quote/v2` request.
+- Best for: integrations that need predictable behavior and explicit refund handling (e.g., payment processors).
 
-- Calldata execution on destination is not allowed.
-- Only exact input bridging is allowed. Specifying exact output will not work.
-- When non-supported currency or NFTs are sent to the deposit address, we currently do not support recovering of those assets.
+### Comparison
 
-## Debugging
+| Behavior | Open | Strict |
+|---|---|---|
+| Accepted currencies | Any solver currency on any supported chain | Only the exact currency in the original quote |
+| Wrong token (solver currency) | Auto quote regeneration and fill | Auto quote regeneration and fill |
+| Wrong token (non-solver) | Not recoverable | Not recoverable |
+| Wrong chain (same VM) | Auto-reroute, new `requestId` created | Auto-reroute, new `requestId` created |
+| Wrong chain (different VM) | Not possible — address formats differ | Not possible — address formats differ |
+| Amount mismatch | Quote regenerated for actual amount | Quote regenerated for actual amount |
+| `refundTo` | Optional (internal fallback) | Required |
+| Address reuse | Yes, same route | Yes, same route |
 
-The transaction hash of the deposit transaction cannot be used to lookup the status of the bridge for deposit address flows.
+## Example Request and Response
 
-### Tracking Deposit Address Transactions
+### Open Deposit Address
 
-For deposit address flows, the most reliable way to detect and track requests is to poll the [Get Requests API](/references/api/get-requests) with the **deposit address** passed as the `user` query parameter:
+Bridging 0.01 ETH from Base to Optimism using an open deposit address:
 
 <CodeGroup>
 ```bash Request
-curl -X GET "https://api.relay.link/requests/v2?user=<DEPOSIT_ADDRESS>&sortBy=updatedAt&sortDirection=desc&limit=20"
+curl -X POST \
+  'https://api.relay.link/quote/v2' \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"user": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+	"originChainId": 8453,
+	"originCurrency": "0x0000000000000000000000000000000000000000",
+	"destinationChainId": 10,
+	"destinationCurrency": "0x0000000000000000000000000000000000000000",
+	"tradeType": "EXACT_INPUT",
+	"recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+	"amount": "100000000000000000",
+	"useDepositAddress": true,
+	"refundTo": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd"
+}'
+```
+```json Response expandable
+{
+  "steps": [
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the relayer to execute the swap for ETH",
+      "kind": "transaction",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "from": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+            "to": "0x856533b33e4526ca3df3b4df4205955056d9d3f0",
+            "data": "0x",
+            "value": "100000000000000000",
+            "chainId": 8453,
+            "gas": "27300",
+            "maxFeePerGas": "6500000",
+            "maxPriorityFeePerGas": "1000000"
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0x5288854c6ff2bf4eb4f53f515e599217c20ded0654f7bbfa2a459ebfe462a57c",
+            "method": "GET"
+          }
+        }
+      ],
+      "requestId": "0x5288854c6ff2bf4eb4f53f515e599217c20ded0654f7bbfa2a459ebfe462a57c",
+      "depositAddress": "0x856533b33e4526ca3df3b4df4205955056d9d3f0"
+    }
+  ],
+  "fees": {
+    "gas": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "143425703256",
+      "amountFormatted": "0.000000143425703256",
+      "amountUsd": "0.000302",
+      "minimumAmount": "143425703256"
+    },
+    "relayer": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "19775083466725",
+      "amountFormatted": "0.000019775083466725",
+      "amountUsd": "0.041623",
+      "minimumAmount": "19775083466725"
+    },
+    "relayerGas": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "773003796434",
+      "amountFormatted": "0.000000773003796434",
+      "amountUsd": "0.001627",
+      "minimumAmount": "773003796434"
+    },
+    "relayerService": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "19002079670291",
+      "amountFormatted": "0.000019002079670291",
+      "amountUsd": "0.039996",
+      "minimumAmount": "19002079670291"
+    },
+    "app": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "0",
+      "amountFormatted": "0.0",
+      "amountUsd": "0",
+      "minimumAmount": "0"
+    },
+    "subsidized": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "0",
+      "amountFormatted": "0.0",
+      "amountUsd": "0",
+      "minimumAmount": "0"
+    }
+  },
+  "details": {
+    "operation": "swap",
+    "sender": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+    "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+    "currencyIn": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "100000000000000000",
+      "amountFormatted": "0.1",
+      "amountUsd": "210.480239",
+      "minimumAmount": "100000000000000000"
+    },
+    "currencyOut": {
+      "currency": {
+        "chainId": 10,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "99980224916533275",
+      "amountFormatted": "0.099980224916533275",
+      "amountUsd": "210.438616",
+      "minimumAmount": "97980620418202610"
+    },
+    "refundCurrency": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "100000000000000000",
+      "amountFormatted": "0.1",
+      "amountUsd": "210.480239",
+      "minimumAmount": "100000000000000000"
+    },
+    "totalImpact": {
+      "usd": "-0.041623",
+      "percent": "-0.02"
+    },
+    "swapImpact": {
+      "usd": "-0.000000",
+      "percent": "-0.00"
+    },
+    "expandedPriceImpact": {
+      "swap": {
+        "usd": "-0.019996"
+      },
+      "execution": {
+        "usd": "-0.021627"
+      },
+      "relay": {
+        "usd": "0"
+      },
+      "app": {
+        "usd": "0"
+      },
+      "sponsored": {
+        "usd": "0"
+      }
+    },
+    "rate": "0.9998022491653327",
+    "slippageTolerance": {
+      "origin": {
+        "usd": "0.000000",
+        "value": "0",
+        "percent": "0.00"
+      },
+      "destination": {
+        "usd": "4.187728",
+        "value": "1999604498330665",
+        "percent": "1.99"
+      }
+    },
+    "timeEstimate": 2,
+    "userBalance": "0",
+    "isFixedRate": false,
+    "route": {
+      "origin": {
+        "inputCurrency": {
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "100000000000000000",
+          "amountFormatted": "0.1",
+          "amountUsd": "210.480239",
+          "minimumAmount": "100000000000000000"
+        },
+        "outputCurrency": {
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "100000000000000000",
+          "amountFormatted": "0.1",
+          "amountUsd": "210.480239",
+          "minimumAmount": "100000000000000000"
+        },
+        "router": "relay"
+      },
+      "destination": {
+        "inputCurrency": {
+          "currency": {
+            "chainId": 10,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "99980224916533275",
+          "amountFormatted": "0.099980224916533275",
+          "amountUsd": "210.438616",
+          "minimumAmount": "97980620418202610"
+        },
+        "outputCurrency": {
+          "currency": {
+            "chainId": 10,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "99980224916533275",
+          "amountFormatted": "0.099980224916533275",
+          "amountUsd": "210.438616",
+          "minimumAmount": "97980620418202610"
+        },
+        "router": "relay"
+      }
+    }
+  },
+  "protocol": {
+    "v2": {
+      "orderId": "0x8391f3eb54c0999767a970a1603aaf16403a17263cdf723adec76e3fda5be275",
+      "orderData": {
+        "version": "v1",
+        "solverChainId": "base",
+        "solver": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+        "salt": "0x184ed77f343bff09b7255a75f0be900ac82c00c276c0a97eed2948ab3a1e8503",
+        "inputs": [
+          {
+            "payment": {
+              "chainId": "base",
+              "currency": "0x0000000000000000000000000000000000000000",
+              "amount": "100000000000000000",
+              "weight": "1"
+            },
+            "refunds": [
+              {
+                "chainId": "base",
+                "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+                "currency": "0x0000000000000000000000000000000000000000",
+                "minimumAmount": "0",
+                "deadline": 1791082506,
+                "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+              },
+              {
+                "chainId": "optimism",
+                "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+                "currency": "0x0000000000000000000000000000000000000000",
+                "minimumAmount": "0",
+                "deadline": 1791082506,
+                "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+              }
+            ]
+          }
+        ],
+        "output": {
+          "chainId": "optimism",
+          "payments": [
+            {
+              "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+              "currency": "0x0000000000000000000000000000000000000000",
+              "minimumAmount": "97980620418202610",
+              "expectedAmount": "99980224916533275"
+            }
+          ],
+          "calls": [],
+          "deadline": 1791082506,
+          "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+        },
+        "fees": []
+      },
+      "paymentDetails": {
+        "chainId": "base",
+        "depository": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+        "currency": "0x0000000000000000000000000000000000000000",
+        "amount": "100000000000000000"
+      }
+    }
+  }
+}
+```
+</CodeGroup>
+
+### Strict Deposit Address
+
+Same route, but using a strict deposit address. Note the addition of `strict: true` and the required `refundTo`:
+
+<CodeGroup>
+```bash Request
+curl -X POST \
+  'https://api.relay.link/quote/v2' \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"user": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+	"originChainId": 8453,
+	"originCurrency": "0x0000000000000000000000000000000000000000",
+	"destinationChainId": 10,
+	"destinationCurrency": "0x0000000000000000000000000000000000000000",
+	"tradeType": "EXACT_INPUT",
+	"recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+	"amount": "100000000000000000",
+	"useDepositAddress": true,
+	"strict": true,
+	"refundTo": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd"
+}'
+```
+```json Response expandable
+{
+  "steps": [
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the relayer to execute the swap for ETH",
+      "kind": "transaction",
+      "items": [
+        {
+          "status": "incomplete",
+          "data": {
+            "from": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+            "to": "0xEa04F61d00AFD8649B39b873306949aa11630067",
+            "data": "0x",
+            "value": "100000000000000000",
+            "chainId": 8453,
+            "gas": "27300",
+            "maxFeePerGas": "6500000",
+            "maxPriorityFeePerGas": "1000000"
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0xcb422162ba0a775cadcdc7983fc2108e761840446fe3f241fd8f72286fd3b4f8",
+            "method": "GET"
+          }
+        }
+      ],
+      "requestId": "0xcb422162ba0a775cadcdc7983fc2108e761840446fe3f241fd8f72286fd3b4f8",
+      "depositAddress": "0xEa04F61d00AFD8649B39b873306949aa11630067"
+    }
+  ],
+  "fees": {
+    "gas": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "143437744316",
+      "amountFormatted": "0.000000143437744316",
+      "amountUsd": "0.000302",
+      "minimumAmount": "143437744316"
+    },
+    "relayer": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "19782653616567",
+      "amountFormatted": "0.000019782653616567",
+      "amountUsd": "0.041606",
+      "minimumAmount": "19782653616567"
+    },
+    "relayerGas": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "773072690010",
+      "amountFormatted": "0.00000077307269001",
+      "amountUsd": "0.001626",
+      "minimumAmount": "773072690010"
+    },
+    "relayerService": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "19009580926557",
+      "amountFormatted": "0.000019009580926557",
+      "amountUsd": "0.039980",
+      "minimumAmount": "19009580926557"
+    },
+    "app": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "0",
+      "amountFormatted": "0.0",
+      "amountUsd": "0",
+      "minimumAmount": "0"
+    },
+    "subsidized": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "0",
+      "amountFormatted": "0.0",
+      "amountUsd": "0",
+      "minimumAmount": "0"
+    }
+  },
+  "details": {
+    "operation": "swap",
+    "sender": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+    "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+    "currencyIn": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "100000000000000000",
+      "amountFormatted": "0.1",
+      "amountUsd": "210.314210",
+      "minimumAmount": "100000000000000000"
+    },
+    "currencyOut": {
+      "currency": {
+        "chainId": 10,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "99980217346383433",
+      "amountFormatted": "0.099980217346383433",
+      "amountUsd": "210.272604",
+      "minimumAmount": "97980612999455765"
+    },
+    "refundCurrency": {
+      "currency": {
+        "chainId": 8453,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "100000000000000000",
+      "amountFormatted": "0.1",
+      "amountUsd": "210.314210",
+      "minimumAmount": "100000000000000000"
+    },
+    "totalImpact": {
+      "usd": "-0.041606",
+      "percent": "-0.02"
+    },
+    "swapImpact": {
+      "usd": "0.000000",
+      "percent": "0.00"
+    },
+    "expandedPriceImpact": {
+      "swap": {
+        "usd": "-0.019980"
+      },
+      "execution": {
+        "usd": "-0.021626"
+      },
+      "relay": {
+        "usd": "0"
+      },
+      "app": {
+        "usd": "0"
+      },
+      "sponsored": {
+        "usd": "0"
+      }
+    },
+    "rate": "0.9998021734638343",
+    "slippageTolerance": {
+      "origin": {
+        "usd": "0.000000",
+        "value": "0",
+        "percent": "0.00"
+      },
+      "destination": {
+        "usd": "4.184425",
+        "value": "1999604346927668",
+        "percent": "1.99"
+      }
+    },
+    "timeEstimate": 2,
+    "userBalance": "0",
+    "isFixedRate": false,
+    "route": {
+      "origin": {
+        "inputCurrency": {
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "100000000000000000",
+          "amountFormatted": "0.1",
+          "amountUsd": "210.314210",
+          "minimumAmount": "100000000000000000"
+        },
+        "outputCurrency": {
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "100000000000000000",
+          "amountFormatted": "0.1",
+          "amountUsd": "210.314210",
+          "minimumAmount": "100000000000000000"
+        },
+        "router": "relay"
+      },
+      "destination": {
+        "inputCurrency": {
+          "currency": {
+            "chainId": 10,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "99980217346383433",
+          "amountFormatted": "0.099980217346383433",
+          "amountUsd": "210.272604",
+          "minimumAmount": "97980612999455765"
+        },
+        "outputCurrency": {
+          "currency": {
+            "chainId": 10,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "99980217346383433",
+          "amountFormatted": "0.099980217346383433",
+          "amountUsd": "210.272604",
+          "minimumAmount": "97980612999455765"
+        },
+        "router": "relay"
+      }
+    }
+  },
+  "protocol": {
+    "v2": {
+      "orderId": "0x67ffde85c03352d45f9b073ef15fc73c656115d1c472de76aff9c66580eb5dc7",
+      "orderData": {
+        "version": "v1",
+        "solverChainId": "base",
+        "solver": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+        "salt": "0xe95244440faaedb49eddcb1dda9a5b82531b38e03c5799242638685b2fdb924e",
+        "inputs": [
+          {
+            "payment": {
+              "chainId": "base",
+              "currency": "0x0000000000000000000000000000000000000000",
+              "amount": "100000000000000000",
+              "weight": "1"
+            },
+            "refunds": [
+              {
+                "chainId": "base",
+                "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+                "currency": "0x0000000000000000000000000000000000000000",
+                "minimumAmount": "0",
+                "deadline": 1791082605,
+                "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+              },
+              {
+                "chainId": "optimism",
+                "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+                "currency": "0x0000000000000000000000000000000000000000",
+                "minimumAmount": "0",
+                "deadline": 1791082605,
+                "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+              }
+            ]
+          }
+        ],
+        "output": {
+          "chainId": "optimism",
+          "payments": [
+            {
+              "recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
+              "currency": "0x0000000000000000000000000000000000000000",
+              "minimumAmount": "97980612999455765",
+              "expectedAmount": "99980217346383433"
+            }
+          ],
+          "calls": [],
+          "deadline": 1791082605,
+          "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+        },
+        "fees": []
+      },
+      "paymentDetails": {
+        "chainId": "base",
+        "depository": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+        "currency": "0x0000000000000000000000000000000000000000",
+        "amount": "100000000000000000"
+      }
+    }
+  }
+}
+```
+</CodeGroup>
+
+Key differences in the strict request:
+- `strict` is set to `true`
+- `refundTo` is required — the request will fail without it
+
+## Quote Regeneration
+
+When funds arrive at a deposit address, Relay evaluates what was sent versus what was originally quoted. The system handles mismatches automatically:
+
+### Same Token, Different Amount
+
+- **Exact match** — The original quote is reused and the fill proceeds directly.
+- **More than quoted** — A new quote is generated for the larger amount, and the fill proceeds.
+- **Less than quoted** — If the smaller amount still covers fees and the minimum fill, a new quote is generated and the fill proceeds. If not, the deposit is refunded to the `refundTo` address.
+
+### Different Token (Solver Currency)
+
+If the user sends a different token that is a [solver currency](#caveats), Relay automatically regenerates the quote using the actual currency deposited and fills the order.
+
+### Different Chain (Same VM)
+
+If the user deposits on the wrong chain but the address exists on that chain (same VM type, e.g., EVM to EVM), Relay auto-reroutes the deposit. A new `requestId` is created for the rerouted order.
+
+### Different Chain (Different VM)
+
+This is not possible — deposit address formats differ across VM types (e.g., EVM vs Solana vs Bitcoin), so a user cannot accidentally send to the wrong VM.
+
+<Warning>
+When Relay regenerates a quote (different amount, different token, or different chain), a **new `requestId` is generated**. Always track transactions by deposit address, not by `requestId`. See [Tracking Transactions](#tracking-transactions).
+</Warning>
+
+## Refund Behavior
+
+What happens when a deposit can't be processed depends on the token type and the `refundTo` configuration.
+
+### Refund Flows
+
+There are two distinct refund scenarios:
+
+1. **Correct currency, fill failed** (e.g., slippage, network issues) — The deposit is automatically refunded to the `refundTo` address, minus the cost of gas. No additional fees are taken.
+2. **Wrong currency (non-solver token)** — Automatic refunds are not possible because Relay can't collect the unsupported token to cover gas costs. The user must visit a recovery UI to reclaim funds. If the integrator is willing to sponsor gas costs, auto-refunds can be arranged.
+
+### `refundTo` Options
+
+| `refundTo` value | Behavior |
+|---|---|
+| User's address | Refund directly to the user |
+| App-controlled address | Refund to integrator's address — your support team handles returning funds to the user |
+| Not set (open only) | Relay sets an internal fallback and handles recovery for rare failures |
+| Not set (strict) | Not allowed — `refundTo` is required for strict deposit addresses |
+
+<Note>
+If users may send from a centralized exchange, **do not use "refund to sender"** — the sender address will be the exchange's hot wallet, not the user's. Use an app-controlled address instead so your support team can handle the last mile.
+</Note>
+
+### Recommended Setup
+
+- **Open deposit addresses**: Set `refundTo` to the user's address for automatic refunds, or omit it to let Relay handle edge cases internally.
+- **Strict deposit addresses**: Always set `refundTo`. If the sender is unknown (e.g., CEX withdrawal), use an app-controlled address so your support team can manage refunds.
+
+## Tracking Transactions
+
+### Querying by Deposit Address
+
+The most reliable way to track deposit address transactions is to poll the [Get Requests API](/references/api/get-requests) using the `depositAddress` query parameter:
+
+<CodeGroup>
+```bash Request
+curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&sortBy=updatedAt&sortDirection=desc&limit=20"
 ```
 ```json Response expandable
 {
   "requests": [
     {
-      "id": "0x8bc200f95ee7cb2af30085fd0a7ecfdd2f3bcfef78d5d441f5dadfdfde95ab7f",
-      "status": "pending",
-      "user": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
-      "recipient": "0xf0ae622e463fa757cf72243569e18be7df1996cd",
+      "id": "0x6acbc4acb0cb61d2b42962ddaf0973b536933670ede1df3ab39f9003e9c3e04e",
+      "status": "success",
+      "user": "0x43255777ad9bd6ff7684d04d6121cd8d96c7e32b",
+      "recipient": "0xf3128499092b90f1a520f63c09946dca3dadf98f",
+      "depositAddress": {
+        "address": "0xb353e49aa47514fb579d6ba6594c768379a96515",
+        "depositAddressType": "open"
+      },
       "data": {
-        "isDepositAddressRequest": true,
+        "slippageTolerance": "50",
+        "failReason": "N/A",
+        "refundFailReason": "N/A",
+        "subsidizedRequest": false,
+        "fees": {
+          "gas": "3807",
+          "fixed": "20002",
+          "price": "7990",
+          "gateway": "0"
+        },
+        "feesUsd": {
+          "gas": "0.003806",
+          "fixed": "0.020000",
+          "price": "0.007989",
+          "gateway": "0.000000"
+        },
         "inTxs": [
           {
-            "hash": "0xabc123...",
-            "chainId": 8453,
-            "timestamp": 1769988962
+            "fee": "9823482523847773",
+            "data": {
+              "to": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+              "data": "0xa9059cbb0000000000000000000000004cd00e387622c35bddb9b4c962c136462338bc310000000000000000000000000000000000000000000000000000000004c3b43d1307b68c63c473186b7aebd374e9bffd16fd791ebcb37b3d005edeb88e7b7672",
+              "from": "0xb353e49aa47514fb579d6ba6594c768379a96515",
+              "value": "0"
+            },
+            "stateChanges": [
+              {
+                "change": {
+                  "data": {
+                    "tokenKind": "ft",
+                    "tokenAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
+                  },
+                  "kind": "token",
+                  "balanceDiff": "-79934525"
+                },
+                "address": "0xb353e49aa47514fb579d6ba6594c768379a96515"
+              },
+              {
+                "change": {
+                  "data": {
+                    "tokenKind": "ft",
+                    "tokenAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
+                  },
+                  "kind": "token",
+                  "balanceDiff": "79934525"
+                },
+                "address": "0x4cd00e387622c35bddb9b4c962c136462338bc31"
+              }
+            ],
+            "hash": "0x6334e6ce2558c2d4ebc187d99f3adf2605a97279a6733e612ee6cdc57f112ad3",
+            "block": 85115744,
+            "type": "onchain",
+            "chainId": 137,
+            "timestamp": 1775351525,
+            "status": "success"
           }
         ],
-        "outTxs": []
+        "currency": "usdc",
+        "currencyObject": {},
+        "feeCurrency": "usdc",
+        "feeCurrencyObject": {
+          "chainId": 137,
+          "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "metadata": {
+            "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+            "verified": true
+          }
+        },
+        "appFeeCurrencyObject": {
+          "chainId": 137,
+          "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "metadata": {
+            "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+            "verified": true
+          }
+        },
+        "appFees": [],
+        "paidAppFees": [],
+        "metadata": {
+          "sender": "0x43255777ad9bd6ff7684d04d6121cd8d96c7e32b",
+          "recipient": "0xf3128499092b90f1a520f63c09946dca3dadf98f",
+          "currencyIn": {
+            "currency": {
+              "chainId": 137,
+              "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+              "symbol": "USDC",
+              "name": "USD Coin",
+              "decimals": 6,
+              "metadata": {
+                "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                "verified": true
+              }
+            },
+            "amount": "79934525",
+            "amountFormatted": "79.934525",
+            "amountUsd": "79.926372",
+            "amountUsdCurrent": "79.923094",
+            "minimumAmount": "79934525"
+          },
+          "currencyOut": {
+            "currency": {
+              "chainId": 8453,
+              "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+              "symbol": "USDC",
+              "name": "USD Coin",
+              "decimals": 6,
+              "metadata": {
+                "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+                "verified": true
+              }
+            },
+            "amount": "79902723",
+            "amountFormatted": "79.902723",
+            "amountUsd": "79.894573",
+            "amountUsdCurrent": "79.891297",
+            "minimumAmount": "79503210"
+          },
+          "rate": "0.9996021493841366",
+          "route": {
+            "origin": {
+              "inputCurrency": {
+                "currency": {
+                  "chainId": 137,
+                  "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+                  "symbol": "USDC",
+                  "name": "USD Coin",
+                  "decimals": 6,
+                  "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                  }
+                },
+                "amount": "79934525",
+                "amountFormatted": "79.934525",
+                "amountUsd": "79.926372",
+                "minimumAmount": "79934525"
+              },
+              "outputCurrency": {
+                "currency": {
+                  "chainId": 137,
+                  "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+                  "symbol": "USDC",
+                  "name": "USD Coin",
+                  "decimals": 6,
+                  "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                  }
+                },
+                "amount": "79934525",
+                "amountFormatted": "79.934525",
+                "amountUsd": "79.926372",
+                "minimumAmount": "79934525"
+              },
+              "router": "relay"
+            },
+            "destination": {
+              "inputCurrency": {
+                "currency": {
+                  "chainId": 8453,
+                  "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+                  "symbol": "USDC",
+                  "name": "USD Coin",
+                  "decimals": 6,
+                  "metadata": {
+                    "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+                    "verified": true
+                  }
+                },
+                "amount": "79902723",
+                "amountFormatted": "79.902723",
+                "amountUsd": "79.894573",
+                "minimumAmount": "79503210"
+              },
+              "outputCurrency": {
+                "currency": {
+                  "chainId": 8453,
+                  "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+                  "symbol": "USDC",
+                  "name": "USD Coin",
+                  "decimals": 6,
+                  "metadata": {
+                    "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+                    "verified": true
+                  }
+                },
+                "amount": "79902723",
+                "amountFormatted": "79.902723",
+                "amountUsd": "79.894573",
+                "minimumAmount": "79503210"
+              },
+              "router": "relay"
+            }
+          }
+        },
+        "price": "79902723",
+        "usesExternalLiquidity": false,
+        "timeEstimate": 4,
+        "outTxs": [
+          {
+            "fee": "426860744193",
+            "data": {
+              "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+              "data": "0x23b872dd000000000000000000000000f70da97812cb96acdf810712aa562db8dfa3dbef000000000000000000000000f3128499092b90f1a520f63c09946dca3dadf98f0000000000000000000000000000000000000000000000000000000004c338031307b68c63c473186b7aebd374e9bffd16fd791ebcb37b3d005edeb88e7b7672",
+              "from": "0xca7ded7e4f4ba8ab3b10009236ae6d1b95094589",
+              "value": "0"
+            },
+            "stateChanges": [
+              {
+                "change": {
+                  "data": {
+                    "tokenKind": "ft",
+                    "tokenAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+                  },
+                  "kind": "token",
+                  "balanceDiff": "-79902723"
+                },
+                "address": "0xf70da97812cb96acdf810712aa562db8dfa3dbef"
+              },
+              {
+                "change": {
+                  "data": {
+                    "tokenKind": "ft",
+                    "tokenAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+                  },
+                  "kind": "token",
+                  "balanceDiff": "79902723"
+                },
+                "address": "0xf3128499092b90f1a520f63c09946dca3dadf98f"
+              }
+            ],
+            "hash": "0x098d75e397350670f9c3fa4496036b0594ad3a06f00ea1784cf45b080f258651",
+            "block": 44281091,
+            "type": "onchain",
+            "chainId": 8453,
+            "timestamp": 1775351529,
+            "status": "success"
+          }
+        ]
       },
-      "createdAt": "2026-02-05T15:33:25.302Z",
-      "updatedAt": "2026-02-05T15:34:10.000Z"
+      "referrer": "meshpay_f5b533dc-841a-4820-a454-9912fca134c1",
+      "createdAt": "2026-04-05T01:12:06.153Z",
+      "updatedAt": "2026-04-05T01:12:44.199Z"
     }
   ]
 }
 ```
 </CodeGroup>
 
-This returns requests associated with that deposit address, including:
+### Handling Quote Regeneration
 
-- `id` (`requestId`)
-- `status`
-- `data.isDepositAddressRequest`
-- Transaction metadata (`inTxs`, `outTxs`, timestamps, fees)
+When a quote is regenerated (different amount, token, or chain), a new `requestId` is generated. Use `includeChildRequests=true` to find all related requests, including regenerated ones:
 
-Once you have the active `requestId`, you can optionally use [Get Status](/references/api/get-intents-status-v3) for request-level status polling:
+```bash
+curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&includeChildRequests=true"
+```
+
+### Request-Level Status
+
+Once you have a `requestId`, you can use [Get Status](/references/api/get-intents-status-v3) for detailed status polling:
 
 <CodeGroup>
 ```bash Request
@@ -111,76 +1222,55 @@ curl -X GET "https://api.relay.link/intents/status/v3?requestId=<REQUEST_ID>"
 ```
 </CodeGroup>
 
-If you already have the `requestId` from the quote response, you can still use it directly. For resilient tracking across deposit-address request regeneration, poll `/requests/v2` with `user=<DEPOSIT_ADDRESS>`.
+### Reindexing Stuck Deposits
 
-## Example Request and Response
+If a deposit appears stuck, you can trigger on-demand re-detection using the [Deposit Address Reindex](/references/api/deposit-address-reindex) endpoint. This checks all solver currency balances on the specified chain and triggers sweeps for any detected deposits:
 
-You will find an example below of sending 0.01 ETH from Base to Optimism.
-
-<CodeGroup>
-```bash Request
-curl -X POST \
-  'https://api.relay.link/quote/v2' \
+```bash
+curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
   -H 'Content-Type: application/json' \
   -d '{
-	"user": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
-	"originChainId": 8453,
-	"originCurrency": "0x0000000000000000000000000000000000000000",
-	"destinationChainId": 10,
-	"destinationCurrency": "0x0000000000000000000000000000000000000000",
-	"tradeType": "EXACT_INPUT",
-	"recipient": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
-	"amount": "100000000000000000",
-	"usePermit": false,
-	"useExternalLiquidity": false,
-	"referrer": "relay.link/bridge",
-	"useDepositAddress": true,
-	"refundTo": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd"
-}'
+    "chainId": 8453,
+    "depositAddress": "0x1ba74e01d46372008260ec971f77eb6032b938a4"
+  }'
 ```
-```json Response expandable
-{
-  "steps": [
-    {
-      "id": "deposit",
-      "action": "Confirm transaction in your wallet",
-      "description": "Deposit funds for executing the calls",
-      "kind": "transaction",
-      "depositAddress": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
-      "requestId": "0xa1dea21f62a85b9ede98b7a6442b7b9574bdfd71adabc03397242adf122038de",
-      "items": [
-        {
-          "status": "incomplete",
-          "data": {
-            "from": "0xF0AE622e463fa757Cf72243569E18Be7Df1996cd",
-            "to": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
-            "data": "0x",
-            "value": "100000000000000000",
-            "maxFeePerGas": "4222843",
-            "maxPriorityFeePerGas": "987146",
-            "chainId": 8453
-          },
-          "check": {
-            "endpoint": "/intents/status/v3?requestId=0xa1dea21f62a85b9ede98b7a6442b7b9574bdfd71adabc03397242adf122038de",
-            "method": "GET"
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-</CodeGroup>
 
-- `useDepositAddress` must be set to `true` <br />
-- `user` can be any valid address, including the zero address <br />
-- `refundTo` can be optionally set when `useDepositAddress` is being used.
-  This is the address that refunds will be sent to in case of an issue. If not specified then manual refund is required.
+<Note>
+The deposit transaction hash cannot be used to look up the status of a deposit address bridge. Always use the deposit address itself or the `requestId` to track status.
+</Note>
 
-## Common Use Cases
+## Caveats
 
-Deposit addresses are particularly useful in the following scenarios:
+### Gas Overhead
 
-- **CEX-to-DeFi Bridging** -- When users are already performing a withdrawal from a centralized exchange and want to bridge to a different chain without an additional transaction.
-- **Onboarding Flows from Fiat Rails** -- For applications that need to seamlessly move funds from fiat onramps to specific destination chains without requiring users to understand intermediate bridging steps.
-- **Wallet Connection Issues** -- In situations where wallet connection or transaction signing is problematic, such as when the wallet provider doesn't support the origin chain or when building headless/automated bridging systems.
+Deposit addresses add gas overhead compared to direct calldata execution because Relay must sweep funds from the deposit address:
+
+| Method | Token Type | Gas Overhead |
+|---|---|---|
+| Receiver | Native tokens (ETH, MATIC, etc.) | ~33,000 gas |
+| Protocol | ERC-20 tokens | ~70,000 gas |
+
+For very small amounts, the gas overhead may make deposit addresses less cost-effective than direct calldata execution.
+
+### Supported Currencies
+
+Only tokens listed as **solver currencies** for a given chain can be processed by deposit addresses. Relay treats certain tokens as equivalent within currency groups (e.g., ETH and WETH) — depositing any token in a group triggers the same fill behavior.
+
+The table below is loaded live from the [chains API](/references/api/get-chains). Each chain's `solverCurrencies` array is the authoritative source for which tokens are supported.
+
+<SolverCurrencies id="solverCurrencies" />
+
+<Warning>
+Non-solver tokens and NFTs sent to deposit addresses are **not recoverable** through normal processes. Always verify the token is a solver currency before depositing.
+</Warning>
+
+### Chain-Specific Notes
+
+- **Bitcoin** — Requires 1 block confirmation before Relay processes the deposit. Deposits are detected via mempool monitoring but only acted on after confirmation.
+- **Solana** — Supports SPL tokens through the protocol deposit method. Native SOL and SPL tokens like USDC are solver currencies on Solana.
+- **Hyperliquid** — Uses bridged USDC (USDC.e) with different decimal precision than native USDC on other chains. Be aware of decimal mismatches when computing amounts.
+
+### Other Limitations
+
+- Calldata execution on destination is not allowed.
+- Only exact input bridging is supported (`tradeType: "EXACT_INPUT"`).
