@@ -22,7 +22,7 @@ const rootElement = document.getElementById(id);
 if (!rootElement) {
 return;
 }
-rootElement.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 20px;">Loading...</td></tr>`;
+rootElement.innerHTML = `<tr><td colspan="2" style="text-align: center; padding: 20px;">Loading...</td></tr>`;
 };
 
 const appendCurrencies = (data) => {
@@ -69,7 +69,6 @@ return a.symbol.localeCompare(b.symbol);
 
 return `<tr key=${chain.id}>
           <td>${chain.displayName}</td>
-          <td>${chain.solverCurrencies.length}</td>
           <td>${currencies}</td>
         </tr>`;
 });
@@ -126,7 +125,6 @@ style={{
         }} >
 <tr style={{ textAlign: "left" }}>
 <th>Chain</th>
-<th>Count</th>
 <th>Solver Currencies</th>
 </tr>
 </thead>
