@@ -9,6 +9,7 @@ Requirements:
 """
 
 import asyncio
+import os
 from dataclasses import dataclass
 from typing import Optional
 
@@ -23,6 +24,9 @@ ETH_TOKEN       = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"   # native ETH
 USDC_BASE_TOKEN = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"   # USDC on Base
 WALLET          = "0x000000000000000000000000000000000000dEaD"
 USDC_DECIMALS   = 6
+
+# Optional API key for Aori (improves rate limits; quoting works without one)
+AORI_API_KEY = os.environ.get("AORI_API_KEY", "")
 
 # Near Intents solver relay (no API key required)
 NEAR_INTENTS_RPC = "https://solver-relay-v2.chaindefuser.com/rpc"
@@ -174,32 +178,42 @@ async def fetch_debridge(session: aiohttp.ClientSession) -> Quote:
 
 async def fetch_aori(session: aiohttp.ClientSession) -> Quote:
     """
-    Aori cross-chain RFQ quote endpoint.
+    Aori cross-chain RFQ quote (REST POST).
     Docs: https://docs.aori.io
+    Chains passed as string names; offerer/recipient replace the old address field.
+    Optional: set AORI_API_KEY for better rate limits.
     """
     try:
+        headers = {"Content-Type": "application/json"}
+        if AORI_API_KEY:
+            headers["x-api-key"] = AORI_API_KEY
+
         async with session.post(
             "https://api.aori.io/quote",
             json={
-                "inputToken":    ETH_TOKEN,
-                "outputToken":   USDC_BASE_TOKEN,
-                "inputAmount":   str(AMOUNT_WEI),
-                "inputChainId":  ETH_CHAIN_ID,
-                "outputChainId": BASE_CHAIN_ID,
-                "address":       WALLET,
+                "offerer":     WALLET,
+                "recipient":   WALLET,
+                "inputToken":  ETH_TOKEN,
+                "outputToken": USDC_BASE_TOKEN,
+                "inputAmount": str(AMOUNT_WEI),
+                "inputChain":  "ethereum",
+                "outputChain": "base",
             },
+            headers=headers,
         ) as resp:
             resp.raise_for_status()
             data = await resp.json()
 
-        output_raw = int(data.get("outputAmount") or data.get("output") or 0)
+        output_raw    = int(data.get("outputAmount") or 0)
+        estimated_ms  = data.get("estimatedTime")
+        gas_info      = f"~{int(estimated_ms) // 1000}s" if estimated_ms else "n/a"
 
         return Quote(
             provider    = "Aori",
             output_raw  = output_raw or None,
             output_usdc = output_raw / 10**USDC_DECIMALS if output_raw else None,
-            fee_info    = str(data.get("fee") or data.get("fees") or "n/a"),
-            gas_info    = str(data.get("gasEstimate") or "n/a"),
+            fee_info    = "n/a",
+            gas_info    = gas_info,
         )
     except Exception as exc:
         return Quote(provider="Aori", error=str(exc))
