@@ -2,18 +2,13 @@
 """
 Cross-chain swap quote fetcher
 Swap: 1 ETH (Ethereum mainnet) → USDC (Base)
-Providers: Across, Aori, Relay.link, deBridge, 1inch Fusion+
+Providers: Across, Aori, Relay.link, deBridge, Near Intents
 
 Requirements:
     pip install aiohttp
-
-Optional env vars:
-    INCH_API_KEY  – 1inch dev-portal API key (https://portal.1inch.dev)
-                    Without it the 1inch request will likely return 401.
 """
 
 import asyncio
-import os
 from dataclasses import dataclass
 from typing import Optional
 
@@ -29,7 +24,12 @@ USDC_BASE_TOKEN = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"   # USDC on Base
 WALLET          = "0x000000000000000000000000000000000000dEaD"
 USDC_DECIMALS   = 6
 
-INCH_API_KEY    = os.environ.get("INCH_API_KEY", "")
+# Near Intents solver relay (no API key required)
+NEAR_INTENTS_RPC = "https://solver-relay-v2.chaindefuser.com/rpc"
+# Defuse asset identifiers for tokens bridged via NEAR OMFT
+NEAR_ETH_ASSET   = "nep141:eth.omft.near"
+NEAR_USDC_ASSET  = "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near"
+
 TIMEOUT         = aiohttp.ClientTimeout(total=20)
 
 
@@ -205,55 +205,48 @@ async def fetch_aori(session: aiohttp.ClientSession) -> Quote:
         return Quote(provider="Aori", error=str(exc))
 
 
-async def fetch_1inch_fusion_plus(session: aiohttp.ClientSession) -> Quote:
+async def fetch_near_intents(session: aiohttp.ClientSession) -> Quote:
     """
-    1inch Fusion+ cross-chain quote.
-    Docs: https://portal.1inch.dev/documentation/fusion-plus
-    Requires INCH_API_KEY environment variable.
+    Near Intents (Defuse) solver relay – JSON-RPC 2.0 quote endpoint.
+    Docs: https://docs.near-intents.org
+    No API key required.
     """
     try:
-        headers = {"Accept": "application/json"}
-        if INCH_API_KEY:
-            headers["Authorization"] = f"Bearer {INCH_API_KEY}"
-
-        async with session.get(
-            "https://api.1inch.dev/fusion-plus/quoter/v1.0/quote/receive",
-            params={
-                "srcChain":        ETH_CHAIN_ID,
-                "dstChain":        BASE_CHAIN_ID,
-                "srcTokenAddress": ETH_TOKEN,
-                "dstTokenAddress": USDC_BASE_TOKEN,
-                "amount":          str(AMOUNT_WEI),
-                "walletAddress":   WALLET,
-                "enableEstimate":  "true",
+        async with session.post(
+            NEAR_INTENTS_RPC,
+            json={
+                "jsonrpc": "2.0",
+                "id":      "1",
+                "method":  "defuse_quote",
+                "params":  [{
+                    "defuse_asset_identifier_in":  NEAR_ETH_ASSET,
+                    "defuse_asset_identifier_out": NEAR_USDC_ASSET,
+                    "amount_in":                   str(AMOUNT_WEI),
+                    "min_deadline_ms":             60000,
+                }],
             },
-            headers=headers,
         ) as resp:
             resp.raise_for_status()
             data = await resp.json()
 
-        # Use the recommended preset; fall back to "fast"
-        presets         = data.get("presets", {})
-        recommended_key = data.get("recommendedPreset", "fast")
-        preset          = presets.get(recommended_key, presets.get("fast", {}))
+        result = data.get("result", {})
+        quotes = result.get("quotes", [])
+        if not quotes:
+            return Quote(provider="Near Intents", error="no quotes returned")
 
-        # auctionEndAmount is the guaranteed minimum; auctionStartAmount is optimistic
-        output_raw = int(
-            preset.get("auctionEndAmount")
-            or preset.get("auctionStartAmount")
-            or data.get("dstTokenAmount")
-            or 0
-        )
+        # Pick the quote with the highest amount_out
+        best = max(quotes, key=lambda q: int(q.get("amount_out") or 0))
+        output_raw = int(best.get("amount_out") or 0)
 
         return Quote(
-            provider    = "1inch Fusion+",
+            provider    = "Near Intents",
             output_raw  = output_raw or None,
             output_usdc = output_raw / 10**USDC_DECIMALS if output_raw else None,
-            fee_info    = f"preset={recommended_key}, bankFee={preset.get('bankFee', '?')}",
-            gas_info    = "gasless (intent / resolver network)",
+            fee_info    = f"solver={best.get('solver_id', '?')}",
+            gas_info    = "gasless (NEAR intent / solver network)",
         )
     except Exception as exc:
-        return Quote(provider="1inch Fusion+", error=str(exc))
+        return Quote(provider="Near Intents", error=str(exc))
 
 
 # ─── Display ──────────────────────────────────────────────────────────────────
@@ -299,7 +292,7 @@ def display_results(quotes: list[Quote]) -> None:
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 async def main() -> None:
-    providers = ["Across", "Aori", "Relay.link", "deBridge", "1inch Fusion+"]
+    providers = ["Across", "Aori", "Relay.link", "deBridge", "Near Intents"]
     print(f"Fetching quotes from {', '.join(providers)} …")
 
     async with aiohttp.ClientSession(timeout=TIMEOUT) as session:
@@ -308,7 +301,7 @@ async def main() -> None:
             fetch_relay(session),
             fetch_debridge(session),
             fetch_aori(session),
-            fetch_1inch_fusion_plus(session),
+            fetch_near_intents(session),
         )
 
     display_results(list(quotes))
