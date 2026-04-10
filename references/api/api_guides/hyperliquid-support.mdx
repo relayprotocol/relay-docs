@@ -560,7 +560,7 @@ The response includes two steps that must be executed in order.
 The first step (`id: authorize`) requires signing an EIP-712 message that maps the nonce to the request ID. This signature can be executed on any EVM chain.
 
 <Note>
-  **Chain ID Override Required**: The API returns Ethereum mainnet (chainId: 1) by default. You must override both `item.data.sign.domain.chainId` and `item.data.post.body.signatureChainId` to match the user's active chain ID (Base, Optimism, etc.) or your preferred chain ID. The signature submitted to the deposit step must use the same modified chainId.
+  **Chain ID Override Recommended**: The `signatureChainId` and `domain.chainId` fields are used for EIP-712 signature authorization only — they do not affect fund routing. The `destinationChainId` in your quote request determines where funds are delivered. The API returns Ethereum mainnet (chainId: 1) by default. We recommend overriding both `item.data.sign.domain.chainId` and `item.data.post.body.signatureChainId` to match the user's active chain ID (Base, Optimism, etc.) for wallet and signature correctness.
 </Note>
 
 Example authorize step response:
