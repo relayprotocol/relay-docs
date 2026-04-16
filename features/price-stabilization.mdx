@@ -1,11 +1,15 @@
 ---
 title: "Price Stabilization"
-description: "Stabilize stable coin pricing using Relay"
+description: "Deliver consistent stablecoin pricing across chains"
 ---
 
-For a cross-chain swap between major stablecoins, the cost is roughly: $0.02 + 1bps
+Stablecoins don't actually trade at 1:1. When users swap between stablecoins cross-chain, the output fluctuates based on market rates, swap impact, and fees. For a $10,000 USDC-to-USDH swap, even small deviations from peg mean the user might receive 9,995 or 10,005 USDH instead of a clean 10,000.
 
-So for \$10,000 USDC input, the user would get \$9,998.98 worth of USDH
+Relay provides two mechanisms to stabilize stablecoin pricing and deliver a cleaner UX: [fee sponsorship](#fee-sponsorship), where you cover transaction fees so the user receives the full market-rate output, and [fixed rates](#fixed-rates), where you lock in a specific exchange rate (e.g. 1:1) and absorb the volatility yourself. With fixed rates, you sometimes sponsor and sometimes earn the difference, with the expectation that it nets out over time.
+
+For a cross-chain swap between major stablecoins, the cost is roughly: \$0.02 + 1bps.
+
+For \$10,000 USDC input, the user would get \$9,998.98 worth of USDH
 
 This is on top of the market rate for the pair:
 
@@ -15,7 +19,7 @@ If 1 USDH = 1.0005 USDC, that's 9,993.98 USDH
 
 ## Price Stabilization Options
 
-Relay supports multiple options for stabilizing prices for better UX, because “stable” coins tend not to actually trade at 1:1:
+Relay supports multiple options for stabilizing prices for better UX:
 
 ### Fee Sponsorship
 With sponsorship, you cover the fees. So for \$10,000 USDC in, the user gets \$10,000 USDH out, and you cover the \$1.02 in fees. Importantly, this doesn't mean the user gets 1:1 in our USDC:USDH example:
@@ -33,7 +37,7 @@ curl --request POST \
   --data '
 {
   "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
-  "originChainId": 10,
+  "originChainId": 999,
   "destinationChainId": 8453,
   "originCurrency": "0x111111a1a0667d36bd57c0a9f569b98057111111",
   "destinationCurrency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
@@ -447,7 +451,12 @@ If 1 USDH = 1.0005 USDC, user gets 10,000 USDH, you sponsor \$6.02
 
 Effectively, you absorb the volatility, sometimes sponsoring, and sometimes earning fees, with the idea that it nets out over a long time period. Of course, during periods you are sponsoring, you need to be careful that it's not being arbitraged. 
 
-If you want, you can set rates other than 1:1. E.g. if you set it to 1:1.0002, then you are effectively setting the price to 2bps, and only sponsoring when the market rate + fees is above that.
+<Warning>
+During periods where you are sponsoring the spread, monitor for arbitrage. 
+A fixed rate that deviates from the market can be drained by arbitrageurs.
+</Warning>
+
+If you want, you can set rates other than 1:1. E.g. if you set it to 1:1.0002, then you are effectively setting the price to 2bps, and only sponsoring when the market rate + fees is above that. The rate is expressed as "input:output".
 
 If 1 USDH = 1.0000 USDC, user gets 9,998 USDH, you earn \$0.98 <br/>
 If 1 USDH = 0.9995 USDC, user gets 9,998 USDH, you earn \$5.98 <br/>
@@ -1084,14 +1093,14 @@ The actual breakdown of fees is more complicated. This is because Relay strives 
 A flat basis point fee charged for using the Relay API gateway and related services. The fee varies by asset pair type and volume tier. An API key is required for the volume based discounts to take effect. Click [here](/references/api/api_core_concepts/fees) to learn more.
 
 ### Execution Fee 
-This is a fee that covers the cost of executing the cross chain transaction. It’s a flat amount, based on the destination chain gas cost, rather than the input amount. For most chains, it’s around $0.02, which is the minimum. For expensive chains like Ethereum, it can be more, depending on gas price. 
+This is a fee that covers the cost of executing the cross chain transaction. It’s a flat amount, based on the destination chain gas cost, rather than the input amount. For most chains, it’s around \$0.02, which is the minimum. For expensive chains like Ethereum, it can be more, depending on gas price. 
 
 ### Swap Fees
 This is effectively the price impact to swap between the input and output currencies, and depends on the depth of liquidity, and the size of the order. There are 3 subcomponents:
 
-**Withdraw Fee:** Cost of getting funds off origin chain <br/>
-**Deposit Fee:** Cost of getting funds onto destination chain <br/>
-**Swap Impact:** Cost of swapping between the currencies (how much USD value lost to slippage)
+* **Withdraw Fee:** Cost of getting funds off origin chain
+* **Deposit Fee:** Cost of getting funds onto destination chain
+* **Swap Impact:** Cost of swapping between the currencies (how much USD value lost to slippage)
 
 The Withdraw & Deposit fees effectively correlate to the cost of rebalancing. For OFTs or mint/redeem stablecoins, this is very low, sub 1bps, especially if the liquidity is loaned. For a token bridged to an L2 using a 7 day bridge, it can be much higher.
 
