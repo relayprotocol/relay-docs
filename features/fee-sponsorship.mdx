@@ -47,7 +47,7 @@ Add these parameters to your [Get Quote](/references/api/get-quote) API request:
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `subsidizeFees` | `boolean` | Set to `true` to have the sponsor pay for all fees associated with the request, including gas topup amounts. |
-| `maxSubsidizationAmount` | `string` | _(Optional)_ The maximum amount to subsidize in USDC with 6 decimal places (e.g., `"1000000"` = $1.00). If the total fees exceed this threshold, the entire request will **not** be subsidized. |
+| `maxSubsidizationAmount` | `string` | _(Optional)_ The maximum amount to subsidize in USDC with 6 decimal places (e.g., `"1000000"` = $1.00). If the total fees exceed this threshold, the sponsor pays up to the cap and the user pays the remainder. |
 | `subsidizeRent` | `boolean` | _(Optional)_ Set to `true` to sponsor Solana ATA rent fees. Requires `subsidizeFees` to also be enabled. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 | `depositFeePayer` | `string` | _(Optional)_ A Solana address to pay deposit transaction fees for Solana origin transactions. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 | `sponsoredFeeComponents` | `string[]` | _(Optional)_ You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees.
@@ -80,16 +80,16 @@ In this example:
 
 ### How `maxSubsidizationAmount` Works
 
-The `maxSubsidizationAmount` parameter acts as a safety threshold:
+The `maxSubsidizationAmount` parameter acts as a spending cap for fee sponsorship:
 
 - If the total fees are **at or below** this amount, the sponsor covers the full cost
-- If the total fees **exceed** this amount, **no sponsorship occurs** — the user pays all fees
+- If the total fees **exceed** this amount, the sponsor pays up to the cap and **the user pays the remainder**
 
-This protects you from unexpectedly high costs during network congestion or volatile market conditions.
+This protects you from unexpectedly high costs during network congestion or volatile market conditions, while still providing partial sponsorship benefit to your users.
 
-<Warning>
-When `maxSubsidizationAmount` is exceeded, the entire request falls back to user-paid fees. The fees are not partially subsidized.
-</Warning>
+<Info>
+With partial fee sponsorship, users always receive some benefit from your sponsorship even when fees spike. For example, if you set a $5.00 cap and fees total $7.00, you pay $5.00 and the user pays $2.00.
+</Info>
 
 ---
 
