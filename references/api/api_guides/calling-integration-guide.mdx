@@ -30,6 +30,10 @@ While not mandatory for integration, doing the following will improve the UX for
 
     Cross-chain calls support both `EXACT_INPUT` and `EXACT_OUTPUT`. Use `EXACT_OUTPUT` when the destination call requires a precise output amount. Use `EXACT_INPUT` when you want to cap how much the user spends and can tolerate variable output.
 
+    <Info>
+      For `EXACT_INPUT` calls, integrators usually need their own proxy contract on the destination chain. Because Relay delivers a variable output amount, the proxy contract should read the received balance at execution time and construct any follow-up calldata from that balance before calling the final target contract.
+    </Info>
+
     <CodeGroup>
     ```bash Request
     curl -X POST "https://api.relay.link/quote/v2" \
@@ -844,6 +848,8 @@ While not mandatory for integration, doing the following will improve the UX for
 <input className="relay-checkbox" type="checkbox" name="transaction-data" value="yes"/> **Verify transaction data** - Confirm `amount` equals the sum of all `txs[].value` fields
 
 <input className="relay-checkbox" type="checkbox" name="trade-type" value="yes"/> **Check tradeType** - Use `"EXACT_OUTPUT"` when the destination call needs a precise amount, or `"EXACT_INPUT"` when spend should be fixed and output can vary
+
+<input className="relay-checkbox" type="checkbox" name="exact-input-proxy" value="yes"/> **Plan for `EXACT_INPUT` execution** - For `"EXACT_INPUT"` calls, use a destination proxy contract that reads the variable output balance and builds any follow-up calldata at runtime
 
 <input className="relay-checkbox" type="checkbox" name="call-data" value="yes"/> **Validate call data** - Ensure contract function calls are properly encoded
 
