@@ -327,8 +327,7 @@
   },
   "footer": {
     "socials": {
-      "twitter": "https://twitter.com/RelayProtocol",
-      "discord": "https://discord.com/invite/relayprotocol"
+      "twitter": "https://twitter.com/RelayProtocol"
     }
   },
   "integrations": {
@@ -350,8 +349,20 @@
   },
   "redirects": [
     {
+      "source": "/references/overview",
+      "destination": "/references/api/overview"
+    },
+    {
+      "source": "/how-it-works/swapping",
+      "destination": "/use-cases/cross-chain-swaps"
+    },
+    {
+      "source": "/how-it-works/the-relay-solver",
+      "destination": "/references/protocol/overview"
+    },
+    {
       "source": "/how-it-works/the-reservoir-relayer",
-      "destination": "/how-it-works/the-relay-solver"
+      "destination": "/references/protocol/overview"
     },
     {
       "source": "/references/sdk/bridging/fetching-a-quote",

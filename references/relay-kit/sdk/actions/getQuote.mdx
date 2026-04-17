@@ -1,9 +1,9 @@
 ---
 title: getQuote
-description: Get a quote for a crosschain relay (bridge, swap, call, etc)
+description: Get a quote for a cross-chain relay (bridge, swap, call, etc)
 ---
 
-### Arguments
+## Arguments
 
 | Property       | Description                                                                                                                                                                                                  | Required |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
@@ -15,7 +15,7 @@ description: Get a quote for a crosschain relay (bridge, swap, call, etc)
 **Warning**: Never pass `x-api-key` in headers from client-side code. Only use the `headers` parameter with API keys when calling `getQuote` entirely on the server.
 </Warning>
 
-### Quote Parameters
+## Quote Parameters
 
 | Property       | Description                                                                                                                                                                                                        | Required                                      |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
@@ -31,7 +31,7 @@ description: Get a quote for a crosschain relay (bridge, swap, call, etc)
 | **txs**        | An array of either transaction objects (made up of a to, data and value properties) or viem request objects returned from viem's [simulateContract](https://viem.sh/docs/contract/simulateContract.html) function. | ❌                                            |
 | **options**    | Additional options that map directly to the [quote API](/references/api/get-quote-v2).                                                                                                                             | ❌                                            |
 
-### Native Bridge Example
+## Native Bridge Example
 
 ```typescript
 import { getClient } from "@relayprotocol/relay-sdk";
@@ -51,7 +51,7 @@ const quote = await getClient()?.actions.getQuote({
 });
 ```
 
-### Cross-Chain Swap Example
+## Cross-Chain Swap Example
 
 ```typescript
 // Cross-Chain Swap from USDC on Ethereum to DAI on Optimism
@@ -67,7 +67,7 @@ const quote = await getClient()?.actions.getQuote({
 });
 ```
 
-### Wrap/Unwrap Example
+## Wrap/Unwrap Example
 
 ```typescript
 // Unwrap ETH
@@ -83,7 +83,7 @@ const quote = await getClient()?.actions.getQuote({
 });
 ```
 
-### Send Example
+## Send Example
 
 ```typescript
 // Send ERC20 / Native Currency to another address on the same chain
@@ -100,7 +100,7 @@ const quote = await getClient()?.actions.getQuote({
 });
 ```
 
-### Server-Side Example with API Key
+## Server-Side Example with API key
 
 ```typescript
 // Server-side only - pass API key via headers

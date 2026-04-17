@@ -3,7 +3,7 @@ title: execute
 description: Execute a quote and get updates on its progress
 ---
 
-### Parameters
+## Parameters
 
 | Property                   | Description                                                                                                                                                                                                                                                                                                                                   | Required |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
@@ -12,7 +12,7 @@ description: Execute a quote and get updates on its progress
 | **depositGasLimit**        | The gas limit used for the deposit transaction. | ❌       |
 | **onProgress**             | Callback to update UI state as execution progresses. Can also be used to get the transaction hash for a given step item. The following data points are returned: `steps`, `fees`, `breakdown`, `txHashes`, `currentStep`, `currentStepItem`, `details`                                                                                                                                                                                                                      | ❌      |
 
-### Example
+## Example
 
 ```typescript
 import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk";
@@ -35,7 +35,7 @@ getClient().actions.execute({
 })
 
 ```
-### Handling onProgress updates
+## Handling onProgress updates
 
 The state of progress is updated as users are moved through the flow. The onProgress callback will fire every time there are changes to the status. Below is a breakdown of the data returned and how it may be useful in representing the status:
 

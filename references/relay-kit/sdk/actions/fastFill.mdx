@@ -7,14 +7,14 @@ The `fastFill` action allows you to accelerate the filling of a cross-chain requ
 
 [Learn more about the Fast Fill API](/references/api/fast-fill)
 
-### Parameters
+## Parameters
 
 | Property                     | Description                                                                                                     | Required |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- |
 | **requestId**                | The unique identifier of the request to fast fill                                                               | ✅       |
 | **solverInputCurrencyAmount**| The amount of input currency the solver should use for filling. This is useful if you know the finalized input amount which can help to minimize slippage. If not specified, uses the quoted amount.      | ❌       |
 
-### Example
+## Example
 
 ```typescript
 import { getClient } from "@relayprotocol/relay-sdk";
@@ -26,7 +26,7 @@ const result = await getClient().actions.fastFill({
 });
 ```
 
-### Example with Solver Input Amount
+## Example with Solver Input Amount
 
 ```typescript
 import { getClient } from "@relayprotocol/relay-sdk";

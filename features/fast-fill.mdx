@@ -11,7 +11,7 @@ Fast Fill is a feature that allows you to accelerate the destination fill of a c
 
 Before you can start fast filling requests, you need:
 
-1. **An API Key** — Required to authenticate your fast fill requests. [Request an api key](/references/api/api-keys#how-to-get-an-api-key).
+1. **An API key** — Required to authenticate your fast fill requests. [Request an API key](/references/api/api-keys#how-to-get-an-api-key).
 2. **Enterprise Partnership** — Reach out to the Relay team to become an Enterprise Partner. Learn more about the [Enterprise Partner Program](/resources/enterprise).
 3. **A Linked Funding Address** — A wallet address must be linked to your API key. This is the address that will fund your app balance. [Reach out](https://forms.gle/XNeELYavjwoJwPEf7) to the Relay team to link your wallet address.
 4. **Sufficient App Balance** — Your app balance must have enough funds to cover fast fills and fee sponsorship. When a fast fill is triggered, a hold is placed against your app balance for the fill amount. This hold is released once the user's deposit lands onchain. While holds are active, they reduce the balance available for new fast fills and claims, but do not block [fee sponsorship](/features/fee-sponsorship) deductions.
@@ -26,10 +26,10 @@ To Fast Fill a request you simply need to call the [Fast Fill API](/references/a
 
 ### Example
 
-This example demonstrates the full fast fill flow: getting a quote, submitting the transaction on-chain, calling the fast fill API, and monitoring the status.
+This example demonstrates the full fast fill flow: getting a quote, submitting the transaction onchain, calling the fast fill API, and monitoring the status.
 
 <CodeGroup>
-```typescript SDK
+```typescript SDK expandable
 import { getClient, createClient } from "@relayprotocol/relay-sdk";
 import { createWalletClient, createPublicClient, http } from "viem";
 import { base } from "viem/chains";
@@ -96,7 +96,7 @@ await getClient().actions.execute({
 console.log("Bridge completed successfully!");
 ```
 
-```typescript API
+```typescript API expandable
 import { createWalletClient, createPublicClient, http, type Hex } from "viem";
 import { base } from "viem/chains";
 

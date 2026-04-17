@@ -13,7 +13,7 @@ This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headle
 
 1. **Quote** — Integrator requests a quote with `useDepositAddress: true`. The response includes a `depositAddress` and `requestId`.
 2. **User Deposit** — User sends funds to the deposit address (wallet transfer or exchange withdrawal).
-3. **Detect + Sweep** — Relay detects the deposit on-chain and sweeps funds to the depository contract. For open-ended addresses, the amount, currency, and chain are validated and the quote may be regenerated if different from the original. For strict addresses, the deposit is validated against the original order.
+3. **Detect + Sweep** — Relay detects the deposit onchain and sweeps funds to the depository contract. For open-ended addresses, the amount, currency, and chain are validated and the quote may be regenerated if different from the original. For strict addresses, the deposit is validated against the original order.
 4. **Fill** — Relay fills on the destination chain from pre-positioned liquidity. Funds are delivered to the recipient address.
 
 ### Key Parameters
