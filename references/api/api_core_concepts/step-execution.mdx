@@ -1,5 +1,6 @@
 ---
 title: "Understanding Step Execution"
+description: "How step execution works when driving Relay directly from the API"
 ---
 
 <Tip>
@@ -60,7 +61,7 @@ const eip191Message =
   "\x19Ethereum Signed Message:\n" + message.message.length + message.message;
 ```
 
-```javascript Signing EIP712
+```javascript Signing EIP712 expandable
 //Creating an EIP-712 signature involves signing a structured object composed of a domain, types, and values.
 //When receiving a signatureKind: "eip712" from the API, you'll need to structure the signature in eth_signTypedData_v4 format.
 //Below, you'll find an example that illustrates how the domain, types, and values can be structured to create the signature.

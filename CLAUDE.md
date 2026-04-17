@@ -27,6 +27,8 @@ When writing or editing an MDX page, identify the **page type** by its path (see
 
 Pages in `solutions/`, `resources/`, `security/`, `references/protocol/`, `references/websockets/` are out of scope for this guide's v1. Edit them by pattern-matching against existing pages in the same folder.
 
+**Nav-organization stubs (ignore):** `references/api/advanced.mdx`, `references/api/core.mdx`, and `references/api/utilities.mdx` are empty files that exist only to create group headers in the API Reference sidebar. They render no content, so frontmatter requirements and other §2 / §3 rules do not apply. Automation should skip them.
+
 ---
 
 ## 2. Global rules (apply to every in-scope page)
@@ -57,14 +59,13 @@ A historical drift on SDK action pages (which previously opened with `### Argume
 
 ### 2.3 Voice
 
-Voice varies by page type (see profiles). Two rules apply everywhere:
+Voice varies by page type (see profiles). These rules apply everywhere:
 
 - Write in **active voice** ("Relay bridges assets", not "Assets are bridged by Relay").
 - Use **imperative** phrasing for step-by-step instructions ("Get a quote", "Execute the bridge", "Call `getQuote()`").
 - Address the reader as **"you"** when describing the reader's actions.
-- Use **the product name** (Relay, RelayKit, the SDK, the widget) as the subject when describing what the product does. Prefer a named subject over generic "it" / "the system" framing.
-
-Do not use "we/our" to describe the product's behavior on reference pages (§3.3–§3.6). "We" is acceptable on feature guides and use-case pages when it reads like Relay-as-a-team giving advice ("We recommend protecting your API key on the backend…").
+- Use **the product name** (Relay, RelayKit, the SDK, the widget) as the subject when the sentence is defining or describing product behavior. Prefer a named subject over generic "it" / "the system" framing.
+- **"We/our" is permitted on every page type** when the voice is Relay-as-a-team giving advice, positioning, or narrating a flow ("We recommend protecting your API key on the backend…", "Our SDK handles the retry automatically…", "Below we'll walk through an end-to-end example"). Reach for the product name when defining behavior, and for "we/our" when advising or narrating — both are first-class on reference pages too.
 
 ### 2.4 Tone
 
@@ -114,7 +115,7 @@ Parameter tables are the dominant structured element on reference pages.
 - Each code block is self-contained — include imports, client construction, and any prerequisite setup, so the reader can paste-and-run.
 - Comment the `// 1. …`, `// 2. …` flow of multi-step examples.
 - Placeholders: `YOUR_API_KEY`, `WALLET_ADDRESS`, `RECIPIENT_ADDRESS` (all caps, snake_case).
-- When a block exceeds 35 lines, wrap it with `expandable` so it collapses by default.
+- When a block exceeds 45 lines, wrap it with `expandable` so it collapses by default.
 
 ### 2.9 Text emphasis
 
@@ -317,22 +318,3 @@ Entries are newest-first. Each entry is a `##` heading with the date and a one-l
 - **Chain names** — use canonical casing: `Ethereum`, `Base`, `Arbitrum`, `Optimism`, `Solana`, `Bitcoin`, `Sui`, `Tron`, `Eclipse`.
 - **Token symbols** — all caps, no backticks in prose: `ETH`, `USDC`, `DAI`. Use backticks only when showing the symbol in code or when distinguishing from a token name.
 - **Contract addresses** — backticked, lowercased hex.
-
----
-
-## 6. Cleanup TODOs from this codification
-
-Flagged during the drafting of this guide. These are one-time doc hygiene items, not automation work.
-
-### Completed (2026-04-17)
-
-1. ~~**Retire `how-it-works/swapping.mdx`.**~~ Removed; redirect to `/use-cases/cross-chain-swaps` added in `docs.json`.
-2. ~~**Retire `how-it-works/the-relay-solver.mdx`.**~~ Removed; redirect to `/references/protocol/overview` added in `docs.json`. The empty `how-it-works/` directory was also removed, and the pre-existing `/how-it-works/the-reservoir-relayer` redirect was retargeted to `/references/protocol/overview`.
-3. ~~**Migrate SDK action pages from `###` to `##`.**~~ All files under `references/relay-kit/sdk/actions/*.mdx` now open with `##` as the primary heading (`claimAppFees`, `execute`, `executeGaslessBatch`, `fastFill`, `getAppFees`, `getQuote`).
-
-### Open
-
-4. **Backfill frontmatter** on any page that lacks `title` / `description`. Run a corpus-wide sweep.
-5. **Create `references/api/changelog.mdx`** with the format in §4.5 and add it to the API Reference top-level nav in `docs.json`.
-6. **Normalize `API key` capitalization** across the corpus — replace `api key` and `API Key` occurrences in prose with `API key` (do not touch code, URLs, or HTTP header names).
-7. **Retire `how-it-works/` as a documented page type.** It is not present in `docs.json` navigation and should not accept new content. (Folder removal is done; keep this item as a reminder for reviewers of any inbound PR that tries to add content there.)
