@@ -30,13 +30,13 @@ While not mandatory for integration, doing the following will improve the UX for
 
     Cross-chain calls support both `EXACT_INPUT` and `EXACT_OUTPUT`. Use `EXACT_OUTPUT` when the destination call requires a precise output amount. Use `EXACT_INPUT` when you want to cap how much the user spends and can tolerate variable output.
 
-    <Info>
+    <Tip>
       For `EXACT_INPUT` calls, integrators usually need their own proxy contract on the destination chain. Because Relay delivers a variable output amount, you cannot always precompute the final calldata at quote time.
 
       Depositing into Aave is a good example. With `EXACT_OUTPUT`, the request can include two calls directly: approve the Aave pool, then call `supply()` with a fixed amount. With `EXACT_INPUT`, the destination amount is variable, so route the calls through your own Aave-specific proxy contract instead.
 
       A simple proxy contract can:
-      - transfer the full token balance approved by `msg.sender` or Relay's router
+      - pull the full approved token balance from the caller that initiated execution, such as Relay's router in a Relay deposit flow
       - approve the Aave pool contract
       - call `supply()` using its full current balance
 
@@ -46,7 +46,7 @@ While not mandatory for integration, doing the following will improve the UX for
 
       Your proxy contract then reads its live balance at execution time and builds the final Aave interaction from that balance.
 
-      Example request shape:
+      The request below is schematic. In practice, `txs[].data` must contain ABI-encoded calldata.
 
       ```bash
       curl -X POST "https://api.relay.link/quote/v2" \
@@ -75,7 +75,7 @@ While not mandatory for integration, doing the following will improve the UX for
       ```
 
       In `execute()`, your proxy can read its token balance, approve the Aave pool, and call `supply(asset, balance, onBehalfOf, referralCode)` with the live balance.
-    </Info>
+    </Tip>
 
     <CodeGroup>
     ```bash Request
@@ -88,7 +88,7 @@ While not mandatory for integration, doing the following will improve the UX for
         "originCurrency": "0x0000000000000000000000000000000000000000",
         "destinationCurrency": "0x0000000000000000000000000000000000000000",
         "amount": "100000000000000000",
-        "tradeType": "EXACT_OUTPUT",
+        "tradeType": "EXACT_OUTPUT", // use EXACT_INPUT to cap spend and accept variable output
         "txs": [
           {
             "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
@@ -836,7 +836,7 @@ While not mandatory for integration, doing the following will improve the UX for
     | Parameter             | Type   | Description                                                                                                                          |
     | --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
     | `amount`              | string      | Total value of all txs combined                                                                                                  |
-    | `tradeType`           | string      | Use `EXACT_INPUT` or `EXACT_OUTPUT`, depending on whether you want to quote by input amount or required output amount.             |
+    | `tradeType`           | string      | `EXACT_INPUT` (quote by input amount) or `EXACT_OUTPUT` (quote by required output)                                                 |
     | `txs`                 | array       | Array of transaction objects                                                                                                         |
     | `txs[].to`            | string      | Contract address to call                                                                                                             |
     | `txs[].value`         | string      | ETH value to send with call                                                                                                          |
@@ -890,9 +890,9 @@ While not mandatory for integration, doing the following will improve the UX for
 
 <input className="relay-checkbox" type="checkbox" name="transaction-data" value="yes"/> **Verify transaction data** - Confirm `amount` equals the sum of all `txs[].value` fields
 
-<input className="relay-checkbox" type="checkbox" name="trade-type" value="yes"/> **Check tradeType** - Use `"EXACT_OUTPUT"` when the destination call needs a precise amount, or `"EXACT_INPUT"` when spend should be fixed and output can vary
+<input className="relay-checkbox" type="checkbox" name="trade-type" value="yes"/> **Check tradeType** - Use `"EXACT_OUTPUT"` for a precise output, or `"EXACT_INPUT"` to cap spend
 
-<input className="relay-checkbox" type="checkbox" name="exact-input-proxy" value="yes"/> **Plan for `EXACT_INPUT` execution** - For `"EXACT_INPUT"` calls, use a destination proxy contract that reads the variable output balance and builds any follow-up calldata at runtime
+<input className="relay-checkbox" type="checkbox" name="exact-input-proxy" value="yes"/> **Plan for `EXACT_INPUT` execution** - Use a destination proxy contract that reads the delivered balance and builds follow-up calldata at runtime
 
 <input className="relay-checkbox" type="checkbox" name="call-data" value="yes"/> **Validate call data** - Ensure contract function calls are properly encoded
 

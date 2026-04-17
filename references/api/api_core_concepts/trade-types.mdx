@@ -23,4 +23,4 @@ We recommend using `EXPECTED_OUTPUT` for when an exact output amount is not nece
 The third supported type is `EXACT_OUTPUT`. In this order type, the user specifies exactly how much of the output currency they want to receive from the swap or bridge. 
 The user is told how much of the origin token this will require to receive exactly the output amount. If the exact requested amount out cannot be filled, the request is failed and the user is refunded on origin. 
 This trade type automatically accounts for any associated fees including relay fees, app fees, and gas fees.
-Destination calls support both `EXACT_INPUT` and `EXACT_OUTPUT`. We recommend using `EXACT_OUTPUT` when the destination call requires an exact amount, like minting with a precise ERC20 amount.
+We recommend using `EXACT_OUTPUT` for destination calls that require a precise output amount, like minting with an exact ERC20 amount. Destination calls also support `EXACT_INPUT` when you want to cap spend and accept a variable output.
