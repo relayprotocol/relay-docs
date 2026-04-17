@@ -28,6 +28,8 @@ While not mandatory for integration, doing the following will improve the UX for
     ## Get a Quote
     To execute a cross-chain transaction, you need to specify the origin chain for payment, the destination chain where the contract is deployed, and the transaction data to execute. Use the [quote endpoint](/references/api/get-quote-v2) with specific parameters for cross-chain calling.
 
+    Cross-chain calls support both `EXACT_INPUT` and `EXACT_OUTPUT`. Use `EXACT_OUTPUT` when the destination call requires a precise output amount. Use `EXACT_INPUT` when you want to cap how much the user spends and can tolerate variable output.
+
     <CodeGroup>
     ```bash Request
     curl -X POST "https://api.relay.link/quote/v2" \
@@ -559,7 +561,7 @@ While not mandatory for integration, doing the following will improve the UX for
 
     **Critical**: When your contract call involves spending ERC20 tokens, you must include an approval transaction in your `txs` array. The approval must come before the actual contract call.
 
-    #### ERC20 Approval \+ Contract Call Pattern
+    #### ERC20 Approval + Contract Call Pattern
 
     <CodeGroup>
     ```javascript JavaScript/ethers.js expandable
@@ -787,7 +789,7 @@ While not mandatory for integration, doing the following will improve the UX for
     | Parameter             | Type   | Description                                                                                                                          |
     | --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
     | `amount`              | string      | Total value of all txs combined                                                                                                  |
-    | `tradeType`           | string      | Must be "EXACT_OUTPUT"                                                                                                           |
+    | `tradeType`           | string      | Use `EXACT_INPUT` or `EXACT_OUTPUT`, depending on whether you want to quote by input amount or required output amount.             |
     | `txs`                 | array       | Array of transaction objects                                                                                                         |
     | `txs[].to`            | string      | Contract address to call                                                                                                             |
     | `txs[].value`         | string      | ETH value to send with call                                                                                                          |
@@ -841,7 +843,7 @@ While not mandatory for integration, doing the following will improve the UX for
 
 <input className="relay-checkbox" type="checkbox" name="transaction-data" value="yes"/> **Verify transaction data** - Confirm `amount` equals the sum of all `txs[].value` fields
 
-<input className="relay-checkbox" type="checkbox" name="trade-type" value="yes"/> **Check tradeType** - Must be set to `"EXACT_OUTPUT"` for cross-chain calls
+<input className="relay-checkbox" type="checkbox" name="trade-type" value="yes"/> **Check tradeType** - Use `"EXACT_OUTPUT"` when the destination call needs a precise amount, or `"EXACT_INPUT"` when spend should be fixed and output can vary
 
 <input className="relay-checkbox" type="checkbox" name="call-data" value="yes"/> **Validate call data** - Ensure contract function calls are properly encoded
 
