@@ -7,7 +7,7 @@ The `executeGaslessBatch` action takes a quote from [getQuote](/references/relay
 
 <Note>An API key is required for gasless batch execution. Configure it via `createClient({ apiKey: "..." })`.</Note>
 
-### Parameters
+## Parameters
 
 | Property               | Description                                                                                                                                              | Required |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
@@ -18,7 +18,7 @@ The `executeGaslessBatch` action takes a quote from [getQuote](/references/relay
 | **originGasOverhead**  | Gas overhead for the origin chain gasless transaction. Overrides the executor's default if provided (Calibur default: 80,000).                           | ❌       |
 | **onProgress**         | Callback for each stage of the execution flow. Returns `status`, `requestId`, and `details`. See [onProgress statuses](#handling-onprogress-updates) below. | ❌       |
 
-### Example
+## Example
 
 ```typescript
 import { getClient, getQuote, executeGaslessBatch } from "@relayprotocol/relay-sdk";
@@ -45,7 +45,7 @@ const result = await executeGaslessBatch({
 console.log("Request ID:", result.requestId);
 ```
 
-### Example with Subsidized Fees
+## Example with Subsidized Fees
 
 ```typescript
 const result = await executeGaslessBatch({
@@ -58,7 +58,7 @@ const result = await executeGaslessBatch({
 });
 ```
 
-### Handling onProgress updates
+## Handling onProgress updates
 
 The `onProgress` callback fires at each stage of the gasless batch execution. The `status` field indicates which stage is currently active:
 
