@@ -65,12 +65,12 @@ curl --request POST \
             "value": "0",
             "chainId": 999,
             "gas": "66491",
-            "maxFeePerGas": "4898375874",
+            "maxFeePerGas": "4890000000",
             "maxPriorityFeePerGas": "1500000000"
           }
         }
       ],
-      "requestId": "0xc80635375f2ec0c1a63a529cd77e04bc71b6392617a9c5f513596b4228d3de05"
+      "requestId": "0x02b000161ebd377171cd97c859b627731e6e6f54079f436742380f2d57add1f4"
     },
     {
       "id": "deposit",
@@ -83,19 +83,19 @@ curl --request POST \
           "data": {
             "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
             "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
-            "data": "0xe801795200000000000000000000000003508bb71268bba25ecacc8f620e01866650532c000000000000000000000000111111a1a0667d36bd57c0a9f569b9805711111100000000000000000000000000000000000000000000000000000000000f42400210c5d0a327ca4ba026b415e03f974923cd1693e074fb314a3afc4ac19766f4",
+            "data": "0xe801795200000000000000000000000003508bb71268bba25ecacc8f620e01866650532c000000000000000000000000111111a1a0667d36bd57c0a9f569b9805711111100000000000000000000000000000000000000000000000000000000000f4240fe747b806ef9f83dd100a69b7342678803c9a0bc50d5ccb7f8e0bf4eb72d6a15",
             "value": "0",
             "chainId": 999,
-            "maxFeePerGas": "4898375874",
+            "maxFeePerGas": "4890000000",
             "maxPriorityFeePerGas": "1500000000"
           },
           "check": {
-            "endpoint": "/intents/status/v3?requestId=0xc80635375f2ec0c1a63a529cd77e04bc71b6392617a9c5f513596b4228d3de05",
+            "endpoint": "/intents/status/v3?requestId=0x02b000161ebd377171cd97c859b627731e6e6f54079f436742380f2d57add1f4",
             "method": "GET"
           }
         }
       ],
-      "requestId": "0xc80635375f2ec0c1a63a529cd77e04bc71b6392617a9c5f513596b4228d3de05",
+      "requestId": "0x02b000161ebd377171cd97c859b627731e6e6f54079f436742380f2d57add1f4",
       "depositAddress": ""
     }
   ],
@@ -112,10 +112,10 @@ curl --request POST \
           "verified": true
         }
       },
-      "amount": "107764269228000",
-      "amountFormatted": "0.000107764269228",
-      "amountUsd": "0.004808",
-      "minimumAmount": "107764269228000"
+      "amount": "107580000000000",
+      "amountFormatted": "0.00010758",
+      "amountUsd": "0.004655",
+      "minimumAmount": "107580000000000"
     },
     "relayer": {
       "currency": {
@@ -129,10 +129,10 @@ curl --request POST \
           "verified": true
         }
       },
-      "amount": "23402",
-      "amountFormatted": "0.023402",
-      "amountUsd": "0.023399",
-      "minimumAmount": "23402"
+      "amount": "23411",
+      "amountFormatted": "0.023411",
+      "amountUsd": "0.023405",
+      "minimumAmount": "23411"
     },
     "relayerGas": {
       "currency": {
@@ -146,10 +146,10 @@ curl --request POST \
           "verified": true
         }
       },
-      "amount": "938",
-      "amountFormatted": "0.000938",
-      "amountUsd": "0.000938",
-      "minimumAmount": "938"
+      "amount": "940",
+      "amountFormatted": "0.00094",
+      "amountUsd": "0.000940",
+      "minimumAmount": "940"
     },
     "relayerService": {
       "currency": {
@@ -163,10 +163,10 @@ curl --request POST \
           "verified": true
         }
       },
-      "amount": "22464",
-      "amountFormatted": "0.022464",
-      "amountUsd": "0.022461",
-      "minimumAmount": "22464"
+      "amount": "22471",
+      "amountFormatted": "0.022471",
+      "amountUsd": "0.022465",
+      "minimumAmount": "22471"
     },
     "app": {
       "currency": {
@@ -197,10 +197,217 @@ curl --request POST \
           "verified": true
         }
       },
-      "amount": "0",
-      "amountFormatted": "0.0",
-      "amountUsd": "0",
-      "minimumAmount": "0"
+      "amount": "23411",
+      "amountFormatted": "0.023411",
+      "amountUsd": "0.023405",
+      "minimumAmount": "23411"
+    }
+  },
+  "feeSponsorship": {
+    "quoted": {
+      "selectedComponents": [
+        "execution",
+        "swap",
+        "relay",
+        "app"
+      ],
+      "capHit": false,
+      "components": {
+        "execution": {
+          "selected": true,
+          "total": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "20945",
+            "amountFormatted": "0.020945",
+            "amountUsd": "0.020940",
+            "minimumAmount": "20945"
+          },
+          "sponsored": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "20945",
+            "amountFormatted": "0.020945",
+            "amountUsd": "0.020940",
+            "minimumAmount": "20945"
+          },
+          "userPays": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0.000000",
+            "minimumAmount": "0"
+          }
+        },
+        "swap": {
+          "selected": true,
+          "total": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "2367",
+            "amountFormatted": "0.002367",
+            "amountUsd": "0.002366",
+            "minimumAmount": "2367"
+          },
+          "sponsored": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "2367",
+            "amountFormatted": "0.002367",
+            "amountUsd": "0.002366",
+            "minimumAmount": "2367"
+          },
+          "userPays": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0.000000",
+            "minimumAmount": "0"
+          }
+        },
+        "relay": {
+          "selected": true,
+          "total": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "99",
+            "amountFormatted": "0.000099",
+            "amountUsd": "0.000099",
+            "minimumAmount": "99"
+          },
+          "sponsored": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "99",
+            "amountFormatted": "0.000099",
+            "amountUsd": "0.000099",
+            "minimumAmount": "99"
+          },
+          "userPays": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0.000000",
+            "minimumAmount": "0"
+          }
+        },
+        "app": {
+          "selected": true,
+          "total": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0.000000",
+            "minimumAmount": "0"
+          },
+          "sponsored": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0.000000",
+            "minimumAmount": "0"
+          },
+          "userPays": {
+            "currency": {
+              "chainId": 999,
+              "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+              "symbol": "USDH",
+              "name": "USDH",
+              "decimals": 6
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0.000000",
+            "minimumAmount": "0"
+          }
+        }
+      },
+      "sponsoredTotal": {
+        "currency": {
+          "chainId": 999,
+          "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+          "symbol": "USDH",
+          "name": "USDH",
+          "decimals": 6
+        },
+        "amount": "23411",
+        "amountFormatted": "0.023411",
+        "amountUsd": "0.023405",
+        "minimumAmount": "23411"
+      },
+      "userPaysTotal": {
+        "currency": {
+          "chainId": 999,
+          "address": "0x111111a1a0667d36bd57c0a9f569b98057111111",
+          "symbol": "USDH",
+          "name": "USDH",
+          "decimals": 6
+        },
+        "amount": "0",
+        "amountFormatted": "0.0",
+        "amountUsd": "0.000000",
+        "minimumAmount": "0"
+      }
     }
   },
   "details": {
@@ -221,7 +428,7 @@ curl --request POST \
       },
       "amount": "1000000",
       "amountFormatted": "1.0",
-      "amountUsd": "0.999870",
+      "amountUsd": "0.999743",
       "minimumAmount": "1000000"
     },
     "currencyOut": {
@@ -236,10 +443,10 @@ curl --request POST \
           "verified": true
         }
       },
-      "amount": "922090",
-      "amountFormatted": "0.92209",
-      "amountUsd": "0.921861",
-      "minimumAmount": "884377"
+      "amount": "947020",
+      "amountFormatted": "0.94702",
+      "amountUsd": "0.946856",
+      "minimumAmount": "908286"
     },
     "refundCurrency": {
       "currency": {
@@ -255,23 +462,23 @@ curl --request POST \
       },
       "amount": "1000000",
       "amountFormatted": "1.0",
-      "amountUsd": "0.999870",
+      "amountUsd": "0.999743",
       "minimumAmount": "1000000"
     },
     "totalImpact": {
-      "usd": "-0.078009",
-      "percent": "-7.80"
+      "usd": "-0.052887",
+      "percent": "-5.29"
     },
     "swapImpact": {
-      "usd": "-0.054610",
-      "percent": "-5.46"
+      "usd": "-0.029482",
+      "percent": "-2.95"
     },
     "expandedPriceImpact": {
       "swap": {
-        "usd": "-0.056973"
+        "usd": "-0.031848"
       },
       "execution": {
-        "usd": "-0.020937"
+        "usd": "-0.02094"
       },
       "relay": {
         "usd": "-0.000099"
@@ -280,10 +487,10 @@ curl --request POST \
         "usd": "0"
       },
       "sponsored": {
-        "usd": "0"
+        "usd": "0.023405"
       }
     },
-    "rate": "0.92209",
+    "rate": "0.94702",
     "slippageTolerance": {
       "origin": {
         "usd": "0.000000",
@@ -291,12 +498,12 @@ curl --request POST \
         "percent": "0.00"
       },
       "destination": {
-        "usd": "0.037612",
-        "value": "37713",
-        "percent": "4.08"
+        "usd": "0.038726",
+        "value": "38734",
+        "percent": "4.09"
       }
     },
-    "timeEstimate": 3,
+    "timeEstimate": 4,
     "userBalance": "0",
     "isFixedRate": false,
     "route": {
@@ -315,7 +522,7 @@ curl --request POST \
           },
           "amount": "1000000",
           "amountFormatted": "1.0",
-          "amountUsd": "0.999870",
+          "amountUsd": "0.999743",
           "minimumAmount": "1000000"
         },
         "outputCurrency": {
@@ -332,7 +539,7 @@ curl --request POST \
           },
           "amount": "1000000",
           "amountFormatted": "1.0",
-          "amountUsd": "0.999870",
+          "amountUsd": "0.999743",
           "minimumAmount": "1000000"
         },
         "router": "relay"
@@ -350,10 +557,10 @@ curl --request POST \
               "verified": true
             }
           },
-          "amount": "922090",
-          "amountFormatted": "0.92209",
-          "amountUsd": "0.921861",
-          "minimumAmount": "884377"
+          "amount": "947020",
+          "amountFormatted": "0.94702",
+          "amountUsd": "0.946856",
+          "minimumAmount": "908286"
         },
         "outputCurrency": {
           "currency": {
@@ -367,10 +574,10 @@ curl --request POST \
               "verified": true
             }
           },
-          "amount": "922090",
-          "amountFormatted": "0.92209",
-          "amountUsd": "0.921861",
-          "minimumAmount": "884377"
+          "amount": "947020",
+          "amountFormatted": "0.94702",
+          "amountUsd": "0.946856",
+          "minimumAmount": "908286"
         },
         "router": "relay"
       }
@@ -378,12 +585,12 @@ curl --request POST \
   },
   "protocol": {
     "v2": {
-      "orderId": "0x0210c5d0a327ca4ba026b415e03f974923cd1693e074fb314a3afc4ac19766f4",
+      "orderId": "0xfe747b806ef9f83dd100a69b7342678803c9a0bc50d5ccb7f8e0bf4eb72d6a15",
       "orderData": {
         "version": "v1",
         "solverChainId": "base",
         "solver": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-        "salt": "0x3fb953e9960fa85d2f554fa44ec05a8d36d72bc34a08c56727f088adf198dc16",
+        "salt": "0xd0866b2647be6c43d71e9110eb7cacfcb31447bacdec1d038a0458cd0b34e0ee",
         "inputs": [
           {
             "payment": {
@@ -398,7 +605,7 @@ curl --request POST \
                 "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
                 "currency": "0x111111a1a0667d36bd57c0a9f569b98057111111",
                 "minimumAmount": "0",
-                "deadline": 1776954009,
+                "deadline": 1776999485,
                 "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
               },
               {
@@ -406,7 +613,7 @@ curl --request POST \
                 "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
                 "currency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
                 "minimumAmount": "0",
-                "deadline": 1776954009,
+                "deadline": 1776999485,
                 "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
               }
             ]
@@ -418,12 +625,12 @@ curl --request POST \
             {
               "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
               "currency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-              "minimumAmount": "884377",
-              "expectedAmount": "922090"
+              "minimumAmount": "908286",
+              "expectedAmount": "947020"
             }
           ],
           "calls": [],
-          "deadline": 1776954009,
+          "deadline": 1776999485,
           "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
         },
         "fees": []
