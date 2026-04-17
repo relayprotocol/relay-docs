@@ -7,11 +7,11 @@ Building applications at scale requires integrating with Relay's system at insta
 
 ## Integrating Relay Webhooks
 
-Each API Key can have a single webhook endpoint configured. In order to configure a webhook you'll need the following:
+Each API key can have a single webhook endpoint configured. In order to configure a webhook you'll need the following:
 
 | **Field** | **Description** | **Example** |
 | --- | --- | --- |
-| API Key | Any requests tied to this API key will post events to the webhook endpoint | `your-api-key` |
+| API key | Any requests tied to this API key will post events to the webhook endpoint | `your-api-key` |
 | Endpoint | An HTTPS endpoint to POST to when the status of a request changes | `https://my.server/receive-relay-event` |
 | Custom Headers | Any custom headers you wish to receive | `{"Authorization": "Bearer 0x123", "X-Hookdeck-Source-Id": "src_123"}` |
 

@@ -1,10 +1,11 @@
 ---
-title: "Rate Limits and API Keys"
+title: "Rate Limits and API keys"
+description: "Authenticate requests and raise your rate limits with a Relay API key"
 ---
 
 Relay enforces rate limits to ensure platform reliability and fair usage across integrators. Default limits apply to all requests. Higher limits are available via API keys.
 
-## Default Rate Limits (No API Key)
+## Default Rate Limits (No API key)
 
 The following limits apply when no API key is provided:
 
@@ -15,7 +16,7 @@ The following limits apply when no API key is provided:
 | `/transactions/status` | 200 requests per minute |
 | Other endpoints        | 200 requests per minute |
 
-## API Key Rate Limits
+## API key Rate Limits
 
 When using an API key, limits increase and are applied per key:
 
@@ -28,7 +29,7 @@ When using an API key, limits increase and are applied per key:
 
 API keys are recommended for server-side production integrations and higher-throughput use cases.
 
-## How to Request an API Key
+## How to Request an API key
 
 Requirements:
 
@@ -41,7 +42,7 @@ To request an API key (once requirements are met):
 2. The Relay team will review within 72 hours.
 3. If approved, we will email your unique API key.
 
-## How to Use an API Key
+## How to Use an API key
 
 ### HTTP Requests
 
@@ -57,7 +58,7 @@ This header should be included on all requests where higher rate limits are requ
 
 <CodeGroup>
 
-```jsx Global API Key
+```jsx Global API key
 // It is recommended to only set the apiKey parameter when using the SDK server-side.
 import {
   createClient,
@@ -73,7 +74,7 @@ createClient({
 ```
 
 
-```jsx SDK Action API Key
+```jsx SDK Action API key
 // In the case that you prefer not to set a global api key 
 // you can pass the api key into the headers parameter of the getQuote function. 
 import { getClient } from "@relayprotocol/relay-sdk";
@@ -104,7 +105,7 @@ createClient({
 });
 ```
 
-## Keeping Your API Key Secure
+## Keeping Your API key Secure
 
 Your API key is sensitive — treat it like a password. It is tied to your account, controls your rate limits, and all requests made with it are attributed to you.
 
