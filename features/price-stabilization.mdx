@@ -3,9 +3,11 @@ title: "Price Stabilization"
 description: "Deliver consistent stablecoin pricing across chains"
 ---
 
+Price Stabilization gives you two mechanisms for stablecoin swaps: [fee sponsorship](#fee-sponsorship), where you cover transaction fees so the user receives the full market-rate output, or [fixed rates](#fixed-rates), where you lock in a specific exchange rate (e.g. 1:1) and absorb the volatility yourself.
+
 Stablecoins don't actually trade at 1:1. When users swap between stablecoins cross-chain, the output fluctuates based on market rates, swap impact, and fees. For a $10,000 USDC-to-USDT swap, even small deviations from peg mean the user might receive 9,995 or 10,005 USDT instead of a clean 10,000.
 
-Relay provides two mechanisms to stabilize stablecoin pricing and deliver a cleaner UX: [fee sponsorship](#fee-sponsorship), where you cover transaction fees so the user receives the full market-rate output, and [fixed rates](#fixed-rates), where you lock in a specific exchange rate (e.g. 1:1) and absorb the volatility yourself. With fixed rates, you sometimes sponsor and sometimes earn the difference, with the expectation that it nets out over time.
+With fixed rates, you sometimes sponsor and sometimes earn the difference, with the expectation that it nets out over time.
 
 For a cross-chain swap between major stablecoins, the cost is roughly: \$0.02 + 1bps.
 
