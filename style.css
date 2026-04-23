@@ -39,7 +39,24 @@
     padding-left: 24px;
   }
 
+  .chain-icon-light {
+    display: block;
+  }
+
+  .chain-icon-dark {
+    display: none;
+  }
+
 }
+
+.dark .relay-table .chain-icon-light {
+  display: none;
+}
+
+.dark .relay-table .chain-icon-dark {
+  display: block;
+}
+
 #\/references\/api\/core,
 #\/references\/api\/utilities,
 #\/references\/api\/advanced {
