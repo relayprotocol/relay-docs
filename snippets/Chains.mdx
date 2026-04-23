@@ -27,7 +27,13 @@ const rows = data
 .sort((a, b) => a.displayName.localeCompare(b.displayName))
 .map((chain) => {
 return `<tr key=${chain.id}>
-          <td style="text-transform: capitalize;">${chain.displayName}</td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px; text-transform: capitalize;">
+              <img class="chain-icon chain-icon-light" src="https://assets.relay.link/icons/square/${chain.id}/light.png" alt="" loading="lazy" style="width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; margin: 0;" />
+              <img class="chain-icon chain-icon-dark" src="https://assets.relay.link/icons/square/${chain.id}/dark.png" alt="" loading="lazy" style="width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; margin: 0;" />
+              <span>${chain.displayName}</span>
+            </div>
+          </td>
           <td>${chain.id}</td>
           <td>${chain.tokenSupport}</td>
         </tr>`;
@@ -74,18 +80,10 @@ return `<tr key=${chain.id}>
 }
 
 return (
-<table
-style={{ width: "100%", borderSpacing: "48px" }}
-className="relay-table" >
-<thead
-style={{
-          borderBottom: "1px solid rgb(227 226 230)",
-          paddingBottom: 5,
-          width: "100%",
-          fontSize: 16,
-        }} >
+<table className="relay-table" style={{ width: "100%" }}>
+<thead style={{ borderBottom: "1px solid rgb(227 226 230)" }}>
 <tr style={{ textAlign: "left" }}>
-<th>Chain Name</th>
+<th>Chain</th>
 <th>Chain ID</th>
 <th>Supported Tokens</th>
 </tr>
