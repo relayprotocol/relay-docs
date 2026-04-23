@@ -246,3 +246,21 @@ getClient().actions.execute({
 ```
 </CodeGroup>
 
+### Viem adapter options
+
+`adaptViemWallet` accepts an optional second argument for adapter-level configuration:
+
+| Property | Description |
+| -------- | ----------- |
+| **disableCapabilitiesCheck** | Skip `wallet.getCapabilities` calls used for EIP-5792 atomic-batch detection and smart-wallet detection. Set this for wallets with a broken `getCapabilities` implementation that hangs or never resolves. When true, execution falls back to sequential transactions. |
+
+```typescript
+import { adaptViemWallet } from "@relayprotocol/relay-sdk";
+
+const adaptedWallet = adaptViemWallet(walletClient, {
+  disableCapabilitiesCheck: true,
+});
+```
+
+<Tip>The same flag is available directly on `getQuote`, `execute`, and `claimAppFees` when you pass a raw viem `WalletClient` — the SDK forwards it to `adaptViemWallet` internally.</Tip>
+
