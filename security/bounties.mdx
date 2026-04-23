@@ -5,7 +5,7 @@ description: "How Relay classifies and rewards vulnerability reports."
 
 Relay runs a bug bounty program to make responsible disclosure financially rational for security researchers. Rewards scale with how much damage a bug can cause and how feasible it is to exploit in practice. We run monitoring and circuit breakers across the stack, so the likelihood tiers and modifiers reflect real response capacity — not a hypothetical one.
 
-This framework applies across the Relay stack, protocol and services.
+This framework applies across Relay's protocol and services.
 
 ## How payouts are calculated
 
@@ -45,7 +45,7 @@ Likelihood captures how probable exploitation is in practice.
 | **L2 — Medium** | Needs setup (flash loans, timing, conditions) | Requires specific conditions: flash loan infra, a particular chain state, MEV infrastructure, or another protocol being in a particular state. |
 | **L1 — Low**    | Needs a privileged role or rare situation     | Requires privileged access (operator, solver, oracle), very specific market conditions, or a multi-step attack depending on several parties.   |
 
-We reduce likelihood by one tier (floored at L1) when the exploit freezes rather than steals - unless the freeze is a step toward theft.
+We reduce likelihood by one tier (floored at L1) when the exploit freezes rather than steals — unless the freeze is a step toward theft.
 
 ## Base payout matrix
 
@@ -106,7 +106,7 @@ Modifiers stack. The final amount is floored at $500, capped at $100,000, and ro
 
 ### Flash loan reentrancy on withdrawal
 
-An attacker uses a flash loan to reenter the withdrawal function and drain some of the protocol's funds in a single transaction. No special permissions required.
+An attacker uses a flash loan to reenter the withdrawal function and drain depository contract funds in a single transaction. No special permissions required.
 
 - **Severity: S4** — instant, total fund theft.
 - **Likelihood: L2** — requires flash loan infrastructure and a specific reentrancy window.
