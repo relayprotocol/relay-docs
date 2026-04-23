@@ -17,6 +17,10 @@ Before you can bridge funds to Lighter, you must first set up an account on [lig
 
 Lighter can be accessed using the standard Relay API flow. To get started, review the [**execution steps**](https://docs.relay.link/references/api/api_core_concepts/step-execution) documentation. When you're ready to execute deposits, refer to the [**Get Quote**](https://docs.relay.link/references/api/get-quote-v2) API endpoint.
 
+<Tip>
+  If you're integrating via the SDK, the [Lighter wallet adapter](/references/relay-kit/sdk/adapters) wraps this flow — it resolves the user's Lighter account index, manages the API key lifecycle, and submits the L2 transfer on your behalf.
+</Tip>
+
 ## Lighter-Specific API Parameters
 
 | **Parameter**       | **Input**   | **Description**                                      |

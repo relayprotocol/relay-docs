@@ -9,7 +9,7 @@ An adapter is a function that takes parameters and returns an object that adhere
 
 | Property                   | Description                                                                                     | Required |
 | -------------------------- | ----------------------------------------------------------------------------------------------- | -------- |
-| **vmType**                    | A string representing a supported vmType (`evm`  `svm`  `bvm`  `suivm` `tvm`)                                                   | ✅       |
+| **vmType**                    | A string representing a supported vmType (`evm`  `svm`  `bvm`  `suivm` `tvm` `lvm`)                                                   | ✅       |
 | **getChainId**                | An async function that returns a chain id                                                                                              | ✅       |
 | **handleSignMessageStep**     | An async function that given a signature step item and a step generates a signature                                                                                              | ✅       |
 | **handleSendTransactionStep** | An async function that given a chain id, a transaction step item and a step returns a transaction hash                                                                                              | ✅       |
@@ -38,6 +38,8 @@ The following adapters are officially maintained and developed by the Relay team
 [Sui Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-sui-wallet-adapter): This adapter gives the sdk the ability to submit transactions to the Sui blockchain. Under the hood it uses the [@mysten/sui](https://www.npmjs.com/package/@mysten/sui) sdk.
 
 [Tron Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-tron-wallet-adapter): This adapter gives the sdk the ability to submit transactions to the Tron blockchain. Under the hood it uses the [tronweb](https://www.npmjs.com/package/tronweb) sdk.
+
+[Lighter Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-lighter-wallet-adapter): This adapter gives the SDK the ability to deposit to [Lighter](https://lighter.exchange/) from any Relay-supported chain. It owns the full Lighter session lifecycle — resolving the user's Lighter account index, generating an in-memory API key, and registering it via `changeApiKey` on first transfer. Integrators who already run their own Lighter session (backend-provisioned key, wallet-level integration) can pass a pre-built `signerClient` to bypass the bootstrap entirely.
 
 
 ### How can I use an adapter?
@@ -243,6 +245,38 @@ getClient().actions.execute({
     ...
 })
 
+```
+```typescript Lighter
+import { getClient, getQuote } from '@relayprotocol/relay-sdk'
+import { adaptLighterWallet } from '@relayprotocol/relay-lighter-wallet-adapter'
+import { createWalletClient, custom } from 'viem'
+import { mainnet } from 'viem/chains'
+
+// Lighter deposits are authorized by an L1 (EVM) signature, so the adapter
+// only needs the user's connected EVM address and a signMessage callback.
+const walletClient = createWalletClient({
+  chain: mainnet,
+  transport: custom(window.ethereum!)
+})
+const account = walletClient.account!
+
+const adaptedWallet = adaptLighterWallet({
+  l1Address: account.address,
+  signL1Message: (message) =>
+    walletClient.signMessage({ account, message })
+})
+
+const options = ... // define this based on getQuote options (destinationChainId: 3586256, recipient: <Lighter account index>)
+
+const quote = await getClient().actions.getQuote(options)
+
+getClient().actions.execute({
+  quote,
+  wallet: adaptedWallet,
+  onProgress: ({ steps, fees, breakdown, currentStep, currentStepItem, txHashes, details }) => {
+    // custom handling
+  }
+})
 ```
 </CodeGroup>
 
