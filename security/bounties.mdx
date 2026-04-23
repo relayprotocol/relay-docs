@@ -45,7 +45,7 @@ Likelihood captures how probable exploitation is in practice.
 | **L2 — Medium** | Needs setup (flash loans, timing, conditions) | Requires specific conditions: flash loan infra, a particular chain state, MEV infrastructure, or another protocol being in a particular state. |
 | **L1 — Low**    | Needs a privileged role or rare situation     | Requires privileged access (operator, solver, oracle), very specific market conditions, or a multi-step attack depending on several parties.   |
 
-We reduce likelihood by one tier (floored at L1) when the exploit freezes rather than steals — unless the freeze is a step toward theft.
+We reduce likelihood by one tier (floored at L1) when the exploit freezes rather than steals (unless the freeze is a step toward theft).
 
 ## Base payout matrix
 
@@ -125,7 +125,7 @@ A rounding error lets any filler extract ~2 bps above their entitled fee per fil
 A crafted cross-chain message bricks a specific pool's accounting, locking all funds in it. The attacker has no way to extract — it is a pure grief and costs gas.
 
 - **Severity: S3** — permanent freeze of a pool.
-- **Likelihood: L2** — downgraded one tier from L3 because the attacker has no profit motive and pays to execute.
+- **Likelihood: L2** — downgraded one tier from L3 because the exploit freezes rather than steals.
 - **Base: $15,000.** Permanently unrecoverable (×1.5) → **$22,500**.
 
 ## Edge cases
