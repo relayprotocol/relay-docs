@@ -5,45 +5,53 @@ description: "How Relay classifies and rewards vulnerability reports."
 
 Relay runs a bug bounty program to make responsible disclosure financially rational for security researchers. Rewards scale with how much damage a bug can cause and how feasible it is to exploit in practice.
 
-This page describes the framework we use to classify reports and determine payouts. It applies across the Relay stack — smart contracts, solvers, oracles, and the services that surround them.
+This framework applies across the Relay stack — smart contracts, solvers, oracles, and the services around them.
 
-## How payouts are determined
+## How payouts are calculated
 
-Every valid report is scored on two axes — **severity** and **likelihood** — and mapped to a base payout. A short, fixed list of modifiers then adjusts the base amount up or down.
+Every valid report goes through five steps:
+
+1. Classify **severity** (S1–S4) — how bad is the damage if exploited?
+2. Classify **likelihood** (L1–L3) — how feasible is exploitation in practice?
+3. Read the **base payout** from the matrix.
+4. Apply **modifiers** (×0.5 to ×1.5) from the fixed list.
+5. Round to the nearest $500. **Floor: $500. Cap: $100,000.**
+
+As a rough intuition: critical bugs usually pay **$20k–$100k**, high bugs **$7.5k–$30k**, and most modifier-adjusted payouts land at **30–70% of base**.
 
 ### Severity
 
-Severity captures what happens if the bug is exploited: damage magnitude and how fast it occurs.
+Severity captures what happens if the bug is exploited — damage magnitude and how fast it occurs.
 
-| Tier | Label | Definition |
+| Tier | Rule of thumb | Definition |
 | -- | -- | -- |
-| **S4** | Critical | Immediate, total fund theft or protocol insolvency. No time to react. |
-| **S3** | High | Large-scale fund theft or permanent freeze. Requires some setup, but fast once triggered. |
-| **S2** | Medium | Partial drain (bounded percentage, not total) or slow drain with a meaningful response window. Temporary freeze. |
-| **S1** | Low | Griefing, minor economic damage, DoS with no fund loss, or a broken admin function with no external exploit path. |
+| **S4 — Critical** | Can drain everything immediately | Total fund theft or protocol insolvency with no time to react. |
+| **S3 — High** | Large or fast theft, or permanent freeze | Large-scale fund theft or permanent freeze. Requires some setup, but fast once triggered. |
+| **S2 — Medium** | Partial or slow damage | Bounded drain (capped percentage, not total) or slow drain with a response window. Temporary freeze. |
+| **S1 — Low** | Annoying but not financially dangerous | Griefing, minor economic damage, DoS with no fund loss, or an admin-only bug with no external exploit path. |
 
-Key distinctions we apply when scoring:
+Four rules resolve the most common classification calls:
 
-- **Theft outranks freeze.** A bug that steals funds is more severe than one that freezes them, even if the frozen amount is larger.
+- **Theft outranks freeze.** Stealing funds is more severe than locking them, even at a larger nominal amount.
 - **Instant outranks slow.** A slow drain gives us time to detect and pause; an instant drain does not.
-- **Bounded damage is scoped to the damage ceiling**, not total TVL.
-- **Admin-only bugs** — functions behind `onlyOwner` or an equivalent role with no external exploit path — are typically S1 regardless of what the function does.
+- **If damage is capped**, severity is based on the cap — not total TVL.
+- **Admin-only bugs are S1.** Functions behind `onlyOwner` or an equivalent role with no external path do not escalate above S1 regardless of the potential damage.
 
 ### Likelihood
 
 Likelihood captures how probable exploitation is in practice.
 
-| Tier | Label | Criteria |
+| Tier | Rule of thumb | Criteria |
 | -- | -- | -- |
-| **L3** | High | No prerequisites. Callable by any EOA, at any time, with publicly available calldata. |
-| **L2** | Medium | Requires specific conditions: flash loan setup, a particular chain state, MEV infrastructure, or another protocol being in a particular state. |
-| **L1** | Low | Requires privileged access (e.g. operator or solver key), very specific market conditions, or a multi-step attack that depends on multiple independent parties. |
+| **L3 — High** | Anyone can do it anytime | No prerequisites. Callable by any EOA with publicly available calldata. |
+| **L2 — Medium** | Needs setup (flash loans, timing, conditions) | Requires specific conditions: flash loan infra, a particular chain state, MEV infrastructure, or another protocol being in a particular state. |
+| **L1 — Low** | Needs a privileged role or rare situation | Requires privileged access (operator, solver, oracle), very specific market conditions, or a multi-step attack depending on several parties. |
 
 We reduce likelihood by one tier when any of the following apply:
 
-- The exploit freezes rather than steals funds, so the attacker pays gas with no upside — unless the freeze is an intermediate step toward theft.
+- The exploit freezes rather than steals, so the attacker pays gas with no upside — unless the freeze is a step toward theft.
 - The attack requires significant capital at risk or fees that materially erode expected profit.
-- The contract is pausable with active monitoring and sub-5-minute response capability — for slow drains only, not instant theft.
+- The contract is pausable with active monitoring and sub-5-minute response — slow drains only, not instant theft.
 
 ## Base payout matrix
 
@@ -54,7 +62,7 @@ We reduce likelihood by one tier when any of the following apply:
 | **S2 — Medium** | $10,000 | $5,000 | $2,000 |
 | **S1 — Low** | $2,000 | $1,000 | $500 |
 
-No valid in-scope finding pays less than $500, and no finding pays more than $100,000. The $500 floor only applies to reports that demonstrate an external exploit path — that is, an attacker without a privileged role can reach the bug.
+The floor of $500 applies only when a report demonstrates an external exploit path — an attacker without a privileged role can reach the bug.
 
 A report receives **$0 with a clear written explanation** when all of the following hold:
 
@@ -62,11 +70,20 @@ A report receives **$0 with a clear written explanation** when all of the follow
 - The reporter does not demonstrate that an unprivileged party can reach that role or induce the privileged party to act.
 - The bug would not fire under normal operation.
 
-These are real bugs and we still want them reported — they just do not qualify as vulnerabilities under this framework. Strong write-ups in this category are candidates for a discretionary bonus (see below).
+These are real bugs and we still want them reported — they just do not qualify as vulnerabilities under this framework. Strong write-ups in this category are candidates for a discretionary bonus.
 
 ## Modifiers
 
-After landing on a base payout, we apply the modifiers below multiplicatively. The list is fixed — there are no open-ended qualitative adjustments.
+After landing on a base payout, apply modifiers multiplicatively. The list is fixed.
+
+**Quick checklist:**
+
+- ×1.5 — permanently unrecoverable freeze
+- ×1.25 — hard to fix, or hard to detect
+- ×0.75 — expensive to exploit, or pausable with active monitoring
+- ×0.5 — damage capped to a sub-pool
+
+**Full trigger definitions:**
 
 | Modifier | Trigger | Factor |
 | -- | -- | -- |
@@ -77,11 +94,11 @@ After landing on a base payout, we apply the modifiers below multiplicatively. T
 | Pausable + monitored | Contract can be paused and active monitoring with <5-minute response is in place | ×0.75 |
 | Bounded damage pool | Damage capped to a sub-pool, not full TVL (e.g. fee buffer only) | ×0.5 |
 
-<Info>The **permanently unrecoverable** modifier applies to freeze scenarios only. S3 and S4 severity tiers already encode "no time to react" for theft-class bugs, so ×1.5 would double-count on those findings.</Info>
+<Info>The **permanently unrecoverable** modifier applies to freeze scenarios only. S3 and S4 already encode "no time to react" for theft-class bugs, so ×1.5 would double-count there.</Info>
 
-Modifiers stack. The final amount is always floored at $500 and capped at $100,000, then rounded to the nearest $500.
+Modifiers stack. The final amount is floored at $500, capped at $100,000, and rounded to the nearest $500.
 
-**Worked example.** An S3/L2 base payout is $15,000. The contract is pausable (×0.75) and damage is bounded to the fee buffer (×0.5), giving $15,000 × 0.75 × 0.5 = $5,625, rounded to **$5,500**.
+**Worked example.** S3/L2 base = $15,000. Pausable (×0.75) and bounded to the fee buffer (×0.5) → $15,000 × 0.75 × 0.5 = $5,625 → **$5,500**.
 
 ## Worked examples
 
@@ -91,37 +108,37 @@ An attacker uses a flash loan to reenter the withdrawal function and drain up to
 
 - **Severity: S4** — instant, total fund theft.
 - **Likelihood: L2** — requires flash loan infrastructure and a specific reentrancy window.
-- **Base payout: $50,000.** No modifiers apply. **Final: $50,000.**
+- **Base: $50,000.** No modifiers apply. **Final: $50,000.**
 
 ### Fee parameter drift
 
-A rounding error in fee calculation lets any filler extract ~2 bps above their entitled fee per fill. Callable by any EOA, damage accumulates slowly, bounded to the fee buffer.
+A rounding error lets any filler extract ~2 bps above their entitled fee per fill. Callable by any EOA, damage accumulates slowly, bounded to the fee buffer.
 
 - **Severity: S2** — slow drain, bounded to the fee pool.
 - **Likelihood: L3** — any EOA, any time.
-- **Base payout: $10,000.** Bounded damage pool (×0.5) and pausable + monitored (×0.75) → $10,000 × 0.5 × 0.75 = $3,750. **Final: $4,000.**
+- **Base: $10,000.** Bounded damage pool (×0.5) and pausable + monitored (×0.75) → $3,750 → **$4,000**.
 
 ### Permanent pool freeze via griefing
 
-An attacker sends a crafted cross-chain message that bricks a specific pool's accounting, locking all funds in it. The attacker has no way to extract the funds — it is a pure grief and costs gas.
+A crafted cross-chain message bricks a specific pool's accounting, locking all funds in it. The attacker has no way to extract — it is a pure grief and costs gas.
 
 - **Severity: S3** — permanent freeze of a pool.
-- **Likelihood: L2** — downgraded one tier from L3 because the attacker has no profit motive and must pay to execute.
-- **Base payout: $15,000.** Permanently unrecoverable (×1.5, freeze with no recovery path) → $15,000 × 1.5 = $22,500. **Final: $22,500.**
+- **Likelihood: L2** — downgraded one tier from L3 because the attacker has no profit motive and pays to execute.
+- **Base: $15,000.** Permanently unrecoverable (×1.5) → **$22,500**.
 
 ## Edge cases
 
-- **"The fix is already deployed."** Payouts are assessed as of the time of report submission, not the time of review. A valid report does not lose value because we moved fast.
-- **"The attacker would need to be a solver or relayer."** Permissioned roles are L1, not L2. L2 is reserved for open-market conditions like flash loans and MEV.
-- **"The bug only exists under specific token configurations."** If the configuration is live in production, the report is treated as real. If it is only theoretical, the likelihood drops to L1.
-- **"The reporter also proposed the fix."** This does not change the tier, but is strong grounds for a discretionary bonus.
+- **"The fix is already deployed."** Payouts are assessed as of report submission, not review. A valid report does not lose value because we moved fast.
+- **"The attacker would need to be a solver or relayer."** Permissioned roles are L1, not L2. L2 is reserved for open-market conditions (flash loans, MEV).
+- **"The bug only exists under specific token configurations."** If the configuration is live in production, the report is treated as real. If only theoretical, likelihood drops to L1.
+- **"The reporter also proposed the fix."** Does not change the tier, but is strong grounds for a discretionary bonus.
 - **Duplicate reports.** The first submission gets the full payout. A duplicate submitted within 7 days receives 10% of the original as a courtesy payment.
 
 ## Discretionary bonuses
 
-Separate from the matrix, we may award discretionary bonuses for:
+Separate from the matrix, we may award bonuses for:
 
-- Exceptional write-ups with clear root cause analysis and a suggested fix.
+- Exceptional write-ups with clear root cause and a suggested fix.
 - Novel attack vectors that reveal a systemic pattern.
 - Proactive disclosure during an active incident.
 
@@ -137,7 +154,7 @@ Bonuses are recognition, not entitlement, and are not pre-committed.
 
 ## Out of scope
 
-The following are out of scope and not eligible for a reward:
+The following are not eligible for a reward:
 
 - Attacks the reporter has already exploited.
 - Issues requiring phishing, social engineering, or a compromised private key.
@@ -147,12 +164,10 @@ The following are out of scope and not eligible for a reward:
 
 ## Reward process and requirements
 
-To receive a bounty reward, the following apply:
-
-- **KYC and background check.** KYC verification and a background check are required before any reward can be issued.
+- **KYC and background check.** Required before any reward can be issued.
 - **Payment.** Rewards are paid in cryptocurrency.
-- **Tax documentation.** Any tax-related documentation (W-8BEN, W-9, or the equivalent for your jurisdiction) is handled as part of KYC.
+- **Tax documentation.** W-8BEN, W-9, or the equivalent for your jurisdiction is handled as part of KYC.
 
 ## Reporting a vulnerability
 
-If you suspect you have found a bug, email [support@relay.link](mailto:support@relay.link) with a description, reproduction steps, and a runnable PoC where applicable. Most responses are provided within 24 hours, and we will get back to you with next steps within 1 to 4 business days.
+Email [support@relay.link](mailto:support@relay.link) with a description, reproduction steps, and a runnable PoC where applicable. Most responses are provided within 24 hours, and we will get back to you with next steps within 1 to 4 business days.
