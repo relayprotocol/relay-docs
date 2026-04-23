@@ -47,7 +47,11 @@ Relay Webhooks specifically stream transaction statuses for both cross and same-
     "updatedAt": 1774993296121,
     "originChainId": 8453,
     "destinationChainId": 42161,
-    "depositAddress": "0x..", //nullable
+    "depositAddress": {
+      "address": "0x..",
+      "depositAddressType": "open", // open / strict
+      "depositor": "0x..", //nullable
+    }, //nullable
     "requestId": "0x..."
   }
 }
