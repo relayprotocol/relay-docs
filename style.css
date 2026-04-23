@@ -39,7 +39,24 @@
     padding-left: 24px;
   }
 
+  .chain-icon-light {
+    display: block;
+  }
+
+  .chain-icon-dark {
+    display: none;
+  }
+
 }
+
+.dark .relay-table .chain-icon-light {
+  display: none;
+}
+
+.dark .relay-table .chain-icon-dark {
+  display: block;
+}
+
 #\/references\/api\/core,
 #\/references\/api\/utilities,
 #\/references\/api\/advanced {
@@ -165,7 +182,7 @@
   .homepage-cards {
     display: flex;
     gap: 24px;
-    margin: 40px 50px 0 50px;
+    margin: 40px 50px;
     justify-content: center;
   }
 
@@ -242,7 +259,7 @@
     }
 
     .homepage-cards {
-      margin: 40px 12px 0 12px;
+      margin: 40px 12px;
     }
   }
 
