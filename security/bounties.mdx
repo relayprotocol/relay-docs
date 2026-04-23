@@ -54,7 +54,15 @@ We reduce likelihood by one tier when any of the following apply:
 | **S2 — Medium** | $10,000 | $5,000 | $2,000 |
 | **S1 — Low** | $2,000 | $1,000 | $500 |
 
-No valid in-scope finding pays less than $500, and no finding pays more than $100,000. Confirmed bugs with no external exploit path (for example, a pure admin function failure) may receive $0 with a clear written explanation — the floor only applies to reports with a demonstrable external exploit path.
+No valid in-scope finding pays less than $500, and no finding pays more than $100,000. The $500 floor only applies to reports that demonstrate an external exploit path — that is, an attacker without a privileged role can reach the bug.
+
+A report receives **$0 with a clear written explanation** when all of the following hold:
+
+- The only exploit path requires a privileged role (owner, operator, solver, oracle).
+- The reporter does not demonstrate that an unprivileged party can reach that role or induce the privileged party to act.
+- The bug would not fire under normal operation.
+
+These are real bugs and we still want them reported — they just do not qualify as vulnerabilities under this framework. Strong write-ups in this category are candidates for a discretionary bonus (see below).
 
 ## Modifiers
 
