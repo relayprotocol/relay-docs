@@ -24,11 +24,11 @@ The [Allocator](/references/protocol/components/allocator) and [Security Council
 
 ## Depository Contracts
 
-{/* Generated using: curl https://api.relay.link/chains | jq -r '.chains[] | "|\(.name)|\(.protocol.v2.depository)|\(.vmType)|\(.id)"' */}
+{/* Generated using: curl https://api.relay.link/chains | jq -r '.chains[] | "|\(.name)|\(.protocol.v2.depository)|\(.vmType)|\(.id)|"' */}
 
 [Depository](/references/protocol/components/depository) contracts are deployed on every supported origin chain.
 
-| Chain          | Address                                      | VM Type        | EVM Chain Id |
+| Chain          | Address                                      | VM Type        | Chain ID     |
 | -------------- | -------------------------------------------- | -------------- | ------------ |
 | ethereum       | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 1            |
 | optimism       | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 10           |
@@ -65,7 +65,7 @@ The [Allocator](/references/protocol/components/allocator) and [Security Council
 | somnia         | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 5031         |
 | superseed      | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 5330         |
 | cyber          | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 7560         |
-| B3             | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 8333         |
+| b3             | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 8333         |
 | base           | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 8453         |
 | plasma         | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 9745         |
 | apechain       | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 33139        |
@@ -93,15 +93,15 @@ The [Allocator](/references/protocol/components/allocator) and [Security Council
 | zero-network   | 0xa88cf7864951147a08707ed732237eaa9b1c3b9b   | ethereum-vm    | 543210       |
 | gensyn         | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 685689       |
 | katana         | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 747474       |
-| lighter        | 723071                                       | lighter-vm     |              |
+| lighter        | 723071                                       | lighter-vm     | 3586256      |
 | ethereal       | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 5064014      |
 | zora           | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 7777777      |
-| bitcoin        | 1KT3zCYUrmQxjcveUNs1Rs7WcXDcPQZ4av           | bitcoin-vm     |              |
-| eclipse        | 99vQwtBwYtrqqD9YSXbdum3KBdxPAVxYTaQ3cfnJSrN2 | solana-vm      |              |
-| soon           | 99vQwtBwYtrqqD9YSXbdum3KBdxPAVxYTaQ3cfnJSrN2 | solana-vm      |              |
+| bitcoin        | 1KT3zCYUrmQxjcveUNs1Rs7WcXDcPQZ4av           | bitcoin-vm     | 8253038      |
+| eclipse        | 99vQwtBwYtrqqD9YSXbdum3KBdxPAVxYTaQ3cfnJSrN2 | solana-vm      | 9286185      |
+| soon           | 99vQwtBwYtrqqD9YSXbdum3KBdxPAVxYTaQ3cfnJSrN2 | solana-vm      | 9286186      |
 | corn           | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 21000000     |
 | degen          | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 666666666    |
-| tron           | TXtEs6t2oUWQsNos7m68gbHdE9Q5n6x2oN           | tron-vm        |              |
-| solana         | 99vQwtBwYtrqqD9YSXbdum3KBdxPAVxYTaQ3cfnJSrN2 | solana-vm      |              |
+| tron           | TXtEs6t2oUWQsNos7m68gbHdE9Q5n6x2oN           | tron-vm        | 728126428    |
+| solana         | 99vQwtBwYtrqqD9YSXbdum3KBdxPAVxYTaQ3cfnJSrN2 | solana-vm      | 792703809    |
 | ancient8       | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 888888888    |
 | rari           | 0x4cd00e387622c35bddb9b4c962c136462338bc31   | ethereum-vm    | 1380012617   |
