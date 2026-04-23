@@ -17,18 +17,16 @@ Every valid report goes through five steps:
 4. Apply **modifiers** (×0.5 to ×1.5) from the fixed list.
 5. Round to the nearest $500. **Floor: $500. Cap: $100,000.**
 
-As a rough intuition: critical bugs usually pay **$20k–$100k**, high bugs **$7.5k–$30k**, and most modifier-adjusted payouts land at **30–70% of base**.
-
 ### Severity
 
 Severity captures what happens if the bug is exploited — damage magnitude and how fast it occurs.
 
-| Tier | Rule of thumb | Definition |
-| -- | -- | -- |
-| **S4 — Critical** | Can drain everything immediately | Total fund theft or protocol insolvency with no time to react. |
-| **S3 — High** | Large or fast theft, or permanent freeze | Large-scale fund theft or permanent freeze. Requires some setup, but fast once triggered. |
-| **S2 — Medium** | Partial or slow damage | Bounded drain (capped percentage, not total) or slow drain with a response window. Temporary freeze. |
-| **S1 — Low** | Annoying but not financially dangerous | Griefing, minor economic damage, DoS with no fund loss, or an admin-only bug with no external exploit path. |
+| Tier              | Rule of thumb                            | Definition                                                                                                  |
+| ----------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **S4 — Critical** | Can drain everything immediately         | Total fund theft or protocol insolvency with no time to react.                                              |
+| **S3 — High**     | Large or fast theft, or permanent freeze | Large-scale fund theft or permanent freeze. Requires some setup, but fast once triggered.                   |
+| **S2 — Medium**   | Partial or slow damage                   | Bounded drain (capped percentage, not total) or slow drain with a response window. Temporary freeze.        |
+| **S1 — Low**      | Annoying but not financially dangerous   | Griefing, minor economic damage, DoS with no fund loss, or an admin-only bug with no external exploit path. |
 
 Four rules resolve the most common classification calls:
 
@@ -41,11 +39,11 @@ Four rules resolve the most common classification calls:
 
 Likelihood captures how probable exploitation is in practice.
 
-| Tier | Rule of thumb | Criteria |
-| -- | -- | -- |
-| **L3 — High** | Anyone can do it anytime | No prerequisites. Callable by any EOA with publicly available calldata. |
+| Tier            | Rule of thumb                                 | Criteria                                                                                                                                       |
+| --------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **L3 — High**   | Anyone can do it anytime                      | No prerequisites. Callable by any EOA with publicly available calldata.                                                                        |
 | **L2 — Medium** | Needs setup (flash loans, timing, conditions) | Requires specific conditions: flash loan infra, a particular chain state, MEV infrastructure, or another protocol being in a particular state. |
-| **L1 — Low** | Needs a privileged role or rare situation | Requires privileged access (operator, solver, oracle), very specific market conditions, or a multi-step attack depending on several parties. |
+| **L1 — Low**    | Needs a privileged role or rare situation     | Requires privileged access (operator, solver, oracle), very specific market conditions, or a multi-step attack depending on several parties.   |
 
 We reduce likelihood by one tier when any of the following apply:
 
@@ -55,16 +53,16 @@ We reduce likelihood by one tier when any of the following apply:
 
 ## Base payout matrix
 
-|  | **L3 — High** | **L2 — Medium** | **L1 — Low** |
-| -- | -- | -- | -- |
-| **S4 — Critical** | $100,000 | $50,000 | $20,000 |
-| **S3 — High** | $30,000 | $15,000 | $7,500 |
-| **S2 — Medium** | $10,000 | $5,000 | $2,000 |
-| **S1 — Low** | $2,000 | $1,000 | $500 |
+|                   | **L3 — High** | **L2 — Medium** | **L1 — Low** |
+| ----------------- | ------------- | --------------- | ------------ |
+| **S4 — Critical** | $100,000      | $50,000         | $20,000      |
+| **S3 — High**     | $30,000       | $15,000         | $7,500       |
+| **S2 — Medium**   | $10,000       | $5,000          | $2,000       |
+| **S1 — Low**      | $2,000        | $1,000          | $500         |
 
 The floor of $500 applies only when a report demonstrates an external exploit path — an attacker without a privileged role can reach the bug.
 
-A report receives **$0 with a clear written explanation** when all of the following hold:
+A report is not eligibale for a bounty when:
 
 - The only exploit path requires a privileged role (owner, operator, solver, oracle).
 - The reporter does not demonstrate that an unprivileged party can reach that role or induce the privileged party to act.
@@ -85,16 +83,20 @@ After landing on a base payout, apply modifiers multiplicatively. The list is fi
 
 **Full trigger definitions:**
 
-| Modifier | Trigger | Factor |
-| -- | -- | -- |
-| Permanently unrecoverable | Freeze scenario with no pause, no upgrade path, and no on-chain recourse | ×1.5 |
-| High remediation cost | Fix requires a full contract redeploy across multiple chains | ×1.25 |
-| Silent / undetectable | No on-chain event emitted, no alert surface, could run unnoticed for days | ×1.25 |
-| High attacker cost | Exploit requires significant capital at risk or fees that materially reduce net gain | ×0.75 |
-| Pausable + monitored | Contract can be paused and active monitoring with <5-minute response is in place | ×0.75 |
-| Bounded damage pool | Damage capped to a sub-pool, not full TVL (e.g. fee buffer only) | ×0.5 |
+| Modifier                  | Trigger                                                                              | Factor |
+| ------------------------- | ------------------------------------------------------------------------------------ | ------ |
+| Permanently unrecoverable | Freeze scenario with no pause, no upgrade path, and no on-chain recourse             | ×1.5   |
+| High remediation cost     | Fix requires a full contract redeploy across multiple chains                         | ×1.25  |
+| Silent / undetectable     | No on-chain event emitted, no alert surface, could run unnoticed for days            | ×1.25  |
+| High attacker cost        | Exploit requires significant capital at risk or fees that materially reduce net gain | ×0.75  |
+| Pausable + monitored      | Contract can be paused and active monitoring with <5-minute response is in place     | ×0.75  |
+| Bounded damage pool       | Damage capped to a sub-pool, not full TVL (e.g. fee buffer only)                     | ×0.5   |
 
-<Info>The **permanently unrecoverable** modifier applies to freeze scenarios only. S3 and S4 already encode "no time to react" for theft-class bugs, so ×1.5 would double-count there.</Info>
+<Info>
+  The **permanently unrecoverable** modifier applies to freeze scenarios only.
+  S3 and S4 already encode "no time to react" for theft-class bugs, so ×1.5
+  would double-count there.
+</Info>
 
 Modifiers stack. The final amount is floored at $500, capped at $100,000, and rounded to the nearest $500.
 
@@ -129,7 +131,6 @@ A crafted cross-chain message bricks a specific pool's accounting, locking all f
 ## Edge cases
 
 - **"The fix is already deployed."** Payouts are assessed as of report submission, not review. A valid report does not lose value because we moved fast.
-- **"The attacker would need to be a solver or relayer."** Permissioned roles are L1, not L2. L2 is reserved for open-market conditions (flash loans, MEV).
 - **"The bug only exists under specific token configurations."** If the configuration is live in production, the report is treated as real. If only theoretical, likelihood drops to L1.
 - **"The reporter also proposed the fix."** Does not change the tier, but is strong grounds for a discretionary bonus.
 - **Duplicate reports.** The first submission gets the full payout. A duplicate submitted within 7 days receives 10% of the original as a courtesy payment.
@@ -146,11 +147,11 @@ Bonuses are recognition, not entitlement, and are not pre-committed.
 
 ## PoC requirements
 
-| Severity | Requirement |
-| -- | -- |
-| **S4, S3** | Runnable PoC required. Explanations without code are not accepted. |
-| **S2** | PoC strongly preferred. A detailed technical explanation is accepted when a PoC is not feasible. |
-| **S1** | Description sufficient with clear reproduction steps. |
+| Severity   | Requirement                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------ |
+| **S4, S3** | Runnable PoC required. Explanations without code are not accepted.                               |
+| **S2**     | PoC strongly preferred. A detailed technical explanation is accepted when a PoC is not feasible. |
+| **S1**     | Description sufficient with clear reproduction steps.                                            |
 
 ## Out of scope
 
