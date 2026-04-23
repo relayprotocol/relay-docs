@@ -3,7 +3,7 @@ title: "Bug Bounty Program"
 description: "How Relay classifies and rewards vulnerability reports."
 ---
 
-Relay runs a bug bounty program to make responsible disclosure financially rational for security researchers. Rewards scale with how much damage a bug can cause and how feasible it is to exploit in practice.
+Relay runs a bug bounty program to make responsible disclosure financially rational for security researchers. Rewards scale with how much damage a bug can cause and how feasible it is to exploit in practice. We run monitoring and circuit breakers across the stack, so the likelihood tiers and modifiers reflect real response capacity — not a hypothetical one.
 
 This framework applies across the Relay stack, protocol and services.
 
@@ -68,7 +68,7 @@ These are real bugs and we still want them reported — they just do not qualify
 
 ## Modifiers
 
-After landing on a base payout, apply modifiers multiplicatively. The list is fixed.
+After landing on a base payout, apply modifiers multiplicatively. Modifiers are drawn from the fixed list below.
 
 **Quick checklist:**
 
@@ -106,7 +106,7 @@ Modifiers stack. The final amount is floored at $500, capped at $100,000, and ro
 
 ### Flash loan reentrancy on withdrawal
 
-An attacker uses a flash loan to reenter the withdrawal function and drain up to 100% of a pool in a single transaction. No special permissions required.
+An attacker uses a flash loan to reenter the withdrawal function and drain some of the protocol's funds in a single transaction. No special permissions required.
 
 - **Severity: S4** — instant, total fund theft.
 - **Likelihood: L2** — requires flash loan infrastructure and a specific reentrancy window.
@@ -133,7 +133,7 @@ A crafted cross-chain message bricks a specific pool's accounting, locking all f
 - **"The fix is already deployed."** Payouts are assessed as of report submission, not review. A valid report does not lose value because we moved fast.
 - **"The bug only exists under specific token configurations."** If the configuration is live in production, the report is treated as real. If only theoretical, likelihood drops to L1.
 - **"The reporter also proposed the fix."** Does not change the tier, but is strong grounds for a discretionary bonus.
-- **Duplicate reports.** The first submission gets the full payout. A duplicate submitted within 7 days receives 10% of the original as a courtesy payment.
+- **Duplicate reports.** The first submission gets the full payout. A duplicate submitted within 7 days receives 10% of the first report's payout as a courtesy payment. Duplicates submitted after 7 days are not eligible for payment.
 
 ## Discretionary bonuses
 
