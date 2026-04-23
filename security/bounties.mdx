@@ -1,29 +1,150 @@
 ---
-title: 'Bounties'
-description: 'Learn how Relay rewards developers who find & report vulnerabilities.'
+title: "Bug Bounty Program"
+description: "How Relay classifies and rewards vulnerability reports."
 ---
 
-We at Relay are committed to maintaining the highest security standards for our protocol and smart contracts. 
-That's why we are launching a bug bounty program for those who help us identify vulnerabilities in the Relay Protocol. 
-With our bounty, we hope to incentivize ethical hackers to discover and report vulnerabilities in our contracts and protocol.
+Relay runs a bug bounty program to make responsible disclosure financially rational for security researchers. Rewards scale with how much damage a bug can cause and how feasible it is to exploit in practice.
 
-Rewards will be dependent on the severity of the bug. We always provide monetary rewards for bugs that fall under these categories: 
+This page describes the framework we use to classify reports and determine payouts. It applies across the Relay stack — smart contracts, solvers, oracles, and the services that surround them.
 
-- Extract value from the solver 
-- Exploiting our smart contracts in an unintended way that results in a loss of funds
+## How payouts are determined
 
-To be eligible for the monetary rewards, this bug must be investigated and confirmed by our team. 
-Monetary reward amounts are 10% of the value at risk, with a maximum reward capped at $100,000 USD. "Value at risk" is defined as the total value that could be extracted within a 10 minute period. This is because our product has automatic circuit breakers and alarms that would prevent losses that take longer to extract.
+Every valid report is scored on two axes — **severity** and **likelihood** — and mapped to a base payout. A short, fixed list of modifiers then adjusts the base amount up or down.
 
-### Reward Process & Requirements
+### Severity
 
-To receive a bounty reward, the following requirements apply:
+Severity captures what happens if the bug is exploited: damage magnitude and how fast it occurs.
 
-- **KYC & Background Check**: A KYC (Know Your Customer) verification and background check are required before any reward can be issued.
-- **Payment**: Bug bounty rewards are issued in cryptocurrency.
-- **Tax Documentation**: Any tax-related documentation requirements (e.g., W-8BEN, W-9, or equivalent forms depending on jurisdiction) will be addressed as part of the KYC process.
+| Tier | Label | Definition |
+| -- | -- | -- |
+| **S4** | Critical | Immediate, total fund theft or protocol insolvency. No time to react. |
+| **S3** | High | Large-scale fund theft or permanent freeze. Requires some setup, but fast once triggered. |
+| **S2** | Medium | Partial drain (bounded percentage, not total) or slow drain with a meaningful response window. Temporary freeze. |
+| **S1** | Low | Griefing, minor economic damage, DoS with no fund loss, or a broken admin function with no external exploit path. |
 
-If you suspect you've encountered a bug, please reach out directly by email: [support@relay.link](emailto:support@relay.link). 
-We review all reports closely with the team. 
-We will get back to you within 1 to 4 days regarding the next steps. 
-Most responses are provided within 24 hours, barring holidays and weekends.
+Key distinctions we apply when scoring:
+
+- **Theft outranks freeze.** A bug that steals funds is more severe than one that freezes them, even if the frozen amount is larger.
+- **Instant outranks slow.** A slow drain gives us time to detect and pause; an instant drain does not.
+- **Bounded damage is scoped to the damage ceiling**, not total TVL.
+- **Admin-only bugs** — functions behind `onlyOwner` or an equivalent role with no external exploit path — are typically S1 regardless of what the function does.
+
+### Likelihood
+
+Likelihood captures how probable exploitation is in practice.
+
+| Tier | Label | Criteria |
+| -- | -- | -- |
+| **L3** | High | No prerequisites. Callable by any EOA, at any time, with publicly available calldata. |
+| **L2** | Medium | Requires specific conditions: flash loan setup, a particular chain state, MEV infrastructure, or another protocol being in a particular state. |
+| **L1** | Low | Requires privileged access (e.g. operator or solver key), very specific market conditions, or a multi-step attack that depends on multiple independent parties. |
+
+We reduce likelihood by one tier when any of the following apply:
+
+- The exploit freezes rather than steals funds, so the attacker pays gas with no upside — unless the freeze is an intermediate step toward theft.
+- The attack requires significant capital at risk or fees that materially erode expected profit.
+- The contract is pausable with active monitoring and sub-5-minute response capability — for slow drains only, not instant theft.
+
+## Base payout matrix
+
+|  | **L3 — High** | **L2 — Medium** | **L1 — Low** |
+| -- | -- | -- | -- |
+| **S4 — Critical** | $100,000 | $50,000 | $20,000 |
+| **S3 — High** | $30,000 | $15,000 | $7,500 |
+| **S2 — Medium** | $10,000 | $5,000 | $2,000 |
+| **S1 — Low** | $2,000 | $1,000 | $500 |
+
+No valid in-scope finding pays less than $500, and no finding pays more than $100,000. Confirmed bugs with no external exploit path (for example, a pure admin function failure) may receive $0 with a clear written explanation — the floor only applies to reports with a demonstrable external exploit path.
+
+## Modifiers
+
+After landing on a base payout, we apply the modifiers below multiplicatively. The list is fixed — there are no open-ended qualitative adjustments.
+
+| Modifier | Trigger | Factor |
+| -- | -- | -- |
+| Permanently unrecoverable | Freeze scenario with no pause, no upgrade path, and no on-chain recourse | ×1.5 |
+| High remediation cost | Fix requires a full contract redeploy across multiple chains | ×1.25 |
+| Silent / undetectable | No on-chain event emitted, no alert surface, could run unnoticed for days | ×1.25 |
+| High attacker cost | Exploit requires significant capital at risk or fees that materially reduce net gain | ×0.75 |
+| Pausable + monitored | Contract can be paused and active monitoring with <5-minute response is in place | ×0.75 |
+| Bounded damage pool | Damage capped to a sub-pool, not full TVL (e.g. fee buffer only) | ×0.5 |
+
+<Info>The **permanently unrecoverable** modifier applies to freeze scenarios only. S3 and S4 severity tiers already encode "no time to react" for theft-class bugs, so ×1.5 would double-count on those findings.</Info>
+
+Modifiers stack. The final amount is always floored at $500 and capped at $100,000, then rounded to the nearest $500.
+
+**Worked example.** An S3/L2 base payout is $15,000. The contract is pausable (×0.75) and damage is bounded to the fee buffer (×0.5), giving $15,000 × 0.75 × 0.5 = $5,625, rounded to **$5,500**.
+
+## Worked examples
+
+### Flash loan reentrancy on withdrawal
+
+An attacker uses a flash loan to reenter the withdrawal function and drain up to 100% of a pool in a single transaction. No special permissions required.
+
+- **Severity: S4** — instant, total fund theft.
+- **Likelihood: L2** — requires flash loan infrastructure and a specific reentrancy window.
+- **Base payout: $50,000.** No modifiers apply. **Final: $50,000.**
+
+### Fee parameter drift
+
+A rounding error in fee calculation lets any filler extract ~2 bps above their entitled fee per fill. Callable by any EOA, damage accumulates slowly, bounded to the fee buffer.
+
+- **Severity: S2** — slow drain, bounded to the fee pool.
+- **Likelihood: L3** — any EOA, any time.
+- **Base payout: $10,000.** Bounded damage pool (×0.5) and pausable + monitored (×0.75) → $10,000 × 0.5 × 0.75 = $3,750. **Final: $4,000.**
+
+### Permanent pool freeze via griefing
+
+An attacker sends a crafted cross-chain message that bricks a specific pool's accounting, locking all funds in it. The attacker has no way to extract the funds — it is a pure grief and costs gas.
+
+- **Severity: S3** — permanent freeze of a pool.
+- **Likelihood: L2** — downgraded one tier from L3 because the attacker has no profit motive and must pay to execute.
+- **Base payout: $15,000.** Permanently unrecoverable (×1.5, freeze with no recovery path) → $15,000 × 1.5 = $22,500. **Final: $22,500.**
+
+## Edge cases
+
+- **"The fix is already deployed."** Payouts are assessed as of the time of report submission, not the time of review. A valid report does not lose value because we moved fast.
+- **"The attacker would need to be a solver or relayer."** Permissioned roles are L1, not L2. L2 is reserved for open-market conditions like flash loans and MEV.
+- **"The bug only exists under specific token configurations."** If the configuration is live in production, the report is treated as real. If it is only theoretical, the likelihood drops to L1.
+- **"The reporter also proposed the fix."** This does not change the tier, but is strong grounds for a discretionary bonus.
+- **Duplicate reports.** The first submission gets the full payout. A duplicate submitted within 7 days receives 10% of the original as a courtesy payment.
+
+## Discretionary bonuses
+
+Separate from the matrix, we may award discretionary bonuses for:
+
+- Exceptional write-ups with clear root cause analysis and a suggested fix.
+- Novel attack vectors that reveal a systemic pattern.
+- Proactive disclosure during an active incident.
+
+Bonuses are recognition, not entitlement, and are not pre-committed.
+
+## PoC requirements
+
+| Severity | Requirement |
+| -- | -- |
+| **S4, S3** | Runnable PoC required. Explanations without code are not accepted. |
+| **S2** | PoC strongly preferred. A detailed technical explanation is accepted when a PoC is not feasible. |
+| **S1** | Description sufficient with clear reproduction steps. |
+
+## Out of scope
+
+The following are out of scope and not eligible for a reward:
+
+- Attacks the reporter has already exploited.
+- Issues requiring phishing, social engineering, or a compromised private key.
+- Findings in third-party protocols we compose with, unless the root cause is in Relay's code.
+- DoS with no fund loss and no path to fund loss.
+- Theoretical issues with no viable PoC against in-scope assets.
+
+## Reward process and requirements
+
+To receive a bounty reward, the following apply:
+
+- **KYC and background check.** KYC verification and a background check are required before any reward can be issued.
+- **Payment.** Rewards are paid in cryptocurrency.
+- **Tax documentation.** Any tax-related documentation (W-8BEN, W-9, or the equivalent for your jurisdiction) is handled as part of KYC.
+
+## Reporting a vulnerability
+
+If you suspect you have found a bug, email [support@relay.link](mailto:support@relay.link) with a description, reproduction steps, and a runnable PoC where applicable. Most responses are provided within 24 hours, and we will get back to you with next steps within 1 to 4 business days.
