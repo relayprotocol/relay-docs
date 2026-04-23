@@ -45,7 +45,8 @@
               "features/gas-top-up",
               "features/gasless-execution",
               "features/fast-fill",
-              "features/gasless-swaps"
+              "features/gasless-swaps",
+              "features/price-stabilization"
             ]
           },
           {
