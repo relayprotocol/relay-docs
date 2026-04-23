@@ -33,7 +33,7 @@ Four rules resolve the most common classification calls:
 - **Theft outranks freeze.** Stealing funds is more severe than locking them, even at a larger nominal amount.
 - **Instant outranks slow.** A slow drain gives us time to detect and pause; an instant drain does not.
 - **If damage is capped**, severity is based on the cap — not total TVL.
-- **Admin-only bugs are S1.** Functions behind `onlyOwner` or an equivalent role with no external path do not escalate above S1 regardless of the potential damage.
+- **Admin-only bugs are S1.** Functions behind `onlyOwner` or an equivalent role do not escalate above S1 regardless of the potential damage. They are only eligible for a bounty when there is an external path to reach the role (see below).
 
 ### Likelihood
 
@@ -79,14 +79,14 @@ After landing on a base payout, apply modifiers multiplicatively. Modifiers are 
 
 **Full trigger definitions:**
 
-| Modifier                  | Trigger                                                                                                                                      | Factor |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Permanently unrecoverable | Damage cannot be reversed after exploit — freeze with no pause or upgrade, or theft with funds laundered/bridged before response is possible | ×1.5   |
-| High remediation cost     | Fix requires a full contract redeploy across multiple chains                                                                                 | ×1.25  |
-| Silent / undetectable     | No onchain event emitted, no alert surface, could run unnoticed for days                                                                     | ×1.25  |
-| High attacker cost        | Exploit requires significant capital at risk or fees that materially reduce net gain                                                         | ×0.75  |
-| Pausable + monitored      | Contract can be paused and active monitoring with sub-5-minute response is in place                                                          | ×0.75  |
-| Bounded damage pool       | Damage capped to a sub-pool, not full TVL (e.g. fee buffer only)                                                                             | ×0.5   |
+| Modifier                  | Trigger                                                                                                                                           | Factor |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Permanently unrecoverable | Damage cannot be reversed after exploit — freeze with no pause or upgrade, or theft with funds laundered/bridged before response is possible      | ×1.5   |
+| High remediation cost     | Fix requires a full contract redeploy across multiple chains                                                                                      | ×1.25  |
+| Silent / undetectable     | No onchain event emitted, no alert surface, could run unnoticed for days                                                                          | ×1.25  |
+| High attacker cost        | Exploit requires significant capital at risk or fees that materially reduce net gain                                                              | ×0.75  |
+| Pausable + monitored      | Contract can be paused. Active monitoring with sub-5-minute response is in place and would meaningfully reduce loss against this specific exploit | ×0.75  |
+| Bounded damage pool       | Damage capped to a sub-pool, not full TVL (e.g. fee buffer only)                                                                                  | ×0.5   |
 
 <Info>
   The **permanently unrecoverable** modifier (×1.5) applies when damage from an
