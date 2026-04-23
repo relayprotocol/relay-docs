@@ -15,7 +15,7 @@ Every valid report goes through five steps:
 2. Classify **likelihood** (L1–L3) — how feasible is exploitation in practice?
 3. Read the **base payout** from the matrix.
 4. Apply **modifiers** (×0.5 to ×1.5) from the fixed list.
-5. Round to the nearest $500. **Floor: $500. Cap: $100,000.**
+5. Round to the nearest $500 (ties round up). **Floor: $500. Cap: $100,000.**
 
 ### Severity
 
@@ -45,11 +45,7 @@ Likelihood captures how probable exploitation is in practice.
 | **L2 — Medium** | Needs setup (flash loans, timing, conditions) | Requires specific conditions: flash loan infra, a particular chain state, MEV infrastructure, or another protocol being in a particular state. |
 | **L1 — Low**    | Needs a privileged role or rare situation     | Requires privileged access (operator, solver, oracle), very specific market conditions, or a multi-step attack depending on several parties.   |
 
-We reduce likelihood by one tier when any of the following apply:
-
-- The exploit freezes rather than steals, so the attacker pays gas with no upside — unless the freeze is a step toward theft.
-- The attack requires significant capital at risk or fees that materially erode expected profit.
-- The contract is pausable with active monitoring and sub-5-minute response — slow drains only, not instant theft.
+We reduce likelihood by one tier (floored at L1) when the exploit freezes rather than steals - unless the freeze is a step toward theft.
 
 ## Base payout matrix
 
@@ -62,7 +58,7 @@ We reduce likelihood by one tier when any of the following apply:
 
 The floor of $500 applies only when a report demonstrates an external exploit path — an attacker without a privileged role can reach the bug.
 
-A report is not eligibale for a bounty when:
+A report is not eligible for a bounty when:
 
 - The only exploit path requires a privileged role (owner, operator, solver, oracle).
 - The reporter does not demonstrate that an unprivileged party can reach that role or induce the privileged party to act.
@@ -76,26 +72,30 @@ After landing on a base payout, apply modifiers multiplicatively. The list is fi
 
 **Quick checklist:**
 
-- ×1.5 — permanently unrecoverable freeze
+- ×1.5 — permanently unrecoverable damage
 - ×1.25 — hard to fix, or hard to detect
 - ×0.75 — expensive to exploit, or pausable with active monitoring
 - ×0.5 — damage capped to a sub-pool
 
 **Full trigger definitions:**
 
-| Modifier                  | Trigger                                                                              | Factor |
-| ------------------------- | ------------------------------------------------------------------------------------ | ------ |
-| Permanently unrecoverable | Freeze scenario with no pause, no upgrade path, and no on-chain recourse             | ×1.5   |
-| High remediation cost     | Fix requires a full contract redeploy across multiple chains                         | ×1.25  |
-| Silent / undetectable     | No on-chain event emitted, no alert surface, could run unnoticed for days            | ×1.25  |
-| High attacker cost        | Exploit requires significant capital at risk or fees that materially reduce net gain | ×0.75  |
-| Pausable + monitored      | Contract can be paused and active monitoring with <5-minute response is in place     | ×0.75  |
-| Bounded damage pool       | Damage capped to a sub-pool, not full TVL (e.g. fee buffer only)                     | ×0.5   |
+| Modifier                  | Trigger                                                                                                                                      | Factor |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Permanently unrecoverable | Damage cannot be reversed after exploit — freeze with no pause or upgrade, or theft with funds laundered/bridged before response is possible | ×1.5   |
+| High remediation cost     | Fix requires a full contract redeploy across multiple chains                                                                                 | ×1.25  |
+| Silent / undetectable     | No onchain event emitted, no alert surface, could run unnoticed for days                                                                     | ×1.25  |
+| High attacker cost        | Exploit requires significant capital at risk or fees that materially reduce net gain                                                         | ×0.75  |
+| Pausable + monitored      | Contract can be paused and active monitoring with <5-minute response is in place                                                             | ×0.75  |
+| Bounded damage pool       | Damage capped to a sub-pool, not full TVL (e.g. fee buffer only)                                                                             | ×0.5   |
 
 <Info>
-  The **permanently unrecoverable** modifier applies to freeze scenarios only.
-  S3 and S4 already encode "no time to react" for theft-class bugs, so ×1.5
-  would double-count there.
+  The **permanently unrecoverable** modifier (×1.5) applies when damage from an
+  exploit cannot be reversed once it happens. This is different from how quickly
+  the damage occurs (which is captured by severity tiers). This modifier is used
+  if the funds or system state cannot be restored after the exploit, such as
+  when funds are stolen and removed before any response is possible (e.g.,
+  laundered or bridged out), or when a freeze is permanent with no way to pause
+  or upgrade the contract.
 </Info>
 
 Modifiers stack. The final amount is floored at $500, capped at $100,000, and rounded to the nearest $500.
@@ -110,7 +110,7 @@ An attacker uses a flash loan to reenter the withdrawal function and drain up to
 
 - **Severity: S4** — instant, total fund theft.
 - **Likelihood: L2** — requires flash loan infrastructure and a specific reentrancy window.
-- **Base: $50,000.** No modifiers apply. **Final: $50,000.**
+- **Base: $50,000.** Permanently unrecoverable (×1.5) — funds laundered in the same tx before any response is possible. **Final: $75,000.**
 
 ### Fee parameter drift
 
