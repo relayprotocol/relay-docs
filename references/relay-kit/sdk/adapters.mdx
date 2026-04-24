@@ -258,10 +258,11 @@ const walletClient = createWalletClient({
   chain: mainnet,
   transport: custom(window.ethereum!)
 })
-const account = walletClient.account!
+
+const [address] = await walletClient.requestAddresses()
 
 const adaptedWallet = adaptLighterWallet({
-  l1Address: account.address,
+  l1Address: address,
   signL1Message: (message) =>
     walletClient.signMessage({ account, message })
 })

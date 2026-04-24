@@ -1,9 +1,9 @@
 ---
 title: "Lighter Support"
-description: "How to deposit to Lighter from any Relay chain"
+description: "How to deposit and withdraw from Lighter to any Relay chain"
 ---
 
-Relay supports depositing and withdrawing to Lighter from any supported chain. You can try depositing today using the [Relay App](https://relay.link/bridge/lighter) (note: withdrawing is not yet supported in the app). This document details how to integrate Lighter deposits into your application.
+Relay supports depositing and withdrawing to Lighter from any supported chain. You can try depositing today using the [Relay App](https://relay.link/bridge/lighter) (note: withdrawing is not yet supported in the app). This document details how to integrate Lighter into your application.
 
 # Prerequisites
 
@@ -836,7 +836,7 @@ curl 'https://api.relay.link/quote/v2' \
 ```
 </CodeGroup>
 
-The quote api returns a transaction step with lighter specific execution data:
+The quote api returns a transaction step with lighter-specific execution data:
 
 ```json
 {
@@ -877,13 +877,13 @@ In order to interact with the Lighter API you must first [request a Lighter API 
 To use the SDK with Lighter, install and configure the
 [Lighter wallet adapter](/references/relay-kit/sdk/adapters#what-adapters-are-available-out-of-the-box).
 
-```
+```bash
 yarn add @relayprotocol/relay-lighter-wallet-adapter @relayprotocol/relay-sdk viem
 ```
 
 If you want the adapter to run its own bootstrap (fresh keygen, `accountApiKey`, or `storage` paths), you also need the Lighter SDK:
 
-```
+```bash
 yarn add @relay-protocol/lighter-ts-sdk
 ```
 
