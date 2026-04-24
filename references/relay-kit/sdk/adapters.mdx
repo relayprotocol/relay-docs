@@ -264,7 +264,7 @@ const [address] = await walletClient.requestAddresses()
 const adaptedWallet = adaptLighterWallet({
   l1Address: address,
   signL1Message: (message) =>
-    walletClient.signMessage({ account, message })
+    walletClient.signMessage({ account: address, message })
 })
 
 const options = ... // define this based on getQuote options (destinationChainId: 3586256, recipient: <Lighter account index>)

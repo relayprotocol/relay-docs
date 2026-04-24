@@ -9,15 +9,15 @@ Relay supports depositing and withdrawing to Lighter from any supported chain. Y
 
 Before you can bridge funds to Lighter, you must first set up an account on [lighter.exchange](https://lighter.exchange/). Once your account is created, you can retrieve your account index to use as the recipient for deposits.
 
-# API Access
+## API Access
 
-Lighter can be accessed using the standard Relay API flow. To get started, review the [**execution steps**](https://docs.relay.link/references/api/api_core_concepts/step-execution) documentation. When you're ready to execute deposits, refer to the [**Get Quote**](https://docs.relay.link/references/api/get-quote-v2) API endpoint.
+Lighter can be accessed using the standard Relay API flow. To get started, review the [**execution steps**](/references/api/api_core_concepts/step-execution) documentation. When you're ready to execute deposits or withdrawals, refer to the [**Get Quote**](/references/api/get-quote-v2) API endpoint.
 
 <Tip>
   If you're integrating via the SDK, the [Lighter wallet adapter](/references/relay-kit/sdk/adapters) wraps this flow — it resolves the user's Lighter account index, manages the API key lifecycle, and submits the L2 transfer on your behalf.
 </Tip>
 
-## Lighter-Specific API Parameters
+## Lighter-specific API Parameters
 
 | **Parameter**                  | **Input**              | **Description**                                                              |
 | ------------------------------ | ---------------------- | ---------------------------------------------------------------------------- |
@@ -887,5 +887,4 @@ If you want the adapter to run its own bootstrap (fresh keygen, `accountApiKey`,
 yarn add @relay-protocol/lighter-ts-sdk
 ```
 
-For implementation details and code samples, see the
-[Adapters documentation](/references/relay-kit/sdk/adapters).
+For implementation details and code samples, see the [Adapters documentation](/references/relay-kit/sdk/adapters).
