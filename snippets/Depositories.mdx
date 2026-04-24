@@ -1,3 +1,12 @@
+export const VM_TYPE_LABELS = {
+  evm: "ethereum-vm",
+  bvm: "bitcoin-vm",
+  svm: "solana-vm",
+  tvm: "tron-vm",
+  hypevm: "hyperliquid-vm",
+  lvm: "lighter-vm"
+}
+
 export const Depositories = ({ env, id }) => {
   const key = `depositories-${env}`
 
@@ -25,7 +34,7 @@ export const Depositories = ({ env, id }) => {
           return `<tr key=${chain.id}>
             <td>${chain.name}</td>
             <td>${chain.protocol.v2.depository}</td>
-            <td>${chain.vmType}</td>
+            <td>${VM_TYPE_LABELS[chain.vmType] || chain.vmType}</td>
             <td>${chain.id}</td>
           </tr>`
         })
