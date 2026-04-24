@@ -1,0 +1,93 @@
+export const Depositories = ({ env, id }) => {
+  const key = `depositories-${env}`
+
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  if (!window[key]) {
+    window[key] = {
+      fetching: false,
+      data: null
+    }
+  }
+  if (!window[key].fetching) {
+    const appendDepositories = (data) => {
+      const rootElement = document.getElementById(id)
+      if (!rootElement) {
+        return
+      }
+      const rows = data
+        .slice()
+        .filter((chain) => chain.protocol && chain.protocol.v2 && chain.protocol.v2.depository)
+        .sort((a, b) => a.id - b.id)
+        .map((chain) => {
+          return `<tr key=${chain.id}>
+            <td>${chain.name}</td>
+            <td>${chain.protocol.v2.depository}</td>
+            <td>${chain.vmType}</td>
+            <td>${chain.id}</td>
+          </tr>`
+        })
+      rootElement.innerHTML = rows.join("")
+      const loaderContainer = document.getElementById(`loader-container-${id}`)
+      if (loaderContainer) {
+        loaderContainer.style.display = "none"
+      }
+    }
+
+    const fetchChains = async () => {
+      try {
+        window[key].fetching = true
+        window[key].data = null
+        const response = await fetch(
+          env === "testnets"
+            ? "https://api.testnets.relay.link/chains"
+            : "https://api.relay.link/chains"
+        )
+        const data = await response.json()
+        window[key].fetching = false
+        window[key].data = data.chains
+        appendDepositories(data.chains)
+      } catch (e) {
+        window[key].fetching = false
+        window[key].data = false
+      }
+    }
+    const loaderContainer = document.getElementById(`loader-container-${id}`)
+    if (loaderContainer) {
+      loaderContainer.style.display = "flex"
+    }
+    if (window[key].data) {
+      setTimeout(() => {
+        appendDepositories(window[key].data)
+      }, 1000)
+    } else {
+      fetchChains()
+    }
+  }
+
+  return (
+    <table style={{ width: "100%", borderSpacing: "48px" }} className="relay-table">
+      <thead
+        style={{
+          borderBottom: "1px solid rgb(227 226 230)",
+          paddingBottom: 5,
+          width: "100%",
+          fontSize: 16,
+        }}
+      >
+        <tr style={{ textAlign: "left" }}>
+          <th>Chain</th>
+          <th>Address</th>
+          <th>VM Type</th>
+          <th>Chain ID</th>
+        </tr>
+      </thead>
+      <tbody id={id} style={{ width: "100%" }}></tbody>
+      <div className={`loader-container-${id}`} style={{ display: "none", justifyContent: "center", alignItems: "center", height: "200px", width: "100%" }}>
+        <div className="loader"></div>
+      </div>
+    </table>
+  )
+}
