@@ -15,7 +15,7 @@ Every valid report goes through five steps:
 2. Classify **likelihood** (L1–L3) — how feasible is exploitation in practice?
 3. Read the **base payout** from the matrix.
 4. Apply **modifiers** (×0.5 to ×1.5) from the fixed list.
-5. Round to the nearest $500 (ties round up). **Floor: $500. Cap: $100,000.**
+5. Round to the nearest \$500 (ties round up). **Floor: \$500. Cap: \$100,000.**
 
 ### Severity
 
@@ -51,12 +51,12 @@ We reduce likelihood by one tier (floored at L1) when the exploit freezes rather
 
 |                   | **L3 — High** | **L2 — Medium** | **L1 — Low** |
 | ----------------- | ------------- | --------------- | ------------ |
-| **S4 — Critical** | $100,000      | $50,000         | $20,000      |
-| **S3 — High**     | $30,000       | $15,000         | $7,500       |
-| **S2 — Medium**   | $10,000       | $5,000          | $2,000       |
-| **S1 — Low**      | $2,000        | $1,000          | $500         |
+| **S4 — Critical** | \$100,000      | \$50,000         | \$20,000      |
+| **S3 — High**     | \$30,000       | \$15,000         | \$7,500       |
+| **S2 — Medium**   | \$10,000       | \$5,000          | \$2,000       |
+| **S1 — Low**      | \$2,000        | \$1,000          | \$500         |
 
-The floor of $500 applies only when a report demonstrates an external exploit path — an attacker without a privileged role can reach the bug.
+The floor of \$500 applies only when a report demonstrates an external exploit path — an attacker without a privileged role can reach the bug.
 
 A report is not eligible for a bounty when:
 
@@ -98,9 +98,9 @@ After landing on a base payout, apply modifiers multiplicatively. Modifiers are 
   or upgrade the contract.
 </Info>
 
-Modifiers stack. The final amount is floored at $500, capped at $100,000, and rounded to the nearest $500.
+Modifiers stack. The final amount is floored at \$500, capped at \$100,000, and rounded to the nearest \$500.
 
-**Worked example.** S3/L2 base = $15,000. Pausable (×0.75) and bounded to the fee buffer (×0.5) → $15,000 × 0.75 × 0.5 = $5,625 → **$5,500**.
+**Worked example.** S3/L2 base = \$15,000. Pausable (×0.75) and bounded to the fee buffer (×0.5) → \$15,000 × 0.75 × 0.5 = \$5,625 → **\$5,500**.
 
 ## Worked examples
 
@@ -110,7 +110,7 @@ An attacker uses a flash loan to reenter the withdrawal function and drain depos
 
 - **Severity: S4** — instant, total fund theft.
 - **Likelihood: L2** — requires flash loan infrastructure and a specific reentrancy window.
-- **Base: $50,000.** Permanently unrecoverable (×1.5) — funds laundered in the same tx before any response is possible. **Final: $75,000.**
+- **Base: \$50,000.** Permanently unrecoverable (×1.5) — funds laundered in the same tx before any response is possible. **Final: \$75,000.**
 
 ### Fee parameter drift
 
@@ -118,7 +118,7 @@ A rounding error lets any filler extract ~2 bps above their entitled fee per fil
 
 - **Severity: S2** — slow drain, bounded to the fee pool.
 - **Likelihood: L3** — any EOA, any time.
-- **Base: $10,000.** Bounded damage pool (×0.5) and pausable + monitored (×0.75) → $3,750 → **$4,000**.
+- **Base: \$10,000.** Bounded damage pool (×0.5) and pausable + monitored (×0.75) → \$3,750 → **\$4,000**.
 
 ### Permanent pool freeze via griefing
 
@@ -126,7 +126,7 @@ A crafted cross-chain message bricks a specific pool's accounting, locking all f
 
 - **Severity: S3** — permanent freeze of a pool.
 - **Likelihood: L2** — downgraded one tier from L3 because the exploit freezes rather than steals.
-- **Base: $15,000.** Permanently unrecoverable (×1.5) → **$22,500**.
+- **Base: \$15,000.** Permanently unrecoverable (×1.5) → **\$22,500**.
 
 ## Edge cases
 
