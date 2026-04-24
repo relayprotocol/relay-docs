@@ -3,11 +3,7 @@ title: "Lighter Support"
 description: "How to deposit to Lighter from any Relay chain"
 ---
 
-Relay supports depositing to Lighter from any supported chain. To try it today, use the [Relay App](https://relay.link/bridge/lighter). This document details how to integrate Lighter deposits into your application.
-
-<Note>
-  Currently, only deposits to Lighter are supported. Withdrawals from Lighter are not yet available.
-</Note>
+Relay supports depositing and withdrawing to Lighter from any supported chain. To try it today, deposit using the [Relay App](https://relay.link/bridge/lighter) (withdrawing is not yet supported). This document details how to integrate Lighter deposits into your application.
 
 # Prerequisites
 
@@ -69,3 +65,21 @@ In this example:
 - `recipient: "509564"` - Your Lighter account index (replace with your actual account index)
 
 The response will include the execution steps required to complete the deposit. Follow the standard [step execution](https://docs.relay.link/references/api/api_core_concepts/step-execution) flow to complete the transaction.
+
+## SDK
+
+To use the SDK with Lighter, install and configure the
+[Lighter wallet adapter](/references/relay-kit/sdk/adapters#what-adapters-are-available-out-of-the-box).
+
+```
+yarn add @relayprotocol/relay-lighter-wallet-adapter @relayprotocol/relay-sdk viem
+```
+
+If you want the adapter to run its own bootstrap (fresh keygen, `accountApiKey`, or `storage` paths), you also need the Lighter SDK:
+
+```
+yarn add @relay-protocol/lighter-ts-sdk
+```
+
+For implementation details and code samples, see the
+[Adapters documentation](/references/relay-kit/sdk/adapters).
