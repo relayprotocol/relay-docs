@@ -1,11 +1,11 @@
 ---
 title: "Lighter Support"
-description: "How to deposit and withdraw from Lighter to any Relay chain"
+description: "How to deposit to and withdraw from Lighter using the Relay API"
 ---
 
 Relay supports depositing and withdrawing to Lighter from any supported chain. You can try depositing today using the [Relay App](https://relay.link/bridge/lighter) (note: withdrawing is not yet supported in the app). This document details how to integrate Lighter into your application.
 
-# Prerequisites
+## Prerequisites
 
 Before you can bridge funds to Lighter, you must first set up an account on [lighter.exchange](https://lighter.exchange/). Once your account is created, you can retrieve your account index to use as the recipient for deposits.
 
@@ -836,7 +836,7 @@ curl 'https://api.relay.link/quote/v2' \
 ```
 </CodeGroup>
 
-The quote api returns a transaction step with lighter-specific execution data:
+The Quote API returns a transaction step with Lighter-specific execution data:
 
 ```json
 {
@@ -870,7 +870,7 @@ The fields returned inside `data.action` are:
 | **usdcFee**        | number   | Fee paid in USDC, in the asset's smallest unit, covering Lighter execution costs.               |
 | **memo**           | string   | Hex-encoded Relay `requestId` used to correlate the Lighter transfer with the Relay order.      |
 
-In order to interact with the Lighter API you must first [request a Lighter API key](https://apidocs.lighter.xyz/docs/api-keys) which is scoped to the specific account. You'll then need to use the data returned by the Relay quote api along with the API key from Lighter to [send transactions](https://apidocs.lighter.xyz/docs/trading). There is a binary used for signing which the SDK packages and lazily loads for you.
+In order to interact with the Lighter API you must first [request a Lighter API key](https://apidocs.lighter.xyz/docs/api-keys) which is scoped to the specific account. You'll then need to use the data returned by the Relay Quote API along with the API key from Lighter to [send transactions](https://apidocs.lighter.xyz/docs/trading). There is a binary used for signing which the SDK packages and lazily loads for you.
 
 ## SDK
 
