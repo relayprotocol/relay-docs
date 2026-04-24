@@ -3,7 +3,7 @@ title: "Lighter Support"
 description: "How to deposit to Lighter from any Relay chain"
 ---
 
-Relay supports depositing and withdrawing to Lighter from any supported chain. To try it today, deposit using the [Relay App](https://relay.link/bridge/lighter) (withdrawing is not yet supported). This document details how to integrate Lighter deposits into your application.
+Relay supports depositing and withdrawing to Lighter from any supported chain. You can try depositing today using the [Relay App](https://relay.link/bridge/lighter) (note: withdrawing is not yet supported in the app). This document details how to integrate Lighter deposits into your application.
 
 # Prerequisites
 
@@ -19,10 +19,11 @@ Lighter can be accessed using the standard Relay API flow. To get started, revie
 
 ## Lighter-Specific API Parameters
 
-| **Parameter**       | **Input**   | **Description**                                      |
-| ------------------- | ----------- | ---------------------------------------------------- |
-| toChainId           | 3586256     | Lighter Chain ID                                     |
-| recipient           |             | Lighter Account Index (not a wallet address)         |
+| **Parameter**                  | **Input**              | **Description**                                                              |
+| ------------------------------ | ---------------------- | ---------------------------------------------------------------------------- |
+| **toChainId** / **fromChainId** | `3586256`              | Lighter Chain ID. Use `toChainId` for deposits and `fromChainId` for withdrawals. |
+| **recipient**                  | Lighter account index  | The Lighter account index to credit — not a wallet address.                  |
+| **user**                       | Lighter account index  | On withdrawals, the Lighter account index to debit.                          |
 
 These parameters are specific to Lighter interactions. All other standard API parameters remain required.
 
@@ -42,13 +43,14 @@ Replace `YOUR_WALLET_ADDRESS` with your Ethereum wallet address. The response wi
 
 For more details, see the [Lighter API documentation](https://apidocs.lighter.xyz/reference/accountsbyl1address).
 
-## Example Quote Request
+## How to deposit
 
-```bash
+<CodeGroup>
+```bash Request
 curl 'https://api.relay.link/quote/v2' \
   -H 'content-type: application/json' \
   -d '{
-    "user": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+    "user": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
     "originChainId": 8453,
     "destinationChainId": 3586256,
     "originCurrency": "0x0000000000000000000000000000000000000000",
@@ -58,6 +60,381 @@ curl 'https://api.relay.link/quote/v2' \
     "amount": "1000000000000000000"
   }'
 ```
+```json Response expandable
+{
+   "steps":[
+      {
+         "id":"deposit",
+         "action":"Confirm transaction in your wallet",
+         "description":"Depositing funds to the relayer to execute the swap for USDC (Perp)",
+         "kind":"transaction",
+         "items":[
+            {
+               "status":"incomplete",
+               "data":{
+                  "from":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+                  "to":"0x4cd00e387622c35bddb9b4c962c136462338bc31",
+                  "data":"0x49290c1c000000000000000000000000f3d63166f0ca56c3c1a3508fce03ff0cf3fb691eb86a968b9c157fc6ab0e30ac13b7c9e8fe5ed28007b43da606737bca5f00cf6d",
+                  "value":"1000000000000000000",
+                  "chainId":8453,
+                  "gas":"32713",
+                  "maxFeePerGas":"6500000",
+                  "maxPriorityFeePerGas":"1000000"
+               },
+               "check":{
+                  "endpoint":"/intents/status/v3?requestId=0x63bf829d9cead2d0dc94113cc368cdc2e2f25f4a9d5c24d4123002e83cf504c1",
+                  "method":"GET"
+               }
+            }
+         ],
+         "requestId":"0x63bf829d9cead2d0dc94113cc368cdc2e2f25f4a9d5c24d4123002e83cf504c1",
+         "depositAddress":""
+      }
+   ],
+   "fees":{
+      "gas":{
+         "currency":{
+            "chainId":8453,
+            "address":"0x0000000000000000000000000000000000000000",
+            "symbol":"ETH",
+            "name":"Ether",
+            "decimals":18,
+            "metadata":{
+               "logoURI":"https://assets.relay.link/icons/1/light.png",
+               "verified":true
+            }
+         },
+         "amount":"160689399841",
+         "amountFormatted":"0.000000160689399841",
+         "amountUsd":"0.000372",
+         "minimumAmount":"160689399841"
+      },
+      "relayer":{
+         "currency":{
+            "chainId":8453,
+            "address":"0x0000000000000000000000000000000000000000",
+            "symbol":"ETH",
+            "name":"Ether",
+            "decimals":18,
+            "metadata":{
+               "logoURI":"https://assets.relay.link/icons/1/light.png",
+               "verified":true
+            }
+         },
+         "amount":"703637317433828",
+         "amountFormatted":"0.000703637317433828",
+         "amountUsd":"1.630976",
+         "minimumAmount":"703637317433828"
+      },
+      "relayerGas":{
+         "currency":{
+            "chainId":8453,
+            "address":"0x0000000000000000000000000000000000000000",
+            "symbol":"ETH",
+            "name":"Ether",
+            "decimals":18,
+            "metadata":{
+               "logoURI":"https://assets.relay.link/icons/1/light.png",
+               "verified":true
+            }
+         },
+         "amount":"0",
+         "amountFormatted":"0.0",
+         "amountUsd":"0",
+         "minimumAmount":"0"
+      },
+      "relayerService":{
+         "currency":{
+            "chainId":8453,
+            "address":"0x0000000000000000000000000000000000000000",
+            "symbol":"ETH",
+            "name":"Ether",
+            "decimals":18,
+            "metadata":{
+               "logoURI":"https://assets.relay.link/icons/1/light.png",
+               "verified":true
+            }
+         },
+         "amount":"703637317433828",
+         "amountFormatted":"0.000703637317433828",
+         "amountUsd":"1.630976",
+         "minimumAmount":"703637317433828"
+      },
+      "app":{
+         "currency":{
+            "chainId":8453,
+            "address":"0x0000000000000000000000000000000000000000",
+            "symbol":"ETH",
+            "name":"Ether",
+            "decimals":18,
+            "metadata":{
+               "logoURI":"https://assets.relay.link/icons/1/light.png",
+               "verified":true
+            }
+         },
+         "amount":"0",
+         "amountFormatted":"0.0",
+         "amountUsd":"0",
+         "minimumAmount":"0"
+      },
+      "subsidized":{
+         "currency":{
+            "chainId":8453,
+            "address":"0x0000000000000000000000000000000000000000",
+            "symbol":"ETH",
+            "name":"Ether",
+            "decimals":18,
+            "metadata":{
+               "logoURI":"https://assets.relay.link/icons/1/light.png",
+               "verified":true
+            }
+         },
+         "amount":"0",
+         "amountFormatted":"0.0",
+         "amountUsd":"0",
+         "minimumAmount":"0"
+      }
+   },
+   "details":{
+      "operation":"swap",
+      "sender":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+      "recipient":"509564",
+      "currencyIn":{
+         "currency":{
+            "chainId":8453,
+            "address":"0x0000000000000000000000000000000000000000",
+            "symbol":"ETH",
+            "name":"Ether",
+            "decimals":18,
+            "metadata":{
+               "logoURI":"https://assets.relay.link/icons/1/light.png",
+               "verified":true
+            }
+         },
+         "amount":"1000000000000000000",
+         "amountFormatted":"1.0",
+         "amountUsd":"2317.921203",
+         "minimumAmount":"1000000000000000000"
+      },
+      "currencyOut":{
+         "currency":{
+            "chainId":3586256,
+            "address":"0",
+            "symbol":"USDC (Perp)",
+            "name":"USD Coin (Perp)",
+            "decimals":6,
+            "metadata":{
+               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
+               "verified":true
+            }
+         },
+         "amount":"2312305224",
+         "amountFormatted":"2312.305224",
+         "amountUsd":"2311.766457",
+         "minimumAmount":"2266059120"
+      },
+      "refundCurrency":{
+         "currency":{
+            "chainId":8453,
+            "address":"0x0000000000000000000000000000000000000000",
+            "symbol":"ETH",
+            "name":"Ether",
+            "decimals":18,
+            "metadata":{
+               "logoURI":"https://assets.relay.link/icons/1/light.png",
+               "verified":true
+            }
+         },
+         "amount":"1000000000000000000",
+         "amountFormatted":"1.0",
+         "amountUsd":"2317.921203",
+         "minimumAmount":"1000000000000000000"
+      },
+      "totalImpact":{
+         "usd":"-6.154746",
+         "percent":"-0.27"
+      },
+      "swapImpact":{
+         "usd":"-4.523770",
+         "percent":"-0.20"
+      },
+      "expandedPriceImpact":{
+         "swap":{
+            "usd":"-4.743994"
+         },
+         "execution":{
+            "usd":"-0.02"
+         },
+         "relay":{
+            "usd":"-1.390752"
+         },
+         "app":{
+            "usd":"0"
+         },
+         "sponsored":{
+            "usd":"0"
+         }
+      },
+      "rate":"2312.305224",
+      "slippageTolerance":{
+         "origin":{
+            "usd":"0.000000",
+            "value":"0",
+            "percent":"0.00"
+         },
+         "destination":{
+            "usd":"46.004152",
+            "value":"46246104",
+            "percent":"1.99"
+         }
+      },
+      "timeEstimate":2,
+      "userBalance":"0",
+      "isFixedRate":false,
+      "route":{
+         "origin":{
+            "inputCurrency":{
+               "currency":{
+                  "chainId":8453,
+                  "address":"0x0000000000000000000000000000000000000000",
+                  "symbol":"ETH",
+                  "name":"Ether",
+                  "decimals":18,
+                  "metadata":{
+                     "logoURI":"https://assets.relay.link/icons/1/light.png",
+                     "verified":true
+                  }
+               },
+               "amount":"1000000000000000000",
+               "amountFormatted":"1.0",
+               "amountUsd":"2317.921203",
+               "minimumAmount":"1000000000000000000"
+            },
+            "outputCurrency":{
+               "currency":{
+                  "chainId":8453,
+                  "address":"0x0000000000000000000000000000000000000000",
+                  "symbol":"ETH",
+                  "name":"Ether",
+                  "decimals":18,
+                  "metadata":{
+                     "logoURI":"https://assets.relay.link/icons/1/light.png",
+                     "verified":true
+                  }
+               },
+               "amount":"1000000000000000000",
+               "amountFormatted":"1.0",
+               "amountUsd":"2317.921203",
+               "minimumAmount":"1000000000000000000"
+            },
+            "router":"relay"
+         },
+         "destination":{
+            "inputCurrency":{
+               "currency":{
+                  "chainId":3586256,
+                  "address":"0",
+                  "symbol":"USDC (Perp)",
+                  "name":"USD Coin (Perp)",
+                  "decimals":6,
+                  "metadata":{
+                     "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
+                     "verified":true
+                  }
+               },
+               "amount":"2312305224",
+               "amountFormatted":"2312.305224",
+               "amountUsd":"2311.766457",
+               "minimumAmount":"2266059120"
+            },
+            "outputCurrency":{
+               "currency":{
+                  "chainId":3586256,
+                  "address":"0",
+                  "symbol":"USDC (Perp)",
+                  "name":"USD Coin (Perp)",
+                  "decimals":6,
+                  "metadata":{
+                     "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
+                     "verified":true
+                  }
+               },
+               "amount":"2312305224",
+               "amountFormatted":"2312.305224",
+               "amountUsd":"2311.766457",
+               "minimumAmount":"2266059120"
+            },
+            "router":"relay"
+         }
+      }
+   },
+   "protocol":{
+      "v2":{
+         "orderId":"0xb86a968b9c157fc6ab0e30ac13b7c9e8fe5ed28007b43da606737bca5f00cf6d",
+         "orderData":{
+            "version":"v1",
+            "solverChainId":"base",
+            "solver":"0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+            "salt":"0xa1fc4e8df304b84b48fe04ec56e5e131e3a2dff4760d792845069edadd1c30f3",
+            "inputs":[
+               {
+                  "payment":{
+                     "chainId":"base",
+                     "currency":"0x0000000000000000000000000000000000000000",
+                     "amount":"1000000000000000000",
+                     "weight":"1"
+                  },
+                  "refunds":[
+                     {
+                        "chainId":"base",
+                        "recipient":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+                        "currency":"0x0000000000000000000000000000000000000000",
+                        "minimumAmount":"0",
+                        "deadline":1777644048,
+                        "extraData":"0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+                     },
+                     {
+                        "chainId":"lighter",
+                        "recipient":"509564",
+                        "currency":"0",
+                        "minimumAmount":"0",
+                        "deadline":1777644048,
+                        "extraData":"0x"
+                     }
+                  ]
+               }
+            ],
+            "output":{
+               "chainId":"lighter",
+               "payments":[
+                  {
+                     "recipient":"509564",
+                     "currency":"0",
+                     "minimumAmount":"2266059120",
+                     "expectedAmount":"2312305224"
+                  }
+               ],
+               "calls":[
+                  
+               ],
+               "deadline":1777644048,
+               "extraData":"0x"
+            },
+            "fees":[
+               
+            ]
+         },
+         "paymentDetails":{
+            "chainId":"base",
+            "depository":"0x4cd00e387622c35bddb9b4c962c136462338bc31",
+            "currency":"0x0000000000000000000000000000000000000000",
+            "amount":"1000000000000000000"
+         }
+      }
+   }
+}
+```
+</CodeGroup>
 
 In this example:
 - `originChainId: 8453` - Depositing from Base
@@ -65,6 +442,435 @@ In this example:
 - `recipient: "509564"` - Your Lighter account index (replace with your actual account index)
 
 The response will include the execution steps required to complete the deposit. Follow the standard [step execution](https://docs.relay.link/references/api/api_core_concepts/step-execution) flow to complete the transaction.
+
+## How to withdraw
+
+<CodeGroup>
+```bash Request
+curl 'https://api.relay.link/quote/v2' \
+  -H 'content-type: application/json' \
+  -d '{
+    "user": "509564",
+    "originChainId": 3586256,
+    "destinationChainId": 8453,
+    "originCurrency": "0",
+    "destinationCurrency": "0x0000000000000000000000000000000000000000",
+    "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+    "tradeType": "EXACT_INPUT",
+    "amount": "1000000"
+  }'
+```
+```json Response expandable
+{
+    "steps": [
+        {
+            "id": "deposit",
+            "action": "Confirm transaction in your wallet",
+            "description": "Depositing funds to the relayer to execute the swap for ETH",
+            "kind": "transaction",
+            "items": [
+                {
+                    "status": "incomplete",
+                    "data": {
+                        "action": {
+                            "type": "transfer",
+                            "parameters": {
+                                "toAccountIndex": 723071,
+                                "assetIndex": 3,
+                                "fromRouteType": 0,
+                                "toRouteType": 0,
+                                "amount": 1000000,
+                                "usdcFee": 3000000,
+                                "memo": "0xfc88e4016659ca122b91dae1aedbb9038e09693a7ce33a1ed1a053d71bdb6aa2"
+                            }
+                        }
+                    },
+                    "check": {
+                        "endpoint": "/intents/status/v3?requestId=0x67ef65da60de7815d1fa42546dbee934b97d67f18bf5eb536ab616449a436aa3",
+                        "method": "GET"
+                    }
+                }
+            ],
+            "requestId": "0x67ef65da60de7815d1fa42546dbee934b97d67f18bf5eb536ab616449a436aa3",
+            "depositAddress": ""
+        }
+    ],
+    "fees": {
+        "gas": {
+            "currency": {
+                "chainId": 3586256,
+                "address": "0",
+                "symbol": "USDC (Perp)",
+                "name": "USD Coin (Perp)",
+                "decimals": 6,
+                "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                }
+            },
+            "amount": "3000000",
+            "amountFormatted": "3.0",
+            "amountUsd": "2.999505",
+            "minimumAmount": "3000000"
+        },
+        "relayer": {
+            "currency": {
+                "chainId": 3586256,
+                "address": "0",
+                "symbol": "USDC (Perp)",
+                "name": "USD Coin (Perp)",
+                "decimals": 6,
+                "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                }
+            },
+            "amount": "22319",
+            "amountFormatted": "0.022319",
+            "amountUsd": "0.022315",
+            "minimumAmount": "22319"
+        },
+        "relayerGas": {
+            "currency": {
+                "chainId": 3586256,
+                "address": "0",
+                "symbol": "USDC (Perp)",
+                "name": "USD Coin (Perp)",
+                "decimals": 6,
+                "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                }
+            },
+            "amount": "1518",
+            "amountFormatted": "0.001518",
+            "amountUsd": "0.001518",
+            "minimumAmount": "1518"
+        },
+        "relayerService": {
+            "currency": {
+                "chainId": 3586256,
+                "address": "0",
+                "symbol": "USDC (Perp)",
+                "name": "USD Coin (Perp)",
+                "decimals": 6,
+                "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                }
+            },
+            "amount": "20801",
+            "amountFormatted": "0.020801",
+            "amountUsd": "0.020798",
+            "minimumAmount": "20801"
+        },
+        "app": {
+            "currency": {
+                "chainId": 3586256,
+                "address": "0",
+                "symbol": "USDC (Perp)",
+                "name": "USD Coin (Perp)",
+                "decimals": 6,
+                "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                }
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0",
+            "minimumAmount": "0"
+        },
+        "subsidized": {
+            "currency": {
+                "chainId": 3586256,
+                "address": "0",
+                "symbol": "USDC (Perp)",
+                "name": "USD Coin (Perp)",
+                "decimals": 6,
+                "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                }
+            },
+            "amount": "0",
+            "amountFormatted": "0.0",
+            "amountUsd": "0",
+            "minimumAmount": "0"
+        }
+    },
+    "details": {
+        "operation": "swap",
+        "sender": "509564",
+        "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+        "currencyIn": {
+            "currency": {
+                "chainId": 3586256,
+                "address": "0",
+                "symbol": "USDC (Perp)",
+                "name": "USD Coin (Perp)",
+                "decimals": 6,
+                "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                }
+            },
+            "amount": "1000000",
+            "amountFormatted": "1.0",
+            "amountUsd": "0.999835",
+            "minimumAmount": "1000000"
+        },
+        "currencyOut": {
+            "currency": {
+                "chainId": 8453,
+                "address": "0x0000000000000000000000000000000000000000",
+                "symbol": "ETH",
+                "name": "Ether",
+                "decimals": 18,
+                "metadata": {
+                    "logoURI": "https://assets.relay.link/icons/1/light.png",
+                    "verified": true
+                }
+            },
+            "amount": "422039092891785",
+            "amountFormatted": "0.000422039092891785",
+            "amountUsd": "0.977171",
+            "minimumAmount": "404777693992511"
+        },
+        "refundCurrency": {
+            "currency": {
+                "chainId": 3586256,
+                "address": "0",
+                "symbol": "USDC (Perp)",
+                "name": "USD Coin (Perp)",
+                "decimals": 6,
+                "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                }
+            },
+            "amount": "1000000",
+            "amountFormatted": "1.0",
+            "amountUsd": "0.999835",
+            "minimumAmount": "1000000"
+        },
+        "totalImpact": {
+            "usd": "-0.022664",
+            "percent": "-2.27"
+        },
+        "swapImpact": {
+            "usd": "-0.000349",
+            "percent": "-0.03"
+        },
+        "expandedPriceImpact": {
+            "swap": {
+                "usd": "-0.000548"
+            },
+            "execution": {
+                "usd": "-0.021517"
+            },
+            "relay": {
+                "usd": "-0.000599"
+            },
+            "app": {
+                "usd": "0"
+            },
+            "sponsored": {
+                "usd": "0"
+            }
+        },
+        "rate": "0.000422039092891785",
+        "slippageTolerance": {
+            "origin": {
+                "usd": "0.000000",
+                "value": "0",
+                "percent": "0.00"
+            },
+            "destination": {
+                "usd": "0.039869",
+                "value": "17261398899274",
+                "percent": "4.08"
+            }
+        },
+        "timeEstimate": 3,
+        "userBalance": "0",
+        "isFixedRate": false,
+        "route": {
+            "origin": {
+                "inputCurrency": {
+                    "currency": {
+                        "chainId": 3586256,
+                        "address": "0",
+                        "symbol": "USDC (Perp)",
+                        "name": "USD Coin (Perp)",
+                        "decimals": 6,
+                        "metadata": {
+                            "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                            "verified": true
+                        }
+                    },
+                    "amount": "1000000",
+                    "amountFormatted": "1.0",
+                    "amountUsd": "0.999835",
+                    "minimumAmount": "1000000"
+                },
+                "outputCurrency": {
+                    "currency": {
+                        "chainId": 3586256,
+                        "address": "0",
+                        "symbol": "USDC (Perp)",
+                        "name": "USD Coin (Perp)",
+                        "decimals": 6,
+                        "metadata": {
+                            "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                            "verified": true
+                        }
+                    },
+                    "amount": "1000000",
+                    "amountFormatted": "1.0",
+                    "amountUsd": "0.999835",
+                    "minimumAmount": "1000000"
+                },
+                "router": "relay"
+            },
+            "destination": {
+                "inputCurrency": {
+                    "currency": {
+                        "chainId": 8453,
+                        "address": "0x0000000000000000000000000000000000000000",
+                        "symbol": "ETH",
+                        "name": "Ether",
+                        "decimals": 18,
+                        "metadata": {
+                            "logoURI": "https://assets.relay.link/icons/1/light.png",
+                            "verified": true
+                        }
+                    },
+                    "amount": "422039092891785",
+                    "amountFormatted": "0.000422039092891785",
+                    "amountUsd": "0.977171",
+                    "minimumAmount": "404777693992511"
+                },
+                "outputCurrency": {
+                    "currency": {
+                        "chainId": 8453,
+                        "address": "0x0000000000000000000000000000000000000000",
+                        "symbol": "ETH",
+                        "name": "Ether",
+                        "decimals": 18,
+                        "metadata": {
+                            "logoURI": "https://assets.relay.link/icons/1/light.png",
+                            "verified": true
+                        }
+                    },
+                    "amount": "422039092891785",
+                    "amountFormatted": "0.000422039092891785",
+                    "amountUsd": "0.977171",
+                    "minimumAmount": "404777693992511"
+                },
+                "router": "relay"
+            }
+        }
+    },
+    "protocol": {
+        "v2": {
+            "orderId": "0xfc88e4016659ca122b91dae1aedbb9038e09693a7ce33a1ed1a053d71bdb6aa2",
+            "orderData": {
+                "version": "v1",
+                "solverChainId": "base",
+                "solver": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+                "salt": "0x686091e7a544ba90af1b4d25ee805b7520b7a1f76bea9097503d3565ef099c27",
+                "inputs": [
+                    {
+                        "payment": {
+                            "chainId": "lighter",
+                            "currency": "0",
+                            "amount": "1000000",
+                            "weight": "1"
+                        },
+                        "refunds": [
+                            {
+                                "chainId": "lighter",
+                                "recipient": "509564",
+                                "currency": "0",
+                                "minimumAmount": "0",
+                                "deadline": 1777647416,
+                                "extraData": "0x"
+                            },
+                            {
+                                "chainId": "base",
+                                "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+                                "currency": "0x0000000000000000000000000000000000000000",
+                                "minimumAmount": "0",
+                                "deadline": 1777647416,
+                                "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+                            }
+                        ]
+                    }
+                ],
+                "output": {
+                    "chainId": "base",
+                    "payments": [
+                        {
+                            "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+                            "currency": "0x0000000000000000000000000000000000000000",
+                            "minimumAmount": "404777693992511",
+                            "expectedAmount": "422039092891785"
+                        }
+                    ],
+                    "calls": [],
+                    "deadline": 1777647416,
+                    "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+                },
+                "fees": []
+            },
+            "paymentDetails": {
+                "chainId": "lighter",
+                "depository": "723071",
+                "currency": "0",
+                "amount": "1000000"
+            }
+        }
+    }
+}
+```
+</CodeGroup>
+
+The quote api returns a transaction step with lighter specific execution data:
+
+```json
+{
+  "data": {
+    "action": {
+        "type": "transfer",
+        "parameters": {
+          "toAccountIndex": 723071,
+          "assetIndex": 3,
+          "fromRouteType": 0,
+          "toRouteType": 0,
+          "amount": 1000000,
+          "usdcFee": 3000000,
+          "memo": "0xfc88e4016659ca122b91dae1aedbb9038e09693a7ce33a1ed1a053d71bdb6aa2"
+      }
+    }
+  }
+}
+```
+
+The fields returned inside `data.action` are:
+
+| **Property**       | **Type** | **Description**                                                                                 |
+| ------------------ | -------- | ----------------------------------------------------------------------------------------------- |
+| **type**           | string   | The Lighter action to perform. For withdrawals this is always `transfer`.                       |
+| **toAccountIndex** | number   | The Lighter account index to transfer funds to (the relayer's account that executes the fill). |
+| **assetIndex**     | number   | Identifier of the asset being transferred on Lighter (e.g. `3` for USDC).                       |
+| **fromRouteType**  | number   | The route type to debit from on the sender's Lighter account.                                   |
+| **toRouteType**    | number   | The route type to credit on the recipient Lighter account.                                      |
+| **amount**         | number   | Amount of the asset to transfer, in the asset's smallest unit.                                  |
+| **usdcFee**        | number   | Fee paid in USDC, in the asset's smallest unit, covering Lighter execution costs.               |
+| **memo**           | string   | Hex-encoded Relay `requestId` used to correlate the Lighter transfer with the Relay order.      |
+
+In order to interact with the Lighter API you must first [request a Lighter API key](https://apidocs.lighter.xyz/docs/api-keys) which is scoped to the specific account. You'll then need to use the data returned by the Relay quote api along with the API key from Lighter to [send transactions](https://apidocs.lighter.xyz/docs/trading). There is a binary used for signing which the SDK packages and lazily loads for you.
 
 ## SDK
 
