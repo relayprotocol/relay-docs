@@ -8,10 +8,7 @@ possible circumstances, a bridge or swap might be refunded instead of completed.
 Learn more about Relay's refund logic and how it works. 
 
 ## What is a refund?
-A refund is returned funds to a user due to a failed swap or bridge.
-Relay will refund the user's funds on the destination chain. 
-If the destination chain is unavailable, Relay will refund the user's funds on the deposit chain. 
-The destination chain might be unavailable for a variety of reasons like a network outage.
+A refund returns funds to a user when a swap or bridge cannot be completed. Refunds are paid on the origin chain to the `refundTo` address supplied on the quote. If `refundTo` is not set, automatic refund is disabled.
 
 ## What causes refunds to happen?
 A refund is triggered when the swap or bridge fails to complete.
