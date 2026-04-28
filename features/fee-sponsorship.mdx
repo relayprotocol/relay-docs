@@ -52,6 +52,10 @@ Add these parameters to your [Get Quote](/references/api/get-quote) API request:
 | `depositFeePayer` | `string` | _(Optional)_ A Solana address to pay deposit transaction fees for Solana origin transactions. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 | `sponsoredFeeComponents` | `string[]` | _(Optional)_ You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees.
 
+<Warning>
+Deposit addresses do not support `sponsoredFeeComponents`. `maxSubsidizationAmount` is supported by deposit addresses but if the amount exceeds the maximum the user pays the full amount.
+</Warning>
+
 ### Example Request
 
 ```bash cURL
