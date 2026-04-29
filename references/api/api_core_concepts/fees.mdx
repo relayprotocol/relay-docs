@@ -110,6 +110,10 @@ When displaying fees to users, we recommend mapping the `expandedPriceImpact` fi
 
 Integrators with [Fee Sponsorship](/features/fee-sponsorship) enabled can subsidize fees for their users. By default, setting **`subsidizeFees`** to `true` sponsors all fee components.
 
-For more granular control, use the **`sponsoredFeeComponents`** parameter in the quote request to choose which specific fee components to sponsor. This allows you to sponsor some fees (e.g. execution and relay fees) while letting the user pay others (e.g. swap fees).
+For more granular control, use the **`sponsoredFeeComponents`** parameter in the quote request to choose which specific fee components to sponsor. This allows you to sponsor some fees (e.g. execution and relay fees) while letting the user pay others (e.g. swap fees). 
+
+<Warning>
+Deposit addresses do not support `sponsoredFeeComponents`.
+</Warning>
 
 See the [Fee Sponsorship Doc](/features/fee-sponsorship) for setup details.
