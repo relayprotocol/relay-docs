@@ -53,7 +53,7 @@ Add these parameters to your [Get Quote](/references/api/get-quote) API request:
 | `sponsoredFeeComponents` | `string[]` | _(Optional)_ You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees.
 
 <Warning>
-Deposit addresses do not support `sponsoredFeeComponents`. `maxSubsidizationAmount` is supported by deposit addresses but if the amount exceeds the maximum the user pays the full amount.
+[Deposit addresses](/features/deposit-addresses) do not support `sponsoredFeeComponents`. `maxSubsidizationAmount` is supported by deposit addresses but if the amount exceeds the maximum the user pays all fees and nothing is subsidized.
 </Warning>
 
 ### Example Request
@@ -94,6 +94,10 @@ This protects you from unexpectedly high costs during network congestion or vola
 <Info>
 With partial fee sponsorship, users always receive some benefit from your sponsorship even when fees spike. For example, if you set a $5.00 cap and fees total $7.00, you pay $5.00 and the user pays $2.00.
 </Info>
+
+<Warning>
+Partial fee sponsorship is not supported for deposit addresses, if the fees exceed the `maxSubsidizationAmount` the user will cover the fees completely and nothing will be sponsored.
+</Warning>
 
 ---
 
