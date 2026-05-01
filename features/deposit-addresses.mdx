@@ -909,15 +909,6 @@ There are two distinct refund scenarios:
 1. **Correct currency, fill failed** (e.g., slippage, network issues) — If `refundTo` is set, the deposit is automatically refunded to that address, minus the cost of gas. No additional fees are taken.
 2. **Wrong currency (non-solver token)** — Not supported in the normal fill flow. Automatic recovery is not available; manual handling may be required.
 
-### Refund Types
-
-Refunds can be delivered on either chain:
-
-- **Origin refund** — Returns the deposited token on the origin chain.
-- **Destination refund** — Pays the solver output token on the destination chain.
-
-If `refundType` is set explicitly, it determines which path is used. Otherwise, providing `refundTo` implies an origin refund.
-
 ### `refundTo` Configuration
 
 | `refundTo` value | Behavior |
