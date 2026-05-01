@@ -1260,6 +1260,19 @@ curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
 
 You can also pass `targetChainId` to reindex a deposit that landed on a different chain than originally quoted. This is useful for operational recovery when funds were sent to the right address but on the wrong chain.
 
+Pass `currency` to scope the reindex to a single currency address rather than iterating every depositable currency on the chain. This accepts any currency registered with Relay on the target chain — including currencies that aren't on the standard solver-depositable list — and is useful when funds landed in a token outside that list (for example, a HyperCore-registered token when the deposit address was created for HyperEVM). Unknown currencies return `400`.
+
+```bash
+curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "chainId": 999,
+    "depositAddress": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
+    "targetChainId": 1337,
+    "currency": "0x6d1e7cde53ba9467b783cb7c530ce054"
+  }'
+```
+
 <Info>
 The background monitor only checks the originally quoted input token. If a different supported token was sent, the monitor won't detect it. Reindex checks all solver-depositable currencies and is the fallback path for these cases.
 </Info>
