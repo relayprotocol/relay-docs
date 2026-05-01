@@ -2,3 +2,7 @@
 title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
+
+## 2026-04-28 — Same-chain dust swaps reject at quote time
+
+**Breaking** — `POST /quote/v2`: same-chain swap requests whose quoted USD value is greater than `0` and less than `$0.05` now return `400` with `errorCode: "AMOUNT_TOO_LOW"`. Previously these requests returned `200` with calldata that reverted on-chain. Wrap and unwrap quotes (e.g. same-chain `ETH` ↔ `WETH`) and quotes that include attached calls continue to be accepted at any size.
