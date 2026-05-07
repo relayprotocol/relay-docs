@@ -23,7 +23,7 @@ This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headle
 | `useDepositAddress` | boolean | Set to `true` to receive a deposit address instead of transaction calldata. |
 | `user` | address | The recipient wallet on the destination chain. Can be any valid address, including the zero address. |
 | `recipient` | address | The address that receives funds on the destination chain. |
-| `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Omitting this on open addresses disables automatic refund. See [Refund Behavior](#refund-behavior). |
+| `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Set to the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to opt into automatic refunds to the original depositor — supported on EVM chains, Bitcoin, and Solana. Omitting this on open addresses disables automatic refund. See [Refund Behavior](#refund-behavior). |
 | `tradeType` | string | Must be `EXACT_INPUT`. Deposit addresses only support exact input trades — output varies based on market conditions at fill time. |
 | `amount` | string | The quoted amount in the origin token's smallest unit. Open-ended addresses support variable deposit amounts. Strict addresses should be treated as exact-payment instructions. |
 | `strict` | boolean | Set to `true` for a strict deposit address tied to a specific order. Omit or set to `false` for an open deposit address. |
@@ -915,17 +915,23 @@ There are two distinct refund scenarios:
 |---|---|
 | User's address | Refund directly to the user |
 | App-controlled address | Refund to integrator's address — your support team handles returning funds to the user |
+| Origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) | Auto-refund to the original depositor — the address that sent funds to the deposit address. Supported on EVM chains, Bitcoin, and Solana origins; rejected on other VMs. |
 | Not set (open) | Automatic refund is disabled — no internal fallback |
 | Not set (strict) | Not allowed — `refundTo` is required for strict deposit addresses |
 
 <Note>
-If users may send from a centralized exchange, **do not use "refund to sender"** — the sender address will be the exchange's hot wallet, not the user's. Use an app-controlled address instead so your support team can handle the last mile.
+If users may send from a centralized exchange, **do not use "refund to sender"** (an explicit user address you don't control, or the native-currency-address auto-refund opt-in) — the sender address will be the exchange's hot wallet, not the user's. Use an app-controlled address instead so your support team can handle the last mile.
 </Note>
+
+<Info>
+When auto-refund to the original depositor is triggered, the request's `outTxs` will contain **two** refund transactions. The first transaction is the solver-to-depositor transfer that actually returns funds to the depositor — this is the one to track from your integration. The second is an internal protocol-settlement transaction that does not move user funds and can be ignored by integrators.
+</Info>
 
 ### Recommended Setup
 
 - **Open deposit addresses**: Set `refundTo` to the user's address for automatic refunds.
 - **Strict deposit addresses**: Always set `refundTo`. If the sender is unknown (e.g., CEX withdrawal), use an app-controlled address so your support team can manage refunds.
+- **Auto-refund to depositor**: When users deposit from wallets they control, you can pass `refundTo` as the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to refund to the original depositor automatically. The first of the two resulting `outTxs` is the transfer to the depositor — track that one for refund delivery. Avoid this when deposits may originate from a centralized exchange.
 
 ## Tracking Transactions
 
