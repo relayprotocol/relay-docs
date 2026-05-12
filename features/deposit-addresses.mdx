@@ -62,7 +62,7 @@ Strict deposit addresses are bound to the original order and should be treated a
 | Wrong token (non-solver) | Not supported in the normal fill flow; may require manual recovery | Not supported in the normal fill flow |
 | Wrong chain (same VM) | Auto-reroute on EVM; other chain families may refund | Not supported |
 | Wrong chain (different VM) | Not possible — address formats differ | Not possible — address formats differ |
-| Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Exact payment expected |
+| Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments fill the quoted amount and refund the excess |
 | `refundTo` | Recommended (omitting disables automatic refund) | Required |
 | Address reuse | Yes, same route | No — bound to original order |
 
@@ -891,7 +891,8 @@ This is not possible — deposit address formats differ across VM types (e.g., E
 Strict addresses are bound to the original order. The handling is narrower:
 
 - **Exact amount** — The fill proceeds using the original order.
-- **Amount mismatch** — The deposit may fail and be refunded to `refundTo`. Send the exact quoted amount.
+- **Underpayment** — The deposit fails and is refunded to `refundTo`. The fill does not proceed.
+- **Overpayment** — The fill proceeds for the originally quoted amount and the excess is returned to `refundTo` as a separate refund leg. The fill itself is never scaled up.
 - **Wrong token or wrong chain** — Not supported. Strict addresses do not have automatic wrong-token or wrong-chain recovery paths.
 
 <Warning>
