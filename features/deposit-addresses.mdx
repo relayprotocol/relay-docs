@@ -58,8 +58,8 @@ Strict deposit addresses are bound to the original order and should be treated a
 | Behavior | Open | Strict |
 |---|---|---|
 | Accepted currencies | Flexible — may adapt to a different supported token depending on chain family | Only the currency specified in the original quote |
-| Wrong token (solver currency) | Requote and fill on some chain families (not universal) | Not supported — refund or manual recovery |
-| Wrong token (non-solver) | Not supported in the normal fill flow; may require manual recovery | Not supported in the normal fill flow |
+| Wrong token (solver currency) | Requote and fill on some chain families (not universal); [relay.link/withdraw](https://relay.link/withdraw) is the fallback if the auto-flow doesn't complete | Recoverable via [relay.link/withdraw](https://relay.link/withdraw) |
+| Wrong token (non-solver) | Not supported and not currently recoverable | Not supported and not currently recoverable |
 | Wrong chain (same VM) | Auto-reroute on EVM; other chain families may refund | Not supported |
 | Wrong chain (different VM) | Not possible — address formats differ | Not possible — address formats differ |
 | Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments fill the quoted amount and refund the excess |
@@ -908,7 +908,11 @@ What happens when a deposit can't be processed depends on the token type and the
 There are two distinct refund scenarios:
 
 1. **Correct currency, fill failed** (e.g., slippage, network issues) — If `refundTo` is set, the deposit is automatically refunded to that address, minus the cost of gas. No additional fees are taken.
-2. **Wrong currency (non-solver token)** — Not supported in the normal fill flow. Automatic recovery is not available; manual handling may be required.
+2. **Wrong currency (non-solver token)** — Not supported and not currently recoverable.
+
+<Info>
+If a wrong solver currency was sent and the deposit didn't auto-resolve, users can recover it at [relay.link/withdraw](https://relay.link/withdraw).
+</Info>
 
 ### `refundTo` Configuration
 
