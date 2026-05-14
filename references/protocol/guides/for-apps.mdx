@@ -10,9 +10,19 @@ Application developers typically interact with Relay through the [Relay API](/re
 
 This page explains how the protocol surfaces in API responses and how to trace an order through the settlement flow.
 
+## orderId vs. requestId
+
+Every Relay request has two identifiers, and they serve different purposes.
+
+The `requestId` is the Relay-level intent identifier. It covers the overall intent — including any origin or destination swaps — and is what most of the API works in: the [quote api](/references/api/get-quote-v2) returns it as `steps[].requestId`, and status polling, webhooks, and the [requests api](/references/api/get-requests) all key off it. It is not derivable from on-chain data alone.
+
+The `orderId` is the protocol-level deposit identifier. It is the `bytes32 id` argument the [Depository](/references/protocol/components/depository) receives in `depositNative` / `depositErc20` (EVM) and `deposit_native` / `deposit_token` (Solana), and it is emitted in the matching deposit event. You can read it directly from on-chain data without an API call, which makes it the right identifier for indexers and merchant-style flows that react to deposits before talking to the Relay API.
+
+If you only have an `orderId` from on-chain data, look it up via the [requests api](/references/api/get-requests) to find the corresponding Relay request and its `requestId`.
+
 ## Protocol Deposits via the API
 
-When requesting a quote using the Relay API's `/quote/v2` endpoint, the response includes a **`protocol`** field when the order will be settled through the Relay Settlement protocol:
+When requesting a quote using the Relay [quote api](/references/api/get-quote-v2), the response includes a **`protocol`** field when the order will be settled through the Relay Settlement protocol:
 
 ```json
 {
@@ -45,7 +55,24 @@ Once an order is submitted, you can trace it through the settlement flow:
 
 ### 1. Deposit Transaction
 
-The user's deposit transaction is a standard transfer to the [Depository](/references/protocol/components/depository) contract on the origin chain. You can find this on the origin chain's block explorer.
+The user's deposit transaction is a standard transfer to the [Depository](/references/protocol/components/depository) contract on the origin chain. You can find it on the origin chain's block explorer, and you can also read the `orderId` directly from the deposit transaction without calling the Relay API.
+
+**EVM chains** — the Depository emits one of two events on every deposit:
+
+```solidity
+event RelayNativeDeposit(address from, uint256 amount, bytes32 id)
+event RelayErc20Deposit(address from, address token, uint256 amount, bytes32 id)
+```
+
+Neither event indexes its arguments, so `id` is read from the log's `data` field. The same event fires whether the depositor called the Depository directly or routed through a Relay router (e.g. `ERC20Router`, `Multicaller`), making event parsing the universal path. See [Contracts Addresses](/references/protocol/depository/addresses) for the Depository address on every supported chain.
+
+**Solana** — the Depository program encodes the `id` directly in the instruction data passed to `deposit_native` / `deposit_token`. See [Contracts Addresses](/references/protocol/depository/addresses) for the program ID. The layout is:
+
+| Offset (bytes) | Length | Field                            |
+| -------------- | ------ | -------------------------------- |
+| 0              | 8      | Anchor discriminator             |
+| 8              | 8      | `amount` (`u64`, little-endian)  |
+| 16             | 32     | `id` (`[u8; 32]`)                |
 
 ### 2. Settlement on Relay Chain
 
