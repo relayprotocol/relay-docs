@@ -90,7 +90,7 @@ All pages use clear, Stripe-adjacent prose — plain English, short paragraphs (
 ### 2.6 Links and cross-references
 
 - Internal links use root-relative paths: `[Fast Fill](/features/fast-fill)` — not relative (`../features/...`), not absolute URLs (`https://docs.relay.link/...`).
-- Anchor links use the Mintlify-generated slug: `/references/api/api-keys#how-to-get-an-api-key`.
+- Anchor links use the Mintlify-generated slug: `/references/api/api-keys#creating-an-api-key`.
 - When introducing a concept that has its own page, link on first mention.
 - External links (GitHub, viem, tanstack, etc.) open in the same tab by default unless the page already uses `target="_blank"` in a `<Card>` block.
 
