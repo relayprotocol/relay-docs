@@ -3,6 +3,12 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-05-15 — More specific `failReason` values on request status
+
+**Added** — `GET /intents/status/v3`: the response `failReason` enum gains `TRANSACTION_TOO_LARGE`, returned when the serialized fill transaction exceeded the origin chain or RPC payload size limit.
+
+**Behavior change** — `GET /intents/status/v3`: failure rows that previously returned `failReason: "UNKNOWN"` now return a specific reason where one is available. Failed same-chain swap attempts return `TRANSACTION_REVERTED`, and refund rows triggered by duplicate deposits against the same request return `DOUBLE_SPEND`. No new enum members were introduced for these two cases.
+
 ## 2026-05-07 — Strict deposit-address overpayments now refund the excess
 
 **Behavior change** — `POST /quote/v2` with `useDepositAddress: true` and `strict: true`: a deposit larger than the quoted `amount` now fills the quoted amount and refunds the excess to `refundTo` in a separate refund leg, instead of scaling the fill up to the deposited amount. Exact payments still fill normally and underpayments still fail and refund. `refundTo` remains required for strict deposit addresses.
