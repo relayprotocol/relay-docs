@@ -5,7 +5,7 @@ description: "Record of breaking changes, deprecations, and notable additions to
 
 ## 2026-05-15 — More specific `failReason` values on request status
 
-**Added** — `GET /intents/status/v3`: the response `failReason` enum gains `TRANSACTION_TOO_LARGE`, returned when the serialized fill transaction exceeded the origin chain or RPC payload size limit.
+**Added** — `GET /intents/status/v3`: the response `failReason` enum gains `TRANSACTION_TOO_LARGE`, returned when the serialized fill transaction exceeded the origin chain or RPC payload size limit. The enum also gains `SOLVER_BALANCE_TOO_LOW`, returned when the solver could not construct or send the fill because its source-side balance (or available UTXOs) was insufficient.
 
 **Behavior change** — `GET /intents/status/v3`: failure rows that previously returned `failReason: "UNKNOWN"` now return a specific reason where one is available. Failed same-chain swap attempts return `TRANSACTION_REVERTED`, and refund rows triggered by duplicate deposits against the same request return `DOUBLE_SPEND`. No new enum members were introduced for these two cases.
 
