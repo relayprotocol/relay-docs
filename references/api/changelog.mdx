@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-05-20 — Decoded `/execute` simulation errors
+
+**Behavior change** — `POST /execute`: raw-call simulation failures now return a decoded `error` label, `message`, `requestId`, and optional `details` object when Relay can decode the revert trace. The `details` object includes the top-level frame, innermost reverting frame, full reverting path, and decoded revert data for both subsidized and non-subsidized gasless execution flows.
+
 ## 2026-05-15 — More specific `failReason` values on request status
 
 **Added** — `GET /intents/status/v3`: the response `failReason` enum gains `TRANSACTION_TOO_LARGE`, returned when the serialized fill transaction exceeded the origin chain or RPC payload size limit. The enum also gains `SOLVER_BALANCE_TOO_LOW`, returned when the solver could not construct or send the fill because its source-side balance (or available UTXOs) was insufficient.
