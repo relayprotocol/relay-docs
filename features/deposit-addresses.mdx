@@ -58,8 +58,8 @@ Strict deposit addresses are bound to the original order and should be treated a
 | Behavior | Open | Strict |
 |---|---|---|
 | Accepted currencies | Flexible — may adapt to a different supported token depending on chain family | Only the currency specified in the original quote |
-| Wrong token (solver currency) | Requote and fill on some chain families (not universal) | Not supported — refund or manual recovery |
-| Wrong token (non-solver) | Not supported in the normal fill flow; may require manual recovery | Not supported in the normal fill flow |
+| Wrong token (solver currency) | Requote and fill on some chain families (not universal); [relay.link/withdraw](https://relay.link/withdraw) is the fallback if the auto-flow doesn't complete | Recoverable via [relay.link/withdraw](https://relay.link/withdraw) |
+| Wrong token (non-solver) | Not supported and not currently recoverable | Not supported and not currently recoverable |
 | Wrong chain (same VM) | Auto-reroute on EVM; other chain families may refund | Not supported |
 | Wrong chain (different VM) | Not possible — address formats differ | Not possible — address formats differ |
 | Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments fill the quoted amount and refund the excess |
@@ -908,7 +908,11 @@ What happens when a deposit can't be processed depends on the token type and the
 There are two distinct refund scenarios:
 
 1. **Correct currency, fill failed** (e.g., slippage, network issues) — If `refundTo` is set, the deposit is automatically refunded to that address, minus the cost of gas. No additional fees are taken.
-2. **Wrong currency (non-solver token)** — Not supported in the normal fill flow. Automatic recovery is not available; manual handling may be required.
+2. **Wrong currency (non-solver token)** — Not supported and not currently recoverable.
+
+<Info>
+If a wrong solver currency was sent and the deposit didn't auto-resolve, users can recover it at [relay.link/withdraw](https://relay.link/withdraw).
+</Info>
 
 ### `refundTo` Configuration
 
@@ -1245,7 +1249,7 @@ curl -X GET "https://api.relay.link/intents/status/v3?requestId=<REQUEST_ID>"
 
 ### Reindexing Stuck Deposits
 
-Relay runs a background monitor that checks for deposits of the originally quoted token. If a user sent a different supported (solver) token, the background monitor may not detect it automatically. Use the [Deposit Address Reindex](/references/api/deposit-address-reindex) endpoint to trigger on-demand re-detection. This checks all solver currency balances on the specified chain and triggers sweeps for any detected deposits.
+Relay's background monitor only checks the originally quoted input token. If a user sent a different supported (solver) token, the monitor may not detect it automatically. Use the [Deposit Address Reindex](/references/api/deposit-address-reindex) endpoint to trigger on-demand re-detection — it checks every solver-depositable currency on the chain and queues a sweep for any non-zero balances.
 
 ```bash
 curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
@@ -1256,24 +1260,20 @@ curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
   }'
 ```
 
-You can also pass `targetChainId` to reindex a deposit that landed on a different chain than originally quoted. This is useful for operational recovery when funds were sent to the right address but on the wrong chain.
+**`chainId` is the chain the deposit address was originally registered on.** Pass `targetChainId` to run the reindex on a different chain — useful when funds were sent to the right address but on the wrong chain (e.g. the address was registered for Arbitrum but funds landed on Ethereum). This is the chain being reindexed, not the destination chain of the original quote.
 
-Pass `currency` to scope the reindex to a single currency address rather than iterating every depositable currency on the chain. This accepts any currency registered with Relay on the target chain — including currencies that aren't on the standard solver-depositable list — and is useful when funds landed in a token outside that list (for example, a HyperCore-registered token when the deposit address was created for HyperEVM). Unknown currencies return `400`.
+Pass `currency` to scope the reindex to a single currency address instead of iterating every depositable currency. Any currency registered with Relay on the target chain is accepted — including currencies outside the standard solver-depositable list (e.g. a HyperCore-registered token when the deposit address was created for HyperEVM).
 
 ```bash
 curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
   -H 'Content-Type: application/json' \
   -d '{
-    "chainId": 999,
+    "chainId": 42161,
     "depositAddress": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
-    "targetChainId": 1337,
-    "currency": "0x6d1e7cde53ba9467b783cb7c530ce054"
+    "targetChainId": 1,
+    "currency": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
   }'
 ```
-
-<Info>
-The background monitor only checks the originally quoted input token. If a different supported token was sent, the monitor won't detect it. Reindex checks all solver-depositable currencies and is the fallback path for these cases.
-</Info>
 
 <Note>
 The deposit transaction hash cannot be used to look up the status of a deposit address bridge. Always use the deposit address itself or the `requestId` to track status.
@@ -1308,7 +1308,7 @@ Non-solver tokens and NFTs sent to deposit addresses are **not recoverable** thr
 
 ### Chain-Specific Notes
 
-- **Bitcoin** — Requires 1 block confirmation before Relay processes the deposit. Deposits are detected via mempool monitoring but only acted on after confirmation.
+- **Bitcoin** — Standard deposits are processed after 1 block confirmation. High-value deposits (above the per-currency threshold) wait for 2 block confirmations to reduce reorg risk. Deposits are detected via mempool monitoring but only acted on after the applicable confirmation count.
 - **Solana** — Supports SPL tokens through the protocol deposit method. Native SOL and SPL tokens like USDC are solver currencies on Solana.
 - **Hyperliquid** — Uses bridged USDC (USDC.e) with different decimal precision than native USDC on other chains. Be aware of decimal mismatches when computing amounts.
 
