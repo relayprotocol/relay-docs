@@ -386,14 +386,12 @@ deposit addresses, there are additional considerations:
 
 ### Block Confirmations
 
-When using deposit addresses, Relay waits for **1 block confirmation** before
-processing. Bitcoin's block time averages ~10 minutes but varies significantly.
-blocks can arrive within minutes of each other or take 30-50 minutes.
+When using deposit addresses, Relay waits for **1 block confirmation** before processing in the typical case. For high-value deposits — those whose origin amount exceeds a per-currency threshold — Relay waits for **2 block confirmations** instead, to reduce the risk of a reorg invalidating the fill. Bitcoin's block time averages ~10 minutes but varies significantly; blocks can arrive within minutes of each other or take 30-50 minutes.
+
+The `timeEstimate` field on the quote response reflects whichever rule applies — expect roughly one block of wait time for standard deposits and roughly two for high-value ones.
 
 <Warning>
-When polling for deposit address transactions, allow for at least 2-3
-	blocks worth of time before considering a transaction stalled. You can
-	monitor block times at [mempool.space](https://mempool.space).
+When polling for deposit address transactions, allow for at least 2-3 blocks worth of time (3-4 for high-value deposits) before considering a transaction stalled. You can monitor block times at [mempool.space](https://mempool.space).
 </Warning>
 
 ### Quote Requirements for Deposit Addresses

@@ -1308,7 +1308,7 @@ Non-solver tokens and NFTs sent to deposit addresses are **not recoverable** thr
 
 ### Chain-Specific Notes
 
-- **Bitcoin** — Requires 1 block confirmation before Relay processes the deposit. Deposits are detected via mempool monitoring but only acted on after confirmation.
+- **Bitcoin** — Standard deposits are processed after 1 block confirmation. High-value deposits (above the per-currency threshold) wait for 2 block confirmations to reduce reorg risk. Deposits are detected via mempool monitoring but only acted on after the applicable confirmation count.
 - **Solana** — Supports SPL tokens through the protocol deposit method. Native SOL and SPL tokens like USDC are solver currencies on Solana.
 - **Hyperliquid** — Uses bridged USDC (USDC.e) with different decimal precision than native USDC on other chains. Be aware of decimal mismatches when computing amounts.
 
