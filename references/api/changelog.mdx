@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-05-21 — Hyperliquid authorize step adds `depositor` field
+
+**Breaking** — `POST /execute/authorize` (Hyperliquid nonce-mapping flow): the EIP-712 `RelayNonceMapping` domain `version` is bumped from `"1"` to `"2"`, and the `NonceMapping` typed-data struct gains a new `depositor` (`address`) field. The `/authorize` request body must include a matching `depositor` field. Integrators that hand-roll the authorize step must sign the new typed-data shape and forward `depositor` exactly as returned in `steps[0].items[0].data.sign.value.depositor` and `steps[0].items[0].data.post.body.depositor`. Integrators that pass the API-returned `sign` payload straight to their wallet (and POST `post.body` verbatim) require no code change. See [Hyperliquid Support](/references/api/api_guides/hyperliquid-support) for the updated payload shapes.
+
 ## 2026-05-20 — Decoded `/execute` simulation errors
 
 **Behavior change** — `POST /execute`: raw-call simulation failures now return a decoded `error` label, `message`, `requestId`, and optional `details` object when Relay can decode the revert trace. The `details` object includes the top-level frame, innermost reverting frame, full reverting path, and decoded revert data for both subsidized and non-subsidized gasless execution flows.
