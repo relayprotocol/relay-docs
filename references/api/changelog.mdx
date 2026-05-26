@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-05-26 — Webhook payload adds `details`, `failReason`, `refundFailReason`
+
+**Added** — `request.status.updated` webhook: the `data` object now includes `details`, `failReason`, and `refundFailReason`, matching the corresponding fields on [`GET /intents/status/v3`](/references/api/get-intents-status-v3). `failReason` returns `"N/A"` on non-failure statuses and the recorded reason (or `"UNKNOWN"`) on `failure`/`fallback`/`refund` statuses. `refundFailReason` defaults to `"N/A"` when no refund-leg failure is recorded. `details` is `null` when no additional context is available.
+
 ## 2026-05-21 — Hyperliquid authorize step adds `depositor` field
 
 **Breaking** — `POST /authorize` (Hyperliquid nonce-mapping flow): the EIP-712 `RelayNonceMapping` domain `version` is bumped from `"1"` to `"2"`, and the `NonceMapping` typed-data struct gains a new `depositor` (`address`) field. The `/authorize` request body must include a matching `depositor` field.
