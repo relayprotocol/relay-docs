@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-05-29 — Oversized Solana aggregator quotes reject at quote time
+
+**Breaking** — `POST /quote/v2`: Solana-origin quotes routed through a third-party aggregator now return `400` when the generated deposit transaction would exceed Solana's 1232-byte limit. Previously these requests returned `200` with calldata that could not be serialized or executed client-side. Use **`maxRouteLength`** or **`includedOriginSwapSources`** to keep transactions under the limit — see [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
+
 ## 2026-05-28 — Bitcoin deposits enter `pending` from mempool
 
 **Behavior change** — `GET /intents/status/v3` and the `request.status.updated` webhook/websocket event: requests with a Bitcoin origin deposit now transition to `pending` as soon as the deposit is observed in the Bitcoin mempool, instead of waiting for the first block confirmation. The `pending` status no longer implies block inclusion for Bitcoin origins; block-confirmation policy continues to govern when the request progresses to `submitted`, `success`, `failure`, or `refund`. EVM and other non-Bitcoin origins are unchanged.
