@@ -38,7 +38,7 @@ App fees are supported on the following transaction types:
 
 | Transaction Type | Supported |
 |---|---|
-| Swaps (cross-chain) | ✅ All chain combinations (EVM, SVM, SUI, BTC) |
+| Swaps (cross-chain) | ✅ All chain combinations (EVM, SVM, BTC) |
 | Swaps (same-chain) | ✅ See chain-specific notes below |
 | Bridges | ✅ |
 | Calls | ✅ |
@@ -52,8 +52,6 @@ App fees are supported on the following transaction types:
 **EVM (same-chain):** Fully supported. Fees can be collected from the input currency, the output currency, or via a parallel swap to USDC.
 
 **SVM (same-chain):** Supported with input-currency collection only. Output-currency fee collection is not available — this applies to all output currencies, not just SOL. If the input currency is not a solver-held currency, the fee is collected via a secondary swap into USDC.
-
-**SUI (same-chain):** Supported with input-currency collection only. No output-currency collection or parallel swap fallback. App fees will only be collected when the input is a solver-held currency.
 
 **Cross-chain (all combinations):** Fully supported. Same-chain limitations do not apply to cross-chain swaps — fees are calculated based on the solver's deposit currency on the origin chain.
 
