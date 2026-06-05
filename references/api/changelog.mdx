@@ -5,7 +5,7 @@ description: "Record of breaking changes, deprecations, and notable additions to
 
 ## 2026-06-05 — Upstream RPC failures no longer reported as `DESTINATION_TX_FAILED`
 
-**Behavior change** — `POST /quote/v2`: quote attempts that fail because an upstream RPC provider returns a transient infrastructure error (proxy timeout, pool-acquire failure, or any negative JSON-RPC code with empty revert data) now return `errorCode: "REQUEST_TIMED_OUT"` when the upstream message indicates a timeout, or `errorCode: "RPC_HTTP_ERROR"` for other transient RPC failures. Previously these were misclassified as `errorCode: "DESTINATION_TX_FAILED"`, which incorrectly suggested an on-chain revert and was treated as non-retryable. `DESTINATION_TX_FAILED` continues to be returned for genuine destination reverts where the RPC provides real revert data. Both new codes are retryable — see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+**Behavior change** — `POST /quote/v2`: quote attempts that fail because of a transient upstream RPC error now return `errorCode: "REQUEST_TIMED_OUT"` on timeout or `errorCode: "RPC_HTTP_ERROR"` for other transient RPC failures. Previously these were misclassified as `errorCode: "DESTINATION_TX_FAILED"`, which suggested an on-chain revert and was treated as non-retryable. `DESTINATION_TX_FAILED` is now returned only for genuine destination reverts. Both new codes are retryable — see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
 
 ## 2026-05-28 — Bitcoin deposits enter `pending` from mempool
 
