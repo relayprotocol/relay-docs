@@ -40,7 +40,7 @@ Relay supports two deposit address modes that differ in how flexible they are wh
 
 ### Open Deposit Addresses
 
-Open-ended deposit addresses are the flexible mode for supported routes. They can handle variable deposit amounts, and on some supported chain families they can also adapt to a different supported input token or a deposit on a different chain.
+Open-ended deposit addresses are the flexible mode for supported routes. They can handle variable deposit amounts, and on some supported chain families they can also adapt to a different supported input token or a deposit on a different chain within the same VM. Adapting to a different token or a wrong chain is not always automatic — recovery may require [manual reindexing](#reindexing-stuck-deposits) before the deposit is recognized.
 
 - `refundTo` is recommended. Omitting `refundTo` disables automatic refund — there is no internal fallback.
 - Best for: general-purpose integrations where you want tolerance for user variability.
@@ -60,7 +60,7 @@ Strict deposit addresses are bound to the original order and should be treated a
 | Accepted currencies | Flexible — may adapt to a different supported token depending on chain family | Only the currency specified in the original quote |
 | Wrong token (solver currency) | Requote and fill on some chain families (not universal); [relay.link/withdraw](https://relay.link/withdraw) is the fallback if the auto-flow doesn't complete | Recoverable via [relay.link/withdraw](https://relay.link/withdraw) |
 | Wrong token (non-solver) | Not supported and not currently recoverable | Not supported and not currently recoverable |
-| Wrong chain (same VM) | Auto-reroute on EVM; other chain families may refund | Not supported |
+| Wrong chain (same VM) | Supported, but may require [manual reindexing](#reindexing-stuck-deposits) before the deposit is recognized; some chain families refund instead | Not supported — no automatic wrong-chain recovery |
 | Wrong chain (different VM) | Not possible — address formats differ | Not possible — address formats differ |
 | Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments fill the quoted amount and refund the excess |
 | `refundTo` | Recommended (omitting disables automatic refund) | Required |
@@ -880,7 +880,11 @@ On some chain families, if the user sends a different token that is a [solver cu
 
 #### Different Chain (Same VM)
 
-On EVM chains, if the user deposits on the wrong chain but the address exists on that chain, Relay can auto-reroute the deposit. Other chain families may treat chain mismatch as an error and refund instead.
+Open and custodial deposit addresses exist at the same address across chains within a VM family (e.g. all EVM chains), so a deposit can land on a chain other than the one quoted. This is **supported but not always automatic**: Relay's background monitor watches the chain the address was registered on, so a wrong-chain deposit may not be recognized until it is reindexed.
+
+If a wrong-chain deposit isn't picked up within a few minutes, trigger detection manually with the [Deposit Address Reindex](#reindexing-stuck-deposits) endpoint, setting `targetChainId` to the chain the funds actually landed on. Once detected, Relay sweeps the funds and proceeds with a fresh quote and fill.
+
+Behavior varies by chain family — some families refund a wrong-chain deposit instead of re-routing it. Strict addresses have no wrong-chain recovery (see [Strict Addresses](#strict-addresses)).
 
 #### Different Chain (Different VM)
 
@@ -912,6 +916,10 @@ There are two distinct refund scenarios:
 
 <Info>
 If a wrong solver currency was sent and the deposit didn't auto-resolve, users can recover it at [relay.link/withdraw](https://relay.link/withdraw).
+</Info>
+
+<Info>
+A same-VM wrong-chain deposit to an open or custodial address is recoverable but may not re-route or refund on its own. Trigger [reindexing](#reindexing-stuck-deposits) with `targetChainId` set to the chain the funds landed on. Strict addresses have no automatic wrong-chain recovery.
 </Info>
 
 ### `refundTo` Configuration
