@@ -49,7 +49,7 @@ These indicate infrastructure or downstream failures and are not common:
 
 | Error Code                       | Description                                                               |
 | -------------------------------- | ------------------------------------------------------------------------- |
-| `DESTINATION_TX_FAILED`          | The relay transaction reverted on the destination chain with real revert data returned by the destination RPC. Transient upstream RPC failures are returned as `REQUEST_TIMED_OUT` or `RPC_HTTP_ERROR` instead. |
+| `DESTINATION_TX_FAILED`          | The relay transaction reverted on the destination chain.                  |
 | `ERC20_ROUTER_ADDRESS_NOT_FOUND` | The router contract for a token could not be located.                     |
 | `UNKNOWN_ERROR`                  | An unclassified or unexpected error occurred.                             |
 | `SWAP_QUOTE_FAILED`              | Failed to calculate a quote, possibly due to third-party pricing failure. |
