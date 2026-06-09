@@ -5,11 +5,11 @@ description: An introduction to adapters and how to use them
 
 ### What is an adapter anyway?
 
-An adapter is a function that takes parameters and returns an object that adheres to this [interface](https://github.com/reservoirprotocol/relay-sdk/blob/main/packages/sdk/src/types/AdaptedWallet.ts). Let's review the interface in depth:
+An adapter is a function that takes parameters and returns an object that adheres to this [interface](https://github.com/relayprotocol/relay-kit/blob/main/packages/sdk/src/types/AdaptedWallet.ts). Let's review the interface in depth:
 
 | Property                   | Description                                                                                     | Required |
 | -------------------------- | ----------------------------------------------------------------------------------------------- | -------- |
-| **vmType**                    | A string representing a supported vmType (`evm`  `svm`  `bvm`  `suivm` `tvm` `lvm`)                                                   | ✅       |
+| **vmType**                    | A string representing a supported vmType (`evm`  `svm`  `bvm`  `tvm` `lvm`)                                                   | ✅       |
 | **getChainId**                | An async function that returns a chain id                                                                                              | ✅       |
 | **handleSignMessageStep**     | An async function that given a signature step item and a step generates a signature                                                                                              | ✅       |
 | **handleSendTransactionStep** | An async function that given a chain id, a transaction step item and a step returns a transaction hash                                                                                              | ✅       |
@@ -34,8 +34,6 @@ The following adapters are officially maintained and developed by the Relay team
 [Viem Adapter](https://github.com/relayprotocol/relay-kit/blob/main/packages/sdk/src/utils/viemWallet.ts): This adapter is the default one used when no adapter is provided. You can also import it yourself to convert any viem wallet client into an adapted wallet ready to be used in the sdk.
 
 [Ethers Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-ethers-wallet-adapter): If your application uses ethers then you'll need this adapter to use the SDK. You'll still need to install viem as that's required for polling transactions but you can pass in your ethers signer to submit transactions and sign messages.
-
-[Sui Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-sui-wallet-adapter): This adapter gives the sdk the ability to submit transactions to the Sui blockchain. Under the hood it uses the [@mysten/sui](https://www.npmjs.com/package/@mysten/sui) sdk.
 
 [Tron Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-tron-wallet-adapter): This adapter gives the sdk the ability to submit transactions to the Tron blockchain. Under the hood it uses the [tronweb](https://www.npmjs.com/package/tronweb) sdk.
 
@@ -170,51 +168,6 @@ getClient().actions.execute({
 ```
 
 
-```typescript Sui expandable
-import { getFullnodeUrl, SuiClient } from '@mysten/sui/client'
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519'
-import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk"
-import { adaptSuiWallet } from '@relayprotocol/relay-sui-wallet-adapter'
-
-// Create a connection to Sui mainnet
-const rpcUrl = getFullnodeUrl('mainnet')
-const suiClient = new SuiClient({ url: rpcUrl })
-
-const keypair = new Ed25519Keypair()
-const walletAddress = keypair.toSuiAddress()
-
-const adaptedWallet = adaptSuiWallet(
-  walletAddress,
-  103665049, //chain id that Relay uses to identify Sui 
-  suiClient,
-  async (tx) => {
-   const result = await suiClient.signAndExecuteTransaction({
-      transaction: tx,
-      signer: keypair,
-      requestType: 'WaitForLocalExecution',
-      options: {
-        showEffects: true,
-      }
-    });
-
-    return result
-  }
-)
-
-const options = ... //define this based on getQuote options
-
-const quote = await getClient().actions.getQuote(options)
-
-getClient().actions.execute({
-  quote,
-  wallet: adaptedWallet,
-  onProgress: ({steps, fees, breakdown, currentStep, currentStepItem, txHashes, details}) => {
-    //custom handling
-  },
-    ...
-})
-
-```
 ```typescript Tron
 import { TronWallet } from 'tronweb'
 import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk"

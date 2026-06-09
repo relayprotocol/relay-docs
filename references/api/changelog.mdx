@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-06-05 — Upstream RPC failures no longer reported as `DESTINATION_TX_FAILED`
+
+**Behavior change** — `POST /quote/v2`: quote attempts that fail because of a transient upstream RPC error now return `errorCode: "REQUEST_TIMED_OUT"` on timeout or `errorCode: "RPC_HTTP_ERROR"` for other transient RPC failures. Previously these were misclassified as `errorCode: "DESTINATION_TX_FAILED"`, which suggested an on-chain revert and was treated as non-retryable. `DESTINATION_TX_FAILED` is now returned only for genuine destination reverts. Both new codes are retryable — see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
 ## 2026-05-29 — Oversized Solana aggregator quotes reject at quote time
 
 **Breaking** — `POST /quote/v2`: Solana-origin quotes routed through a third-party aggregator now return `400` when the generated deposit transaction would exceed Solana's 1232-byte limit. Previously these requests returned `200` with calldata that could not be serialized or executed client-side. Use **`maxRouteLength`** or **`includedOriginSwapSources`** to keep transactions under the limit — see [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
