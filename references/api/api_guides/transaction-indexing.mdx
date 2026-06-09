@@ -79,16 +79,6 @@ curl -X POST 'https://api.relay.link/transactions/index' \
 
 Call this API immediately after submitting a transaction, before waiting for confirmation.
 
-### Bitcoin Support
-
-`transactions/index` supports Bitcoin (`chainId: 8253038`) for manually reindexing a deposit that was missed by automatic indexing. Pass the Bitcoin transaction id as `txHash`.
-
-Relay verifies the transaction exists and has been included in a block before enqueueing reindex work. If the transaction cannot be found, or has been broadcast but is not yet included in a block, the endpoint returns `404`:
-
-```json
-{ "message": "Transaction not found or not included for txHash: <txHash>" }
-```
-
 <Tip>
 	If you receive a `404` for a freshly broadcast Bitcoin transaction, wait
 	for at least one block confirmation and retry.
