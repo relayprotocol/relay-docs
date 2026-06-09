@@ -11,9 +11,9 @@ Base builder codes are a way to attribute onchain activity. Each code enhances o
 
 A builder code is an [ERC-8021](https://eip.tools/eip/8021) `dataSuffix` appended to the end of a deposit transaction's calldata. The called contract ignores the trailing bytes, but indexers read them to credit your application.
 
-Relay matches an onchain transaction to its quote by `requestId`. Appending bytes to arbitrary calldata changes the transaction, so the solver can no longer match it and the request stops tracking — even though the transaction succeeds onchain. To avoid this, request an **explicit deposit** quote: set **`explicitDeposit`** to `true`. The explicit flow routes funds through the Relay Depository contract that carries the order ID as an argument, so the solver tracks the deposit by that order ID rather than by exact calldata — trailing suffix bytes don't affect it.
+Relay matches an onchain transaction to its quote by `requestId`. Appending bytes to arbitrary calldata changes the transaction, so the solver can no longer match it and the request stops tracking — even though the transaction succeeds onchain. To avoid this, request an [explicit deposit](/references/api/get-quote-v2#body-explicit-deposit) quote: set **`explicitDeposit`** to `true`. The explicit flow routes funds through the Relay Depository contract that carries the order ID as an argument, so the solver tracks the deposit by that order ID rather than by exact calldata — trailing suffix bytes don't affect it.
 
-See [Wallet Detection](/references/api/api_core_concepts/wallet-detection) for how **`explicitDeposit`** works, and the [Get Quote reference](/references/api/get-quote-v2#body-explicit-deposit) for the parameter. Builder codes only work for quotes that route through the Relay Depository contract; same-chain swaps don't use the deposit flow and can't carry a builder code.
+Builder codes only work for quotes that route through the Relay Depository contract; same-chain swaps don't use the deposit flow and can't carry a builder code.
 
 ### Example
 
