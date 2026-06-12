@@ -1,74 +1,116 @@
 ---
-title: "Relay Fees"
-description: "Learn about Relay fees"
+title: "Fee Structure"
+description: "Learn about Relay's fee structure"
 ---
 
-In any given Relay there are four potential fees:
+In any given token swap or bridge powered by Relay, there are four potential fees:
 
 1. **Execution Fees**
 
-   Fees to cover execution costs including network gas on the origin and/or destination chain.
-   - Fill gas estimate (and origin gas estimate for gasless transactions)
-   - $0.02 flat fee
+   Covers execution costs including network gas on the origin and/or destination chain, and includes:
+   - $0.02 flat fee — always included
+   - Destination (fill) gas estimate — always included, covers transaction fulfillment on the destination chain
+   - Origin gas estimate — only included for gasless transactions, covers transaction submission on the origin chain on the user's behalf
+
+   For regular (non-gasless) transactions, the user pays origin gas directly from their own wallet to the network — it's not part of Relay's fee.
+
 2. **Swap Fees**
 
-   Fees to liquidity providers that facilitate cross-asset and cross-chain token swaps.
+   Covers payments to liquidity providers that facilitate cross-asset and cross-chain token swaps, and includes:
    - DEX fees
    - DEX swap impact
    - Solver cross-chain rebalancing fees
+
+   Note: Hyperliquid charges a $1 activation fee for new deposits. Relay cannot change this fee — it is passed through to users.
+
 3. **Relay Fees**
 
-   A flat basis point fee charged for using the Relay API gateway and related services. The fee varies by asset pair type and volume tier. An API key is required for the volume based discounts to take effect.
+   A flat basis point fee charged for using the Relay API gateway and related services, including via the Relay.link frontend.
 
-   <table className="relay-table">
+   <table className="relay-table" style={{tableLayout: "fixed", width: "100%"}}>
      <thead>
        <tr>
-         <th>Volume Tier</th>
-         <th>Same Token Bridge</th>
-         <th>Stablecoin Swaps</th>
-         <th>Major Swaps</th>
-         <th>Minor Swaps</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Standard Fees</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Token Bridge & Same-Chain Wrap/Unwrap</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Stablecoin Swap</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Major Swap</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Minor Swap</th>
        </tr>
      </thead>
      <tbody>
        <tr>
-         <td>{'< $10M'}</td>
+         <td>Relay Fee charged to end users</td>
          <td>0.00%</td>
          <td>0.01%</td>
          <td>0.06%</td>
          <td>0.15%</td>
        </tr>
+     </tbody>
+   </table>
+
+   Relay integrators can receive a revenue share on the Relay Fee. The revenue share varies by asset pair type and volume tier, as detailed below. To qualify, integrators must:
+
+   1. Pass an API key in the Relay quote
+   2. Complete Know Your Business (KYB) verification
+   3. Exceed $10,000,000 in aggregate U.S. dollar volume over a trailing 30-day period
+   4. Provide an EVM wallet address to receive revenue share
+
+   The revenue share cannot be used to discount the Relay product to end users.
+
+   <table className="relay-table" style={{tableLayout: "fixed", width: "100%"}}>
+     <thead>
+       <tr>
+         <th style={{width: "20%", verticalAlign: "top"}}>Revenue Share Volume Tier* (U.S. Dollars)</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Token Bridge & Same-Chain Wrap/Unwrap</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Stablecoin Swap</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Major Swap</th>
+         <th style={{width: "20%", verticalAlign: "top"}}>Minor Swap</th>
+       </tr>
+     </thead>
+     <tbody>
        <tr>
          <td>{'$10M – $100M'}</td>
-         <td>0.00%</td>
-         <td>0.0066%</td>
-         <td>0.045%</td>
-         <td>0.10%</td>
+         <td>0%</td>
+         <td>34%</td>
+         <td>25%</td>
+         <td>33.33%</td>
        </tr>
        <tr>
          <td>{'$100M – $1B'}</td>
-         <td>0.00%</td>
-         <td>0.0033%</td>
-         <td>0.03%</td>
-         <td>0.05%</td>
+         <td>0%</td>
+         <td>67%</td>
+         <td>50%</td>
+         <td>66.67%</td>
        </tr>
      </tbody>
    </table>
 
-   _* Volume Tier is in USD, trailing 30 days_
+   _* The Revenue Share Volume Tier is calculated based on the aggregate U.S. dollar value of the transactions for the trailing 30 days._
 
-   **Relay Fee Categories:**
-   - **Same token bridging**: bridging with no swap, e.g. USDC on Arbitrum to USDC on Base.
-   - **Stablecoin swaps**: includes same and cross-chain swaps between USDC, USDT, DAI, USDe and USDS.
-   - **Major token swaps**: includes same and cross-chain swaps between ETH, WETH, BTC, WBTC, SOL, WSOL, POL, BNB, USDC including when paired with major stablecoins (USDT, DAI, USDe and USDs).
-   - **Minor token swaps**: includes same and cross-chain swaps between any tokens not listed above, e.g. AVAX on Avalanche to Aster on Binance Smart Chain.
+   **Relay Transaction Types:**
+   - **Token Bridge:** a token bridge transaction. Examples:
+     - USDC on Arbitrum to USDC on Base
+   - **Same-Chain Wrap/Unwrap:** a 1:1 conversion on the same chain between a native asset and its tokenized equivalent via a single smart contract. Wrapping locks the native asset and mints the wrapped token; unwrapping burns the wrapped token and releases the native asset. Examples:
+     - ETH to WETH on Ethereum
+     - SOL to WSOL on Solana
+     - POL to WPOL on Polygon
+     - BNB to WBNB on BNB Chain
+   - **Stablecoin swap:** same-chain or cross-chain swaps between any pair of these stablecoins: USDC, USDC.e, USDT, USDT0, DAI, USDe, USDS, USD1, PYUSD, USDG, mUSD, USDm, USDH, pUSD, and PlumeUSD (each, a "Major Stablecoin"). Examples:
+     - USDC to USDT on Ethereum
+     - USDC on Optimism to USDT on Solana
+   - **Major swap:** same-chain or cross-chain swaps between any pair of these tokens: ETH, WETH, BTC, WBTC, SOL, WSOL, POL, BNB, and PLUME (each, a "Major Token"), and between any Major Token and any Major Stablecoin. Examples:
+     - ETH to POL on Polygon
+     - ETH on Ethereum to SOL on Solana
+   - **Minor swap:** same-chain or cross-chain token swaps between any pair of tokens that are not a Major Stablecoin or Major Token. Examples:
+     - LINK to UNI on Ethereum
+     - AVAX on Avalanche to Aster on BNB Chain
 
 4. **App Fees**
 
-   Fees added on top of a Relay by the integrator.
+   Fees added on top of a Relay quote by the integrator.
 
-If you are interested in learning how app fees work, and how you can add them to your quotes please check out our [App Fees Doc](/features/app-fees).\
-\
+If you are interested in learning how app fees work, and how you can add them to your quotes please check out our [App Fees Doc](/features/app-fees).
+
 _Please note that the above fee structure applies to standard cases. In certain cases, such as route-specific campaigns or promotions, different fees may apply._
 
 ## Fees Object
@@ -110,7 +152,7 @@ When displaying fees to users, we recommend mapping the `expandedPriceImpact` fi
 
 Integrators with [Fee Sponsorship](/features/fee-sponsorship) enabled can subsidize fees for their users. By default, setting **`subsidizeFees`** to `true` sponsors all fee components.
 
-For more granular control, use the **`sponsoredFeeComponents`** parameter in the quote request to choose which specific fee components to sponsor. This allows you to sponsor some fees (e.g. execution and relay fees) while letting the user pay others (e.g. swap fees). 
+For more granular control, use the **`sponsoredFeeComponents`** parameter in the quote request to choose which specific fee components to sponsor. This allows you to sponsor some fees (e.g. execution and relay fees) while letting the user pay others (e.g. swap fees).
 
 <Warning>
 Deposit addresses do not support `sponsoredFeeComponents`.
