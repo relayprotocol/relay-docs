@@ -109,7 +109,7 @@ function enhanceGetQuotePage() {
     addLearnMore(
       "response-fees",
       "/references/api/api_core_concepts/fees",
-      "Learn more about fees",
+      "Learn more about fees - [DEPRECATED]",
       "learn-more-fees",
       "before",
     );
