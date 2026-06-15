@@ -115,7 +115,7 @@ _Please note that the above fee structure applies to standard cases. In certain 
 
 ## Fees in the API
 
-Both the quote API and the requests API return an order's fees in the `expandedPriceImpact` object, which breaks the total cost into the following components:
+Both the quote API and the requests API return a request's fees in the `expandedPriceImpact` object, which breaks them down into the following components:
 
 **execution** - Execution fees covering network gas on the origin and/or destination chain plus the flat fee.
 
@@ -149,9 +149,9 @@ See the [Fee Sponsorship Doc](/features/fee-sponsorship) for setup details.
 ## Deprecated: Fees Object
 
 <Warning>
-The `fees` object is deprecated. It is still returned from the quote API and the [`GET /requests/v2`](/references/api/get-requests) API for backwards compatibility, but it only reports Relay-related fees and does not reflect the full cost of an order. Do not rely on it for new integrations.
+The `fees` object is deprecated. It is still returned from the quote API and the [`GET /requests/v2`](/references/api/get-requests) API for backwards compatibility, but it only reports Relay-related fees and does not reflect the full cost of a request. Do not rely on it for new integrations.
 
-To understand or display the complete fee breakdown of an order, use the [`expandedPriceImpact`](#fees-in-the-api) object instead, which covers execution, swap, relay, app, and sponsored fees.
+To understand or display the complete fee breakdown of a request, use the [`expandedPriceImpact`](#fees-in-the-api) object instead, which covers execution, swap, relay, app, and sponsored fees.
 </Warning>
 
 The deprecated `fees` object is segmented into the following fields:
