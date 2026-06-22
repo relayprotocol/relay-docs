@@ -9,7 +9,7 @@ An adapter is a function that takes parameters and returns an object that adhere
 
 | Property                   | Description                                                                                     | Required |
 | -------------------------- | ----------------------------------------------------------------------------------------------- | -------- |
-| **vmType**                    | A string representing a supported vmType (`evm`  `svm`  `bvm`  `tvm` `lvm`)                                                   | ✅       |
+| **vmType**                    | A string representing a supported vmType (`evm`  `svm`  `bvm`  `tvm` `lvm` `tonvm`)                                                   | ✅       |
 | **getChainId**                | An async function that returns a chain id                                                                                              | ✅       |
 | **handleSignMessageStep**     | An async function that given a signature step item and a step generates a signature                                                                                              | ✅       |
 | **handleSendTransactionStep** | An async function that given a chain id, a transaction step item and a step returns a transaction hash                                                                                              | ✅       |
@@ -38,6 +38,8 @@ The following adapters are officially maintained and developed by the Relay team
 [Tron Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-tron-wallet-adapter): This adapter gives the sdk the ability to submit transactions to the Tron blockchain. Under the hood it uses the [tronweb](https://www.npmjs.com/package/tronweb) sdk.
 
 [Lighter Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-lighter-wallet-adapter): This adapter gives the SDK the ability to deposit to [Lighter](https://lighter.exchange/) from any Relay-supported chain. It owns the full Lighter session lifecycle — resolving the user's Lighter account index, generating an in-memory API key, and registering it via `changeApiKey` on first transfer. Integrators who already run their own Lighter session (backend-provisioned key, wallet-level integration) can pass a pre-built `signerClient` to bypass the bootstrap entirely.
+
+[TON Adapter](https://github.com/relayprotocol/relay-kit/tree/main/packages/relay-ton-wallet-adapter): This adapter gives the SDK the ability to submit transactions on the TON blockchain. The user's key stays in their wallet, so the adapter never signs — you pass a `sendTransaction` callback (for example wrapping Dynamic's TON connector or TonConnect UI) that signs and broadcasts the request, while the adapter handles request building and on-chain confirmation. Confirmation reads default to a public toncenter endpoint; pass your own `@ton/ton` `TonClient` or an `endpoint` via the optional `options` argument for production use. TON support requires the `@ton/core` and `@ton/ton` peer dependencies in addition to `viem` and `@relayprotocol/relay-sdk`.
 
 
 ### How can I use an adapter?
@@ -230,6 +232,34 @@ getClient().actions.execute({
   onProgress: ({ steps, fees, breakdown, currentStep, currentStepItem, txHashes, details }) => {
     // custom handling
   }
+})
+```
+```typescript TON
+import { getClient, Execute, getQuote } from "@relayprotocol/relay-sdk"
+import { adaptTonWallet } from '@relayprotocol/relay-ton-wallet-adapter'
+
+// The user's key lives in their TON wallet, so the adapter never signs. You
+// provide a sendTransaction callback that forwards the TonConnect-style request
+// to your wallet provider (e.g. Dynamic's TON connector or tonConnectUI), signs
+// + broadcasts it, and returns the result. The adapter accepts a signed
+// external-message { boc } (what most TonConnect wallets return) or a
+// { transactionHash }.
+const adaptedWallet = adaptTonWallet(walletAddress, async (request) => {
+  const { boc } = await wallet.sendTransaction(request)
+  return { boc }
+})
+
+const options = ... // define this based on getQuote options
+
+const quote = await getClient().actions.getQuote(options)
+
+getClient().actions.execute({
+  quote,
+  wallet: adaptedWallet,
+  onProgress: ({ steps, fees, breakdown, currentStep, currentStepItem, txHashes, details }) => {
+    // custom handling
+  },
+  ...
 })
 ```
 </CodeGroup>
