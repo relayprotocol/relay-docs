@@ -1234,6 +1234,30 @@ When a quote is regenerated (different amount, token, or chain), a new `requestI
 curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&includeChildRequests=true"
 ```
 
+When a regeneration happens, the original request stays under its original `requestId` and public status while the actual sweep and fill move under the regenerated request. To follow the handoff directly, read `data.supersededByRequestId` on the original request — it returns the regenerated `requestId` that now owns the fill lifecycle.
+
+```bash
+curl -X GET "https://api.relay.link/requests/v2?id=<ORIGINAL_REQUEST_ID>"
+```
+
+```json
+{
+  "requests": [
+    {
+      "id": "<ORIGINAL_REQUEST_ID>",
+      "status": "pending",
+      "data": {
+        "supersededByRequestId": "<REGENERATED_REQUEST_ID>"
+      }
+    }
+  ]
+}
+```
+
+<Tip>
+Use `supersededByRequestId` when you have the original `requestId` and want a direct pointer to the request that owns the fill. Use `includeChildRequests=true` when you want every related request in one response.
+</Tip>
+
 ### Request-Level Status
 
 Once you have a `requestId`, you can use [Get Status](/references/api/get-intents-status-v3) for detailed status polling:
