@@ -118,6 +118,12 @@
                 ]
               },
               {
+                "group": "Migration Guides",
+                "pages": [
+                  "references/api/api_guides/migrating-to-requests-v3"
+                ]
+              },
+              {
                 "group": "Chains, Tokens, Contracts",
                 "pages": [
                   "references/api/api_resources/supported-chains",

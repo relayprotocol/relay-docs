@@ -115,24 +115,28 @@ _Please note that the above fee structure applies to standard cases. In certain 
 
 ## Fees in the API
 
-Both the quote API and the requests API return a request's fees in the `expandedPriceImpact` object, which breaks them down into the following components:
+[`GET /requests/v3`](/references/api/get-requests) returns a request's fees in the `data.fees` object, with `quoted` (estimated at quote time) and `actual` (computed at fill time) values. It breaks fees down into the following components:
 
 **execution** - Execution fees covering network gas on the origin and/or destination chain plus the flat fee.
 
 **swap** - Swap costs from cross-currency and cross-chain exchange, including DEX fees, swap slippage, and solver rebalancing.
 
-**relay** - The Relay fee, the flat basis-point fee charged by Relay for routing and meta-aggregation services.
+**platform** - The platform fee, the flat basis-point fee charged by Relay for routing and meta-aggregation services.
 
 **app** - App fees added on top by the integrator, when present.
 
 **sponsored** - The portion of fees the integrator subsidizes on behalf of the user via [Fee Sponsorship](/features/fee-sponsorship).
 
 <Tip>
-When displaying fees to users, we recommend mapping the `expandedPriceImpact` fields as follows:
-- **relay** → Provider Fee
+When displaying fees to users, we recommend mapping the `data.fees` fields as follows:
+- **platform** → Provider Fee
 - **app** → Your App's Fee
 - **swap** + **execution** → Swap Impact
 </Tip>
+
+<Note>
+In the quote API and [`GET /requests/v2`](/references/api/get-requests), this same breakdown is returned as the `expandedPriceImpact` object, and the **platform** component is named **relay**.
+</Note>
 
 ## Fee Sponsorship
 
@@ -147,7 +151,7 @@ See the [Fee Sponsorship Doc](/features/fee-sponsorship) for setup details.
 <Warning>
 The `fees` object is deprecated. It is still returned from the quote API and the [`GET /requests/v2`](/references/api/get-requests) API for backwards compatibility, but it only reports Relay-related fees and does not reflect the full cost of a request. Do not rely on it for new integrations.
 
-To understand or display the complete fee breakdown of a request, use the [`expandedPriceImpact`](#fees-in-the-api) object instead, which covers execution, swap, relay, app, and sponsored fees.
+To understand or display the complete fee breakdown of a request, use the [`data.fees`](#fees-in-the-api) object in `GET /requests/v3` (or `expandedPriceImpact` in the quote API and `GET /requests/v2`) instead, which covers execution, swap, platform, app, and sponsored fees.
 </Warning>
 
 The deprecated `fees` object is segmented into the following fields:

@@ -395,3 +395,24 @@
       padding: 0;
     }
   }
+/* ── Stronger red/green diff highlighting in code blocks ───────────────────
+   Mintlify renders code via Shiki; the default diff line tint is faint.
+   Boost the contrast for ```diff blocks (and [!code ++]/[!code --] lines).
+   Tune the rgba alpha values below if you want it stronger/softer. */
+.line.diff.add,
+span.line.diff.add,
+.line.diff.remove,
+span.line.diff.remove {
+  display: inline-block;
+  width: 100%;
+  margin: 0 -1rem;
+  padding: 0 1rem;
+}
+.line.diff.add,
+span.line.diff.add {
+  background-color: rgba(46, 160, 67, 0.24) !important;
+}
+.line.diff.remove,
+span.line.diff.remove {
+  background-color: rgba(248, 81, 73, 0.22) !important;
+}
