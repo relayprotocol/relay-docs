@@ -15,7 +15,7 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
 
 <Tabs>
   <Tab title="v2">
-    ```json
+    ```json expandable
     {
       "id": "0x0000348634...",
       "status": "success",
@@ -23,7 +23,7 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
       "recipient": "0x07082933...",
       "depositAddress": null,
       "moonpayId": null,
-      "referrer": "funxyz|su4gnoxz14",
+      "referrer": "my-app|user-123",
       "data": {
         "slippageTolerance": "0",
         "failReason": "N/A",
@@ -94,12 +94,13 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
     ```
   </Tab>
   <Tab title="v3">
-    ```json
+    ```json expandable
     {
       "id": "0x0000348634...",
       "status": "success",
       "user": "0xe7a2052a...",
       "recipient": "0x07082933...",
+      "referrer": "my-app|user-123",
       "refundTo": null,
       "depositAddress": null,
       "title": "Crosschain Swap",
@@ -172,59 +173,59 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
     ```
   </Tab>
   <Tab title="Difference">
-    ```diff
-      {
-        "id": "0x0000348634...",
-        "status": "success",
-    -   "moonpayId": null,
-    -   "referrer": "funxyz|su4gnoxz14",
-    +   "refundTo": null,
-    +   "title": "Crosschain Swap",
-    +   "depositAddress": null,
-        "data": {
-    -     "failReason": "N/A",
-    -     "refundFailReason": "N/A",
-    +     "failReason": null,
-    +     "refundFailReason": null,
-    -     "subsidizedRequest": true,
-    -     "price": "10000000000",
-    +     "quotedOutputAmount": "10000000000",
-    -     "fees": { "gas": "1160", "fixed": "0", "price": "1999930" },
-    -     "feesUsd": { "gas": "0.001159", "...": "..." },
-    -     "currency": "usdc",
-    -     "currencyObject": { "...": "..." },
-    -     "feeCurrency": "usdc.e",
-    -     "feeCurrencyObject": { "...": "..." },
-    -     "appFees":     [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ],
-    -     "paidAppFees": [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ],
-    +     "appFees": {
-    +       "quoted": [ { "bps": "5", "amount": "5000000" } ],
-    +       "actual": [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ],
-    +       "currency": { "symbol": "USDC.e", "decimals": 6 }
-    +     },
-    -     "subsidizedFee": { "amountUsd": "6.99", "...": "..." },
-    -     "expandedPriceImpact": { "quoted": { "relay": { "usd": "0" }, "...": "..." } },
-    +     "fees": {
-    +       "quoted": { "swap": {}, "execution": {}, "platform": {}, "app": {}, "sponsored": {} },
-    +       "actual": { "...": "..." },
-    +       "currency": { "symbol": "USDC.e", "decimals": 6 }
-    +     },
-          "feeSponsorship": {
-    -       "quoted": { "selectedComponents": ["execution","swap","relay","app"], "components": { "relay": {} } }
-    +       "quoted": { "selectedComponents": ["execution","swap","platform","app"], "components": { "platform": {} } },
-    +       "actual": { "sponsorPayment": { "amount": "...", "chainId": 8453 } },
-    +       "currency": { "symbol": "USDC.e", "decimals": 6 }
-          },
-    -     "inTxs":  [ { "hash": "0xcd4d70..." } ],
-    -     "outTxs": [ { "hash": "0x1c0089..." } ],
-    +     "inTxs":  [ { "txHash": "0xcd4d70..." } ],
-    +     "outTxs": [ { "txHash": "0x1c0089..." } ],
-    -     "metadata": { "currencyIn": {}, "currencyOut": {}, "rate": "1", "route": {} }
-    +     "swap":  { "currencyIn": {}, "currencyOut": {}, "rate": "1" },
-    +     "route": { "origin": {}, "destination": {} },
-    +     "externalMetadata": { "moonpayId": null }
-        }
+    ```jsonc expandable
+    {
+      "id": "0x0000348634...",
+      "status": "success",
+      "moonpayId": null,                          // [!code --]
+      "refundTo": null,                           // [!code ++]
+      "title": "Crosschain Swap",                 // [!code ++]
+      "depositAddress": null,                     // [!code ++]
+      "referrer": "my-app|user-123",
+      "data": {
+        "failReason": "N/A",                      // [!code --]
+        "refundFailReason": "N/A",                // [!code --]
+        "failReason": null,                       // [!code ++]
+        "refundFailReason": null,                 // [!code ++]
+        "subsidizedRequest": true,                // [!code --]
+        "price": "10000000000",                   // [!code --]
+        "quotedOutputAmount": "10000000000",      // [!code ++]
+        "fees": { "gas": "1160", "fixed": "0", "price": "1999930" }, // [!code --]
+        "feesUsd": { "gas": "0.001159" },         // [!code --]
+        "currency": "usdc",                       // [!code --]
+        "currencyObject": { },                    // [!code --]
+        "feeCurrency": "usdc.e",                  // [!code --]
+        "feeCurrencyObject": { },                 // [!code --]
+        "appFees":     [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ], // [!code --]
+        "paidAppFees": [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ], // [!code --]
+        "appFees": {                              // [!code ++]
+          "quoted": [ { "bps": "5", "amount": "5000000" } ], // [!code ++]
+          "actual": [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ], // [!code ++]
+          "currency": { "symbol": "USDC.e", "decimals": 6 } // [!code ++]
+        },                                        // [!code ++]
+        "subsidizedFee": { "amountUsd": "6.99" }, // [!code --]
+        "expandedPriceImpact": { "quoted": { "relay": { "usd": "0" } } }, // [!code --]
+        "fees": {                                 // [!code ++]
+          "quoted": { "swap": {}, "execution": {}, "platform": {}, "app": {}, "sponsored": {} }, // [!code ++]
+          "actual": { },                          // [!code ++]
+          "currency": { "symbol": "USDC.e", "decimals": 6 } // [!code ++]
+        },                                        // [!code ++]
+        "feeSponsorship": {
+          "quoted": { "selectedComponents": ["execution","swap","relay","app"], "components": { "relay": {} } } // [!code --]
+          "quoted": { "selectedComponents": ["execution","swap","platform","app"], "components": { "platform": {} } }, // [!code ++]
+          "actual": { "sponsorPayment": { "amount": "...", "chainId": 8453 } }, // [!code ++]
+          "currency": { "symbol": "USDC.e", "decimals": 6 } // [!code ++]
+        },
+        "inTxs":  [ { "hash": "0xcd4d70..." } ],     // [!code --]
+        "outTxs": [ { "hash": "0x1c0089..." } ],     // [!code --]
+        "inTxs":  [ { "txHash": "0xcd4d70..." } ],   // [!code ++]
+        "outTxs": [ { "txHash": "0x1c0089..." } ],   // [!code ++]
+        "metadata": { "currencyIn": {}, "currencyOut": {}, "rate": "1", "route": {} } // [!code --]
+        "swap":  { "currencyIn": {}, "currencyOut": {}, "rate": "1" }, // [!code ++]
+        "route": { "origin": {}, "destination": {} }, // [!code ++]
+        "externalMetadata": { "moonpayId": null }  // [!code ++]
       }
+    }
     ```
   </Tab>
 </Tabs>
@@ -261,7 +262,7 @@ Every individual change, grouped by request side and response side.
     | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKey`, `title` |
     | **Currency** | `currencyInChainId`, `currencyOutChainId`, `currencyInAddress`, `currencyOutAddress` |
     | **Ranges** | `startTimestamp`, `endTimestamp`, `startBlock`, `endBlock`, `amountUsdMin`/`Max`, `appFeesAmountUsdMin`/`Max`, `fillTimeMin`/`Max` |
-    | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection` |
+    | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData` |
 
     <Tip>
       `term` is a single unified search across request id, wallet, deposit address, and every transaction hash (deposit, fill, refund, failed, chain‑entry). It replaces the v2 pattern of running separate `user` / `hash` / `id` lookups and merging the results.
@@ -280,8 +281,7 @@ Every individual change, grouped by request side and response side.
 
     **Removed & changed parameters.**
     - `hash` is removed; use `term`, or the targeted `depositTxHash` / `fillTxHash` / `refundTxHash`.
-    - `includeAuthenticatedData` is removed; integrator‑only fields are returned automatically for requests created with your API key.
-    - `referrer` is removed from both the request and the response.
+    - `referrer` is no longer a query parameter; it's still returned in the response, but only when `includeAuthenticatedData=true`.
   </Accordion>
 
 </AccordionGroup>
@@ -383,7 +383,7 @@ Every individual change, grouped by request side and response side.
 
   <Accordion title="Moved, added & nulled fields" icon="arrows-up-down-left-right">
     - `moonpayId` moves from the root to **`data.externalMetadata.moonpayId`**.
-    - `referrer` is **removed** from the response.
+    - `referrer` is no longer a query parameter, but it's still returned in the response — **only when `includeAuthenticatedData=true`**.
     - **`refundTo`** (refund target for deposit‑address transactions) is **added** at the root.
     - **`title`** (the request type: `Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
     - **`depositAddress`** is now a structured object: `{ address, type: "strict" | "open", depositor, depositTxHash }`.
@@ -418,8 +418,7 @@ Every individual change, grouped by request side and response side.
     | `data.appFeeCurrencyObject` | `data.appFees.currency` |
     | `data.subsidizedRequest` / `data.subsidizedFee` | `data.feeSponsorship` |
     | `data.metadata` (catch‑all) | `data.swap` + `data.route` |
-    | `referrer` (request & response) | — |
-    | `?includeAuthenticatedData` | automatic for requests created with your API key |
+    | `referrer` (query parameter) | removed as a filter; still returned in the response when `includeAuthenticatedData=true` |
     | `?hash` | `term` / `depositTxHash` / `fillTxHash` / `refundTxHash` |
     | status `delayed` | `depositing` / `submitted` |
   </Accordion>
@@ -440,7 +439,7 @@ Every individual change, grouped by request side and response side.
 
 <Steps>
   <Step title="Switch the endpoint and headers">
-    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Drop `includeAuthenticatedData` and any `referrer` parameter.
+    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Drop the `referrer` query parameter. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
   </Step>
   <Step title="Update fee reads (the big one)">
     Stop reading `data.fees.gas` / `feesUsd`. Read the per‑component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
@@ -460,5 +459,9 @@ Every individual change, grouped by request side and response side.
 </Steps>
 
 <Tip>
-  Integrator‑only data — revenue share via `platformFee`, un‑redacted pending output, and `refundCurrencyData` — is returned automatically for requests created with your API key. There's no opt‑in flag to set.
+  Authenticated data (revenue share via `platformFee`, un‑redacted unfilled destination data, and `referrer`) is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key tied to those requests.
 </Tip>
+
+<Warning>
+  `includeAuthenticatedData` gates whether those authenticated fields are returned. If you proxy the Requests API from a public site, force `includeAuthenticatedData=false` on your backend regardless of the incoming value, and only set it `true` from a trusted, authenticated context.
+</Warning>
