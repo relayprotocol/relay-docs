@@ -24,7 +24,8 @@
               "solutions/wallets-and-wallet-providers",
               "solutions/multichain-apps",
               "solutions/chains",
-              "solutions/commerce-and-payments"
+              "solutions/commerce-and-payments",
+              "solutions/payment-service-providers"
             ]
           },
           {
