@@ -61,7 +61,7 @@ Strict deposit addresses are bound to the original order and should be treated a
 | Wrong token (solver currency) | Requote and fill on some chain families (not universal); [relay.link/withdraw](https://relay.link/withdraw) is the fallback if the auto-flow doesn't complete | Recoverable via [relay.link/withdraw](https://relay.link/withdraw) |
 | Wrong token (non-solver) | Not supported and not currently recoverable | Not supported and not currently recoverable |
 | Wrong chain (same VM) | Supported, but may require [manual reindexing](#reindexing-stuck-deposits) before the deposit is recognized; some chain families refund instead | Not supported — no automatic wrong-chain recovery |
-| Wrong chain (different VM) | Not possible — address formats differ | Not possible — address formats differ |
+| Wrong chain (different VM) | Not supported | Not supported |
 | Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments fill the quoted amount and refund the excess |
 | `refundTo` | Recommended (omitting disables automatic refund) | Required |
 | Address reuse | Yes, same route | No — bound to original order |
@@ -1233,6 +1233,30 @@ When a quote is regenerated (different amount, token, or chain), a new `requestI
 ```bash
 curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&includeChildRequests=true"
 ```
+
+When a regeneration happens, the original request stays under its original `requestId` and public status while the actual sweep and fill move under the regenerated request. To follow the handoff directly, read `data.supersededByRequestId` on the original request — it returns the regenerated `requestId` that now owns the fill lifecycle.
+
+```bash
+curl -X GET "https://api.relay.link/requests/v2?id=<ORIGINAL_REQUEST_ID>"
+```
+
+```json
+{
+  "requests": [
+    {
+      "id": "<ORIGINAL_REQUEST_ID>",
+      "status": "pending",
+      "data": {
+        "supersededByRequestId": "<REGENERATED_REQUEST_ID>"
+      }
+    }
+  ]
+}
+```
+
+<Tip>
+Use `supersededByRequestId` when you have the original `requestId` and want a direct pointer to the request that owns the fill. Use `includeChildRequests=true` when you want every related request in one response.
+</Tip>
 
 ### Request-Level Status
 
