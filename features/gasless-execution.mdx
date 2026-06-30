@@ -528,7 +528,7 @@ Use **`error`** and **`message`** for integration handling, and include **`reque
 }
 ```
 
-If Relay cannot map a custom error selector to a known contract error, the response uses a label like `UNKNOWN_CUSTOM_ERROR_0x34ceaf9e` and includes **`rawArgsHex`** when encoded revert arguments are available.
+If Relay cannot map a custom error selector to a known contract error, the response uses a label of the form `UNKNOWN_CUSTOM_ERROR_<selector>` and includes **`rawArgsHex`** when encoded revert arguments are available.
 
 ### More Use Cases
 

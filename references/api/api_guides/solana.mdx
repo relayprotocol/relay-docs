@@ -223,6 +223,11 @@ Solana transactions have a hard **1232-byte** size limit. If you append custom
 instructions to the transaction (e.g., for tracking, fee collection, or other
 logic), the combined transaction can exceed this limit and fail.
 
+When a Solana-origin quote is routed through a third-party aggregator and the
+generated deposit transaction would exceed 1232 bytes, `POST /quote/v2` returns
+a `400` response instead of a successful quote with calldata that cannot be
+executed. Use the mitigations below to keep transactions under the limit.
+
 Pass **`maxRouteLength`** in your quote request to limit the number of hops in
 the Solana swap routing. Fewer hops means a smaller transaction.
 

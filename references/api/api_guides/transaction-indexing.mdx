@@ -79,6 +79,11 @@ curl -X POST 'https://api.relay.link/transactions/index' \
 
 Call this API immediately after submitting a transaction, before waiting for confirmation.
 
+<Tip>
+	If you receive a `404` for a freshly broadcast Bitcoin transaction, wait
+	for at least one block confirmation and retry.
+</Tip>
+
 ## Decision Matrix
 
 | Transaction Type            | API Endpoint          | Reason                                             |

@@ -24,7 +24,7 @@ This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headle
 | `user` | address | The recipient wallet on the destination chain. Can be any valid address, including the zero address. |
 | `recipient` | address | The address that receives funds on the destination chain. |
 | `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Set to the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to opt into automatic refunds to the original depositor — supported on EVM chains, Bitcoin, and Solana. Omitting this on open addresses disables automatic refund. See [Refund Behavior](#refund-behavior). |
-| `tradeType` | string | Must be `EXACT_INPUT`. Deposit addresses only support exact input trades — output varies based on market conditions at fill time. |
+| `tradeType` | string | `EXACT_INPUT` or `EXPECTED_OUTPUT` for open deposit addresses. `EXACT_OUTPUT` is supported only with a strict deposit address (`strict: true`); an open-ended `EXACT_OUTPUT` request is rejected. |
 | `amount` | string | The quoted amount in the origin token's smallest unit. Open-ended addresses support variable deposit amounts. Strict addresses should be treated as exact-payment instructions. |
 | `strict` | boolean | Set to `true` for a strict deposit address tied to a specific order. Omit or set to `false` for an open deposit address. |
 
@@ -1233,6 +1233,30 @@ When a quote is regenerated (different amount, token, or chain), a new `requestI
 ```bash
 curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&includeChildRequests=true"
 ```
+
+When a regeneration happens, the original request stays under its original `requestId` and public status while the actual sweep and fill move under the regenerated request. To follow the handoff directly, read `data.supersededByRequestId` on the original request — it returns the regenerated `requestId` that now owns the fill lifecycle.
+
+```bash
+curl -X GET "https://api.relay.link/requests/v2?id=<ORIGINAL_REQUEST_ID>"
+```
+
+```json
+{
+  "requests": [
+    {
+      "id": "<ORIGINAL_REQUEST_ID>",
+      "status": "pending",
+      "data": {
+        "supersededByRequestId": "<REGENERATED_REQUEST_ID>"
+      }
+    }
+  ]
+}
+```
+
+<Tip>
+Use `supersededByRequestId` when you have the original `requestId` and want a direct pointer to the request that owns the fill. Use `includeChildRequests=true` when you want every related request in one response.
+</Tip>
 
 ### Request-Level Status
 

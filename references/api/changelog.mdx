@@ -3,9 +3,25 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-06-19 — TON inbound `inTxs[].hash` now an explorer-ready hex hash
+
+**Behavior change** — `GET /requests/v2`: for TON-origin requests, `data.inTxs[].hash` is now the bare 64-character hex transaction hash, suitable for opening on Tonviewer at `/transaction/{TX_HASH}`. Previously this field returned an internal composite identifier that had to be parsed before it could be linked to an explorer. Non-TON origins and `data.outTxs[]` are unaffected.
+
+**Added** — `GET /chains`: the TON entry now exposes `explorerPaths.transaction` as `/transaction/{TX_HASH}`, so clients building explorer URLs can read the canonical Tonviewer path from the API rather than hardcoding `/tx/{TX_HASH}`.
+
+## 2026-06-10 — Reorged deposit transactions report `failure` on `inTxs[]`
+
+**Behavior change** — `GET /requests/v2`: when a deposit is detected as reorged out or canonically failed on Base, the matching entry in `data.inTxs[]` now reports `status: "failure"`. Previously the top-level request `status` could flip to `"failure"` while the corresponding `data.inTxs[].status` remained `"success"`, leaving integrators that key their deposit UI off `data.inTxs[0].status` showing a succeeded deposit. Historical rows are not backfilled; the new behavior applies to detections going forward.
+
+**Added** — `GET /requests/v2`: failed `data.inTxs[]` entries can now include a `metadata.reorg` object with detection context. Fields: `detectedAt` (unix millis), `source` (detector component), `reason` (short code), and optional `details`, `failReason`, `action` (`"fill"` or `"refund"`), `blockNumber`, `blockHash`, `receiptStatus`. The object is only populated when the failure was caught by the reorg/finality path; deposits that fail through other paths are unaffected.
+
 ## 2026-06-05 — Upstream RPC failures no longer reported as `DESTINATION_TX_FAILED`
 
 **Behavior change** — `POST /quote/v2`: quote attempts that fail because of a transient upstream RPC error now return `errorCode: "REQUEST_TIMED_OUT"` on timeout or `errorCode: "RPC_HTTP_ERROR"` for other transient RPC failures. Previously these were misclassified as `errorCode: "DESTINATION_TX_FAILED"`, which suggested an on-chain revert and was treated as non-retryable. `DESTINATION_TX_FAILED` is now returned only for genuine destination reverts. Both new codes are retryable — see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
+## 2026-05-29 — Oversized Solana aggregator quotes reject at quote time
+
+**Breaking** — `POST /quote/v2`: Solana-origin quotes routed through a third-party aggregator now return `400` when the generated deposit transaction would exceed Solana's 1232-byte limit. Previously these requests returned `200` with calldata that could not be serialized or executed client-side. Use **`maxRouteLength`** or **`includedOriginSwapSources`** to keep transactions under the limit — see [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
 
 ## 2026-05-28 — Bitcoin deposits enter `pending` from mempool
 

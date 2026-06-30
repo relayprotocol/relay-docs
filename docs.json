@@ -100,6 +100,7 @@
                   "references/api/api_guides/bridging-integration-guide",
                   "references/api/api_guides/calling-integration-guide",
                   "references/api/api_guides/transaction-indexing",
+                  "references/api/api_guides/builder-codes",
                   "references/api/api_guides/smart-accounts",
                   {
                     "group": "Chain Support Guides",
