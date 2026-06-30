@@ -54,12 +54,15 @@ Relay Webhooks specifically stream transaction statuses for both cross and same-
       "depositTxHash": "0x..", //nullable — origin-chain tx hash of the depositor's transfer into the deposit address
     }, //nullable
     "requestId": "0x...",
+    "referrer": "your-referrer", //nullable — echoes the referrer supplied on the originating quote request
     "details": null,
     "failReason": "DOUBLE_SPEND",
     "refundFailReason": "N/A"
   }
 }
 ```
+
+The `referrer` field echoes the value supplied on the originating quote request, or `null` if no referrer was provided. Use it to attribute webhook events back to the request source (campaign, partner, or integration surface) without an extra lookup.
 
 The `details`, `failReason`, and `refundFailReason` fields mirror the same fields returned by [`GET /intents/status/v3`](/references/api/get-intents-status-v3):
 
