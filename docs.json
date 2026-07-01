@@ -91,6 +91,7 @@
                   "references/api/api_core_concepts/trade-types",
                   "references/api/api_core_concepts/surplus-and-shortage",
                   "references/api/api_core_concepts/handling-errors",
+                  "references/api/api_core_concepts/execution-errors",
                   "references/api/api_core_concepts/contract-compatibility"
                 ]
               },
