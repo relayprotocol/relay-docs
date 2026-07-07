@@ -63,8 +63,8 @@ const App = () => {
 				fee: '100' // 1%
 			  }
 			],
-			duneConfig: {
-				apiKey: "YOUR_DUNE_KEY",
+			codexConfig: {
+				apiKey: "YOUR_CODEX_KEY",
 			},
 			chains,
 			baseApiUrl: MAINNET_RELAY_API
@@ -132,8 +132,8 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <RelayKitProvider options={{
-		  duneConfig: {
-			apiKey: "YOUR_DUNE_KEY",
+		  codexConfig: {
+			apiKey: "YOUR_CODEX_KEY",
 		  },
           chains,
           baseApiUrl: MAINNET_RELAY_API
