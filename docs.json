@@ -54,6 +54,7 @@
             "group": "Safety & Security",
             "pages": [
               "security/compliance",
+              "security/unsupported-exchanges",
               "security/bounties",
               "security/mev-protection",
               "security/community-support",
