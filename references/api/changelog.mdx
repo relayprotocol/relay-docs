@@ -3,6 +3,16 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-07-02 — Quote protocol-data opt-in for onchain order verification
+
+**Breaking** — `POST /quote` and `POST /quote/v2`: the opt-in request flag `includeProtocolSignature` is renamed to `includeProtocolData`. The previous name is no longer honored. Integrators that were passing `includeProtocolSignature: true` to receive `protocol.v2.orderSignature` must switch to `includeProtocolData: true`. Setting this opt-in may increase quote response latency.
+
+**Added** — `POST /quote` and `POST /quote/v2`: when the quote is settled through the Relay settlement protocol, the response's `protocol.v2` block now includes `hubType` (currently always `"onchain"`) alongside `orderId`. With `includeProtocolData: true`, `protocol.v2.orderSignature` — the solver's ECDSA signature over `orderId` — is also returned, so integrators can validate an onchain `orderId` against the quoted intent using `ecrecover` without a follow-up API call.
+
+## 2026-06-23 — `slippageTolerance` rejects values outside 0–10000 bps
+
+**Breaking** — `POST /quote`, `POST /quote/v2`, and `POST /price`: `slippageTolerance` and `latePaymentSlippageTolerance` are now validated as integer strings in the range `0`–`10000` basis points. Values outside that range — including negative integers and values greater than `10000` — return `400` with `errorCode: "INVALID_SLIPPAGE_TOLERANCE"`. Previously, negative values were accepted at quote time and produced refund outcomes downstream, and values above `10000` were accepted, effectively removing the minimum-output floor. Non-integer strings on `POST /price` previously returned `500`; they now return `400` with the same `INVALID_SLIPPAGE_TOLERANCE` code as the other endpoints. See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
 ## 2026-06-19 — TON inbound `inTxs[].hash` now an explorer-ready hex hash
 
 **Behavior change** — `GET /requests/v2`: for TON-origin requests, `data.inTxs[].hash` is now the bare 64-character hex transaction hash, suitable for opening on Tonviewer at `/transaction/{TX_HASH}`. Previously this field returned an internal composite identifier that had to be parsed before it could be linked to an explorer. Non-TON origins and `data.outTxs[]` are unaffected.
