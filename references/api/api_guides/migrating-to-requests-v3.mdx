@@ -99,11 +99,11 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
       "id": "0x0000348634...",
       "status": "success",
       "user": "0xe7a2052a...",
+      "sender": "0xE7a205...",
       "recipient": "0x07082933...",
-      "referrer": "my-app|user-123",
       "refundTo": null,
       "depositAddress": null,
-      "title": "Crosschain Swap",
+      "requestType": "Bridge",
       "data": {
         "slippageTolerance": "0",
         "failReason": null,
@@ -111,7 +111,6 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
         "failedTxHash": null,
         "failedTxBlockNumber": null,
         "failedCallData": null,
-        "quotedOutputAmount": "10000000000",
         "usesExternalLiquidity": false,
         "timeEstimate": 4,
         "triggeredByFastFill": null,
@@ -144,18 +143,22 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
           "actual": { "selectedComponents": ["execution", "swap", "platform", "app"], "capHit": false, "components": { "execution": "…", "swap": "…", "platform": "…", "app": "…" }, "sponsoredTotal": { "amount": "7001090", "amountUsd": "6.999165" }, "userPaysTotal": { "amount": "0", "amountUsd": "0" }, "sponsorPayment": { "amount": "7000949", "address": "0x833589...", "chainId": 8453 } },
           "currency": { "chainId": 137, "address": "0x2791bc...", "symbol": "USDC.e", "decimals": 6 }
         },
-        "swap": {
-          "sender": "0xE7a205...",
-          "recipient": "0x070829...",
-          "currencyIn": { "currency": { "chainId": 137, "address": "0x2791bc...", "symbol": "USDC.e", "name": "USDCoin (bridged)", "decimals": 6, "metadata": { "logoURI": "https://...", "verified": true } }, "amount": "10000000000", "amountFormatted": "10000.0", "amountUsd": "9997.600000", "amountUsdCurrent": "9996.000000", "minimumAmount": "10000000000" },
-          "currencyOut": { "currency": { "chainId": 8453, "address": "0x833589...", "symbol": "USDC", "name": "USD Coin", "decimals": 6, "metadata": { "logoURI": "https://...", "verified": true } }, "amount": "10000000000", "amountFormatted": "10000.0", "amountUsd": "9997.600000", "amountUsdCurrent": "9996.000000", "minimumAmount": "10000000000" },
-          "rate": "1"
+        "route": {
+          "includedSwapSources": [],
+          "includedOriginSwapSources": [],
+          "includedDestinationSwapSources": [],
+          "quoted": {
+            "origin": { "inputCurrency": { "currency": { "chainId": 137, "symbol": "USDC.e", "decimals": 6 }, "amount": "10000000000" }, "outputCurrency": { "currency": { "chainId": 137, "symbol": "USDC.e", "decimals": 6 }, "amount": "10000000000" }, "router": "relay" },
+            "destination": { "inputCurrency": { "currency": { "chainId": 8453, "symbol": "USDC", "decimals": 6 }, "amount": "10000000000" }, "outputCurrency": { "currency": { "chainId": 8453, "symbol": "USDC", "decimals": 6 }, "amount": "10000000000" }, "router": "relay" }
+          },
+          "actual": {
+            "rate": "1",
+            "origin": { "inputCurrency": { "currency": { "chainId": 137, "symbol": "USDC.e", "decimals": 6 }, "amount": "10000000000" }, "outputCurrency": { "currency": { "chainId": 137, "symbol": "USDC.e", "decimals": 6 }, "amount": "10000000000" }, "router": "relay" },
+            "destination": { "inputCurrency": { "currency": { "chainId": 8453, "symbol": "USDC", "decimals": 6 }, "amount": "10000000000" }, "outputCurrency": { "currency": { "chainId": 8453, "address": "0x833589...", "symbol": "USDC", "name": "USD Coin", "decimals": 6, "metadata": { "logoURI": "https://...", "verified": true } }, "amount": "10000000000", "amountFormatted": "10000.0", "amountUsd": "9997.600000" }, "router": "relay" }
+          }
         },
         "platformFee": null,
-        "route": {
-          "origin": { "inputCurrency": { "currency": { "chainId": 137, "symbol": "USDC.e", "decimals": 6 }, "amount": "10000000000" }, "outputCurrency": { "currency": { "chainId": 137, "symbol": "USDC.e", "decimals": 6 }, "amount": "10000000000" }, "router": "relay", "includedSwapSources": [] },
-          "destination": { "inputCurrency": { "currency": { "chainId": 8453, "symbol": "USDC", "decimals": 6 }, "amount": "10000000000" }, "outputCurrency": { "currency": { "chainId": 8453, "symbol": "USDC", "decimals": 6 }, "amount": "10000000000" }, "router": "relay", "includedSwapSources": [] }
-        },
+        "referrer": "my-app|user-123",
         "refundCurrencyData": null,
         "externalMetadata": { "moonpayId": null }
       },
@@ -167,6 +170,7 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
         "deposit": { "origin": { "amount": "10000000000", "chainId": 137, "currency": "0x2791bc...", "depositor": "0xe7a205...", "depository": "0x...", "onchainId": "0x...", "transactionId": "0xcd4d70..." } },
         "settlement": { "destination": { "fills": [ { "chainId": 8453, "transactionId": "0x1c0089..." } ], "refunds": [] } }
       },
+      "features": ["app_fees"],
       "createdAt": "2026-05-25T22:21:11.161Z",
       "updatedAt": "2026-05-25T22:21:51.291Z"
     }
@@ -178,18 +182,19 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
       "id": "0x0000348634...",
       "status": "success",
       "moonpayId": null,                          // [!code --]
+      "sender": "0xE7a205...",                    // [!code ++] promoted from data.metadata.sender
       "refundTo": null,                           // [!code ++]
-      "title": "Crosschain Swap",                 // [!code ++]
-      "depositAddress": null,                     // [!code ++]
-      "referrer": "my-app|user-123",
+      "requestType": "Bridge",                    // [!code ++]
+      "depositAddress": null,                     // now an object: { address, type, depositor, depositTxHash }
+      "referrer": "my-app|user-123",              // [!code --] moved to data.referrer (authenticated)
+      "features": ["app_fees"],                   // [!code ++]
       "data": {
         "failReason": "N/A",                      // [!code --]
         "refundFailReason": "N/A",                // [!code --]
         "failReason": null,                       // [!code ++]
         "refundFailReason": null,                 // [!code ++]
         "subsidizedRequest": true,                // [!code --]
-        "price": "10000000000",                   // [!code --]
-        "quotedOutputAmount": "10000000000",      // [!code ++]
+        "price": "10000000000",                   // [!code --] removed; read data.route.actual.destination.inputCurrency
         "fees": { "gas": "1160", "fixed": "0", "price": "1999930" }, // [!code --]
         "feesUsd": { "gas": "0.001159" },         // [!code --]
         "currency": "usdc",                       // [!code --]
@@ -220,9 +225,13 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
         "outTxs": [ { "hash": "0x1c0089..." } ],     // [!code --]
         "inTxs":  [ { "txHash": "0xcd4d70..." } ],   // [!code ++]
         "outTxs": [ { "txHash": "0x1c0089..." } ],   // [!code ++]
-        "metadata": { "currencyIn": {}, "currencyOut": {}, "rate": "1", "route": {} } // [!code --]
-        "swap":  { "currencyIn": {}, "currencyOut": {}, "rate": "1" }, // [!code ++]
-        "route": { "origin": {}, "destination": {} }, // [!code ++]
+        "metadata": { "sender": "…", "currencyIn": {}, "currencyOut": {}, "rate": "1", "route": {} }, // [!code --]
+        "route": {                                // [!code ++]
+          "includedSwapSources": [],              // [!code ++]
+          "quoted": { "origin": {}, "destination": {} }, // [!code ++]
+          "actual": { "rate": "1", "origin": {}, "destination": {} } // [!code ++]
+        },                                        // [!code ++]
+        "referrer": "my-app|user-123",            // [!code ++] authenticated; moved from root
         "externalMetadata": { "moonpayId": null }  // [!code ++]
       }
     }
@@ -242,10 +251,10 @@ Every individual change, grouped by request side and response side.
 
 <AccordionGroup>
   <Accordion title="Authentication" icon="key">
-    ```diff
-      GET /requests/v3
-      Headers:
-    + x-api-key: <your-api-key>        # now required
+    ```bash
+    GET /requests/v3
+    Headers:
+    x-api-key: <your-api-key>        # now required [!code ++]
     ```
 
     The `x-api-key` request header is now required. Every request authenticates against an active API key. See [API Keys](/references/api/api-keys) for details.
@@ -259,7 +268,7 @@ Every individual change, grouped by request side and response side.
     | **Search** | `term` (request id, wallet, deposit address, every tx hash), `id`, `orderId`, `depositTxHash`, `fillTxHash`, `refundTxHash` |
     | **Chain** | `originChainId`, `destinationChainId`, `chainId` (either direction), `privateChainsToInclude` |
     | **Address** | `user`, `depositAddress`, `recipient` |
-    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKey`, `title` |
+    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKey`, `requestType` |
     | **Currency** | `currencyInChainId`, `currencyOutChainId`, `currencyInAddress`, `currencyOutAddress` |
     | **Ranges** | `startTimestamp`, `endTimestamp`, `startBlock`, `endBlock`, `amountUsdMin`/`Max`, `appFeesAmountUsdMin`/`Max`, `fillTimeMin`/`Max` |
     | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData` |
@@ -292,102 +301,119 @@ Every individual change, grouped by request side and response side.
   <Accordion title="Pagination & total" icon="list">
     The response envelope now includes a `total`, and `continuation` is an opaque cursor you pass back to fetch the next page. `limit` defaults to 20 and is capped at **50**.
 
-    ```diff
-    - // v2: offset-style paging, no total
-    + "total": 12345,
-    + "continuation": "eyJ..."   // opaque cursor, pass back as ?continuation=
+    ```jsonc
+    // v2: offset-style paging, no total [!code --]
+    "total": 12345, // [!code ++]
+    "continuation": "eyJ..."   // opaque cursor, pass back as ?continuation= [!code ++]
     ```
   </Accordion>
 
   <Accordion title="Currencies — unified to a single object" icon="coins">
     The `currency` (string) + `currencyObject` (object) duality is removed everywhere, along with `feeCurrency`/`feeCurrencyObject` and `appFeeCurrencyObject`. Every currency is a single object: `{ chainId, address, symbol, name, decimals, metadata }`. Amount objects carry that currency plus `amount`, `amountFormatted`, `amountUsd`, and where relevant `amountUsdCurrent`, `minimumAmount`.
 
-    ```diff
-    - "currency": "usdc",
-    - "currencyObject": { "chainId": 137, "symbol": "USDC", "decimals": 6 }
-    + // read the currency object directly off the amount, e.g. data.swap.currencyIn.currency
+    ```jsonc
+    "currency": "usdc", // [!code --]
+    "currencyObject": { "chainId": 137, "symbol": "USDC", "decimals": 6 } // [!code --]
+    // read the currency object directly off the amount, [!code ++]
+    // e.g. data.route.actual.origin.inputCurrency.currency [!code ++]
     ```
   </Accordion>
 
   <Accordion title="Fees — expandedPriceImpact → data.fees, relay → platform" icon="receipt">
     `data.expandedPriceImpact` is renamed to **`data.fees`** (and the old wei `data.fees` / `data.feesUsd` are removed). Each phase (`quoted`, `actual`) breaks fees into `swap`, `execution`, `platform`, `app`, and `sponsored`, with the shared currency hoisted to `data.fees.currency`. The `relay` component is renamed to **`platform`**, and per‑component values now include `amount` and `amountFormatted` in addition to `usd`.
 
-    ```diff
-    - "expandedPriceImpact": { "quoted": { "swap": { "usd": "-1.99" }, "relay": { "usd": "0" } } }
-    + "fees": {
-    +   "quoted": { "swap": { "usd": "-1.99", "amount": "...", "amountFormatted": "..." }, "platform": { "usd": "0" } },
-    +   "actual": { "...": "..." },
-    +   "currency": { "symbol": "USDC.e" }
-    + }
+    ```jsonc
+    "expandedPriceImpact": { "quoted": { "swap": { "usd": "-1.99" }, "relay": { "usd": "0" } } } // [!code --]
+    "fees": { // [!code ++]
+      "quoted": { "swap": { "usd": "-1.99", "amount": "...", "amountFormatted": "..." }, "platform": { "usd": "0" } }, // [!code ++]
+      "actual": { "...": "..." }, // [!code ++]
+      "currency": { "symbol": "USDC.e" } // [!code ++]
+    } // [!code ++]
     ```
   </Accordion>
 
   <Accordion title="Fee sponsorship — single source of truth" icon="hand-holding-dollar">
     `data.subsidizedRequest` and `data.subsidizedFee` are removed. `data.feeSponsorship` is now the only sponsorship source — determine whether a request was sponsored from `feeSponsorship.{quoted,actual}.sponsoredTotal.amountUsd`. The `relay` bucket is renamed to **`platform`**, the shared `currency` is hoisted to `feeSponsorship.currency`, and the `actual` phase gains a `sponsorPayment` object.
 
-    ```diff
-    - "subsidizedRequest": true,
-    - "subsidizedFee": { "amountUsd": "6.99" },
-      "feeSponsorship": {
-    -   "quoted": { "selectedComponents": ["execution","swap","relay","app"], "components": { "relay": {} } }
-    +   "quoted": { "selectedComponents": ["execution","swap","platform","app"], "components": { "platform": {} } },
-    +   "actual": { "sponsorPayment": { "amount": "...", "chainId": 8453 } },
-    +   "currency": { "symbol": "USDC.e" }
-      }
+    ```jsonc
+    "subsidizedRequest": true, // [!code --]
+    "subsidizedFee": { "amountUsd": "6.99" }, // [!code --]
+    "feeSponsorship": {
+      "quoted": { "selectedComponents": ["execution","swap","relay","app"], "components": { "relay": {} } } // [!code --]
+      "quoted": { "selectedComponents": ["execution","swap","platform","app"], "components": { "platform": {} } }, // [!code ++]
+      "actual": { "sponsorPayment": { "amount": "...", "chainId": 8453 } }, // [!code ++]
+      "currency": { "symbol": "USDC.e" } // [!code ++]
+    }
     ```
   </Accordion>
 
   <Accordion title="App fees — consolidated into one object" icon="layer-group">
     The parallel `appFees` (quoted) and `paidAppFees` (actual) arrays are consolidated into one object with explicit `quoted` / `actual` keys and a hoisted `currency`.
 
-    ```diff
-    - "appFees":     [ { "bps": "5", "amount": "5000000" } ],
-    - "paidAppFees": [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ],
-    + "appFees": {
-    +   "quoted": [ { "bps": "5", "amount": "5000000" } ],
-    +   "actual": [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ],
-    +   "currency": { "symbol": "USDC.e" }
-    + }
+    ```jsonc
+    "appFees":     [ { "bps": "5", "amount": "5000000" } ], // [!code --]
+    "paidAppFees": [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ], // [!code --]
+    "appFees": { // [!code ++]
+      "quoted": [ { "bps": "5", "amount": "5000000" } ], // [!code ++]
+      "actual": [ { "bps": "5", "amount": "5000000", "amountUsd": "4.99" } ], // [!code ++]
+      "currency": { "symbol": "USDC.e" } // [!code ++]
+    } // [!code ++]
     ```
   </Accordion>
 
-  <Accordion title="Swap & route — metadata is split apart" icon="route">
-    The `data.metadata` catch‑all is removed. Its swap fields move to **`data.swap`** (`sender`, `recipient`, `currencyIn`, `currencyOut`, `rate`, `currencyGasTopup`) and the routing info moves to **`data.route`** (`origin` / `destination` with `inputCurrency`, `outputCurrency`, `router`, `includedSwapSources`).
+  <Accordion title="Swap & route — metadata folds into data.route" icon="route">
+    The `data.metadata` catch‑all is removed. `sender` is promoted to the **root** (next to `recipient`), and everything else moves into **`data.route`**, which now has two phases:
 
-    ```diff
-    - "metadata": { "currencyIn": {}, "currencyOut": {}, "rate": "1", "route": {} }
-    + "swap":  { "currencyIn": {}, "currencyOut": {}, "rate": "1" },
-    + "route": { "origin": {}, "destination": {} }
+    - `data.route.quoted` — the route as quoted at request time.
+    - `data.route.actual` — what actually executed. Carries `rate`, and `actual` falls back to `quoted` when there's no execution data yet (e.g. same‑chain swaps).
+
+    Each phase has `origin` and `destination` sides, and each side has `inputCurrency` / `outputCurrency` (each a full amount object) plus `router`. `includedSwapSources` / `includedOriginSwapSources` / `includedDestinationSwapSources` are hoisted to the top of `data.route`.
+
+    There is **no `data.swap`** and **no `data.quotedOutputAmount`** — read amounts from the route instead:
+
+    - Amount deposited: `data.route.actual.origin.inputCurrency` (→ `quoted`).
+    - Amount received: `data.route.actual.destination.outputCurrency` (→ `quoted`). For same‑chain swaps there is no destination side, so fall back to `origin.outputCurrency`.
+
+    ```jsonc
+    "metadata": { "sender": "…", "currencyIn": {}, "currencyOut": {}, "rate": "1", "route": {} } // [!code --]
+    // sender → promoted to the root [!code ++]
+    "route": { // [!code ++]
+      "includedSwapSources": [], // [!code ++]
+      "quoted": { "origin": {}, "destination": {} }, // [!code ++]
+      "actual": { "rate": "1", "origin": {}, "destination": {} } // [!code ++]
+    } // [!code ++]
     ```
   </Accordion>
 
   <Accordion title="Transaction hashes — hash → txHash" icon="hashtag">
     Inside `inTxs[]` and `outTxs[]`, the `hash` field is renamed to `txHash`. The array names themselves are unchanged.
 
-    ```diff
-    - "inTxs":  [ { "hash": "0xcd4d70..." } ],
-    - "outTxs": [ { "hash": "0x1c0089..." } ]
-    + "inTxs":  [ { "txHash": "0xcd4d70..." } ],
-    + "outTxs": [ { "txHash": "0x1c0089..." } ]
+    ```jsonc
+    "inTxs":  [ { "hash": "0xcd4d70..." } ], // [!code --]
+    "outTxs": [ { "hash": "0x1c0089..." } ] // [!code --]
+    "inTxs":  [ { "txHash": "0xcd4d70..." } ], // [!code ++]
+    "outTxs": [ { "txHash": "0x1c0089..." } ] // [!code ++]
     ```
   </Accordion>
 
   <Accordion title="Statuses — new values" icon="signal">
     The response `status` enum is now `pending`, `waiting`, `depositing`, `submitted`, `success`, `failure`, `refund`. `depositing` and `submitted` are new; the v2 `delayed` value is gone. The `status` **filter** accepts `success`, `failure`, `refund`, `pending`, `depositing`.
 
-    ```diff
-    - status ∈ { pending, waiting, delayed, success, failure, refund }
-    + status ∈ { pending, waiting, depositing, submitted, success, failure, refund }
+    ```jsonc
+    status ∈ { pending, waiting, delayed, success, failure, refund } // [!code --]
+    status ∈ { pending, waiting, depositing, submitted, success, failure, refund } // [!code ++]
     ```
   </Accordion>
 
   <Accordion title="Moved, added & nulled fields" icon="arrows-up-down-left-right">
     - `moonpayId` moves from the root to **`data.externalMetadata.moonpayId`**.
-    - `referrer` is no longer a query parameter, but it's still returned in the response — **only when `includeAuthenticatedData=true`**.
+    - `sender` is **promoted to the root** (next to `recipient`); it previously lived in `data.metadata.sender`.
+    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It's also no longer a query parameter.
     - **`refundTo`** (refund target for deposit‑address transactions) is **added** at the root.
-    - **`title`** (the request type: `Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
+    - **`requestType`** (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
+    - **`features`** (e.g. `gasless_execution`, `fast_fill`, `gas_top_up`, `app_fees`, `deposit_address`) is **added** at the root.
     - **`depositAddress`** is now a structured object: `{ address, type: "strict" | "open", depositor, depositTxHash }`.
-    - `data.price` → **`data.quotedOutputAmount`** (the amount the solver committed to send at solve time — distinct from the actual received amount in `data.swap.currencyOut.amount`).
+    - `data.price` is **removed** — read the quoted output amount from `data.route.actual.destination.inputCurrency` (distinct from the actual received amount in `data.route.actual.destination.outputCurrency`).
     - `failReason` / `refundFailReason` use **`null`** instead of the string `"N/A"`.
   </Accordion>
 </AccordionGroup>
@@ -399,9 +425,10 @@ Every individual change, grouped by request side and response side.
     | v2 | v3 |
     | --- | --- |
     | `data.expandedPriceImpact` | `data.fees` (component `relay` → `platform`) |
-    | `data.price` | `data.quotedOutputAmount` |
-    | `data.metadata.{currencyIn,currencyOut,sender,recipient,rate,currencyGasTopup}` | `data.swap.*` |
-    | `data.metadata.route` | `data.route` |
+    | `data.metadata.sender` | `sender` (root) |
+    | `data.metadata.recipient` | `recipient` (root) |
+    | `data.metadata.{currencyIn,currencyOut,rate,currencyGasTopup}` | `data.route.{quoted,actual}.*` |
+    | `data.metadata.route` | `data.route.{quoted,actual}` |
     | `data.appFees` (quoted) + `data.paidAppFees` (actual) | `data.appFees.{quoted,actual,currency}` |
     | `inTxs[].hash` / `outTxs[].hash` | `inTxs[].txHash` / `outTxs[].txHash` |
     | `feeSponsorship…components.relay` | `feeSponsorship…components.platform` |
@@ -417,7 +444,8 @@ Every individual change, grouped by request side and response side.
     | `data.feeCurrency` / `data.feeCurrencyObject` | currency hoisted into fee objects |
     | `data.appFeeCurrencyObject` | `data.appFees.currency` |
     | `data.subsidizedRequest` / `data.subsidizedFee` | `data.feeSponsorship` |
-    | `data.metadata` (catch‑all) | `data.swap` + `data.route` |
+    | `data.metadata` (catch‑all) | `data.route.{quoted,actual}` (`sender` promoted to root) |
+    | `data.price` | read `data.route.actual.destination.inputCurrency` |
     | `referrer` (query parameter) | removed as a filter; still returned in the response when `includeAuthenticatedData=true` |
     | `?hash` | `term` / `depositTxHash` / `fillTxHash` / `refundTxHash` |
     | status `delayed` | `depositing` / `submitted` |
@@ -427,8 +455,11 @@ Every individual change, grouped by request side and response side.
     | --- | --- |
     | `total` (envelope) | total matching the current filters |
     | `continuation` cursor | opaque pagination cursor |
-    | `title` | request type |
+    | `requestType` | request type (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) |
+    | `sender` (root) | promoted from `data.metadata.sender` |
+    | `features` (root) | request feature flags (`gasless_execution`, `fast_fill`, `app_fees`, …) |
     | `refundTo` | refund target for deposit‑address flows |
+    | `data.route.actual` | executed route (with `rate`); falls back to `quoted` |
     | `data.externalMetadata` | partner correlation IDs (e.g. `moonpayId`) |
     | `feeSponsorship.actual.sponsorPayment` | what the sponsor actually paid |
     | broad filter/sort surface | see [Filtering, search & sorting](#what-changed) |
@@ -441,11 +472,11 @@ Every individual change, grouped by request side and response side.
   <Step title="Switch the endpoint and headers">
     Point requests at `GET /requests/v3` and send `x-api-key` (now required). Drop the `referrer` query parameter. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
   </Step>
-  <Step title="Update fee reads (the big one)">
+  <Step title="Update fee reads">
     Stop reading `data.fees.gas` / `feesUsd`. Read the per‑component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
   </Step>
-  <Step title="Repoint currency, swap & route reads">
-    Replace `data.metadata.currencyIn/out/...` with `data.swap.*` and `data.metadata.route` with `data.route`. Drop `currency`/`currencyObject` string handling — read the single currency object.
+  <Step title="Repoint currency & route reads">
+    Replace `data.metadata.*` reads: `sender` is now at the root, and currencies/rate come from `data.route.{quoted,actual}` (prefer `actual`, fall back to `quoted`). Read the deposited amount from `route.actual.origin.inputCurrency` and the received amount from `route.actual.destination.outputCurrency` (fall back to `origin.outputCurrency` for same‑chain swaps). Drop `currency`/`currencyObject` string handling — read the single currency object.
   </Step>
   <Step title="Consolidate app fees & sponsorship">
     Read `data.appFees.quoted` / `data.appFees.actual`. Replace `subsidizedRequest`/`subsidizedFee` with `data.feeSponsorship`, and rename its `relay` bucket to `platform`.
