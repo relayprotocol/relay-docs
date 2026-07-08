@@ -13,7 +13,6 @@ Once a request is submitted, execution can still fail during the fill or, if a f
 
 | Error Code | Description |
 | ---------- | ------------ |
-| `DEPOSIT_ADDRESS_MISMATCH` | The deposit was detected at an address that doesn't match the one issued for this request. |
 | `DEPOSIT_CHAIN_MISMATCH` | For strict deposit addresses, the deposit landed on a different chain than the one the address was registered for. |
 | `INCORRECT_DEPOSIT_CURRENCY` | For strict deposit addresses, the token received doesn't match the currency quoted for this request. |
 | `DOUBLE_SPEND` | A second deposit was detected at an address whose first deposit was already processed. |
@@ -41,7 +40,7 @@ Once a request is submitted, execution can still fail during the fill or, if a f
 | `SWAP_IMPACT_TOO_HIGH` | The swap's price impact at fill time exceeds the acceptable threshold. |
 | `INSUFFICIENT_POOL_LIQUIDITY` | The DEX pool doesn't have enough reserves to complete the swap at any price. |
 | `SLIPPAGE` | The swap couldn't complete within the given slippage tolerance. |
-| `TOO_LITTLE_RECEIVED` | The on-chain swap executed, but the output amount was below the guaranteed minimum. |
+| `TOO_LITTLE_RECEIVED` | The onchain swap executed, but the output amount was below the guaranteed minimum. |
 | `GENERATE_SWAP_FAILED` | Generating the swap transaction (routing, calldata) failed before execution. |
 | `REVERSE_SWAP_FAILED` | The reversal swap used to return funds to the user for a refund failed to execute or quote. |
 
@@ -55,7 +54,7 @@ Once a request is submitted, execution can still fail during the fill or, if a f
 | `INVALID_GAS_PRICE` | The submitted gas price is outside acceptable bounds. |
 | `JUPITER_INVALID_TOKEN_ACCOUNT` | The token account required for the swap doesn't exist or is invalid (Solana/Jupiter). |
 
-### On-Chain Execution & Revert Errors
+### Onchain Execution & Revert Errors
 
 | Error Code | Description |
 | ---------- | ------------ |
@@ -79,7 +78,7 @@ Once a request is submitted, execution can still fail during the fill or, if a f
 | Error Code | Description |
 | ---------- | ------------ |
 | `ORDER_EXPIRED` | The order's expiration timestamp passed before it could be executed. |
-| `ORDER_IS_CANCELLED` | The order was cancelled on-chain before it could be filled. |
+| `ORDER_IS_CANCELLED` | The order was cancelled onchain before it could be filled. |
 | `ORDER_ALREADY_FILLED` | The order was already fully executed and can't be filled again. |
 | `SIGNATURE_EXPIRED` | The signature used for token approval expired before execution. |
 | `INVALID_SIGNATURE` | The provided signature is invalid or doesn't match the expected signer. |
