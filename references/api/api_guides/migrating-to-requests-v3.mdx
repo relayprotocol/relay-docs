@@ -279,11 +279,14 @@ Every individual change, grouped by request side and response side.
 
     **Sorting.** `sortBy` accepts `createdAt` (default), `updatedAt`, or `amountUsd`. `sortDirection` is `asc` or `desc` (defaults to `desc` for time fields, `asc` for `amountUsd`).
 
-    **Advanced filtering (AND / OR composition).** The `filters` parameter takes a JSON‑encoded array of groups. Fields **within** a group are AND'd; the groups themselves are OR'd. Top‑level parameters still apply.
+    **Advanced filtering (AND / OR / negation).** The `filters` parameter takes a JSON‑encoded array of groups. Fields **within** a group are AND'd; the groups themselves are OR'd. Any key can be negated with a `not:` prefix, and a field's value may be an array (OR within that field). Top‑level parameters still apply.
 
     ```bash
     # "(depositAddress=0xabc AND originChainId=8453) OR (depositAddress=0x123 AND originChainId=1)"
     GET /requests/v3?filters=[{"depositAddress":"0xabc","originChainId":8453},{"depositAddress":"0x123","originChainId":1}]
+
+    # negation + array value: everything except failures and refunds
+    GET /requests/v3?filters=[{"not:status":["failure","refund"]}]
     ```
 
     <Note>OR groups support identity, address, chain, currency, and status‑style fields. Range filters and `features` are top‑level only.</Note>
@@ -298,15 +301,6 @@ Every individual change, grouped by request side and response side.
 ### Response fields
 
 <AccordionGroup>
-  <Accordion title="Pagination" icon="list">
-    `continuation` is an opaque cursor you pass back to fetch the next page. `limit` defaults to 20 and is capped at **50**.
-
-    ```jsonc
-    // v2: offset-style paging [!code --]
-    "continuation": "eyJ..."   // opaque cursor, pass back as ?continuation= [!code ++]
-    ```
-  </Accordion>
-
   <Accordion title="Currencies — unified to a single object" icon="coins">
     The `currency` (string) + `currencyObject` (object) duality is removed everywhere, along with `feeCurrency`/`feeCurrencyObject` and `appFeeCurrencyObject`. Every currency is a single object: `{ chainId, address, symbol, name, decimals, metadata }`. Amount objects carry that currency plus `amount`, `amountFormatted`, `amountUsd`, and where relevant `amountUsdCurrent`, `minimumAmount`.
 
@@ -452,7 +446,6 @@ Every individual change, grouped by request side and response side.
   <Accordion title="Added" icon="plus">
     | Added in v3 | Notes |
     | --- | --- |
-    | `continuation` cursor | opaque pagination cursor |
     | `requestType` | request type (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) |
     | `sender` (root) | promoted from `data.metadata.sender` |
     | `features` (root) | request feature flags (`gasless_execution`, `fast_fill`, `app_fees`, …) |
@@ -482,8 +475,8 @@ Every individual change, grouped by request side and response side.
   <Step title="Fix tx hashes, statuses & nulls">
     Rename `inTxs[].hash` / `outTxs[].hash` to `txHash`. Handle the new `depositing` / `submitted` statuses (and remove `delayed`). Treat `failReason` / `refundFailReason` as `null` rather than `"N/A"`.
   </Step>
-  <Step title="Adopt the new querying & pagination">
-    Replace separate `user`/`hash`/`id` lookups with a single `term` search where it fits. Paginate by passing `continuation` back for the next page (`limit` max 50).
+  <Step title="Adopt the new querying surface">
+    Replace separate `user`/`hash`/`id` lookups with a single `term` search where it fits, and take advantage of the new filter/sort parameters. Pagination is unchanged — keep passing `continuation` back for the next page (`limit` max 50).
   </Step>
 </Steps>
 
