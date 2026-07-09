@@ -135,7 +135,7 @@ When displaying fees to users, we recommend mapping the `data.fees` fields as fo
 </Tip>
 
 <Note>
-In the quote API and [`GET /requests/v2`](/references/api/get-requests), this same breakdown is returned as the `expandedPriceImpact` object, and the **platform** component is named **relay**.
+In the quote API and [`GET /requests/v2`](/references/api/get-requests-v2), this same breakdown is returned as the `expandedPriceImpact` object, and the **platform** component is named **relay**.
 </Note>
 
 ## Fee Sponsorship
@@ -151,7 +151,7 @@ See the [Fee Sponsorship Doc](/features/fee-sponsorship) for setup details.
 ## Deprecated: Fees Object
 
 <Warning>
-The `fees` object is deprecated. It is still returned from the quote API and the [`GET /requests/v2`](/references/api/get-requests) API for backwards compatibility, but it only reports Relay-related fees and does not reflect the full cost of a request. Do not rely on it for new integrations.
+The `fees` object is deprecated. It is still returned from the quote API and the [`GET /requests/v2`](/references/api/get-requests-v2) API for backwards compatibility, but it only reports Relay-related fees and does not reflect the full cost of a request. Do not rely on it for new integrations.
 
 To understand or display the complete fee breakdown of a request, use the [`data.fees`](#fees-in-the-api) object in `GET /requests/v3` (or `expandedPriceImpact` in the quote API and `GET /requests/v2`) instead, which covers execution, swap, platform, app, and sponsored fees.
 </Warning>

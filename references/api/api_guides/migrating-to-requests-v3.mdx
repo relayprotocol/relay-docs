@@ -240,7 +240,7 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
 </Tabs>
 
 <Warning>
-  **`data.fees` has changed meaning.** The key `fees` is reused for a different shape. In v2, `data.fees` was raw wei (`gas`/`fixed`/`price`/`gateway`). In v3 that object is removed, and `data.fees` now holds the per‑component USD breakdown that v2 called `expandedPriceImpact`. Code reading `data.fees.gas` will break — read `data.fees.quoted` / `data.fees.actual` instead.
+  **`data.fees` has changed meaning.** The key `fees` is reused for a different shape. In v2, `data.fees` was raw wei (`gas`/`fixed`/`price`/`gateway`). In v3 that object is removed, and `data.fees` now holds the per-component USD breakdown that v2 called `expandedPriceImpact`. Code reading `data.fees.gas` will break — read `data.fees.quoted` / `data.fees.actual` instead.
 </Warning>
 
 ## What changed
@@ -274,12 +274,12 @@ Every individual change, grouped by request side and response side.
     | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData` |
 
     <Tip>
-      `term` is a single unified search across request id, wallet, deposit address, and every transaction hash (deposit, fill, refund, failed, chain‑entry). It replaces the v2 pattern of running separate `user` / `hash` / `id` lookups and merging the results.
+      `term` is a single unified search across request id, wallet, deposit address, and every transaction hash (deposit, fill, refund, failed, chain-entry). It replaces the v2 pattern of running separate `user` / `hash` / `id` lookups and merging the results.
     </Tip>
 
     **Sorting.** `sortBy` accepts `createdAt` (default), `updatedAt`, or `amountUsd`. `sortDirection` is `asc` or `desc` (defaults to `desc` for time fields, `asc` for `amountUsd`).
 
-    **Advanced filtering (AND / OR / negation).** The `filters` parameter takes a JSON‑encoded array of groups. Fields **within** a group are AND'd; the groups themselves are OR'd. Any key can be negated with a `not:` prefix, and a field's value may be an array (OR within that field). Top‑level parameters still apply.
+    **Advanced filtering (AND / OR / negation).** The `filters` parameter takes a JSON-encoded array of groups. Fields **within** a group are AND'd; the groups themselves are OR'd. Any key can be negated with a `not:` prefix, and a field's value may be an array (OR within that field). Top-level parameters still apply.
 
     ```bash
     # "(depositAddress=0xabc AND originChainId=8453) OR (depositAddress=0x123 AND originChainId=1)"
@@ -289,7 +289,7 @@ Every individual change, grouped by request side and response side.
     GET /requests/v3?filters=[{"not:status":["failure","refund"]}]
     ```
 
-    <Note>OR groups support identity, address, chain, currency, and status‑style fields. Range filters and `features` are top‑level only.</Note>
+    <Note>OR groups support identity, address, chain, currency, and status-style fields. Range filters and `features` are top-level only.</Note>
 
     **Removed & changed parameters.**
     - `hash` is removed; use `term`, or the targeted `depositTxHash` / `fillTxHash` / `refundTxHash`.
@@ -313,7 +313,7 @@ Every individual change, grouped by request side and response side.
   </Accordion>
 
   <Accordion title="Fees — expandedPriceImpact → data.fees, relay → platform" icon="receipt">
-    `data.expandedPriceImpact` is renamed to **`data.fees`** (and the old wei `data.fees` / `data.feesUsd` are removed). Each phase (`quoted`, `actual`) breaks fees into `swap`, `execution`, `platform`, `app`, and `sponsored`, with the shared currency hoisted to `data.fees.currency`. The `relay` component is renamed to **`platform`**, and per‑component values now include `amount` and `amountFormatted` in addition to `usd`.
+    `data.expandedPriceImpact` is renamed to **`data.fees`** (and the old wei `data.fees` / `data.feesUsd` are removed). Each phase (`quoted`, `actual`) breaks fees into `swap`, `execution`, `platform`, `app`, and `sponsored`, with the shared currency hoisted to `data.fees.currency`. The `relay` component is renamed to **`platform`**, and per-component values now include `amount` and `amountFormatted` in addition to `usd`.
 
     ```jsonc
     "expandedPriceImpact": { "quoted": { "swap": { "usd": "-1.99" }, "relay": { "usd": "0" } } } // [!code --]
@@ -355,17 +355,17 @@ Every individual change, grouped by request side and response side.
   </Accordion>
 
   <Accordion title="Swap & route — metadata folds into data.route" icon="route">
-    The `data.metadata` catch‑all is removed. `sender` is promoted to the **root** (next to `recipient`), and everything else moves into **`data.route`**, which now has two phases:
+    The `data.metadata` catch-all is removed. `sender` is promoted to the **root** (next to `recipient`), and everything else moves into **`data.route`**, which now has two phases:
 
     - `data.route.quoted` — the route as quoted at request time.
-    - `data.route.actual` — what actually executed. Carries `rate`, and `actual` falls back to `quoted` when there's no execution data yet (e.g. same‑chain swaps).
+    - `data.route.actual` — what actually executed. Carries `rate`, and `actual` falls back to `quoted` when there's no execution data yet (e.g. same-chain swaps).
 
     Each phase has `origin` and `destination` sides, and each side has `inputCurrency` / `outputCurrency` (each a full amount object) plus `router`. `includedSwapSources` / `includedOriginSwapSources` / `includedDestinationSwapSources` are hoisted to the top of `data.route`.
 
     There is **no `data.swap`** and **no `data.quotedOutputAmount`** — read amounts from the route instead:
 
     - Amount deposited: `data.route.actual.origin.inputCurrency` (→ `quoted`).
-    - Amount received: `data.route.actual.destination.outputCurrency` (→ `quoted`). For same‑chain swaps there is no destination side, so fall back to `origin.outputCurrency`.
+    - Amount received: `data.route.actual.destination.outputCurrency` (→ `quoted`). For same-chain swaps there is no destination side, so fall back to `origin.outputCurrency`.
 
     ```jsonc
     "metadata": { "sender": "…", "currencyIn": {}, "currencyOut": {}, "rate": "1", "route": {} } // [!code --]
@@ -402,7 +402,7 @@ Every individual change, grouped by request side and response side.
     - `moonpayId` moves from the root to **`data.externalMetadata.moonpayId`**.
     - `sender` is **promoted to the root** (next to `recipient`); it previously lived in `data.metadata.sender`.
     - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It's also no longer a query parameter.
-    - **`refundTo`** (refund target for deposit‑address transactions) is **added** at the root.
+    - **`refundTo`** (refund target for deposit-address transactions) is **added** at the root.
     - **`requestType`** (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
     - **`features`** (e.g. `gasless_execution`, `fast_fill`, `gas_top_up`, `app_fees`, `deposit_address`) is **added** at the root.
     - **`depositAddress`** is now a structured object: `{ address, type: "strict" | "open", depositor, depositTxHash }`.
@@ -431,13 +431,13 @@ Every individual change, grouped by request side and response side.
   <Accordion title="Removed" icon="trash">
     | Removed in v3 | Replacement |
     | --- | --- |
-    | `data.fees` (wei `gas`/`fixed`/`price`/`gateway`) | `data.fees` (now USD price‑impact) |
+    | `data.fees` (wei `gas`/`fixed`/`price`/`gateway`) | `data.fees` (now USD price-impact) |
     | `data.feesUsd` | `data.fees` |
     | `data.currency` / `data.currencyObject` | currency object on each amount |
     | `data.feeCurrency` / `data.feeCurrencyObject` | currency hoisted into fee objects |
     | `data.appFeeCurrencyObject` | `data.appFees.currency` |
     | `data.subsidizedRequest` / `data.subsidizedFee` | `data.feeSponsorship` |
-    | `data.metadata` (catch‑all) | `data.route.{quoted,actual}` (`sender` promoted to root) |
+    | `data.metadata` (catch-all) | `data.route.{quoted,actual}` (`sender` promoted to root) |
     | `data.price` | read `data.route.actual.destination.inputCurrency` |
     | `referrer` (query parameter) | removed as a filter; still returned in the response when `includeAuthenticatedData=true` |
     | `?hash` | `term` / `depositTxHash` / `fillTxHash` / `refundTxHash` |
@@ -449,7 +449,7 @@ Every individual change, grouped by request side and response side.
     | `requestType` | request type (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) |
     | `sender` (root) | promoted from `data.metadata.sender` |
     | `features` (root) | request feature flags (`gasless_execution`, `fast_fill`, `app_fees`, …) |
-    | `refundTo` | refund target for deposit‑address flows |
+    | `refundTo` | refund target for deposit-address flows |
     | `data.route.actual` | executed route (with `rate`); falls back to `quoted` |
     | `data.externalMetadata` | partner correlation IDs (e.g. `moonpayId`) |
     | `feeSponsorship.actual.sponsorPayment` | what the sponsor actually paid |
@@ -464,10 +464,10 @@ Every individual change, grouped by request side and response side.
     Point requests at `GET /requests/v3` and send `x-api-key` (now required). Drop the `referrer` query parameter. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
   </Step>
   <Step title="Update fee reads">
-    Stop reading `data.fees.gas` / `feesUsd`. Read the per‑component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
+    Stop reading `data.fees.gas` / `feesUsd`. Read the per-component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
   </Step>
   <Step title="Repoint currency & route reads">
-    Replace `data.metadata.*` reads: `sender` is now at the root, and currencies/rate come from `data.route.{quoted,actual}` (prefer `actual`, fall back to `quoted`). Read the deposited amount from `route.actual.origin.inputCurrency` and the received amount from `route.actual.destination.outputCurrency` (fall back to `origin.outputCurrency` for same‑chain swaps). Drop `currency`/`currencyObject` string handling — read the single currency object.
+    Replace `data.metadata.*` reads: `sender` is now at the root, and currencies/rate come from `data.route.{quoted,actual}` (prefer `actual`, fall back to `quoted`). Read the deposited amount from `route.actual.origin.inputCurrency` and the received amount from `route.actual.destination.outputCurrency` (fall back to `origin.outputCurrency` for same-chain swaps). Drop `currency`/`currencyObject` string handling — read the single currency object.
   </Step>
   <Step title="Consolidate app fees & sponsorship">
     Read `data.appFees.quoted` / `data.appFees.actual`. Replace `subsidizedRequest`/`subsidizedFee` with `data.feeSponsorship`, and rename its `relay` bucket to `platform`.
@@ -481,9 +481,7 @@ Every individual change, grouped by request side and response side.
 </Steps>
 
 <Tip>
-  Authenticated data (revenue share via `platformFee`, un‑redacted unfilled destination data, and `referrer`) is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key tied to those requests.
+  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key tied to those requests.
 </Tip>
 
-<Warning>
-  `includeAuthenticatedData` gates whether those authenticated fields are returned. If you proxy the Requests API from a public site, force `includeAuthenticatedData=false` on your backend regardless of the incoming value, and only set it `true` from a trusted, authenticated context.
-</Warning>
+
