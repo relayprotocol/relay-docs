@@ -61,7 +61,7 @@ Strict deposit addresses are bound to the original order and should be treated a
 | Wrong token (solver currency) | Requote and fill on some chain families (not universal); [relay.link/withdraw](https://relay.link/withdraw) is the fallback if the auto-flow doesn't complete | Recoverable via [relay.link/withdraw](https://relay.link/withdraw) |
 | Wrong token (non-solver) | Not supported and not currently recoverable | Not supported and not currently recoverable |
 | Wrong chain (same VM) | Supported, but may require [manual reindexing](#reindexing-stuck-deposits) before the deposit is recognized; some chain families refund instead | Not supported — no automatic wrong-chain recovery |
-| Wrong chain (different VM) | Not possible — address formats differ | Not possible — address formats differ |
+| Wrong chain (different VM) | Not supported | Not supported |
 | Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments fill the quoted amount and refund the excess |
 | `refundTo` | Recommended (omitting disables automatic refund) | Required |
 | Address reuse | Yes, same route | No — bound to original order |

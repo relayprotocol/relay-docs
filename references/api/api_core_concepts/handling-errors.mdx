@@ -22,7 +22,7 @@ These are known validation and routing issues that developers should gracefully 
 | `INVALID_GAS_LIMIT_FOR_DEPOSIT_SPECIFIED_TXS` | Deposit-specified transactions require a supported trade type and a configured gas limit. See the [call execution guide](/references/api/api_guides/calling-integration-guide). |
 | `INVALID_INPUT_CURRENCY`                      | The provided input currency address is invalid or not supported.           |
 | `INVALID_OUTPUT_CURRENCY`                     | The provided output currency address is invalid or not supported.          |
-| `INVALID_SLIPPAGE_TOLERANCE`                  | Slippage value is not a valid integer string representing basis points.    |
+| `INVALID_SLIPPAGE_TOLERANCE`                  | `slippageTolerance` (or `latePaymentSlippageTolerance`) is not an integer string in the range `0`–`10000` basis points. |
 | `NO_INTERNAL_SWAP_ROUTES_FOUND`               | No valid swap route exists internally for the selected token pair.         |
 | `NO_QUOTES`                                   | No available quotes for the given parameters.                              |
 | `NO_SWAP_ROUTES_FOUND`                        | No route was found to fulfill the quote request with the given parameters. |
