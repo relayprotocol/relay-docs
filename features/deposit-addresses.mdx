@@ -954,7 +954,7 @@ When `recoveryAddress` is supplied:
 - Existing `refundTo` behavior remains unchanged for flows that do not supply `recoveryAddress`.
 
 <Warning>
-`recoveryAddress` does not guarantee an automatic refund — it is a recovery path for funds that auto-refund cannot safely return.
+`recoveryAddress` never receives refunds — it is only used to withdraw funds from the depository contract in the case that we cannot fill or refund.
 </Warning>
 
 Constraints:
