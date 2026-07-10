@@ -24,6 +24,7 @@ This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headle
 | `user` | address | The recipient wallet on the destination chain. Can be any valid address, including the zero address. |
 | `recipient` | address | The address that receives funds on the destination chain. |
 | `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Set to the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to opt into automatic refunds to the original depositor — supported on EVM chains, Bitcoin, and Solana. Omitting this on open addresses disables automatic refund. See [Refund Behavior](#refund-behavior). |
+| `recoveryAddress` | address | Optional origin-chain EOA controlled by the integrator. Used as a recovery address when Relay cannot safely auto-refund to the original depositor. This is additive to `refundTo`; existing `refundTo` behavior is preserved unless `recoveryAddress` is supplied. See [`recoveryAddress`](#recoveryaddress). |
 | `tradeType` | string | `EXACT_INPUT` or `EXPECTED_OUTPUT` for open deposit addresses. `EXACT_OUTPUT` is supported only with a strict deposit address (`strict: true`); an open-ended `EXACT_OUTPUT` request is rejected. |
 | `amount` | string | The quoted amount in the origin token's smallest unit. Open-ended addresses support variable deposit amounts. Strict addresses should be treated as exact-payment instructions. |
 | `strict` | boolean | Set to `true` for a strict deposit address tied to a specific order. Omit or set to `false` for an open deposit address. |
@@ -928,23 +929,45 @@ A same-VM wrong-chain deposit to an open or custodial address is recoverable but
 |---|---|
 | User's address | Refund directly to the user |
 | App-controlled address | Refund to integrator's address — your support team handles returning funds to the user |
-| Origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) | Auto-refund to the original depositor — the address that sent funds to the deposit address. Supported on EVM chains, Bitcoin, and Solana origins; rejected on other VMs. |
+| Origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) | Auto-refund to the original depositor — the address that sent funds to the deposit address. Supported on EVM chains, Bitcoin, and Solana origins; rejected on other VMs. Relay makes a best effort to detect known CEX sender addresses — if the depositor is detected as a CEX address, Relay aborts auto-refund and requires manual refund / recovery instead. |
 | Not set (open) | Automatic refund is disabled — no internal fallback |
 | Not set (strict) | Not allowed — `refundTo` is required for strict deposit addresses |
 
 <Note>
-If users may send from a centralized exchange, **do not use "refund to sender"** — neither an explicit user address you don't control nor the native-currency-address auto-refund opt-in — the sender address will be the exchange's hot wallet, not the user's. Use an app-controlled address instead so your support team can handle the last mile.
+If users may send from a centralized exchange, **do not use "refund to sender"** — neither an explicit user address you don't control nor the native-currency-address auto-refund opt-in — the sender address will be the exchange's hot wallet, not the user's. Use an app-controlled address instead so your support team can handle the last mile. If you still want depositor auto-detection for self-custodied senders, pair the auto-refund opt-in with a [`recoveryAddress`](#recoveryaddress) as the fallback.
 </Note>
 
 <Info>
 When auto-refund to the original depositor is triggered, the request's `outTxs` will contain **two** refund transactions. The first transaction is the solver-to-depositor transfer that actually returns funds to the depositor — this is the one to track from your integration. The second is an internal protocol-settlement transaction that does not move user funds and can be ignored by integrators.
 </Info>
 
+### `recoveryAddress`
+
+`recoveryAddress` is for cases where Relay cannot auto-refund. It should be an integrator-controlled EOA on the origin chain.
+
+Use `recoveryAddress` when an integrator wants to use Relay's depositor detection, but also needs a fallback recovery path if the detected depositor cannot safely receive an automatic refund. This is most relevant for deposits from custodial sources like centralized exchanges, unsupported currency deposits, or blocked depositor addresses.
+
+When `recoveryAddress` is supplied:
+
+- Relay still attempts to auto-refund where possible.
+- If Relay cannot auto-refund, the integrator can recover funds using `recoveryAddress`.
+- Existing `refundTo` behavior remains unchanged for flows that do not supply `recoveryAddress`.
+
+<Warning>
+`recoveryAddress` does not guarantee an automatic refund — it is a recovery path for funds that auto-refund cannot safely return.
+</Warning>
+
+Constraints:
+
+- Requires `useDepositAddress: true` — the request is rejected otherwise.
+- Must be a valid address on the origin chain and cannot be the origin chain's native-currency address.
+- Strict deposit addresses still require `refundTo` even when `recoveryAddress` is set.
+
 ### Recommended Setup
 
 - **Open deposit addresses**: Set `refundTo` to the user's address for automatic refunds.
 - **Strict deposit addresses**: Always set `refundTo`. If the sender is unknown (e.g., CEX withdrawal), use an app-controlled address so your support team can manage refunds.
-- **Auto-refund to depositor**: When users deposit from wallets they control, you can pass `refundTo` as the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to refund to the original depositor automatically. The first of the two resulting `outTxs` is the transfer to the depositor — track that one for refund delivery. Avoid this when deposits may originate from a centralized exchange.
+- **Auto-refund to depositor**: When users deposit from wallets they control, you can pass `refundTo` as the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to refund to the original depositor automatically. The first of the two resulting `outTxs` is the transfer to the depositor — track that one for refund delivery. Avoid this when deposits may originate from a centralized exchange, or pair it with a [`recoveryAddress`](#recoveryaddress) so funds Relay cannot safely auto-refund remain recoverable.
 
 ## Tracking Transactions
 
