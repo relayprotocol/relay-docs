@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-07-09 — Solana quote size check reserves compute-budget headroom
+
+**Behavior change** — `POST /quote/v2`: the Solana deposit-transaction size check on cross-chain Solana-origin quotes now reserves 60 bytes of headroom for the compute-budget instructions wallets and SDKs prepend at send time, so quotes are rejected when the compiled deposit transaction would exceed **1172 bytes** (1232 minus 60). Previously the check ran at the raw 1232-byte limit and could return `200` with calldata that no longer fit once the client added its compute-budget instructions. The `400` response body now names the effective limit and the reserved-bytes reason. Continue to use **`maxRouteLength`** or **`includedOriginSwapSources`** to keep transactions under the limit — see [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
+
 ## 2026-07-02 — Quote protocol-data opt-in for onchain order verification
 
 **Breaking** — `POST /quote` and `POST /quote/v2`: the opt-in request flag `includeProtocolSignature` is renamed to `includeProtocolData`. The previous name is no longer honored. Integrators that were passing `includeProtocolSignature: true` to receive `protocol.v2.orderSignature` must switch to `includeProtocolData: true`. Setting this opt-in may increase quote response latency.
