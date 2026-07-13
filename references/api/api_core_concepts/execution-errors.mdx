@@ -33,7 +33,7 @@ Once a request is submitted, execution can still fail during the fill or, if a f
 | `SPONSOR_BALANCE_TOO_LOW` | The sponsor covering transaction fees doesn't have sufficient balance. |
 | `INSUFFICIENT_FUNDS_FOR_RENT` | The user's balance isn't enough to cover rent/storage fees (Solana). |
 | `NEGATIVE_NEW_AMOUNT_AFTER_FEES` | After deducting fees, the resulting amount is zero or negative. |
-| `AMOUNT_TOO_LOW_TO_REFUND` | The amount available is too low to refund once fees are applied. |
+| `AMOUNT_TOO_LOW_TO_REFUND` | The amount to refund is zero or negative, or below the chain's minimum transfer threshold, so no refund could be issued. |
 | `GASLESS_PERMIT_BALANCE_TOO_LOW` | The balance available from a gasless permit wasn't enough to complete the request, so the funds were refunded. |
 
 ### Swap Routing & Pricing Errors
@@ -126,8 +126,8 @@ Once a request is submitted, execution can still fail during the fill or, if a f
 
 | Error Code | Description |
 | ---------- | ------------ |
-| `AMOUNT_TOO_LOW_TO_REFUND` | The refund amount is zero or negative before fees, so there's nothing to refund. |
-| `NEGATIVE_NEW_AMOUNT_AFTER_FEES` | After deducting fees, the refund amount would be zero or negative. |
+| `AMOUNT_TOO_LOW_TO_REFUND` | The amount to refund is zero or negative, or below the chain's minimum transfer threshold, so no refund could be issued. |
+| `NEGATIVE_NEW_AMOUNT_AFTER_FEES` | After deducting fees, the resulting amount is zero or negative. |
 | `SWAP_CURRENCY_NOT_ON_ORIGIN` | The swap's output currency isn't available to bridge back to the origin chain, so the refund can't be issued in the original currency. |
 | `REFUND_RECIPIENT_IS_VASP` | The refund recipient was identified as a Virtual Asset Service Provider (VASP), which requires manual review before the refund can be issued. |
 | `N/A` | No refund failure has occurred. |
