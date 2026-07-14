@@ -714,7 +714,7 @@ If Relay cannot map a custom error selector to a known contract error, the respo
   <Accordion title="Gasless upgrade to an EIP-7702 Smart Account">
     Another example of a flow where the transaction execution does not depend on `tx.origin` is the action of upgrading a regular EOA to an EIP-7702 smart account. In this flow, any entity can execute an upgrade payload and a signed EIP-7702 `authorizationList` from the EOA.
 
-    The client must pass the correct fields for the `to` (which is the EOA that is to be upgraded), data is the call data for the initialization of the EOA's EIO-7702 Smart Account and the authorizationList which contains the signed information about the Smart Account to upgrade to.
+    The client must pass the correct fields for the `to` (which is the EOA that is to be upgraded), data is the call data for the initialization of the EOA's EIP-7702 Smart Account and the authorizationList which contains the signed information about the Smart Account to upgrade to.
     <Steps>
         <Step title="Sign the EIP-7702 authorizationList">
           <CodeGroup>
@@ -752,8 +752,8 @@ If Relay cannot map a custom error selector to a known contract error, the respo
 
 
           // --- Sign EIP-7702 Authorization (viem handles everything: r, s, yParity, nonce, chainId) ---
-          const authorization = await client.signAuthorization({
-            account: client.account!,
+          const authorization = await walletClient.signAuthorization({
+            account: walletClient.account!,
             contractAddress: "0xSMART_ACCOUNT_CONTRACT" //This is the contract that will have authorization
           });
           ```
