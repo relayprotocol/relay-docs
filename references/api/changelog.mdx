@@ -3,6 +3,58 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-07-09 — Solana quote size check reserves compute-budget headroom
+
+**Behavior change** — `POST /quote/v2`: the Solana deposit-transaction size check on cross-chain Solana-origin quotes now reserves 60 bytes of headroom for the compute-budget instructions wallets and SDKs prepend at send time, so quotes are rejected when the compiled deposit transaction would exceed **1172 bytes** (1232 minus 60). Previously the check ran at the raw 1232-byte limit and could return `200` with calldata that no longer fit once the client added its compute-budget instructions. The `400` response body now names the effective limit and the reserved-bytes reason. Continue to use **`maxRouteLength`** or **`includedOriginSwapSources`** to keep transactions under the limit — see [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
+
+## 2026-07-02 — Quote protocol-data opt-in for onchain order verification
+
+**Breaking** — `POST /quote` and `POST /quote/v2`: the opt-in request flag `includeProtocolSignature` is renamed to `includeProtocolData`. The previous name is no longer honored. Integrators that were passing `includeProtocolSignature: true` to receive `protocol.v2.orderSignature` must switch to `includeProtocolData: true`. Setting this opt-in may increase quote response latency.
+
+**Added** — `POST /quote` and `POST /quote/v2`: when the quote is settled through the Relay settlement protocol, the response's `protocol.v2` block now includes `hubType` (currently always `"onchain"`) alongside `orderId`. With `includeProtocolData: true`, `protocol.v2.orderSignature` — the solver's ECDSA signature over `orderId` — is also returned, so integrators can validate an onchain `orderId` against the quoted intent using `ecrecover` without a follow-up API call.
+
+## 2026-06-23 — `slippageTolerance` rejects values outside 0–10000 bps
+
+**Breaking** — `POST /quote`, `POST /quote/v2`, and `POST /price`: `slippageTolerance` and `latePaymentSlippageTolerance` are now validated as integer strings in the range `0`–`10000` basis points. Values outside that range — including negative integers and values greater than `10000` — return `400` with `errorCode: "INVALID_SLIPPAGE_TOLERANCE"`. Previously, negative values were accepted at quote time and produced refund outcomes downstream, and values above `10000` were accepted, effectively removing the minimum-output floor. Non-integer strings on `POST /price` previously returned `500`; they now return `400` with the same `INVALID_SLIPPAGE_TOLERANCE` code as the other endpoints. See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
+## 2026-06-19 — TON inbound `inTxs[].hash` now an explorer-ready hex hash
+
+**Behavior change** — `GET /requests/v2`: for TON-origin requests, `data.inTxs[].hash` is now the bare 64-character hex transaction hash, suitable for opening on Tonviewer at `/transaction/{TX_HASH}`. Previously this field returned an internal composite identifier that had to be parsed before it could be linked to an explorer. Non-TON origins and `data.outTxs[]` are unaffected.
+
+**Added** — `GET /chains`: the TON entry now exposes `explorerPaths.transaction` as `/transaction/{TX_HASH}`, so clients building explorer URLs can read the canonical Tonviewer path from the API rather than hardcoding `/tx/{TX_HASH}`.
+
+## 2026-06-10 — Reorged deposit transactions report `failure` on `inTxs[]`
+
+**Behavior change** — `GET /requests/v2`: when a deposit is detected as reorged out or canonically failed on Base, the matching entry in `data.inTxs[]` now reports `status: "failure"`. Previously the top-level request `status` could flip to `"failure"` while the corresponding `data.inTxs[].status` remained `"success"`, leaving integrators that key their deposit UI off `data.inTxs[0].status` showing a succeeded deposit. Historical rows are not backfilled; the new behavior applies to detections going forward.
+
+**Added** — `GET /requests/v2`: failed `data.inTxs[]` entries can now include a `metadata.reorg` object with detection context. Fields: `detectedAt` (unix millis), `source` (detector component), `reason` (short code), and optional `details`, `failReason`, `action` (`"fill"` or `"refund"`), `blockNumber`, `blockHash`, `receiptStatus`. The object is only populated when the failure was caught by the reorg/finality path; deposits that fail through other paths are unaffected.
+
+## 2026-06-05 — Upstream RPC failures no longer reported as `DESTINATION_TX_FAILED`
+
+**Behavior change** — `POST /quote/v2`: quote attempts that fail because of a transient upstream RPC error now return `errorCode: "REQUEST_TIMED_OUT"` on timeout or `errorCode: "RPC_HTTP_ERROR"` for other transient RPC failures. Previously these were misclassified as `errorCode: "DESTINATION_TX_FAILED"`, which suggested an on-chain revert and was treated as non-retryable. `DESTINATION_TX_FAILED` is now returned only for genuine destination reverts. Both new codes are retryable — see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
+## 2026-05-29 — Oversized Solana aggregator quotes reject at quote time
+
+**Breaking** — `POST /quote/v2`: Solana-origin quotes routed through a third-party aggregator now return `400` when the generated deposit transaction would exceed Solana's 1232-byte limit. Previously these requests returned `200` with calldata that could not be serialized or executed client-side. Use **`maxRouteLength`** or **`includedOriginSwapSources`** to keep transactions under the limit — see [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
+
+## 2026-05-28 — Bitcoin deposits enter `pending` from mempool
+
+**Behavior change** — `GET /intents/status/v3` and the `request.status.updated` webhook/websocket event: requests with a Bitcoin origin deposit now transition to `pending` as soon as the deposit is observed in the Bitcoin mempool, instead of waiting for the first block confirmation. The `pending` status no longer implies block inclusion for Bitcoin origins; block-confirmation policy continues to govern when the request progresses to `submitted`, `success`, `failure`, or `refund`. EVM and other non-Bitcoin origins are unchanged.
+
+## 2026-05-27 — `depositAddress` payloads add `depositTxHash`
+
+**Added** — `GET /requests/v2` and the `request.status.updated` webhook/websocket event: the `depositAddress` object now includes `depositTxHash`, the origin-chain transaction hash of the depositor's transfer into the deposit address. This is distinct from `inTxHashes`, which tracks the sweep from the deposit address to the Relay depository. The field is `null` until the depositor's transfer is observed, and is omitted on non-deposit-address requests (where `depositAddress` itself is `null`).
+
+## 2026-05-26 — Webhook payload adds `details`, `failReason`, `refundFailReason`
+
+**Added** — `request.status.updated` webhook: the `data` object now includes `details`, `failReason`, and `refundFailReason`, matching the corresponding fields on [`GET /intents/status/v3`](/references/api/get-intents-status-v3). `failReason` returns `"N/A"` on non-failure statuses and the recorded reason (or `"UNKNOWN"`) on `failure`/`fallback`/`refund` statuses. `refundFailReason` defaults to `"N/A"` when no refund-leg failure is recorded. `details` is `null` when no additional context is available.
+
+## 2026-05-21 — Hyperliquid authorize step adds `depositor` field
+
+**Breaking** — `POST /authorize` (Hyperliquid nonce-mapping flow): the EIP-712 `RelayNonceMapping` domain `version` is bumped from `"1"` to `"2"`, and the `NonceMapping` typed-data struct gains a new `depositor` (`address`) field. The `/authorize` request body must include a matching `depositor` field.
+
+Integrators that pass the API-returned `sign` payload straight to their wallet (and POST `post.body` verbatim) require no code change. Integrators that hand-roll the authorize step must sign the new typed-data shape and forward `depositor` from `steps[0].items[0].data.sign.value.depositor`. See [Hyperliquid Support](/references/api/api_guides/hyperliquid-support) for the updated payload shapes.
+
 ## 2026-05-20 — Decoded `/execute` simulation errors
 
 **Behavior change** — `POST /execute`: raw-call simulation failures now return a decoded `error` label, `message`, `requestId`, and optional `details` object when Relay can decode the revert trace. The `details` object includes the top-level frame, innermost reverting frame, full reverting path, and decoded revert data for both subsidized and non-subsidized gasless execution flows.

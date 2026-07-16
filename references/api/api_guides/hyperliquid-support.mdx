@@ -92,7 +92,7 @@ curl 'https://api.relay.link/quote/v2' \
                      "signatureKind":"eip712",
                      "domain":{
                         "name":"RelayNonceMapping",
-                        "version":"1",
+                        "version":"2",
                         "chainId":1,
                         "verifyingContract":"0x0000000000000000000000000000000000000000"
                      },
@@ -104,6 +104,10 @@ curl 'https://api.relay.link/quote/v2' \
                            },
                            {
                               "name":"wallet",
+                              "type":"address"
+                           },
+                           {
+                              "name":"depositor",
                               "type":"address"
                            },
                            {
@@ -119,6 +123,7 @@ curl 'https://api.relay.link/quote/v2' \
                      "value":{
                         "chainId":"hyperliquid",
                         "wallet":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+                        "depositor":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
                         "nonce":1770329064777,
                         "id":"0x3bfdb54176b619a1f1f59f091a0708d0216a9f74b985b34d092cdcc4f9f4f9f3"
                      },
@@ -131,6 +136,7 @@ curl 'https://api.relay.link/quote/v2' \
                         "type":"nonce-mapping",
                         "walletChainId":1337,
                         "wallet":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+                        "depositor":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
                         "nonce":1770329064777,
                         "id":"0x3bfdb54176b619a1f1f59f091a0708d0216a9f74b985b34d092cdcc4f9f4f9f3",
                         "signatureChainId":1
@@ -579,7 +585,7 @@ Example authorize step response:
           "signatureKind": "eip712",
           "domain": {
             "name": "RelayNonceMapping",
-            "version": "1",
+            "version": "2",
             "chainId": 1,
             "verifyingContract": "0x0000000000000000000000000000000000000000"
           },
@@ -587,6 +593,7 @@ Example authorize step response:
             "NonceMapping": [
               { "name": "chainId", "type": "string" },
               { "name": "wallet", "type": "address" },
+              { "name": "depositor", "type": "address" },
               { "name": "id", "type": "bytes32" },
               { "name": "nonce", "type": "uint256" }
             ]
@@ -594,6 +601,7 @@ Example authorize step response:
           "value": {
             "chainId": "hyperliquid",
             "wallet": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+            "depositor": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
             "nonce": 1765463670254,
             "id": "0x7b3e352d6bb600f7d937250968dc9b9c7deaf34b3787fb2312fc7374603f1667"
           },
@@ -606,6 +614,7 @@ Example authorize step response:
             "type": "nonce-mapping",
             "walletChainId": 1337,
             "wallet": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+            "depositor": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
             "nonce": 1765463670254,
             "id": "0x7b3e352d6bb600f7d937250968dc9b9c7deaf34b3787fb2312fc7374603f1667",
             "signatureChainId": 1
@@ -776,4 +785,4 @@ Important considerations:
 - The action data must exactly match what was signed
 - A successful response returns status `200` with `data.status: "ok"`
 
-For a complete implementation example, refer to our [publicly available SDK](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/hyperliquid.ts).
+For a complete implementation example, refer to our [publicly available SDK](https://github.com/relayprotocol/relay-kit/blob/main/packages/sdk/src/utils/hyperliquid.ts).

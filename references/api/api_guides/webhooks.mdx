@@ -51,11 +51,26 @@ Relay Webhooks specifically stream transaction statuses for both cross and same-
       "address": "0x..",
       "depositAddressType": "open", // open / strict
       "depositor": "0x..", //nullable
+      "depositTxHash": "0x..", //nullable — origin-chain tx hash of the depositor's transfer into the deposit address
     }, //nullable
-    "requestId": "0x..."
+    "requestId": "0x...",
+    "referrer": "your-referrer", //nullable — echoes the referrer supplied on the originating quote request
+    "details": null,
+    "failReason": "DOUBLE_SPEND",
+    "refundFailReason": "N/A"
   }
 }
 ```
+
+The `referrer` field echoes the value supplied on the originating quote request, or `null` if no referrer was provided. Use it to attribute webhook events back to the request source (campaign, partner, or integration surface) without an extra lookup.
+
+The `details`, `failReason`, and `refundFailReason` fields mirror the same fields returned by [`GET /intents/status/v3`](/references/api/get-intents-status-v3):
+
+| **Field** | **Description** |
+| --- | --- |
+| `details` | Additional status context (e.g. decoded revert data on failures). `null` when no extra detail is available. |
+| `failReason` | Reason a fill failed. Returns `"N/A"` on non-failure statuses. On `failure`, `fallback`, and `refund` statuses, returns the recorded reason or `"UNKNOWN"` when no specific reason is available. See [`/intents/status/v3`](/references/api/get-intents-status-v3) for the enum. |
+| `refundFailReason` | Reason a refund leg failed. Defaults to `"N/A"` when no refund-leg failure is recorded. See [`/intents/status/v3`](/references/api/get-intents-status-v3) for the enum. |
 
 By default we post all status updates. If you're only interested in certain statuses you can filter on the `status` property in your endpoint.
 

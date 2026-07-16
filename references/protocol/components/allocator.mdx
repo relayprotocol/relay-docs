@@ -80,7 +80,7 @@ Different chains require different transaction formats. The Allocator uses speci
 | Builder | Chains | Signature Format |
 |---------|--------|------------------|
 | **EVM Payload Builder** | Ethereum, Base, Arbitrum, Optimism, + all EVM chains | EIP-712 typed data |
-| **Solana Payload Builder** | Solana, Eclipse, Soon | Ed25519 |
+| **Solana Payload Builder** | Solana, Eclipse | Ed25519 |
 | **Bitcoin Payload Builder** | Bitcoin | ECDSA (secp256k1) |
 
 
@@ -119,4 +119,4 @@ The Allocator cannot mint new balances or alter the Hub ledger. It can only auth
 
 ## Source Code
 
-The Allocator contract (`RelayAllocator.sol`) and the gateway contract (`RelayAllocatorSpender.sol`) are part of the [`settlement-protocol`](https://github.com/relayprotocol/settlement-protocol) repository.
+The Allocator contract (`RelayAllocator.sol`) and the gateway contract (`RelayAllocatorSpender.sol`) are part of the [`settlement-protocol`](https://github.com/relayprotocol/relay-settlement) repository.

@@ -68,7 +68,7 @@ return 0;
 .join(', ')
 : '';
 
-const swapsSupported = chain.tokenSupport === 'All' ? 'true' : 'false';
+const swapsSupported = chain.tokenSupport === 'All' ? 'true' : chain.displayName === 'Bitcoin' ? 'N/A' : 'false';
 
 const gasTopUpSupported = 
 chain.vmType === 'evm' && (
