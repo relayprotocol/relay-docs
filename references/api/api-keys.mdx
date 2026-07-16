@@ -5,7 +5,7 @@ description: "Create API keys in the Relay Dashboard to authenticate requests an
 
 Relay enforces rate limits to keep the platform reliable for every integrator. Default limits apply to unauthenticated traffic; an API key raises those limits and attributes each request to your account.
 
-You manage keys in the [Relay Dashboard](https://dashboard.relay.link) — create new keys, rotate existing ones, monitor request volume, and inspect individual requests.
+You manage keys in the [Relay Dashboard](https://dashboard.relay.link) — create new keys, rotate existing ones, and inspect individual requests.
 
 ## Creating an API key
 
@@ -19,12 +19,13 @@ API keys are self-serve. To create one:
 Use a separate key per environment (production, staging, local). Per-key request history makes it easy to spot a misbehaving deploy without revoking the wrong credential.
 </Tip>
 
-## Tracking usage and requests
+## Tracking requests
 
 The [Relay Dashboard](https://dashboard.relay.link) is also where you observe what your integration is doing in production:
 
 - **Requests** — full history of quotes and intents made with each key, with status, route, amounts, and timing.
-- **Usage** — request volume and rate-limit utilization per key over time.
+- **Advanced filtering** — narrow the table by chain, currency, amount, status, time, and more, combining conditions with AND/OR logic to isolate exactly the requests you care about.
+- **Custom views** — save any combination of filters, sort order, and columns as a reusable view for your team, each with its own name, icon, and color.
 - **Keys** — create, rename, and revoke keys for your account.
 
 When debugging a specific transaction, paste the `requestId` from your application into the dashboard's search to jump straight to the matching record.
