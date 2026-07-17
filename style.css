@@ -381,3 +381,10 @@
       padding: 0;
     }
   }
+
+  /* A heading as the first line of a Callout keeps its prose top margin on
+     the deployed build (the prose first-child reset doesn't win inside the
+     callout), adding an unwanted gap. Zero it out. */
+  .callout .prose > :first-child {
+    margin-top: 0;
+  }
