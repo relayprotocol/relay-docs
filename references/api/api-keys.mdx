@@ -1,11 +1,9 @@
 ---
 title: "API keys and Rate Limits"
-description: "Create API keys in the Relay Dashboard to authenticate requests and raise your rate limits"
+description: "Create API keys in the Relay Dashboard to authenticate requests and manage your rate limits"
 ---
 
-Relay enforces rate limits to keep the platform reliable for every integrator. Default limits apply to unauthenticated traffic; an API key raises those limits and attributes each request to your account.
-
-You manage keys in the [Relay Dashboard](https://dashboard.relay.link) — create new keys, rotate existing ones, and inspect individual requests.
+Relay enforces rate limits to keep the platform reliable for every integrator. You manage API keys in the [Relay Dashboard](https://dashboard.relay.link) — create new API keys, rotate existing ones, and inspect individual requests. Default limits listed below apply to self-minted API keys.
 
 ## Creating an API key
 
@@ -30,9 +28,9 @@ The [Relay Dashboard](https://dashboard.relay.link) is also where you observe wh
 
 When debugging a specific transaction, paste the `requestId` from your application into the dashboard's search to jump straight to the matching record.
 
-## Default Rate Limits (no API key)
+## Default Rate Limits
 
-The following limits apply to unauthenticated requests:
+The following limits apply per API key:
 
 | Endpoint               | Limit                   |
 | ---------------------- | ----------------------- |
@@ -41,9 +39,9 @@ The following limits apply to unauthenticated requests:
 | `/transactions/status` | 200 requests per minute |
 | Other endpoints        | 200 requests per minute |
 
-## API key Rate Limits
+## Elevated Rate Limits
 
-Authenticated requests get higher limits, applied per key:
+Higher limits are available on request, applied per key:
 
 | Endpoint               | Limit                   |
 | ---------------------- | ----------------------- |
@@ -52,7 +50,7 @@ Authenticated requests get higher limits, applied per key:
 | `/transactions/status` | 10 requests per second  |
 | Other endpoints        | 200 requests per minute |
 
-API keys are recommended for server-side production integrations and higher-throughput use cases.
+To request higher limits, get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link).
 
 ## How to Use an API key
 
