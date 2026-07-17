@@ -56,7 +56,7 @@ To request higher limits, get in touch through the support widget in the [Relay 
 
 ### HTTP requests
 
-Pass the key in the request headers on every call where you want elevated limits:
+Pass the key in the request headers on every request:
 
 ```
 x-api-key: YOUR_API_KEY
@@ -95,7 +95,7 @@ const quote = await getClient()?.actions.getQuote(quoteParams, undefined, {
 
 ### Proxy API
 
-If you're calling the SDK from the browser, stand up a proxy that appends the key server-side and point `baseApiUrl` at it. This keeps the key out of client bundles while preserving elevated limits.
+If you're calling the SDK from the browser, stand up a proxy that appends the key server-side and point `baseApiUrl` at it. This keeps the key out of client bundles while preserving your key's rate limits.
 
 ```typescript
 import {
