@@ -13,7 +13,7 @@ This is where the `/execute` API comes in. The API allows users to submit raw ca
 
 ## How to use it?
 
-This feature is only currently available to Enterprise Partners, learn more about the [Enterprise Partner Program](/resources/enterprise) to get started. Once you're an Enterprise Partner you should have an API key and a linked funding address. You'll then need to fund your app balance, you can learn more about that [here](/features/fee-sponsorship).
+To use gasless execution you'll need an API key with a linked funding address and a funded app balance. Create an API key in the [Relay Dashboard](https://dashboard.relay.link), then see [Fee Sponsorship](/features/fee-sponsorship) for details on linking a funding address and funding your app balance.
 
 ### Executing a gasless quote
 
@@ -444,6 +444,92 @@ In this example use case you want to execute a gasless Relay quote with the [exe
     Refer to the [quickstart guide](/references/api/quickstart#status-lifecycle) for more information on how to monitor the status of a transaction.
 </Steps>
 
+## Handling simulation errors
+
+Relay simulates `/execute` raw calls before submission. If the simulation reverts, the API returns `400` with a decoded error label, a message, the `requestId`, and trace details when Relay can decode the revert path.
+
+```typescript
+type ExecuteSimulationErrorResponse = {
+  error: string;
+  message: string;
+  requestId: string;
+  details?: SimulationErrorDetails;
+};
+
+type SimulationErrorDetails = {
+  topLevel: SimulationErrorFrame;
+  innermost: SimulationErrorFrame;
+  path: SimulationErrorFrame[];
+  revert: {
+    type: "errorString" | "panic" | "customError" | "unknownCustomError" | "empty";
+    label: string;
+    message: string;
+    selector?: string;
+    name?: string;
+    args?: Record<string, string>;
+    rawArgsHex?: string;
+  };
+};
+
+type SimulationErrorFrame = {
+  type: string;
+  address?: string;
+  contract?: string;
+  function?: string;
+  selector?: string;
+  error?: string;
+  revertReason?: string;
+  gasUsed?: string;
+};
+```
+
+Use **`error`** and **`message`** for integration handling, and include **`requestId`** when contacting Relay support. Use **`details.innermost`** and **`details.revert`** to identify the contract, function selector, and revert data that caused the simulation failure.
+
+```json Response
+{
+  "error": "INVALID_SIGNATURE",
+  "message": "Invalid signature",
+  "requestId": "0x887091202256e66960493eb09c410188307cc734c919e89696b3ae9993a7fa1d",
+  "details": {
+    "topLevel": {
+      "type": "CALL",
+      "address": "0xca11bde05977b3631167028862be2a173976ca11",
+      "contract": "Multicall3",
+      "function": "Multicall3.aggregate3Value"
+    },
+    "innermost": {
+      "type": "CALL",
+      "address": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+      "contract": "Permit2",
+      "selector": "0xda9c8680",
+      "error": "execution reverted"
+    },
+    "path": [
+      {
+        "type": "CALL",
+        "contract": "Multicall3",
+        "function": "Multicall3.aggregate3Value"
+      },
+      {
+        "type": "CALL",
+        "contract": "Permit2",
+        "selector": "0xda9c8680",
+        "error": "execution reverted"
+      }
+    ],
+    "revert": {
+      "type": "customError",
+      "label": "INVALID_SIGNATURE",
+      "message": "Invalid signature",
+      "selector": "0x8baa579f",
+      "name": "InvalidSignature"
+    }
+  }
+}
+```
+
+If Relay cannot map a custom error selector to a known contract error, the response uses a label of the form `UNKNOWN_CUSTOM_ERROR_<selector>` and includes **`rawArgsHex`** when encoded revert arguments are available.
+
 ### More Use Cases
 
 <AccordionGroup>
@@ -628,7 +714,7 @@ In this example use case you want to execute a gasless Relay quote with the [exe
   <Accordion title="Gasless upgrade to an EIP-7702 Smart Account">
     Another example of a flow where the transaction execution does not depend on `tx.origin` is the action of upgrading a regular EOA to an EIP-7702 smart account. In this flow, any entity can execute an upgrade payload and a signed EIP-7702 `authorizationList` from the EOA.
 
-    The client must pass the correct fields for the `to` (which is the EOA that is to be upgraded), data is the call data for the initialization of the EOA's EIO-7702 Smart Account and the authorizationList which contains the signed information about the Smart Account to upgrade to.
+    The client must pass the correct fields for the `to` (which is the EOA that is to be upgraded), data is the call data for the initialization of the EOA's EIP-7702 Smart Account and the authorizationList which contains the signed information about the Smart Account to upgrade to.
     <Steps>
         <Step title="Sign the EIP-7702 authorizationList">
           <CodeGroup>
@@ -666,8 +752,8 @@ In this example use case you want to execute a gasless Relay quote with the [exe
 
 
           // --- Sign EIP-7702 Authorization (viem handles everything: r, s, yParity, nonce, chainId) ---
-          const authorization = await client.signAuthorization({
-            account: client.account!,
+          const authorization = await walletClient.signAuthorization({
+            account: walletClient.account!,
             contractAddress: "0xSMART_ACCOUNT_CONTRACT" //This is the contract that will have authorization
           });
           ```

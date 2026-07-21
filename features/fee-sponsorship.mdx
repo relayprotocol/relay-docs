@@ -17,9 +17,8 @@ Fee sponsorship covers all destination chain fees (including gas topup amounts),
 
 Before you can sponsor transactions, you need:
 
-1. **An API key** — Required to authenticate your sponsorship requests and associate them with your app balance. [Request an API key](/references/api/api-keys#how-to-get-an-api-key).
-2. **Enterprise Partnership** — Reach out to the Relay team to become an Enterprise Partner. Learn more about the [Enterprise Partner Program](/resources/enterprise).
-3. **A Linked Funding Address** — A wallet address must be linked to your API key. This is the address that will fund your app balance. [Reach out](https://forms.gle/XNeELYavjwoJwPEf7) to the relay team to link your wallet address.
+1. **An API key** — Required to authenticate your sponsorship requests and associate them with your app balance. Create one in the [Relay Dashboard](https://dashboard.relay.link); see [API keys and Rate Limits](/references/api/api-keys) for details.
+2. **A Fee Sponsorship Wallet** — A wallet linked to your API key that funds your app balance. Link one from the [App Balance page](https://dashboard.relay.link/balance) in the Relay Dashboard by signing a message to prove ownership — no gas required.
 3. **Sufficient App Balance** — Your app balance must have enough funds to cover the fees you wish to sponsor.
 
 Once you're set up, you can begin depositing funds and sponsoring transactions.
@@ -42,7 +41,7 @@ Once your app balance is funded, you can sponsor transactions by including speci
 
 ### Sponsorship Parameters
 
-Add these parameters to your [Get Quote](/references/api/get-quote) API request:
+Add these parameters to your [Get Quote](/references/api/get-quote-v2) API request:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -51,6 +50,10 @@ Add these parameters to your [Get Quote](/references/api/get-quote) API request:
 | `subsidizeRent` | `boolean` | _(Optional)_ Set to `true` to sponsor Solana ATA rent fees. Requires `subsidizeFees` to also be enabled. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 | `depositFeePayer` | `string` | _(Optional)_ A Solana address to pay deposit transaction fees for Solana origin transactions. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 | `sponsoredFeeComponents` | `string[]` | _(Optional)_ You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees.
+
+<Warning>
+[Deposit addresses](/features/deposit-addresses) do not support `sponsoredFeeComponents`. `maxSubsidizationAmount` is supported by deposit addresses but if the amount exceeds the maximum the user pays all fees and nothing is subsidized.
+</Warning>
 
 ### Example Request
 
@@ -90,6 +93,10 @@ This protects you from unexpectedly high costs during network congestion or vola
 <Info>
 With partial fee sponsorship, users always receive some benefit from your sponsorship even when fees spike. For example, if you set a $5.00 cap and fees total $7.00, you pay $5.00 and the user pays $2.00.
 </Info>
+
+<Warning>
+Partial fee sponsorship is not supported for deposit addresses, if the fees exceed the `maxSubsidizationAmount` the user will cover the fees completely and nothing will be sponsored.
+</Warning>
 
 ---
 
@@ -249,6 +256,6 @@ For more details on the fee structure, see [Relay Fees](/references/api/api_core
 
 - [App Fees](/features/app-fees) — Learn how to collect fees from your users
 - [Get App Fee Balances](/references/api/get-app-fee-balances) — API reference for checking balances
-- [Get Quote](/references/api/get-quote) — API reference for quote requests
+- [Get Quote](/references/api/get-quote-v2) — API reference for quote requests
 - [Relay Fees](/references/api/api_core_concepts/fees) — Understanding Relay's fee structure
 - [Solana Support](/references/api/api_guides/solana) — Guide to depositing and withdrawing on Solana

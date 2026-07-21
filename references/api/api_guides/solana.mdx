@@ -219,9 +219,9 @@ curl -X POST "https://api.relay.link/quote/v2" \
 
 ## Transaction Size Optimization
 
-Solana transactions have a hard **1232-byte** size limit. If you append custom
-instructions to the transaction (e.g., for tracking, fee collection, or other
-logic), the combined transaction can exceed this limit and fail.
+Solana transactions have a hard **1232-byte** size limit. Wallets and SDKs prepend compute-budget instructions to the transaction at send time, which consume up to 60 bytes. Relay reserves that headroom at quote time, so the effective quote-time limit is **1172 bytes**. If additional custom instructions (e.g., for tracking, fee collection, or other logic) push the transaction past 1232 bytes at send time, it will fail.
+
+When a Solana-origin quote is routed through a third-party aggregator and the generated deposit transaction would exceed 1172 bytes, `POST /quote/v2` returns a `400` response instead of a successful quote with calldata that cannot be executed. Use the mitigations below to keep transactions under the limit.
 
 Pass **`maxRouteLength`** in your quote request to limit the number of hops in
 the Solana swap routing. Fewer hops means a smaller transaction.

@@ -98,6 +98,13 @@ Bitcoin uses the standard Relay API flow. Review the
 [execution steps](/references/api/api_core_concepts/step-execution)
 documentation, then use the [Get Quote](/references/api/get-quote-v2) endpoint.
 
+<Info>
+	For Bitcoin origin deposits, the request transitions to `pending` as soon
+	as the deposit appears in the Bitcoin mempool — earlier than the
+	equivalent transition on EVM origins. Block-confirmation policy still
+	governs the move to `submitted`/`success`. 
+</Info>
+
 ### Example: Withdraw from Bitcoin to Base
 
 <CodeGroup>
@@ -386,15 +393,17 @@ deposit addresses, there are additional considerations:
 
 ### Block Confirmations
 
-When using deposit addresses, Relay waits for **1 block confirmation** before
-processing. Bitcoin's block time averages ~10 minutes but varies significantly.
-blocks can arrive within minutes of each other or take 30-50 minutes.
+When using deposit addresses, Relay waits for **1 block confirmation** before processing in the typical case. For high-value deposits — those whose origin amount exceeds a per-currency threshold — Relay waits for **2 block confirmations** instead, to reduce the risk of a reorg invalidating the fill. Bitcoin's block time averages ~10 minutes but varies significantly; blocks can arrive within minutes of each other or take 30-50 minutes.
+
+The `timeEstimate` field on the quote response reflects whichever rule applies — expect roughly one block of wait time for standard deposits and roughly two for high-value ones.
 
 <Warning>
-When polling for deposit address transactions, allow for at least 2-3
-	blocks worth of time before considering a transaction stalled. You can
-	monitor block times at [mempool.space](https://mempool.space).
+When polling for deposit address transactions, allow for at least 2-3 blocks worth of time (3-4 for high-value deposits) before considering a transaction stalled. You can monitor block times at [mempool.space](https://mempool.space).
 </Warning>
+
+### Manually Reindexing a Bitcoin Deposit
+
+If a Bitcoin deposit is not picked up by automatic indexing, you can trigger a manual reindex by calling [`POST /transactions/index`](/references/api/transactions-index) with `chainId: 8253038` and the Bitcoin `txHash`. Relay verifies the transaction is included in a block before reindexing — calls for transactions that have not yet been confirmed in a block return `404`. See the [Transaction Indexing guide](/references/api/api_guides/transaction-indexing) for the full request shape.
 
 ### Quote Requirements for Deposit Addresses
 

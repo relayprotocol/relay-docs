@@ -32,7 +32,7 @@ Note: This is not required for same-chain swaps.
 
 [Documentation](/references/api/transactions-single)
 
-[Implementation Reference](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/transaction.ts#L122)
+[Implementation Reference](https://github.com/relayprotocol/relay-kit/blob/main/packages/sdk/src/utils/transaction.ts#L122)
 
 ### Request Example
 
@@ -62,7 +62,7 @@ Use this API for transactions that contain internal deposits that need to be det
 
 [Documentation](/references/api/transactions-index)
 
-[Implementation Reference](https://github.com/reservoirprotocol/relay-kit/blob/main/packages/sdk/src/utils/transaction.ts#L113)
+[Implementation Reference](https://github.com/relayprotocol/relay-kit/blob/main/packages/sdk/src/utils/transaction.ts#L113)
 
 ### Request Example
 
@@ -78,6 +78,11 @@ curl -X POST 'https://api.relay.link/transactions/index' \
 ### Integration
 
 Call this API immediately after submitting a transaction, before waiting for confirmation.
+
+<Tip>
+	If you receive a `404` for a freshly broadcast Bitcoin transaction, wait
+	for at least one block confirmation and retry.
+</Tip>
 
 ## Decision Matrix
 

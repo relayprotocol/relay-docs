@@ -23,8 +23,9 @@ This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headle
 | `useDepositAddress` | boolean | Set to `true` to receive a deposit address instead of transaction calldata. |
 | `user` | address | The recipient wallet on the destination chain. Can be any valid address, including the zero address. |
 | `recipient` | address | The address that receives funds on the destination chain. |
-| `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Omitting this on open addresses disables automatic refund. See [Refund Behavior](#refund-behavior). |
-| `tradeType` | string | Must be `EXACT_INPUT`. Deposit addresses only support exact input trades — output varies based on market conditions at fill time. |
+| `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Set to the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to opt into automatic refunds to the original depositor — supported on EVM chains, Bitcoin, and Solana. Omitting this on open addresses disables automatic refund. See [Refund Behavior](#refund-behavior). |
+| `recoveryAddress` | address | Optional origin-chain EOA controlled by the integrator. Used as a recovery address when Relay cannot safely auto-refund to the original depositor. This is additive to `refundTo`; existing `refundTo` behavior is preserved unless `recoveryAddress` is supplied. See [`recoveryAddress`](#recoveryaddress). |
+| `tradeType` | string | `EXACT_INPUT` or `EXPECTED_OUTPUT` for open deposit addresses. `EXACT_OUTPUT` is supported only with a strict deposit address (`strict: true`); an open-ended `EXACT_OUTPUT` request is rejected. |
 | `amount` | string | The quoted amount in the origin token's smallest unit. Open-ended addresses support variable deposit amounts. Strict addresses should be treated as exact-payment instructions. |
 | `strict` | boolean | Set to `true` for a strict deposit address tied to a specific order. Omit or set to `false` for an open deposit address. |
 
@@ -40,7 +41,7 @@ Relay supports two deposit address modes that differ in how flexible they are wh
 
 ### Open Deposit Addresses
 
-Open-ended deposit addresses are the flexible mode for supported routes. They can handle variable deposit amounts, and on some supported chain families they can also adapt to a different supported input token or a deposit on a different chain.
+Open-ended deposit addresses are the flexible mode for supported routes. They can handle variable deposit amounts, and on some supported chain families they can also adapt to a different supported input token or a deposit on a different chain within the same VM. Adapting to a different token or a wrong chain is not always automatic — recovery may require [manual reindexing](#reindexing-stuck-deposits) before the deposit is recognized.
 
 - `refundTo` is recommended. Omitting `refundTo` disables automatic refund — there is no internal fallback.
 - Best for: general-purpose integrations where you want tolerance for user variability.
@@ -58,11 +59,11 @@ Strict deposit addresses are bound to the original order and should be treated a
 | Behavior | Open | Strict |
 |---|---|---|
 | Accepted currencies | Flexible — may adapt to a different supported token depending on chain family | Only the currency specified in the original quote |
-| Wrong token (solver currency) | Requote and fill on some chain families (not universal) | Not supported — refund or manual recovery |
-| Wrong token (non-solver) | Not supported in the normal fill flow; may require manual recovery | Not supported in the normal fill flow |
-| Wrong chain (same VM) | Auto-reroute on EVM; other chain families may refund | Not supported |
-| Wrong chain (different VM) | Not possible — address formats differ | Not possible — address formats differ |
-| Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Exact payment expected |
+| Wrong token (solver currency) | Requote and fill on some chain families (not universal); [relay.link/withdraw](https://relay.link/withdraw) is the fallback if the auto-flow doesn't complete | Recoverable via [relay.link/withdraw](https://relay.link/withdraw) |
+| Wrong token (non-solver) | Not supported and not currently recoverable | Not supported and not currently recoverable |
+| Wrong chain (same VM) | Supported, but may require [manual reindexing](#reindexing-stuck-deposits) before the deposit is recognized; some chain families refund instead | Not supported — no automatic wrong-chain recovery |
+| Wrong chain (different VM) | Not supported | Not supported |
+| Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments fill the quoted amount and refund the excess |
 | `refundTo` | Recommended (omitting disables automatic refund) | Required |
 | Address reuse | Yes, same route | No — bound to original order |
 
@@ -880,7 +881,11 @@ On some chain families, if the user sends a different token that is a [solver cu
 
 #### Different Chain (Same VM)
 
-On EVM chains, if the user deposits on the wrong chain but the address exists on that chain, Relay can auto-reroute the deposit. Other chain families may treat chain mismatch as an error and refund instead.
+Open and custodial deposit addresses exist at the same address across chains within a VM family (e.g. all EVM chains), so a deposit can land on a chain other than the one quoted. This is **supported but not always automatic**: Relay's background monitor watches the chain the address was registered on, so a wrong-chain deposit may not be recognized until it is reindexed.
+
+If a wrong-chain deposit isn't picked up within a few minutes, trigger detection manually with the [Deposit Address Reindex](#reindexing-stuck-deposits) endpoint, setting `targetChainId` to the chain the funds actually landed on. Once detected, Relay sweeps the funds and proceeds with a fresh quote and fill.
+
+Behavior varies by chain family — some families refund a wrong-chain deposit instead of re-routing it. Strict addresses have no wrong-chain recovery (see [Strict Addresses](#strict-addresses)).
 
 #### Different Chain (Different VM)
 
@@ -891,7 +896,8 @@ This is not possible — deposit address formats differ across VM types (e.g., E
 Strict addresses are bound to the original order. The handling is narrower:
 
 - **Exact amount** — The fill proceeds using the original order.
-- **Amount mismatch** — The deposit may fail and be refunded to `refundTo`. Send the exact quoted amount.
+- **Underpayment** — The deposit fails and is refunded to `refundTo`. The fill does not proceed.
+- **Overpayment** — The fill proceeds for the originally quoted amount and the excess is returned to `refundTo` as a separate refund leg. The fill itself is never scaled up.
 - **Wrong token or wrong chain** — Not supported. Strict addresses do not have automatic wrong-token or wrong-chain recovery paths.
 
 <Warning>
@@ -907,16 +913,15 @@ What happens when a deposit can't be processed depends on the token type and the
 There are two distinct refund scenarios:
 
 1. **Correct currency, fill failed** (e.g., slippage, network issues) — If `refundTo` is set, the deposit is automatically refunded to that address, minus the cost of gas. No additional fees are taken.
-2. **Wrong currency (non-solver token)** — Not supported in the normal fill flow. Automatic recovery is not available; manual handling may be required.
+2. **Wrong currency (non-solver token)** — Not supported and not currently recoverable.
 
-### Refund Types
+<Info>
+If a wrong solver currency was sent and the deposit didn't auto-resolve, users can recover it at [relay.link/withdraw](https://relay.link/withdraw).
+</Info>
 
-Refunds can be delivered on either chain:
-
-- **Origin refund** — Returns the deposited token on the origin chain.
-- **Destination refund** — Pays the solver output token on the destination chain.
-
-If `refundType` is set explicitly, it determines which path is used. Otherwise, providing `refundTo` implies an origin refund.
+<Info>
+A same-VM wrong-chain deposit to an open or custodial address is recoverable but may not re-route or refund on its own. Trigger [reindexing](#reindexing-stuck-deposits) with `targetChainId` set to the chain the funds landed on. Strict addresses have no automatic wrong-chain recovery.
+</Info>
 
 ### `refundTo` Configuration
 
@@ -924,17 +929,45 @@ If `refundType` is set explicitly, it determines which path is used. Otherwise, 
 |---|---|
 | User's address | Refund directly to the user |
 | App-controlled address | Refund to integrator's address — your support team handles returning funds to the user |
+| Origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) | Auto-refund to the original depositor — the address that sent funds to the deposit address. Supported on EVM chains, Bitcoin, and Solana origins; rejected on other VMs. Relay makes a best effort to detect known CEX sender addresses — if the depositor is detected as a CEX address, Relay aborts auto-refund and requires manual refund / recovery instead. |
 | Not set (open) | Automatic refund is disabled — no internal fallback |
 | Not set (strict) | Not allowed — `refundTo` is required for strict deposit addresses |
 
 <Note>
-If users may send from a centralized exchange, **do not use "refund to sender"** — the sender address will be the exchange's hot wallet, not the user's. Use an app-controlled address instead so your support team can handle the last mile.
+If users may send from a centralized exchange, **do not set `refundTo` as the user's address** — neither an explicit user address you don't control nor the native-currency-address auto-refund opt-in — the sender address will be the exchange's hot wallet, not the user's. Use an app-controlled address instead so your support team can handle the last mile. If you still want depositor auto-detection for self-custodied senders, pair the auto-refund opt-in with a [`recoveryAddress`](#recoveryaddress) as the fallback.
 </Note>
+
+<Info>
+When auto-refund to the original depositor is triggered, the request's `outTxs` will contain **two** refund transactions. The first transaction is the solver-to-depositor transfer that actually returns funds to the depositor — this is the one to track from your integration. The second is an internal protocol-settlement transaction that does not move user funds and can be ignored by integrators.
+</Info>
+
+### `recoveryAddress`
+
+`recoveryAddress` is for cases where Relay cannot auto-refund. It should be an integrator-controlled EOA on the origin chain.
+
+Use `recoveryAddress` when an integrator wants to use Relay's depositor detection, but also needs a fallback recovery path if the detected depositor cannot safely receive an automatic refund. This is most relevant for deposits from custodial sources like centralized exchanges, unsupported currency deposits, or blocked depositor addresses.
+
+When `recoveryAddress` is supplied:
+
+- Relay still attempts to auto-refund where possible.
+- If Relay cannot auto-refund, the integrator can recover funds using `recoveryAddress`.
+- Existing `refundTo` behavior remains unchanged for flows that do not supply `recoveryAddress`.
+
+<Warning>
+`recoveryAddress` never receives refunds — it is only used to withdraw funds from the depository contract in the case that we cannot fill or refund.
+</Warning>
+
+Constraints:
+
+- Requires `useDepositAddress: true` — the request is rejected otherwise.
+- Must be a valid address on the origin chain and cannot be the origin chain's native-currency address.
+- Strict deposit addresses still require `refundTo` even when `recoveryAddress` is set.
 
 ### Recommended Setup
 
 - **Open deposit addresses**: Set `refundTo` to the user's address for automatic refunds.
 - **Strict deposit addresses**: Always set `refundTo`. If the sender is unknown (e.g., CEX withdrawal), use an app-controlled address so your support team can manage refunds.
+- **Auto-refund to depositor**: When users deposit from wallets they control, you can pass `refundTo` as the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to refund to the original depositor automatically. The first of the two resulting `outTxs` is the transfer to the depositor — track that one for refund delivery. Avoid this when deposits may originate from a centralized exchange, or pair it with a [`recoveryAddress`](#recoveryaddress) so funds Relay cannot safely auto-refund remain recoverable.
 
 ## Tracking Transactions
 
@@ -956,7 +989,9 @@ curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>
       "recipient": "0xf3128499092b90f1a520f63c09946dca3dadf98f",
       "depositAddress": {
         "address": "0xb353e49aa47514fb579d6ba6594c768379a96515",
-        "depositAddressType": "open"
+        "depositAddressType": "open",
+        "depositor": "0xb353e49aa47514fb579d6ba6594c768379a96515",
+        "depositTxHash": "0x41ce037184d661c35f102c961c88f587d137c611bf928389a562ff139ad51d4b",
       },
       "data": {
         "slippageTolerance": "50",
@@ -1222,6 +1257,30 @@ When a quote is regenerated (different amount, token, or chain), a new `requestI
 curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&includeChildRequests=true"
 ```
 
+When a regeneration happens, the original request stays under its original `requestId` and public status while the actual sweep and fill move under the regenerated request. To follow the handoff directly, read `data.supersededByRequestId` on the original request — it returns the regenerated `requestId` that now owns the fill lifecycle.
+
+```bash
+curl -X GET "https://api.relay.link/requests/v2?id=<ORIGINAL_REQUEST_ID>"
+```
+
+```json
+{
+  "requests": [
+    {
+      "id": "<ORIGINAL_REQUEST_ID>",
+      "status": "pending",
+      "data": {
+        "supersededByRequestId": "<REGENERATED_REQUEST_ID>"
+      }
+    }
+  ]
+}
+```
+
+<Tip>
+Use `supersededByRequestId` when you have the original `requestId` and want a direct pointer to the request that owns the fill. Use `includeChildRequests=true` when you want every related request in one response.
+</Tip>
+
 ### Request-Level Status
 
 Once you have a `requestId`, you can use [Get Status](/references/api/get-intents-status-v3) for detailed status polling:
@@ -1246,7 +1305,7 @@ curl -X GET "https://api.relay.link/intents/status/v3?requestId=<REQUEST_ID>"
 
 ### Reindexing Stuck Deposits
 
-Relay runs a background monitor that checks for deposits of the originally quoted token. If a user sent a different supported (solver) token, the background monitor may not detect it automatically. Use the [Deposit Address Reindex](/references/api/deposit-address-reindex) endpoint to trigger on-demand re-detection. This checks all solver currency balances on the specified chain and triggers sweeps for any detected deposits.
+Relay's background monitor only checks the originally quoted input token. If a user sent a different supported (solver) token, the monitor may not detect it automatically. Use the [Deposit Address Reindex](/references/api/deposit-address-reindex) endpoint to trigger on-demand re-detection — it checks every solver-depositable currency on the chain and queues a sweep for any non-zero balances.
 
 ```bash
 curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
@@ -1257,11 +1316,20 @@ curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
   }'
 ```
 
-You can also pass `targetChainId` to reindex a deposit that landed on a different chain than originally quoted. This is useful for operational recovery when funds were sent to the right address but on the wrong chain.
+**`chainId` is the chain the deposit address was originally registered on.** Pass `targetChainId` to run the reindex on a different chain — useful when funds were sent to the right address but on the wrong chain (e.g. the address was registered for Arbitrum but funds landed on Ethereum). This is the chain being reindexed, not the destination chain of the original quote.
 
-<Info>
-The background monitor only checks the originally quoted input token. If a different supported token was sent, the monitor won't detect it. Reindex checks all solver-depositable currencies and is the fallback path for these cases.
-</Info>
+Pass `currency` to scope the reindex to a single currency address instead of iterating every depositable currency. Any currency registered with Relay on the target chain is accepted — including currencies outside the standard solver-depositable list (e.g. a HyperCore-registered token when the deposit address was created for HyperEVM).
+
+```bash
+curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "chainId": 42161,
+    "depositAddress": "0x1ba74e01d46372008260ec971f77eb6032b938a4",
+    "targetChainId": 1,
+    "currency": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+  }'
+```
 
 <Note>
 The deposit transaction hash cannot be used to look up the status of a deposit address bridge. Always use the deposit address itself or the `requestId` to track status.
@@ -1296,7 +1364,7 @@ Non-solver tokens and NFTs sent to deposit addresses are **not recoverable** thr
 
 ### Chain-Specific Notes
 
-- **Bitcoin** — Requires 1 block confirmation before Relay processes the deposit. Deposits are detected via mempool monitoring but only acted on after confirmation.
+- **Bitcoin** — Standard deposits are processed after 1 block confirmation. High-value deposits (above the per-currency threshold) wait for 2 block confirmations to reduce reorg risk. Deposits are detected via mempool monitoring but only acted on after the applicable confirmation count.
 - **Solana** — Supports SPL tokens through the protocol deposit method. Native SOL and SPL tokens like USDC are solver currencies on Solana.
 - **Hyperliquid** — Uses bridged USDC (USDC.e) with different decimal precision than native USDC on other chains. Be aware of decimal mismatches when computing amounts.
 

@@ -24,7 +24,8 @@
               "solutions/wallets-and-wallet-providers",
               "solutions/multichain-apps",
               "solutions/chains",
-              "solutions/commerce-and-payments"
+              "solutions/commerce-and-payments",
+              "solutions/payment-service-providers"
             ]
           },
           {
@@ -45,13 +46,15 @@
               "features/gas-top-up",
               "features/gasless-execution",
               "features/fast-fill",
-              "features/gasless-swaps"
+              "features/gasless-swaps",
+              "features/price-stabilization"
             ]
           },
           {
             "group": "Safety & Security",
             "pages": [
               "security/compliance",
+              "security/unsupported-exchanges",
               "security/bounties",
               "security/mev-protection",
               "security/community-support",
@@ -62,7 +65,6 @@
             "group": "Resources",
             "pages": [
               "resources/supported-chains",
-              "resources/enterprise",
               "resources/developing-with-ai",
               "resources/support",
               "resources/brand-assets"
@@ -90,6 +92,7 @@
                   "references/api/api_core_concepts/trade-types",
                   "references/api/api_core_concepts/surplus-and-shortage",
                   "references/api/api_core_concepts/handling-errors",
+                  "references/api/api_core_concepts/execution-errors",
                   "references/api/api_core_concepts/contract-compatibility"
                 ]
               },
@@ -99,6 +102,7 @@
                   "references/api/api_guides/bridging-integration-guide",
                   "references/api/api_guides/calling-integration-guide",
                   "references/api/api_guides/transaction-indexing",
+                  "references/api/api_guides/builder-codes",
                   "references/api/api_guides/smart-accounts",
                   {
                     "group": "Chain Support Guides",
@@ -397,7 +401,11 @@
     },
     {
       "source": "/resources/partnerships",
-      "destination": "/resources/enterprise"
+      "destination": "/references/api/api-keys"
+    },
+    {
+      "source": "/resources/enterprise",
+      "destination": "/references/api/api-keys"
     },
     {
       "source": "/references/sdk/getting-started",
