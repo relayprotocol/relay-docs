@@ -3,11 +3,21 @@ title: "Migrating to Requests v3"
 description: "What changed in GET /requests/v3 and how to upgrade from v2."
 ---
 
-`GET /requests/v3` is the latest version of the Requests API. It gives you a richer query surface with advanced filtering across status, chains, amounts, addresses, time, and more, plus a cleaner and more consistent response. This guide covers every change and how to upgrade. v2 stays available, so you can migrate at your own pace.
+`GET /requests/v3` is the latest version of the Requests API. It gives you a richer query surface with advanced filtering across status, chains, amounts, addresses, time, and more, plus a cleaner and more consistent response. This guide covers every change and how to upgrade. `GET /requests/v2` remains available during a deprecation window (see the [sunset timeline](#sunset-timeline) below) — migrate before it's retired.
 
 <Warning>
   `x-api-key` is now required. Every v3 request authenticates against an active API key. See [API Keys](/references/api/api-keys) for details.
 </Warning>
+
+## Sunset timeline
+
+`GET /requests/v2` is **deprecated as of July 22, 2026**. It keeps working, but migrate to `GET /requests/v3` before it's fully retired on **November 22, 2026**.
+
+| Date | What changes |
+| --- | --- |
+| **Jul 22, 2026** | v2 is deprecated; v3 is the recommended version. v2 keeps working. |
+| **Aug 22, 2026 onward** | v2's rate limit is progressively reduced each month; requests over the limit receive `429`. |
+| **Nov 22, 2026** | v2 is fully retired — all traffic must be on v3. |
 
 ## Response shape
 
@@ -158,6 +168,7 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
           }
         },
         "platformFee": null,
+        "quoteOraclePrice": null,
         "referrer": "my-app|user-123",
         "refundCurrencyData": null,
         "externalMetadata": { "moonpayId": null }
@@ -185,7 +196,7 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
       "sender": "0xE7a205...",                    // [!code ++] promoted from data.metadata.sender
       "refundTo": null,                           // [!code ++]
       "requestType": "Bridge",                    // [!code ++]
-      "depositAddress": null,                     // now an object: { address, type, depositor, depositTxHash }
+      "depositAddress": null,                     // now an object: { address, type, depositor, depositTxHash, recoveryAddress }
       "referrer": "my-app|user-123",              // [!code --] moved to data.referrer (authenticated)
       "features": ["app_fees"],                   // [!code ++]
       "data": {
@@ -238,6 +249,10 @@ The same request shown in full for v2 and v3, plus a focused diff of what moved.
     ```
   </Tab>
 </Tabs>
+
+<Info>
+  The full OpenAPI schema lives at [api.relay.link/documentation/json](https://api.relay.link/documentation/json).
+</Info>
 
 <Warning>
   **`data.fees` has changed meaning.** The key `fees` is reused for a different shape. In v2, `data.fees` was raw wei (`gas`/`fixed`/`price`/`gateway`). In v3 that object is removed, and `data.fees` now holds the per-component USD breakdown that v2 called `expandedPriceImpact`. Code reading `data.fees.gas` will break — read `data.fees.quoted` / `data.fees.actual` instead.
@@ -360,7 +375,7 @@ Every individual change, grouped by request side and response side.
     - `data.route.quoted` — the route as quoted at request time.
     - `data.route.actual` — what actually executed. Carries `rate`, and `actual` falls back to `quoted` when there's no execution data yet (e.g. same-chain swaps).
 
-    Each phase has `origin` and `destination` sides, and each side has `inputCurrency` / `outputCurrency` (each a full amount object) plus `router`. `includedSwapSources` / `includedOriginSwapSources` / `includedDestinationSwapSources` are hoisted to the top of `data.route`.
+    Each phase has `origin` and `destination` sides, and each side has `inputCurrency` / `outputCurrency` (each a full amount object) plus `router` (on the `actual` route, `router` reflects the provider that actually filled the leg, not always `"relay"`). `includedSwapSources` / `includedOriginSwapSources` / `includedDestinationSwapSources` are hoisted to the top of `data.route`.
 
     There is **no `data.swap`** and **no `data.quotedOutputAmount`** — read amounts from the route instead:
 
@@ -405,7 +420,8 @@ Every individual change, grouped by request side and response side.
     - **`refundTo`** (refund target for deposit-address transactions) is **added** at the root.
     - **`requestType`** (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
     - **`features`** (e.g. `gasless_execution`, `fast_fill`, `gas_top_up`, `app_fees`, `deposit_address`) is **added** at the root.
-    - **`depositAddress`** is now a structured object: `{ address, type: "strict" | "open", depositor, depositTxHash }`.
+    - **`depositAddress`** is now a structured object: `{ address, type: "strict" | "open", depositor, depositTxHash, recoveryAddress }`. `recoveryAddress` is the origin-chain address that can recover deposit-address funds if the recipient wallet is later blocked (`null` when not set).
+    - **`data.quoteOraclePrice`** is **added** — the oracle price snapshot at quote time (`{ rate, observedAt, inputCurrency, outputCurrency }`), returned only for fixed-BPS oracle integrators; `null` otherwise.
     - `data.price` is **removed** — read the quoted output amount from `data.route.actual.destination.inputCurrency` (distinct from the actual received amount in `data.route.actual.destination.outputCurrency`).
     - `failReason` / `refundFailReason` use **`null`** instead of the string `"N/A"`.
   </Accordion>
@@ -450,6 +466,8 @@ Every individual change, grouped by request side and response side.
     | `sender` (root) | promoted from `data.metadata.sender` |
     | `features` (root) | request feature flags (`gasless_execution`, `fast_fill`, `app_fees`, …) |
     | `refundTo` | refund target for deposit-address flows |
+    | `depositAddress.recoveryAddress` | origin-chain address that can recover deposit-address funds if the recipient is later blocked |
+    | `data.quoteOraclePrice` | oracle price snapshot at quote time (`rate`, `observedAt`, `inputCurrency`, `outputCurrency`); fixed-BPS oracle integrators only |
     | `data.route.actual` | executed route (with `rate`); falls back to `quoted` |
     | `data.externalMetadata` | partner correlation IDs (e.g. `moonpayId`) |
     | `feeSponsorship.actual.sponsorPayment` | what the sponsor actually paid |
