@@ -3,6 +3,12 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-07-22 — `recipient` validated at quote time
+
+**Added** — `POST /quote` and `POST /quote/v2`: an explicitly provided `recipient` is now validated before quoting. Recipients that fail address validation for the destination chain return `400` with `errorCode: "INVALID_ADDRESS"`. Recipients that resolve to a supported token contract (which cannot receive tokens — e.g. passing the destination-chain USDC contract as `recipient`) return `400` with the new `errorCode: "INVALID_RECIPIENT"`. Requests that omit `recipient` are unaffected — the implicit `recipient = user` path is not revalidated. Previously these requests surfaced as `DESTINATION_TX_FAILED` after simulation. See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
+**Behavior change** — `POST /quote` and `POST /quote/v2`: when a blocklisted wallet recipient reaches destination simulation and the token contract rejects the transfer, the response `errorCode` is still `DESTINATION_TX_FAILED` but the `message` is now `Recipient cannot receive this token (blocked by the token contract). Try a different recipient address.` instead of the generic `Destination transaction failed`. Error classification is unchanged.
+
 ## 2026-07-22 — `GET /requests/v3` is live; `GET /requests/v2` deprecated & scheduled for sunset
 
 **Added** — `GET /requests/v3`: the recommended Requests API. It requires `x-api-key`, adds a broad filter/search/sort surface, and returns a cleaner, consolidated response. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3).
