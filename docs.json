@@ -120,6 +120,12 @@
                 ]
               },
               {
+                "group": "Migration Guides",
+                "pages": [
+                  "references/api/api_guides/migrating-to-requests-v3"
+                ]
+              },
+              {
                 "group": "Chains, Tokens, Contracts",
                 "pages": [
                   "references/api/api_resources/supported-chains",
@@ -155,6 +161,7 @@
               {
                 "group": "Deprecated",
                 "pages": [
+                  "references/api/get-requests-v2",
                   "references/api/get-price",
                   "references/api/get-config",
                   "references/api/get-intents-status",
