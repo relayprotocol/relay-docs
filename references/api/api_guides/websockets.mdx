@@ -31,15 +31,13 @@ Refer to the guide below on how to integrate the websocket into your application
 
 ## **Authentication**
 
-The Websocket Service is available for anyone with strict rate limits. For customers with an API key it can be used for authentication for higher rate limits, the service is available at the following URL `wss://ws.relay.link`
+The Websocket Service uses an API key for authentication and is available at the following URL `wss://ws.relay.link`
 
 To connect using an API key, provide your API key as a query param in the connection url:
 
 ```
 const wss = new ws(`wss://ws.relay.link?apiKey=${YOUR_API_KEY}`);
 ```
-
-<Tip>Authentication is generally not required in client-side applications.</Tip>
 
 <Warning>
 **The websocket server needs to restart to deploy updates**
