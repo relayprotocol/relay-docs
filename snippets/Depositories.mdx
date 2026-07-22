@@ -1,12 +1,3 @@
-export const VM_TYPE_LABELS = {
-  evm: "ethereum-vm",
-  bvm: "bitcoin-vm",
-  svm: "solana-vm",
-  tvm: "tron-vm",
-  hypevm: "hyperliquid-vm",
-  lvm: "lighter-vm"
-}
-
 export const Depositories = ({ env, id }) => {
   const key = `depositories-${env}`
 
@@ -26,13 +17,21 @@ export const Depositories = ({ env, id }) => {
       if (!rootElement) {
         return
       }
+       const VM_TYPE_LABELS = {
+        evm: "ethereum-vm",
+        bvm: "bitcoin-vm",
+        svm: "solana-vm",
+        tvm: "tron-vm",
+        hypevm: "hyperliquid-vm",
+        lvm: "lighter-vm"
+      }
       const rows = data
         .slice()
         .filter((chain) => chain.protocol && chain.protocol.v2 && chain.protocol.v2.depository)
         .sort((a, b) => a.id - b.id)
         .map((chain) => {
           return `<tr key=${chain.id}>
-            <td>${chain.name}</td>
+            <td>${chain.displayName}</td>
             <td>${chain.protocol.v2.depository}</td>
             <td>${VM_TYPE_LABELS[chain.vmType] || chain.vmType}</td>
             <td>${chain.id}</td>
@@ -46,6 +45,7 @@ export const Depositories = ({ env, id }) => {
     }
 
     const fetchChains = async () => {
+      debugger;
       try {
         window[key].fetching = true
         window[key].data = null
