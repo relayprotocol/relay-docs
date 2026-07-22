@@ -421,6 +421,7 @@ Every individual change, grouped by request side and response side.
     - **`requestType`** (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
     - **`features`** (e.g. `gasless_execution`, `fast_fill`, `gas_top_up`, `app_fees`, `deposit_address`) is **added** at the root.
     - **`depositAddress`** is now a structured object: `{ address, type: "strict" | "open", depositor, depositTxHash, recoveryAddress }`. `recoveryAddress` is the origin-chain address that can recover deposit-address funds if the recipient wallet is later blocked (`null` when not set).
+    - **`supersededByRequestId`** is **promoted to the root**; it previously lived at `data.supersededByRequestId` in v2. When a deposit-address request is regenerated (currently Bitcoin/BVM only), the original request's `supersededByRequestId` points to the regenerated `requestId` that owns the sweep and fill. `null` otherwise.
     - **`data.quoteOraclePrice`** is **added** — the oracle price snapshot at quote time (`{ rate, observedAt, inputCurrency, outputCurrency }`), returned only for fixed-BPS oracle integrators; `null` otherwise.
     - `data.price` is **removed** — read the quoted output amount from `data.route.actual.destination.inputCurrency` (distinct from the actual received amount in `data.route.actual.destination.outputCurrency`).
     - `failReason` / `refundFailReason` use **`null`** instead of the string `"N/A"`.
@@ -443,6 +444,7 @@ Every individual change, grouped by request side and response side.
     | `feeSponsorship…components.relay` | `feeSponsorship…components.platform` |
     | `moonpayId` (root) | `data.externalMetadata.moonpayId` |
     | `depositAddress` (nullable) | `depositAddress` object `{address,type,depositor,depositTxHash}` |
+    | `data.supersededByRequestId` | `supersededByRequestId` (root) |
   </Accordion>
   <Accordion title="Removed" icon="trash">
     | Removed in v3 | Replacement |

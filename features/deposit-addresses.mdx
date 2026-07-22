@@ -1257,10 +1257,10 @@ When a quote is regenerated (different amount, token, or chain), a new `requestI
 curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&includeChildRequests=true"
 ```
 
-When a regeneration happens, the original request stays under its original `requestId` and public status while the actual sweep and fill move under the regenerated request. To follow the handoff directly, read `data.supersededByRequestId` on the original request — it returns the regenerated `requestId` that now owns the fill lifecycle.
+When a regeneration happens, the original request stays under its original `requestId` and public status while the actual sweep and fill move under the regenerated request. To follow the handoff directly, read the top-level `supersededByRequestId` on the original request in `GET /requests/v3` (or `data.supersededByRequestId` on the legacy `GET /requests/v2`) — it returns the regenerated `requestId` that now owns the fill lifecycle.
 
 ```bash
-curl -X GET "https://api.relay.link/requests/v2?id=<ORIGINAL_REQUEST_ID>"
+curl -X GET "https://api.relay.link/requests/v3?id=<ORIGINAL_REQUEST_ID>" -H "x-api-key: YOUR_API_KEY"
 ```
 
 ```json
@@ -1269,9 +1269,7 @@ curl -X GET "https://api.relay.link/requests/v2?id=<ORIGINAL_REQUEST_ID>"
     {
       "id": "<ORIGINAL_REQUEST_ID>",
       "status": "pending",
-      "data": {
-        "supersededByRequestId": "<REGENERATED_REQUEST_ID>"
-      }
+      "supersededByRequestId": "<REGENERATED_REQUEST_ID>"
     }
   ]
 }
