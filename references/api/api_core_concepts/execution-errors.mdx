@@ -59,6 +59,8 @@ Once a request is submitted, execution can still fail during the fill or, if a f
 | `INVALID_GAS_PRICE` | The submitted gas price is outside acceptable bounds. |
 | `QUOTED_GAS_LIMIT_EXCEEDED` | The gas limit required at fill time was significantly higher than the gas limit quoted, so the fill was aborted. |
 | `JUPITER_INVALID_TOKEN_ACCOUNT` | The token account required for the swap doesn't exist or is invalid (Solana/Jupiter). |
+| `TRANSACTION_SUBMISSION_FAILED` | The fill transaction could not be broadcast to the network — for example, the RPC was unavailable, the signer was unavailable, or the transaction was rejected before broadcast (nonce or fee issue). No transaction hash exists for this failure. |
+| `TRANSACTION_NOT_INCLUDED` | The fill transaction was broadcast successfully and a transaction hash was recorded, but the transaction was not included on-chain before Relay's retry and gas-bump window elapsed. The transaction may still confirm afterwards, so the recorded hash is worth checking. |
 
 ### Onchain Execution & Revert Errors
 
