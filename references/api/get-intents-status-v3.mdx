@@ -4,6 +4,10 @@ description: "This API returns current status of intent."
 openapi: get /intents/status/v3
 ---
 
+<Note>
+Polling is not the only way to track status. Configure a [webhook](/references/api/api_guides/webhooks) in the Relay Dashboard to have status updates pushed to your backend, or subscribe to [websockets](/references/api/api_guides/websockets) for a real-time stream.
+</Note>
+
 Relay statuses take one of the following options:
 
 | Status | Description |
