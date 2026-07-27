@@ -3,6 +3,12 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-07-27 — More specific `failReason` values for submission failures
+
+**Added** — `GET /requests/v3`, `GET /intents/status/v3`, and the `request.status.updated` webhook: the response `failReason` enum gains **`TRANSACTION_SUBMISSION_FAILED`**, returned when the fill transaction could not be broadcast to the network (RPC unavailable, signer unavailable, or pre-broadcast rejection — no transaction hash exists), and **`TRANSACTION_NOT_INCLUDED`**, returned when the fill transaction was broadcast but never included onchain before Relay's retry and gas-bump window elapsed. See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors#transaction-construction--gas-errors) for the full enum.
+
+**Behavior change** — `GET /requests/v3`, `GET /intents/status/v3`, and the `request.status.updated` webhook: gasless `/execute` failure rows that previously returned `failReason: "UNKNOWN"` when a broadcast succeeded but the transaction was never included, or when the transaction was never accepted for broadcast, now return one of the two new reasons.
+
 ## 2026-07-22 — `recipient` validated at quote time
 
 **Added** — `POST /quote` and `POST /quote/v2`: an explicitly provided `recipient` is now validated before quoting. Recipients that fail address validation for the destination chain return `400` with `errorCode: "INVALID_ADDRESS"`. Recipients that resolve to a supported token contract (which cannot receive tokens — e.g. passing the destination-chain USDC contract as `recipient`) return `400` with the new `errorCode: "INVALID_RECIPIENT"`. Requests that omit `recipient` are unaffected — the implicit `recipient = user` path is not revalidated. Previously these requests surfaced as `DESTINATION_TX_FAILED` after simulation. See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
