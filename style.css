@@ -134,20 +134,6 @@
     max-height: 32px;
   }
 
-  #enterprise-link {
-    margin-left: 10px;
-    padding: 2px 8px;
-    color: #fff;
-    border-radius: 20px;
-    font-size: 14px;
-    background-color: rgb(var(--primary-dark)/1);
-    display: inline-block;
-    line-height: normal;
-    font-weight: 600;
-    font-style: normal;
-    letter-spacing: normal;
-  }
-
   @media (width < 700px) {
     [class*="intercom-with-namespace"],
     .intercom-lightweight-app-launcher {
@@ -394,4 +380,11 @@
       margin: 0;
       padding: 0;
     }
+  }
+
+  /* A heading as the first line of a Callout keeps its prose top margin on
+     the deployed build (the prose first-child reset doesn't win inside the
+     callout), adding an unwanted gap. Zero it out. */
+  .callout .prose > :first-child {
+    margin-top: 0;
   }

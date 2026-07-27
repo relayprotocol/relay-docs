@@ -65,7 +65,6 @@
             "group": "Resources",
             "pages": [
               "resources/supported-chains",
-              "resources/enterprise",
               "resources/developing-with-ai",
               "resources/support",
               "resources/brand-assets"
@@ -93,6 +92,7 @@
                   "references/api/api_core_concepts/trade-types",
                   "references/api/api_core_concepts/surplus-and-shortage",
                   "references/api/api_core_concepts/handling-errors",
+                  "references/api/api_core_concepts/execution-errors",
                   "references/api/api_core_concepts/contract-compatibility"
                 ]
               },
@@ -117,6 +117,12 @@
                   "references/api/api_guides/deep-linking",
                   "references/api/api_guides/websockets",
                   "references/api/api_guides/webhooks"
+                ]
+              },
+              {
+                "group": "Migration Guides",
+                "pages": [
+                  "references/api/api_guides/migrating-to-requests-v3"
                 ]
               },
               {
@@ -155,6 +161,7 @@
               {
                 "group": "Deprecated",
                 "pages": [
+                  "references/api/get-requests-v2",
                   "references/api/get-price",
                   "references/api/get-config",
                   "references/api/get-intents-status",
@@ -401,7 +408,11 @@
     },
     {
       "source": "/resources/partnerships",
-      "destination": "/resources/enterprise"
+      "destination": "/references/api/api-keys"
+    },
+    {
+      "source": "/resources/enterprise",
+      "destination": "/references/api/api-keys"
     },
     {
       "source": "/references/sdk/getting-started",
