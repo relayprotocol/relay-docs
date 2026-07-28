@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-07-28 — Higher elevated rate limit for `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: the elevated per-key rate limit is now **20 requests per second**, up from the previously shared 10 rps bucket. `GET /requests` and `GET /requests/v2` continue at 10 rps. Default (non-elevated) limits are unchanged. See [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits).
+
 ## 2026-07-27 — More specific `failReason` values for submission failures
 
 **Added** — `GET /requests/v3`, `GET /intents/status/v3`, and the `request.status.updated` webhook: the response `failReason` enum gains **`TRANSACTION_SUBMISSION_FAILED`**, returned when the fill transaction could not be broadcast to the network (RPC unavailable, signer unavailable, or pre-broadcast rejection — no transaction hash exists), and **`TRANSACTION_NOT_INCLUDED`**, returned when the fill transaction was broadcast but never included onchain before Relay's retry and gas-bump window elapsed. See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors#transaction-construction--gas-errors) for the full enum.
