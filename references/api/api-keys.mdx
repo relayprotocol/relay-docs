@@ -47,9 +47,12 @@ Higher limits are available on request, applied per key:
 | Endpoint               | Limit                   |
 | ---------------------- | ----------------------- |
 | `/quote`               | 10 requests per second  |
+| `/requests/v3`         | 20 requests per second  |
 | `/requests`            | 10 requests per second  |
 | `/transactions/status` | 10 requests per second  |
 | Other endpoints        | 200 requests per minute |
+
+`/requests` and `/requests/v2` share the 10 rps bucket; `/requests/v3` has its own 20 rps bucket.
 
 To request higher limits, get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link).
 
