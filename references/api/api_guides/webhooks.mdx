@@ -5,17 +5,15 @@ description: "Simplify your Integration with Low-Latency Relay Webhooks"
 
 Building applications at scale requires integrating with Relay's system at instant speed. Rather than polling the API for status updates, webhooks push transaction lifecycle events directly to your server the moment they happen. Configure a webhook endpoint and Relay will notify your backend in real time as quotes are processed — lightweight, no polling, low latency.
 
-## Integrating Relay Webhooks
+## Configuring a Webhook
 
-Each API key can have a single webhook endpoint configured. In order to configure a webhook you'll need the following:
+Webhooks are self-serve in the [Relay Dashboard](https://dashboard.relay.link). Each API key can have a single webhook endpoint, and any requests tied to that key will post events to it. To configure one:
 
-| **Field** | **Description** | **Example** |
-| --- | --- | --- |
-| API key | Any requests tied to this API key will post events to the webhook endpoint | `your-api-key` |
-| Endpoint | An HTTPS endpoint to POST to when the status of a request changes | `https://my.server/receive-relay-event` |
-| Custom Headers | Any custom headers you wish to receive | `{"Authorization": "Bearer 0x123", "X-Hookdeck-Source-Id": "src_123"}` |
-
-Once you have this information reach out to Relay to configure your API key with a webhook endpoint.
+1. Sign in to the [Relay Dashboard](https://dashboard.relay.link).
+2. Open the **API keys** tab.
+3. Open the actions menu on the key you want to configure and select **Configure Webhook**.
+4. Enable the webhook and enter your **Webhook URL** — an HTTPS endpoint to POST to when the status of a request changes (e.g. `https://my.server/receive-relay-event`).
+5. Optionally add **Custom Headers** to include on every webhook request (e.g. `Authorization: Bearer 0x123`), then save.
 
 ## Webhook Events
 

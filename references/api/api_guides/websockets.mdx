@@ -5,6 +5,10 @@ description: "Remove Indexing Latency from your App using Relay Websockets"
 
 Our goal at Relay is to make multichain payments feel instant. Even when transactions confirm quickly onchain, API polling latency can degrade user experience. Connecting your app to Relay Websockets means your users get streamed updates of the status of their Relays for a speedier experience.
 
+<Info>
+Websockets stream statuses to a connected client. To have Relay push status updates to your backend instead, configure a [webhook](/references/api/api_guides/webhooks).
+</Info>
+
 ## Relay Status Websockets
 
 Relay Status Websockets specifically stream transaction statuses for both cross and same-chain status, though the stages differ slightly.
