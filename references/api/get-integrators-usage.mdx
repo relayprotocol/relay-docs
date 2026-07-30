@@ -1,0 +1,11 @@
+---
+title: "Get Integrator Usage"
+description: "Returns aggregated request counts grouped by API key, endpoint, status code, and error code"
+openapi: get /integrators/usage
+---
+
+Programmatic counterpart to the Dashboard's request history — returns the same aggregated counts you see under **Requests**, broken down by endpoint, HTTP status, and (for `400` responses) the machine-readable `errorCode`.
+
+The `granularity` query parameter controls the time bucket and the default window: `minutely` (last 24h), `hourly` (last 7d), or `daily` (last 14d). Data older than 14 days is not retained.
+
+<Tip>Use `granularity=minutely` to build a near-real-time uptime view; use `granularity=daily` for longer-range trend analysis. The `errorCode` field on `400` rows lets you distinguish validation errors (e.g. `AMOUNT_TOO_LOW`, `UNSUPPORTED_CHAIN`) from other client errors when calculating a meaningful success rate.</Tip>
