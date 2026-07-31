@@ -3,6 +3,51 @@ title: "Gasless Execution"
 description: "Submit arbitrary transactions for gasless execution"
 ---
 
+**Gasless Execution: stablecoin payments that only require stablecoins.**
+
+Your users sign. Relay executes. No gas token required.
+
+A user holding 100 USDC should be able to pay 100 USDC. But without a gas token they can't move it: the balance is functionally frozen until they go buy ETH, on the right chain, at the right time. That's the state most payers are in: new users, stablecoin holders, and anyone arriving from an exchange.
+
+The payment fails not for lack of money, but for lack of a second token they've never heard of.
+
+Decouple signing from submitting. Your user signs a payload offchain; Relay submits the transaction and fronts the origin gas. The user never needs to hold or buy a native gas token: costs are deducted from the token in the flow, so a user holding only USDC pays in USDC.
+
+To make it free for the user too, pair it with [Fee Sponsorship](/features/fee-sponsorship): Gasless Execution removes the gas token, while sponsorship removes the cost.
+
+Gasless Execution covers any EVM transaction, not just payments:
+
+- **ERC-4337 smart accounts:** The user signs a user operation; Relay submits it and covers the origin gas.
+- **EIP-7702 wallets:** Delegate an EOA to a smart account and execute atomic, gasless batches. Even the upgrade itself can be executed gaslessly.
+- **Any raw transaction that doesn't depend on the submitter:** Sign the payload, and Relay executes it.
+
+## Why it matters
+
+### For integrators
+
+- **Serve the payers you're currently losing.** Users who hold stablecoins but no gas include most new users; today their transactions simply fail.
+- **Payments never stall on gas.** No "insufficient funds for gas" dead ends mid-checkout.
+- **You choose the cost model.** Fees come out of the stablecoin in motion, or you sponsor them for a full 1:1.
+- **Use one integration across account types.** Support ERC-4337 smart accounts, EIP-7702-delegated EOAs, embedded wallets, and custodial wallets without building paymaster or bundler infrastructure.
+
+### For your users
+
+- **Stablecoins are enough.** Pay in the token they hold; no gas tokens or chains to understand.
+- **Sign, don't submit.** Nothing to configure and no transaction to send.
+- **Get 1:1 payments when sponsored.** Send a dollar, and a dollar arrives.
+
+## Who it's for
+
+- **Payment service providers:** Payers hold stablecoins, not gas tokens, and every gas requirement is a failed payment. Gasless Execution makes stablecoin payments self-contained; pair it with Fee Sponsorship for 1:1 settlement. A user can pay in USDC from a wallet holding only USDC.
+- **Wallets and wallet infrastructure:** Users arrive holding tokens but no gas, and their first action stalls. Gasless Execution makes the first transaction work instantly. A new user can send from a fresh wallet holding zero ETH.
+- **Onchain apps:** High-frequency flows stall when users run out of gas mid-session. Gasless Execution keeps them transacting in the token they're already using.
+
+Gasless Execution is one of four ways to get gas out of your users' way, alongside [Fee Sponsorship](/features/fee-sponsorship), just-in-time gas, and pay-with-any-token. They combine.
+
+For stablecoin payments that arrive exactly 1:1, pair Gasless Execution with Fee Sponsorship and price stabilization.
+
+---
+
 ## How does it work?
 
 Gasless transactions on EVM are regular transactions where the transaction signer and the gas payer are two different addresses. Rather than signing with the same address and then submitting their transaction and paying gas, a user can simply sign a transaction payload, and other entities (relayers, solvers, etc.) can submit the transaction on their behalf and sponsor the gas costs.
