@@ -5,11 +5,64 @@ description: "Bridge assets by sending funds to a deposit address — no wallet 
 
 import { SolverCurrencies } from "/snippets/SolverCurrencies.mdx";
 
-Deposit addresses let users bridge or swap tokens by simply sending funds to an address — no wallet connection or signing required. This works for both cross-chain bridges and same-chain swaps. The integrator requests a quote with `useDepositAddress: true`, receives a deposit address, and the user transfers funds there. Relay detects the deposit and fills on the destination chain.
+**One address in. Any token, any chain. Exactly what you asked for, out.**
 
-This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headless systems where the sender can't sign transactions. The user just sends to an address — same UX as a normal transfer.
+Connect-wallet flows kill conversion, for two reasons. Many payers can't connect at all: a customer paying from a centralized exchange can only send to an address. And for those who can, connecting a wallet to an unfamiliar site and signing arbitrary calldata is scary, a pattern that has repeatedly proven risky. Every wallet-connect prompt is a drop-off point, right when your customer was ready to pay.
 
-## How It Works
+One address. The payer sends anything to it, any token on any of 85+ chains, or same chain, and you receive the asset and chain you run on, like USDC on Base. Relay prices, routes, converts, and settles. Nothing to connect, nothing to sign, no arbitrary calldata to execute: just a transfer, the same behavior users already know from every exchange withdrawal and QR payment. Funds stay theirs until the order fills, and you can accept from chains you don't natively support, with no wallet UI or per-chain build.
+
+Every chain and asset your customers already hold becomes something you can accept, through one integration. “We can't take that” becomes captured volume. For a payment processor, it's the wedge that serves your entire book from a single build.
+
+## Open and Strict
+
+**Open** is reusable for the same route and tolerates variable amounts: each new deposit triggers a fresh quote and fill. Best for general-purpose acceptance and top-up flows. **Strict** is bound to one order and single-use: you specify exactly what you receive, overpayments refund the excess, underpayments refund in full. Best for payment processors and fixed-price checkout. Quick rule: exact per-order payout, use Strict; reusable and tolerant of variable amounts, use Open. Configuration details are in the integration guide below.
+
+## How it works
+
+1. **Request** an address via the API with your destination chain, output asset, and trade type.
+2. **Deposit:** the user sends any supported token, any chain, or same chain. No wallet connection.
+3. **Fill:** on confirmed deposit, the order fills while user funds sit in non-custodial escrow.
+4. **Settle:** you receive your asset on your chain; track status deposit-to-fill via the API.
+
+From a centralized exchange, the whole flow is: copy the address, paste it into the exchange's withdrawal screen, withdraw. No wallet required.
+
+## Why it matters
+
+**For integrators**
+
+- **Increase conversion.** No wallet-connect wall between the payer and the payment.
+- **Accept centralized exchange deposits,** demand you'd otherwise turn away.
+- **One integration, 85+ chains,** including chains you have no wallet UI for. No per-chain build, no liquidity to manage.
+- **Simple reconciliation.** Settle to the one asset and chain you already run on.
+
+**For your users**
+
+- **Nothing to connect or sign.** Just send funds to an address.
+- **Pay with whatever they hold,** from wherever they hold it: an exchange withdrawal or a QR scan is the whole flow.
+- **Safe by default.** A wrong amount or a failed fill refunds automatically.
+
+## Who it's for
+
+- **Payment Service Providers:** merchants want to accept crypto, but wallet-connect checkouts leak conversion and exclude exchange-held funds. One integration accepts from every chain, settling to your one stablecoin. A $5 checkout: the customer picks any supported asset on any chain, and you receive your settlement currency.
+- **Wallets & Wallet Infrastructure:** every manual bridge or connect step is a drop-off. Add scan-to-pay and crosschain top-ups with no signing flow. A QR code is the address.
+- **On / Off Ramps:** stablecoin deposits arrive from more chains and issuers than you've built support for. One address receives any of them and hands settlement to your fiat rails; adding a chain stops being an integration project.
+- **Merchant Acceptance:** no customer gets turned away for holding the wrong stablecoin on the wrong chain. Accept any of them, settle to the one you run on.
+
+You keep the merchant relationship, checkout, ledger, and compliance policy. Relay is the rail underneath.
+
+## What you get
+
+Compliance screening on arrival, refund-to-address on under/overpayment or failure, optional app fees collected at settlement, and same chain plus crosschain through one integration.
+
+## Limitations
+
+Long-tail tokens with unknown liquidity can't be sent to a deposit address (a negligible share of volume). Per-order ceilings and route coverage constraints apply; see the integration guide below.
+
+For exact 1:1 stablecoin acceptance, pair deposit addresses with [fee sponsorship](/features/fee-sponsorship) and [price stabilization](/features/price-stabilization).
+
+---
+
+## Technical integration
 
 1. **Quote** — Integrator requests a quote with `useDepositAddress: true`. The response includes a `depositAddress` and `requestId`.
 2. **User Deposit** — User sends funds to the deposit address (wallet transfer or exchange withdrawal).
