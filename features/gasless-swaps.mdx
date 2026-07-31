@@ -3,7 +3,60 @@ title: "Gasless Swaps"
 description: "Remove gas friction from swaps so users only pay with the input token"
 ---
 
-Gas fees add layers of complexity to swapping. Holding the native token, on the right network, at the right time to pay for gas adds friction for users. A gasless swap means that the user only pays with the input token, and this covers all fees. This means someone else is executing the transaction and paying the gas.
+**Gasless Swaps: the token they're swapping is all they need.**
+
+**Users swap with what they hold. Fees come out of the swap, or you cover them.**
+
+Every swap has a hidden prerequisite: gas. Holding the right native token, on the right network, at the right time is friction your users shouldn't have to think about. For users who arrive holding only the token they want to swap, it's a dead end.
+
+Gasless Swaps remove the prerequisite. The user signs, the swap executes, and the input token covers everything: fees come out of the swap itself, so someone holding only USDC can swap it without holding anything else. If you'd rather your users pay nothing at all, cover the fees from your app balance instead.
+
+It keeps the intake side of your product open: users bring whatever token they hold, and you settle in the asset you run on.
+
+## One integration, three paths
+
+Gasless Swaps work with the wallets you already have:
+
+- **External wallets:** The user signs a message offchain and the swap executes from there. No approval transaction, no gas. USDC is fully gasless out of the box; other tokens need a one-time approval.
+- **ERC-4337 smart accounts:** Already on smart accounts? Submit the operation through Relay instead of a bundler, and Relay covers the gas.
+- **Embedded and custodial wallets:** EIP-7702 delegation makes the approval and the swap one atomic, gasless action with any token.
+
+The decision tree below picks the right path for your setup.
+
+## How it works
+
+1. **Quote:** Request a swap quote as normal.
+2. **Sign:** The user signs offchain. No transaction to send, no gas to pay.
+3. **Execute:** Relay submits the swap and handles the gas.
+4. **Receive:** The user gets the output token, with fees deducted from the swap or covered by you.
+
+## Why it matters
+
+### For integrators
+
+- **Serve users who hold one token.** That's most users, most of the time.
+- **Remove the approval-and-gas dance.** One signature replaces the multi-step setup that loses users.
+- **Choose the cost model.** Deduct fees from the swap itself, or sponsor them for a free experience.
+- **Skip paymaster and bundler infrastructure.** The paths above all use one API.
+
+### For your users
+
+- **Swap what they hold.** No native gas token required.
+- **Sign once.** No approval transaction, setup, or dead end.
+
+## Who it's for
+
+- **Wallets and wallet infrastructure:** Make the swap button work for users who hold a single token.
+- **Onchain apps:** Keep users swapping with the balance they already have instead of stalling when they run out of gas.
+- **DEXes and aggregators:** Offer routes users can complete, whatever token they hold.
+
+## What to watch
+
+Same-chain Gasless Swaps require you to sponsor the fees. Same-chain swaps route directly through DEXes, so Relay cannot deduct gas fees before the user receives the destination token. On the external-wallet path, tokens without permit support need a one-time approval transaction.
+
+For stablecoin conversions at exactly 1:1, pair Gasless Swaps with [Price Stabilization](/features/price-stabilization) and [Fee Sponsorship](/features/fee-sponsorship).
+
+---
 
 ## What solution is right for me?
 
