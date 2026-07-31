@@ -3,6 +3,46 @@ title: "App Fees"
 description: "Add App Fees on any route and collect in stablecoins "
 ---
 
+**App Fees: monetization built in.**
+
+Add your fee to any transaction. Collected at settlement, settled in USDC.
+
+Your product already powers the flows: swaps, onboarding, top-ups, and payments run through it every day, and most integrators give all of it away for free. Charging for it normally means building billing infrastructure: collection logic, settlement handling, and a treasury slowly filling with small amounts of hundreds of tokens across dozens of chains that someone has to reconcile and convert.
+
+Add your fee to any quote in basis points and it's collected at settlement, automatically. Fees accrue in a single USDC balance no matter which tokens or chains your users touched, claimable whenever you want. No invoicing, no per-chain treasury, no reconciliation.
+
+App fees are distinct from rev share: rev share is a cut of Relay's fee, app fees are your own pricing on your own flows.
+
+## How it works
+
+1. **Set** your fee on the quote: basis points of the input value, with one or more recipients.
+2. **Transact:** your user completes the flow as normal; the fee is collected at settlement, automatically.
+3. **Accrue:** fees land in one USDC balance, regardless of the tokens and chains involved.
+4. **Claim** whenever you want: free on Base, or on any chain in any currency, via the Relay app, the API, or a multisig or smart contract.
+
+## Why it matters
+
+- **Turn existing flows into a revenue line.** Your pricing, set per flow and per quote. Dial it by product, tier, or promotion.
+- **No billing infrastructure.** Collection happens at settlement; there's nothing to invoice, chase, or reconcile.
+- **Clean revenue.** One USDC balance instead of a dust-token treasury. Finance can actually account for it.
+
+## Who it's for
+
+- **Wallets and wallet infrastructure:** the swaps, top-ups, and onboarding you already facilitate become revenue.
+- **Payment service providers:** price your own service on top of the rail. Mark up flows per merchant or per product, collect at settlement, and reconcile one balance.
+- **Onchain apps:** swap revenue is the business model. Set your fee on every trade and collect it in one balance.
+- **DEXes and aggregators:** monetize your frontend's order flow without building fee collection into every route.
+
+## What you get
+
+Per-quote control in bps of input value across supported flows (cross-chain and same-chain swaps, bridges, calls, wraps, deposit-address flows, and gasless swaps); multiple recipients per quote; one USDC balance claimable on any chain (free on Base) through the Relay app, API, or SDK; smart contract and multisig claiming (EIP-1271) for DAOs and treasuries; and verification endpoints to confirm quoted versus collected fees per transaction.
+
+## Limitations
+
+App fees aren't supported on sends or transfers, or on gasless execution without a prior quote. Some same-chain collection constraints apply on SVM and SUI, and fees below a minimum threshold aren't collected. Details are in the integration guide below.
+
+---
+
 ## What are App Fees?
 
 App fees are additional fees set by third-party developers on top of existing fees. These fees are specified when generating a quote. To improve the gas costs of fee setting, App fees are not paid out in real-time. Rather, App Fees accrue in an offchain base _USDC,_ balance and can be withdrawn as desired at your convenience.
