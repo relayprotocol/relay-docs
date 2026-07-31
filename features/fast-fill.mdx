@@ -5,7 +5,54 @@ description: "Accelerate the destination fill of a cross-chain request"
 
 import AppBalance from "/snippets/AppBalance.mdx";
 
-Fast Fill is a feature that allows you to accelerate the destination fill of a cross-chain request. This is useful if you want to speed up the completion of a bridge or swap operation before it's landed onchain.
+**Fast Fill: instant payments, by choice.**
+
+Complete any transaction the moment it's submitted. You absorb the variance; your users get instant.
+
+Blockchains don't speak to one another. A payment moving between chains can only complete once the chain it left from has confirmed it, and every chain keeps its own clock: some confirm in about a second, others take minutes. Cross-chain payments settle in seconds on Relay as standard, but that one variable—the sending chain's confirmation time—is set by the chain itself.
+
+Fast Fill is for the moments when instant isn't optional: a checkout that confirms as the customer taps, a trade that lands as it's placed, whatever chain the money comes from and however it's behaving.
+
+Call Fast Fill on any transaction and the payment completes the moment it's submitted; settlement follows behind the scenes. Your app balance bridges the gap and absorbs any movement in fees or gas while it does, capped at an amount you set and released automatically once the payment settles.
+
+It's how card payments have always worked: approved at the counter, settled behind the scenes. Fast Fill brings the same mechanic onchain and makes instant a control you own.
+
+## How it works
+
+1. **Submit:** Your user sends their transaction as normal.
+2. **Accelerate:** You call Fast Fill for that transaction.
+3. **Arrive:** The user's funds are delivered instantly, and your app balance holds the amount in the meantime.
+4. **Settle:** When the incoming payment confirms, the hold releases automatically.
+
+Set a USD cap per transaction; anything above it simply isn't accelerated.
+
+## Why it matters
+
+### For integrators
+
+- **Instant, unconditionally.** Standard settlement is already seconds; Fast Fill makes completion immediate on the flows you choose.
+- **Deploy it where seconds convert.** Checkout, trading, onboarding. It's per-transaction, not all-or-nothing.
+- **You absorb the variance, capped.** Fees and gas can move between completion and settlement; your balance covers it, up to a USD cap you set, released automatically.
+
+### For your users
+
+- **Instant, every time.** The same experience on every payment, from every chain.
+- **Nothing extra to do.** The flow they know, completed immediately.
+
+## Who it's for
+
+- **Payment Service Providers:** The customer is standing at checkout. Fast Fill makes confirmation immediate, whatever chain the payment comes from.
+- **Wallets and Wallet Infrastructure:** Cross-chain actions feel instant regardless of where the user started. Speed is the difference users actually notice.
+- **Onchain Apps:** In high-frequency flows, the trade needs to land now. Accelerate the moments where timing is the product.
+- **DEXes and Aggregators:** Order flow routes to the fastest reliable provider. Fast Fill puts that speed under your control.
+
+## Scope
+
+Fast Fill is an enterprise feature: it requires an API key, a linked funding address, and a funded app balance to back the holds. Balance mechanics, slippage handling, and integration details are in the guide below.
+
+For payments that are instant and exactly 1:1, pair Fast Fill with [Price Stabilization](/features/price-stabilization) and [Fee Sponsorship](/features/fee-sponsorship).
+
+---
 
 ## Requirements
 
