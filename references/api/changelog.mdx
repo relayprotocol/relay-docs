@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-08-03 — Optional total match count on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: the new opt-in `includeTotal` boolean query parameter (defaults to `false`) returns an exact `total` field on the response with the count of requests matching the current filters, independent of `limit` and `continuation`. The count reflects all matches across the full data window, not just the returned page. Because computing the exact count adds meaningful query latency, keep `includeTotal` off on the hot list-fetch path and enable it only when the total is needed (e.g. rendering a "X of Y results" header). Pagination behavior is unchanged.
+
 ## 2026-07-30 — `route.actual.origin` reflects the observed deposit when no fill occurred
 
 **Behavior change** — `GET /requests/v3`: for requests where an origin deposit was observed on-chain but no fill was ever attempted (for example, a double-spent Bitcoin deposit that fails before solve), `data.route.actual.origin.inputCurrency` now reflects the actual deposited amount and currency instead of mirroring `data.route.quoted.origin.inputCurrency`. `data.route.actual.origin.outputCurrency` is `null` in this case — no fill occurred, so no output currency was observed — and `data.route.actual.destination` continues to fall back to `data.route.quoted.destination`. Previously the entire `data.route.actual` object silently mirrored `data.route.quoted` on these rows, hiding the real deposit amount from integrators reading the actual-side fields. Requests that reached a fill attempt are unaffected.
