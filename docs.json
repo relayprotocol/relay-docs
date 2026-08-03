@@ -154,6 +154,7 @@
               "references/api/deposit-address-reindex",
               "references/api/get-app-fee-balances",
               "references/api/claim-app-fees",
+              "references/api/get-usage",
               "references/api/advanced",
               "references/api/fast-fill",
               "references/api/get-swap-sources",
