@@ -286,7 +286,7 @@ Every individual change, grouped by request side and response side.
     | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKey`, `requestType` |
     | **Currency** | `currencyInChainId`, `currencyOutChainId`, `currencyInAddress`, `currencyOutAddress`, `currencyInSymbol`, `currencyOutSymbol` |
     | **Ranges** | `startTimestamp`, `endTimestamp`, `startBlock`, `endBlock`, `amountUsdMin`/`Max`, `appFeesAmountUsdMin`/`Max`, `fillTimeMin`/`Max` |
-    | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData` |
+    | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData`, `includeTotal` |
 
     <Tip>
       `term` is a single unified search across request id, wallet, deposit address, and every transaction hash (deposit, fill, refund, failed, chain-entry). It replaces the v2 pattern of running separate `user` / `hash` / `id` lookups and merging the results.
@@ -309,6 +309,8 @@ Every individual change, grouped by request side and response side.
     **Removed & changed parameters.**
     - `hash` is removed; use `term`, or the targeted `depositTxHash` / `fillTxHash` / `refundTxHash`.
     - `referrer` is no longer a query parameter; it's still returned in the response, but only when `includeAuthenticatedData=true`.
+
+    **Total match count.** Pass `includeTotal=true` to receive the exact total count of matching requests as `total` on the response (independent of `limit` and `continuation`). Omit it — or set `includeTotal=false` — when you only need the current page; computing the total adds meaningful query latency, so it is opt-in.
   </Accordion>
 
 </AccordionGroup>
@@ -473,6 +475,7 @@ Every individual change, grouped by request side and response side.
     | `data.route.actual` | executed route (with `rate`); falls back to `quoted` |
     | `data.externalMetadata` | partner correlation IDs (e.g. `moonpayId`) |
     | `feeSponsorship.actual.sponsorPayment` | what the sponsor actually paid |
+    | `total` (response, opt-in) | total count of requests matching the filters; returned only when `includeTotal=true` |
     | broad filter/sort surface | see [Filtering, search & sorting](#what-changed) |
   </Accordion>
 </AccordionGroup>
