@@ -153,6 +153,7 @@
               "references/api/transactions-single",
               "references/api/deposit-address-reindex",
               "references/api/get-app-fee-balances",
+              "references/api/get-metrics-usage",
               "references/api/claim-app-fees",
               "references/api/advanced",
               "references/api/fast-fill",
