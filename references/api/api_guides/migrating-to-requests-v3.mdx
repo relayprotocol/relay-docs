@@ -19,6 +19,47 @@ description: "What changed in GET /requests/v3 and how to upgrade from v2."
 | **Sep 1, 2026 onward** | v2's rate limit is progressively reduced each month; requests over the limit receive `429`. |
 | **Nov 24, 2026** | v2 is fully retired — all traffic must be on v3. |
 
+## Detecting deprecation programmatically
+
+Every response from `GET /requests/v2` carries in-band deprecation signals so clients can surface or log the sunset timeline without hard-coding dates.
+
+- **`Deprecation`** header — RFC 8594 structured-field Date, e.g. `@1784678400`.
+- **`Sunset`** header — RFC 7231 HTTP-date, e.g. `Tue, 24 Nov 2026 00:00:00 GMT`.
+- **`Link`** header — three lines with `rel="deprecation"`, `rel="sunset"`, and `rel="successor-version"` pointing to this guide and to `GET /requests/v3`.
+
+These headers are attached to every v2 response (`2xx`, `4xx`, and `5xx`) and are listed in `Access-Control-Expose-Headers`, so browser clients using `fetch` or `XMLHttpRequest` can read them cross-origin:
+
+```javascript
+const res = await fetch("https://api.relay.link/requests/v2?...");
+const sunset = res.headers.get("sunset");
+const deprecation = res.headers.get("deprecation");
+```
+
+Successful (`200`) responses additionally include a top-level `deprecation` object:
+
+```json
+"deprecation": {
+  "message": "GET /requests/v2 is deprecated. Migrate to GET /requests/v3. Relay reduces the v2 rate limit in stages from September 1, 2026. Relay retires v2 on November 24, 2026.",
+  "deprecatedAt": "2026-07-22T00:00:00Z",
+  "throttledFrom": "2026-09-01T00:00:00Z",
+  "sunsetAt": "2026-11-24T00:00:00Z",
+  "successor": "https://api.relay.link/requests/v3",
+  "migrationGuide": "https://docs.relay.link/references/api/api_guides/migrating-to-requests-v3"
+}
+```
+
+When v2 rate-limits your traffic, `429` responses return a route-specific body that also points at v3:
+
+```json
+{
+  "message": "You reached the rate limit for GET /requests/v2. Relay reduces this limit in stages. Relay retires v2 on November 24, 2026. Migrate to GET /requests/v3.",
+  "successor": "https://api.relay.link/requests/v3",
+  "migrationGuide": "https://docs.relay.link/references/api/api_guides/migrating-to-requests-v3"
+}
+```
+
+No `Retry-After` is emitted on `429` from `GET /requests/v2`.
+
 ## Response shape
 
 The same request shown in full for v2 and v3, plus a focused diff of what moved.
