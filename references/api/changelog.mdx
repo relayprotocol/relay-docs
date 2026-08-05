@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-08-04 — Null-check filters on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: the `filters` AND/OR parameter now accepts `null` as a null-check operator on any recognised key. `{"depositAddress": null}` matches requests where the field is empty (does not exist); `{"not:depositAddress": null}` matches requests where the field is present. Null-checks work across identity, address, chain, currency, and status-style fields, including the composite `user` filter and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. Arrays that mix `null` with real values for the same key return `400`. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+
 ## 2026-08-04 — In-band deprecation signaling on `GET /requests/v2`
 
 **Added** — `GET /requests/v2`: every response now carries `Deprecation`, `Sunset`, and `Link` headers pointing to `GET /requests/v3` and the [migration guide](/references/api/api_guides/migrating-to-requests-v3), on `2xx`, `4xx`, and `5xx` alike. The `Deprecation` header is a structured-field Date (`@<unix-seconds>`), `Sunset` is an RFC 7231 HTTP-date, and `Link` includes three relations — `deprecation`, `sunset`, and `successor-version`. The three headers are also listed in the API's `Access-Control-Expose-Headers`, so browser clients using `fetch` or `XMLHttpRequest` can read them cross-origin.

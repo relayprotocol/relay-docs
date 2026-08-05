@@ -335,7 +335,7 @@ Every individual change, grouped by request side and response side.
 
     **Sorting.** `sortBy` accepts `createdAt` (default), `updatedAt`, or `amountUsd`. `sortDirection` is `asc` or `desc` (defaults to `desc` for time fields, `asc` for `amountUsd`).
 
-    **Advanced filtering (AND / OR / negation).** The `filters` parameter takes a JSON-encoded array of groups. Fields **within** a group are AND'd; the groups themselves are OR'd. Any key can be negated with a `not:` prefix, and a field's value may be an array (OR within that field). Top-level parameters still apply.
+    **Advanced filtering (AND / OR / negation / null-checks).** The `filters` parameter takes a JSON-encoded array of groups. Fields **within** a group are AND'd; the groups themselves are OR'd. Any key can be negated with a `not:` prefix, a field's value may be an array (OR within that field), and a value of `null` is a null-check ("is empty" / "is not empty") instead of an equality test. Top-level parameters still apply.
 
     ```bash
     # "(depositAddress=0xabc AND originChainId=8453) OR (depositAddress=0x123 AND originChainId=1)"
@@ -343,9 +343,13 @@ Every individual change, grouped by request side and response side.
 
     # negation + array value: everything except failures and refunds
     GET /requests/v3?filters=[{"not:status":["failure","refund"]}]
+
+    # null-checks: requests with no deposit address, or with any deposit address
+    GET /requests/v3?filters=[{"depositAddress":null}]
+    GET /requests/v3?filters=[{"not:depositAddress":null}]
     ```
 
-    <Note>OR groups support identity, address, chain, currency, and status-style fields. Range filters and `features` are top-level only.</Note>
+    <Note>OR groups support identity, address, chain, currency, and status-style fields. Range filters and `features` are top-level only. Null-checks work on any recognised `filters` key, including the composite `user` field and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. `null` cannot be combined with real values in an array for the same key — that returns `400`.</Note>
 
     **Removed & changed parameters.**
     - `hash` is removed; use `term`, or the targeted `depositTxHash` / `fillTxHash` / `refundTxHash`.
