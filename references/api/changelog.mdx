@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-08-06 — `data.apiKeyName` on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: the response `data` object now includes `apiKeyName`, the display name of the API key that created the request. It is returned only when the caller authenticates with an API key belonging to the request's owning integrator and passes `includeAuthenticatedData=true` — the same gate as `data.referrer` and `data.platformFee`. `null` when the owning API key has no name set. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+
 ## 2026-08-04 — Null-check filters on `GET /requests/v3`
 
 **Added** — `GET /requests/v3`: the `filters` AND/OR parameter now accepts `null` as a null-check operator on any recognised key. `{"depositAddress": null}` matches requests where the field is empty (does not exist); `{"not:depositAddress": null}` matches requests where the field is present. Null-checks work across identity, address, chain, currency, and status-style fields, including the composite `user` filter and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. Arrays that mix `null` with real values for the same key return `400`. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
