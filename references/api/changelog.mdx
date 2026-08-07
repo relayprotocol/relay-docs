@@ -3,6 +3,12 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-08-07 — `failReason` and `refundFailReason` on `GET /intents/status/v3`
+
+**Added** — `GET /intents/status/v3`: the response now includes `failReason` and `refundFailReason`, matching the fields already returned on [`GET /requests/v3`](/references/api/get-requests) and the `request.status.updated` [webhook](/references/api/api_guides/webhooks) / [websocket](/references/api/api_guides/websockets) event. `failReason` returns `"N/A"` on non-failure statuses and the recorded reason (or `"UNKNOWN"`) on `failure`, `fallback`, and `refund` statuses. `refundFailReason` defaults to `"N/A"` when no refund-leg failure is recorded. Integrators polling status can now read these values directly without a follow-up call to `GET /requests/v3`. See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors) for the full enum.
+
+**Added** — `GET /intents/status/v3`, `GET /requests/v3`, and the `request.status.updated` webhook: the `refundFailReason` enum gains **`MANUAL_REFUND_REQUIRED`**, returned when the refund leg could not be automatically executed and requires manual intervention (for example, when the origin funds cannot be programmatically returned to the depositor).
+
 ## 2026-08-06 — `data.apiKeyName` on `GET /requests/v3`
 
 **Added** — `GET /requests/v3`: the response `data` object now includes `apiKeyName`, the display name of the API key that created the request. It is returned only when the caller authenticates with an API key belonging to the request's owning integrator and passes `includeAuthenticatedData=true` — the same gate as `data.referrer` and `data.platformFee`. `null` when the owning API key has no name set. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
