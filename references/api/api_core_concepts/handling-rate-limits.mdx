@@ -6,7 +6,7 @@ description: "Reduce your request volume and request a higher tier when you reac
 Relay enforces rate limits per API key to keep the platform reliable for every integrator. A request that exceeds a limit is rejected with a `429` response instead of being served. If your integration is reaching a limit, there are three things to try, in order. Start by optimizing your request workflow. If that isn't enough, replace status polling with webhooks or websockets. If your volume is still legitimate after both, reach out to support for a higher limit.
 
 <Tip>
-Per-endpoint limits are listed in [API keys and Rate Limits](/references/api/api-keys#default-rate-limits). To see which keys and endpoints are reaching their limits, open the **Observability** tab in the [Relay Dashboard](https://dashboard.relay.link).
+Per-endpoint limits are listed in [API keys and Rate Limits](/references/api/api-keys#default-rate-limits). To see which keys and endpoints are reaching their limits, open [Observability](https://dashboard.relay.link/observability) in the Relay Dashboard.
 </Tip>
 
 ## Optimize your request workflow
@@ -16,6 +16,8 @@ Most integrations that reach a limit are sending requests they don't need. This 
 Configuration data is the most common source of waste. Chains, currencies, and similar responses change infrequently, so fetch them once at startup and cache them rather than calling on every user interaction.
 
 Quote traffic is the next place to look. `/quote` carries the tightest default limit at 50 requests per minute. Debounce amount and token inputs so a user typing an amount produces one call rather than one per keystroke, and collapse identical in-flight requests into a single call whose result is shared across callers.
+
+Validation belongs on the client too. Amounts below Relay's minimum come back as [`AMOUNT_TOO_LOW`](/references/api/api_core_concepts/handling-errors), so a sub-cent value a user types should fail your own check before it turns into a quote call. Where your interface already knows the user's balance, apply the same treatment to amounts they can't cover.
 
 If you poll for status, widen the interval and stop polling once a request reaches a terminal status (`success`, `failure`, or `refund`). When you need many records at once, [`GET /requests/v3`](/references/api/get-requests) retrieves them in a single filtered call instead of one call per request ID.
 
