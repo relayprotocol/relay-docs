@@ -1,9 +1,9 @@
 ---
 title: "Handling Rate Limits"
-description: "Reduce your request volume and request a higher tier when you reach Relay's per-key rate limits"
+description: "Reduce your request volume and request an elevated limit when you reach Relay's per-key rate limits"
 ---
 
-Relay enforces rate limits per API key to keep the platform reliable for every integrator. A request that exceeds a limit is rejected with a `429` response instead of being served. If your integration is reaching a limit, there are three things to try, in order. Start by optimizing your request workflow. If that isn't enough, replace status polling with webhooks or websockets. If your volume is still legitimate after both, reach out to support for a higher limit.
+Relay enforces rate limits per API key to keep the platform reliable for every integrator. When a request exceeds a limit, Relay rejects it with a `429` response. Use this guide to optimize your request workflow or replace status polling with webhooks or websockets. If you have already tried both, contact support to request an elevated rate limit.
 
 <Tip>
 Per-endpoint limits are listed in [API keys and Rate Limits](/references/api/api-keys#default-rate-limits). To see which keys and endpoints are reaching their limits, open [Observability](https://dashboard.relay.link/observability) in the Relay Dashboard.
@@ -13,7 +13,7 @@ Per-endpoint limits are listed in [API keys and Rate Limits](/references/api/api
 
 Most integrations that reach a limit are sending requests they don't need. This is the fastest change to ship, and it usually resolves the problem without any change to your architecture.
 
-Configuration data is the most common source of waste. Chains, currencies, and similar responses change infrequently, so fetch them once at startup and cache them rather than calling on every user interaction.
+Configuration data is the most common source of unnecessary traffic. Chains, currencies, and similar responses change infrequently, so fetch them once at startup and cache them rather than calling on every user interaction.
 
 Quote traffic is the next place to look. `/quote` carries the tightest default limit at 50 requests per minute. Debounce amount and token inputs so a user typing an amount produces one call rather than one per keystroke, and collapse identical in-flight requests into a single call whose result is shared across callers.
 
@@ -21,12 +21,11 @@ Validation belongs on the client too. Amounts below Relay's minimum come back as
 
 If you poll for status, widen the interval and stop polling once a request reaches a terminal status (`success`, `failure`, or `refund`). When you need many records at once, [`GET /requests/v3`](/references/api/get-requests) retrieves them in a single filtered call instead of one call per request ID.
 
-
 ---
 
 ## Replace polling with webhooks or websockets
 
-Polling for status generates more avoidable request volume than anything else. Relay can push status updates to you instead, which removes those calls from your budget entirely and delivers updates faster than any polling interval.
+Polling for status is a major source of avoidable request volume. Relay can push status updates to you instead, which removes those calls from your budget entirely and delivers updates faster than any polling interval.
 
 [Webhooks](/references/api/api_guides/webhooks) POST `request.status.updated` events to an HTTPS endpoint on your backend as each request changes status. Configure one endpoint per API key in the [Relay Dashboard](https://dashboard.relay.link). Use webhooks when you have a server that can receive traffic.
 
@@ -36,8 +35,8 @@ Either option eliminates polling for status. Keep a low-frequency reconciliation
 
 ---
 
-## Request a higher rate limit tier
+## Request an elevated rate limit
 
-If your workflow is already optimized and you've moved off polling, your volume is legitimate and the limit should be raised. Elevated limits are applied per key. The [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits) table lists what's available.
+If your workflow is already optimized and you've moved off polling, reach out to our support team to request an elevated rate limit. Elevated limits are applied per key. The [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits) table lists what's available.
 
-To request an upgrade, get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link). Tell us the API key and endpoints involved, your expected sustained and peak volume in requests per second, and what you've already optimized.
+Get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link). Tell us the label of the API key as it appears in the Dashboard rather than the key itself, the endpoints involved, your expected sustained and peak volume in requests per second, and what you've already optimized.
