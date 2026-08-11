@@ -1,35 +1,19 @@
 ---
 title: "Payment Service Providers"
-description: "Accept and disburse any asset, on any chain, settled to the currency you run on"
+description: "Accept and disburse any asset, on any chain, settled in the currency you run on"
 ---
 
-Relay is onchain payments infrastructure that lets payment service providers add universal onchain acceptance and payouts through a single integration. Consumers and businesses can spend any onchain currency they hold and Relay routes, converts, and settles to your chosen asset and chain.
-
-
-<Columns cols={4}>
-  <Card title="85+ Chains" icon="link">
-    Every asset on every major network
-  </Card>
-  <Card title="< 3s Settlement" icon="bolt">
-    P50 fill time across all routes
-  </Card>
-  <Card title="$20B+" icon="chart-line">
-    Volume enabled to date
-  </Card>
-  <Card title="100M+ Txs" icon="receipt">
-    Processed across the network
-  </Card>
-</Columns>
+Relay lets payment service providers add universal onchain acceptance and payouts through a single integration. Consumers and businesses can spend any onchain currency they hold, and Relay routes and converts to your chosen asset and chain.
 
 ## Use Cases
 
 ### Pay-ins or Commerce
 
-Accept funds in any asset on any of 85+ chains — or the same chain — and receive your settlement asset (e.g., USDC on Base or Solana). Two integration paths:
+Accept funds in any asset on any chain and receive your settlement asset through two integration paths:
 
-**Connected or embedded wallet payments** — Use the standard [quote and deposit flow](/references/api/get-quote-v2) when your user connects a wallet. Quote, deposit, fill. Deposits are optionally [gasless](/features/gasless-execution), with [fixed or market rates](/features/price-stabilization). 
+[Connected or embedded wallets](/references/api/get-quote-v2) - Use the standard quote and deposit flow when your user connects a wallet. Deposits are optionally [gasless](/features/gasless-execution), with [fixed or market rates](/features/price-stabilization).
 
-**Deposit addresses** — Generate one [deposit address](/features/deposit-addresses) per order for wallet-less acceptance. Anything sent to it is routed and converted to your settlement asset automatically, with no frontend integration on the payer side. Deposit addresses also power QR and scan-to-pay for cross-chain acceptance, and are extremely valuable for centralized exchange payments. 
+[Deposit addresses](/features/deposit-addresses) - Depsoit addresses let users initiate Relays without connecting a wallet or from a surface that doesn't allow it, such as a centralized Exchange. Deposit addresses are static addresses route and convert to your settlement asset automatically when funds enter the address. This is particularly valuable for centralized exchange payments.
 
 ### Disbursements
 
