@@ -21,11 +21,11 @@
           {
             "group": "Solutions",
             "pages": [
+              "solutions/payment-service-providers",
               "solutions/wallets-and-wallet-providers",
               "solutions/multichain-apps",
               "solutions/chains",
-              "solutions/commerce-and-payments",
-              "solutions/payment-service-providers"
+              "solutions/commerce-and-payments"
             ]
           },
           {
