@@ -1,6 +1,6 @@
 ---
 title: "Payment Service Providers"
-description: "Accept and disburse any asset, on any chain, settled in the currency you run on"
+description: "Accept and disburse any asset, on any supported chain, settled in the currency you run on"
 ---
 
 Relay lets payment service providers add universal onchain acceptance and payouts through a single integration. Consumers and businesses can spend any onchain currency they hold, and Relay routes and converts to your chosen asset and chain.
@@ -9,15 +9,15 @@ Relay lets payment service providers add universal onchain acceptance and payout
 
 ### Pay-ins or Commerce
 
-Accept funds in any asset on any chain and receive your settlement asset through two integration paths:
+Accept funds in any asset on any [supported chain](/references/api/api_resources/supported-chains) and receive your settlement asset through two integration paths:
 
 [Connected or embedded wallets](/references/api/get-quote-v2) — Use the standard quote and deposit flow when your user connects a wallet. Deposits are optionally [gasless](/features/gasless-execution), with [fixed or market rates](/features/price-stabilization).
 
-[Deposit addresses](/features/deposit-addresses) — Static addresses that let users pay without connecting a wallet, including from surfaces that don't support wallet connections, such as centralized exchanges. Funds sent to the address are routed and converted to your settlement asset automatically.
+[Deposit addresses](/features/deposit-addresses) — Generate an address for each order or reusable route so users can pay without connecting a wallet, including from surfaces that don't support wallet connections, such as centralized exchanges. Funds sent to the address are routed and converted to your settlement asset automatically.
 
 ### Disbursements
 
-Run pay-ins in reverse to send funds out — marketplace seller payouts, creator and worker disbursements, and cross-border payouts — to any chain and asset from your settlement balance, through the same integration.
+Run pay-ins in reverse to send funds out — marketplace seller payouts, creator and worker disbursements, and cross-border payouts — to any supported chain and asset from your settlement balance, through the same integration.
 
 ## Compliance & Screening
 
