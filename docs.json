@@ -16,7 +16,7 @@
         "groups": [
           {
             "group": "Introduction",
-            "pages": ["what-is-relay"]
+            "pages": ["what-is-relay", "how-relay-works"]
           },
           {
             "group": "Solutions",

@@ -1,103 +1,39 @@
 ---
 title: What is Relay?
-description: "Enterprise-Grade Onchain Payments Infrastructure"
+description: "Enterprise-grade onchain payments infrastructure"
 ---
 
-Relay is a multichain payments network, designed to make swapping and transacting across 100s of chains delightfully simple. Since launching in 2024, Relay has served **5M users**, processed **50M transactions**, and driven **$5B+ in volume** across **85+ networks**.
+Relay is payments infrastructure that brings the convenience and confidence of fiat rails onchain. Integrate once to reach every chain, with execution enterprises can rely on and the tooling to build the experience your users expect.
 
-It combines two core components:
+[Create an account →](https://dashboard.relay.link)
 
-- Instant low cost cross-chain intents, powered by the [Relay Protocol](/references/protocol/overview)
-- Comprehensive DEX Meta-Aggregation across 85 chains
+## Major use cases
 
-This makes Relay a powerful solution for a diverse set of use cases:
-
-<Columns cols={3}>
-  <Card
-    title="Bridging & Onboarding"
-    icon="link"
-    href="/use-cases/bridging"
-    cta="Learn More"
-  >
-    Instant Bridging between 85+ Chains
+<CardGroup cols={2}>
+  <Card title="Accept onchain payments" icon="credit-card" href="/solutions/commerce-and-payments">
+    Let customers pay from supported chains and settle in the asset your application uses.
   </Card>
-  <Card
-    title="Swaps"
-    href="/use-cases/cross-chain-swaps"
-    icon="right-left"
-    cta="Learn More"
-  >
-    Same-chain & Cross-chain Swaps on Every Chain
+  <Card title="Move assets across chains" icon="link" href="/use-cases/bridging">
+    Bridge assets between supported chains through one transaction flow.
   </Card>
-  <Card
-    title="Call Execution"
-    href="/use-cases/calling"
-    icon="hexagon-nodes"
-    cta="Learn More"
-  >
-    Pay for Txs with Tokens on any Chain
+  <Card title="Add swaps" icon="repeat" href="/use-cases/cross-chain-swaps">
+    Exchange assets on the same chain or across different chains.
   </Card>
-</Columns>
+  <Card title="Execute crosschain calls" icon="hexagon-nodes" href="/use-cases/calling">
+    Let users take an action on one chain and pay with assets from another.
+  </Card>
+</CardGroup>
 
-To see Relay in action, and test supported routes, try the [Relay App](https://relay.link/bridge).
+## Start integrating
 
-To start building, check out the [Quickstart Guide](/references/api/quickstart).
-
----
-
-## The Relay Stack
-
-Built as a full-stack solution for every layer of the multichain payments experience:
-
-### Relay App
-
-**For everyone who wants to swap tokens across chains** - The fastest way to go from any token to any token across chains. Swap ETH on Ethereum for SOL on Solana in one transaction — built on the same infrastructure that powers enterprise customers.
-
-[Try the App](https://relay.link/)
-
-### Relay API
-
-**For developers building multichain experiences** - One integration, 75+ chains, zero complexity. Abstract the hardest parts of multichain development:
-
-- **Bridge instantly** between chains with predictable fees
-- **Swap seamlessly** using meta-aggregation across all major DEXs
-- **Deliver payments-grade UX** with gas sponsorship, guaranteed rates, and SLAs
-
-Whether you're building wallets, marketplaces, or consumer apps, Relay makes crosschain payments fast, reliable, and invisible.
-
-[View Documentation](/references/api/overview)
-
-### Relay Protocol
-
-**The network powering it all** - The open system connecting users to relayers who execute onchain actions with maximum capital efficiency. Designed for low gas costs, rapid chain expansion, and enterprise-grade reliability.
-
-[Learn More](/references/protocol/overview)
-
----
-
-## Payments-Grade Reliability
-
-Unlike traditional bridges, Relay delivers the reliability users expect from modern payments:
-
-- **99.9% uptime** across 85+ networks
-- **Fast execution** instead of multi-minute wait times
-- **Automatic redundancy** systems ensuring transactions complete
-- **Clear completion signals** for apps and users
-
----
-
-## Trusted by Leading Teams
-
-**Chain Expansion**: Alchemy, Conduit, and Caldera rely on Relay to provide payment rails to every rollup out of the box.
-
-**Chain Abstraction**: OpenSea powers crosschain mints through Relay so collectors never worry about which chain they're on. Phantom collapses complex swaps into seamless flows.
-
-**Multichain Infrastructure**: Apps like OneBalance route execution through Relay, letting users access opportunities across chains as easily as checking their balance.
-
----
-
-## Get Started
-
-**For Users**: [Try the Relay App](https://relay.link/) to swap any token across any chain instantly.
-
-**For Teams & Developers**: Check out our [Quickstart Guide](/references/api/quickstart) to add multichain payments to your app.
+<CardGroup cols={3}>
+  <Card title="Quickstart" icon="rocket" href="/references/api/quickstart">
+    Get a quote and execute your first transaction.
+  </Card>
+  <Card title="API Reference" icon="brackets-curly" href="/references/api/overview">
+    Explore our complete API reference.
+  </Card>
+  <Card title="Start integrating" icon="message" href="https://dashboard.relay.link">
+    Create an account in the Relay Dashboard.
+  </Card>
+</CardGroup>
