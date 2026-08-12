@@ -78,6 +78,10 @@ const App = () => {
 }
 ```
 
+<Warning>
+The widgets read transaction history from `GET /requests/v3`, which requires a Relay API key. Set **`baseApiUrl`** to a server-side [proxy](/references/api/api-keys#proxy-api) that injects `x-api-key` — do not pass the key from the browser. When `baseApiUrl` points directly at the Relay API, `RelayKitProvider` logs a client-side warning.
+</Warning>
+
 If you're using the `convertViemChainToRelayChain` you'll need to install and import the `@relayprotocol/relay-sdk` to use this function.
 
 ### Styling

@@ -671,7 +671,7 @@ If 1 USDT = 1.0000 USDC, user gets 99.95 USDT, you earn \$0.02 <br/>
 If 1 USDT = 0.9995 USDC, user gets 99.95 USDT, you earn \$0.07 <br/>
 If 1 USDT = 1.0005 USDC, user gets 99.95 USDT, you sponsor \$0.03
 
-Fixed rates is supported for the following tokens: USDC, USDC.e, USDT, USDe, USDH, mUSD, DAI.
+Fixed rates work for all stablecoins that Relay holds as solver currencies — common examples include USDC, USDC.e, USDT, USDe, USDH, mUSD, and DAI. Solver currencies vary by chain: to check which stablecoins are supported on a given chain, call the [chains API](/references/api/get-chains) and inspect that chain's **`solverCurrencies`** array. For example, on MegaETH the solver holds USDT and USDm, so fixed rates work for both.
 
 <CodeGroup>
 ```bash Request

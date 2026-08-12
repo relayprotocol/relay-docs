@@ -21,7 +21,7 @@ import { useWalletClient } from 'wagmi'
 
 ...
 
-const wallet = useWalletClient()
+const { data: wallet } = useWalletClient()
 
 const options = ... //define this based on getQuote options
 
