@@ -70,6 +70,10 @@ Once you're set up, you can begin fast filling requests.
 
 To Fast Fill a request you simply need to call the [Fast Fill API](/references/api/fast-fill) with the request ID of the request you want to fast fill after you've submitted it onchain but before it finalizes. When a fast fill is triggered, the transaction is instantly filled on the destination chain and a hold is placed against your app balance for the fill amount. Once the user's deposit lands onchain and Relay indexes it, the hold is released.
 
+### If the origin deposit never lands
+
+Fast Fill advances the destination funds before Relay confirms the origin deposit. If the deposit never lands, Relay does not release the hold. The sponsoring app bears the loss, and the held amount becomes a permanent debit against its app balance.
+
 ### Example
 
 This example demonstrates the full fast fill flow: getting a quote, submitting the transaction onchain, calling the fast fill API, and monitoring the status.
