@@ -3,6 +3,12 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-08-07 — `failReason` and `refundFailReason` on `GET /intents/status/v3`
+
+**Added** — `GET /intents/status/v3`: the response now includes `failReason` and `refundFailReason`, matching the fields already returned on [`GET /requests/v3`](/references/api/get-requests) and the `request.status.updated` [webhook](/references/api/api_guides/webhooks) / [websocket](/references/api/api_guides/websockets) event. `failReason` returns `"N/A"` on non-failure statuses and the recorded reason (or `"UNKNOWN"`) on `failure`, `fallback`, and `refund` statuses. `refundFailReason` defaults to `"N/A"` when no refund-leg failure is recorded. Integrators polling status can now read these values directly without a follow-up call to `GET /requests/v3`. See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors) for the full enum.
+
+**Added** — `GET /intents/status/v3`, `GET /requests/v3`, and the `request.status.updated` webhook: the `refundFailReason` enum gains **`MANUAL_REFUND_REQUIRED`**, returned when the refund leg could not be automatically executed and requires manual intervention (for example, when the origin funds cannot be programmatically returned to the depositor).
+
 ## 2026-08-06 — `data.apiKeyName` on `GET /requests/v3`
 
 **Added** — `GET /requests/v3`: the response `data` object now includes `apiKeyName`, the display name of the API key that created the request. It is returned only when the caller authenticates with an API key belonging to the request's owning integrator and passes `includeAuthenticatedData=true` — the same gate as `data.referrer` and `data.platformFee`. `null` when the owning API key has no name set. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
@@ -26,6 +32,16 @@ description: "Record of breaking changes, deprecations, and notable additions to
 ## 2026-07-30 — `route.actual.origin` reflects the observed deposit when no fill occurred
 
 **Behavior change** — `GET /requests/v3`: for requests where an origin deposit was observed on-chain but no fill was ever attempted (for example, a double-spent Bitcoin deposit that fails before solve), `data.route.actual.origin.inputCurrency` now reflects the actual deposited amount and currency instead of mirroring `data.route.quoted.origin.inputCurrency`. `data.route.actual.origin.outputCurrency` is `null` in this case — no fill occurred, so no output currency was observed — and `data.route.actual.destination` continues to fall back to `data.route.quoted.destination`. Previously the entire `data.route.actual` object silently mirrored `data.route.quoted` on these rows, hiding the real deposit amount from integrators reading the actual-side fields. Requests that reached a fill attempt are unaffected.
+
+## 2026-07-30 — TON inbound `inTxs[].txHash` now an explorer-ready hex hash
+
+**Behavior change** — `GET /requests/v3`: for TON-origin requests, `data.inTxs[].txHash` is now the bare 64-character hex transaction hash, suitable for opening on Tonviewer at `/transaction/{TX_HASH}`. Previously this field returned an internal composite identifier that had to be parsed before it could be linked to an explorer. Non-TON origins and `data.outTxs[]` are unaffected. This mirrors the fix previously shipped for [`GET /requests/v2`](/references/api/get-requests-v2) on 2026-06-19.
+
+## 2026-07-28 — Reasonless quote failures classified into specific error codes
+
+**Behavior change** — `POST /quote`, `POST /quote/v2`, and `POST /price`: transient failures that previously collapsed into a generic `500` with `errorCode: "UNKNOWN_ERROR"` are now classified. Transient infrastructure failures (including raw transport timeouts) return `503` with `errorCode: "SERVICE_UNAVAILABLE"`, transient price-feed failures return `503` with `errorCode: "PRICE_FETCH_FAILED"`, and quote requests for token pairs that cannot be priced return `400` with `errorCode: "UNSUPPORTED_CURRENCY"`. Only genuinely unclassified failures still return `500 UNKNOWN_ERROR`. Both `503` codes are retryable — see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
+**Added** — `POST /quote`, `POST /quote/v2`, and `POST /price`: the response `errorCode` enum gains `SERVICE_UNAVAILABLE` and `PRICE_FETCH_FAILED` for transient upstream failures where the request should be retried.
 
 ## 2026-07-28 — Higher elevated rate limit for `GET /requests/v3`
 
