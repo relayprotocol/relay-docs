@@ -33,6 +33,10 @@ description: "Record of breaking changes, deprecations, and notable additions to
 
 **Behavior change** — `GET /requests/v3`: for requests where an origin deposit was observed on-chain but no fill was ever attempted (for example, a double-spent Bitcoin deposit that fails before solve), `data.route.actual.origin.inputCurrency` now reflects the actual deposited amount and currency instead of mirroring `data.route.quoted.origin.inputCurrency`. `data.route.actual.origin.outputCurrency` is `null` in this case — no fill occurred, so no output currency was observed — and `data.route.actual.destination` continues to fall back to `data.route.quoted.destination`. Previously the entire `data.route.actual` object silently mirrored `data.route.quoted` on these rows, hiding the real deposit amount from integrators reading the actual-side fields. Requests that reached a fill attempt are unaffected.
 
+## 2026-07-30 — TON inbound `inTxs[].txHash` now an explorer-ready hex hash
+
+**Behavior change** — `GET /requests/v3`: for TON-origin requests, `data.inTxs[].txHash` is now the bare 64-character hex transaction hash, suitable for opening on Tonviewer at `/transaction/{TX_HASH}`. Previously this field returned an internal composite identifier that had to be parsed before it could be linked to an explorer. Non-TON origins and `data.outTxs[]` are unaffected. This mirrors the fix previously shipped for [`GET /requests/v2`](/references/api/get-requests-v2) on 2026-06-19.
+
 ## 2026-07-28 — Higher elevated rate limit for `GET /requests/v3`
 
 **Added** — `GET /requests/v3`: the elevated per-key rate limit is now **20 requests per second**, up from the previously shared 10 rps bucket. `GET /requests` and `GET /requests/v2` continue at 10 rps. Default (non-elevated) limits are unchanged. See [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits).
