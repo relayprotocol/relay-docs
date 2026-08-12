@@ -114,9 +114,17 @@ If you are just getting started, run the instance first in shadow mode: it signs
 
 A single oracle can answer requests on its own, and the service also supports peering across multiple oracle instances to collect corroborating signatures.
 
-When an incoming request sets `requestPeerSignatures=true` and `PEERS` is configured, the oracle starts its local attestation and every configured peer request concurrently. The first response group whose canonical unsigned payload accumulates the configured number of unique allowlisted signatures is returned. The local oracle is not privileged, so a quorum can be satisfied entirely by remote peers.
+When an incoming request sets `requestPeerSignatures=true` and `PEERS` is configured, the oracle starts its local attestation and every configured peer request concurrently. The first response group whose unsigned payload accumulates the configured number of unique allowlisted signatures is returned. The local oracle is not privileged, so a quorum can be satisfied entirely by remote peers.
 
-Responses are combined only when their complete unsigned payloads and signing metadata match. The resolver rejects aggregation across differing attestation payloads, differing signing domains, differing array ordering, duplicate signers, non-allowlisted signers, multi-message responses where a signer is missing from any signature array, or responses that fail the endpoint schema.
+Responses are combined only when their unsigned payloads and signing metadata match. The oracle rejects aggregation across:
+
+- Differing attestation payloads.
+- Differing signing domains.
+- Differing array ordering.
+- Duplicate signers.
+- Non-allowlisted signers.
+- Multi-message responses where a signer is missing from any signature array.
+- Responses that fail the endpoint schema.
 
 To enable quorum aggregation, define an allowlist of trusted signer addresses and the total number of signatures required:
 
@@ -126,23 +134,37 @@ To enable quorum aggregation, define an allowlist of trusted signer addresses an
 For example, a 2-of-3 configuration is:
 
 ```sh
-ORACLE_SIGNERS=0xOracleOne;0xOracleTwo;0xOracleThree
+ORACLE_SIGNERS=0x1111111111111111111111111111111111111111;0x2222222222222222222222222222222222222222;0x3333333333333333333333333333333333333333
 ORACLE_SIGNERS_THRESHOLD=2
 ```
 
-The service fails to start when:
+The service always fails to start when `ORACLE_SIGNERS_THRESHOLD` is set to something that is not an integer, or to an integer below `1`. This is checked whether or not `ORACLE_SIGNERS` is configured.
 
-- `ORACLE_SIGNERS_THRESHOLD` is not an integer, is less than `1`, or exceeds the number of unique entries in `ORACLE_SIGNERS`.
+When `ORACLE_SIGNERS` is configured, the service also fails to start when:
+
+- `ORACLE_SIGNERS_THRESHOLD` exceeds the number of unique entries in `ORACLE_SIGNERS`.
 - Any entry in `ORACLE_SIGNERS` is not a valid nonzero address.
-- The local signer address is not included in `ORACLE_SIGNERS` (when `ORACLE_SIGNERS` is configured).
+- The local signer address is not included in `ORACLE_SIGNERS`.
 
-<Warning>`ORACLE_SIGNERS_THRESHOLD` is a total signature count. A 2-of-3 oracle configuration uses `ORACLE_SIGNERS_THRESHOLD=2`, not `1`. Existing deployments that previously treated the threshold as an additional-peer count must increment the value together with the application rollout.</Warning>
+When `ORACLE_SIGNERS` is omitted, none of those three checks run and the threshold is ignored for quorum purposes. The service logs a startup warning in that case, so a threshold set without an allowlist enforces nothing.
 
-When `ORACLE_SIGNERS` is omitted, the service preserves compatibility by waiting for the local operation and every configured peer instead of completing early at the threshold, and only peer responses that match the local unsigned result are aggregated.
+<Warning>
+**2026-08-06**: `ORACLE_SIGNERS_THRESHOLD` is now a total signature count, so a 2-of-3 configuration uses `2`, not `1`. It previously counted additional peer signatures and defaulted to `0`, and `0` is now rejected at startup. Deployments that set the value explicitly must raise it together with the application rollout.
+</Warning>
 
-Peer calls remain best-effort. If a peer times out, errors, fails response validation, or does not agree with a signable quorum, it is skipped and a structured warning is emitted. If no group reaches the threshold, the strongest valid partial signed group is returned after all sources settle, and a structured warning records the matched and required signature counts.
+Without the allowlist, the service preserves compatibility by waiting for the local operation and every configured peer instead of completing early at the threshold. Only peer responses that match the local unsigned payload are aggregated.
 
-This allows a new oracle to be introduced in shadow mode without turning peer availability into a hard dependency for each request.
+Peer calls remain best-effort. If a peer times out, errors, fails response validation, or returns a payload that does not match any signable group, it is skipped and a structured warning is emitted.
+
+If no group reaches the threshold, the strongest valid partial group is returned once all sources settle, and a structured warning records the matched and required signature counts.
+
+<Warning>
+A quorum shortfall is not signalled to the caller: a partial group is returned with a normal success response, and the matched count appears only in the oracle's logs. Count the unique signatures in the response yourself if you require a full quorum.
+</Warning>
+
+Treating peer calls as best-effort allows a new oracle to be introduced in shadow mode without turning peer availability into a hard dependency for each request.
+
+Aggregated signatures are consumed onchain by a single authorized signer address, which can be an EIP-1271 contract such as `RelayOracleMultisig`. See [Oracle Contract](/references/protocol/components/oracle#oracle-contract) for how thresholding works on that side.
 
 ## Security and trust model
 
@@ -204,7 +226,7 @@ You can also set:
 HTTP_PORT=3000
 PEERS=https://peer-one.example.com|peer-api-key;https://peer-two.example.com|peer-api-key
 PEER_REQUEST_TIMEOUT_MS=10000
-ORACLE_SIGNERS=0xOracleOne;0xOracleTwo;0xOracleThree
+ORACLE_SIGNERS=0x1111111111111111111111111111111111111111;0x2222222222222222222222222222222222222222;0x3333333333333333333333333333333333333333
 ORACLE_SIGNERS_THRESHOLD=2
 ```
 
@@ -213,8 +235,8 @@ Notes:
 - `HTTP_PORT` is optional if your platform injects `PORT`. The server resolves ports in this order: `HTTP_PORT`, then `PORT`, then `3000`.
 - `API_KEYS` is optional in code, but strongly recommended for any deployment that is reachable over a network.
 - `PEER_REQUEST_TIMEOUT_MS` defaults to `10000`.
-- `ORACLE_SIGNERS` is the semicolon-separated allowlist used to count unique oracle signatures during quorum aggregation. See [Peer oracles and quorum](/references/protocol/guides/third-party-oracle#peer-oracles-and-quorum) for behavior details.
-- `ORACLE_SIGNERS_THRESHOLD` is the total number of unique allowlisted signatures required for a quorum. It defaults to `1` and is validated at startup against the size of `ORACLE_SIGNERS`.
+- `ORACLE_SIGNERS` is the semicolon-separated allowlist used to count unique oracle signatures during quorum aggregation. See [Peer oracles and quorum](#peer-oracles-and-quorum) for behavior details.
+- `ORACLE_SIGNERS_THRESHOLD` is the total number of unique allowlisted signatures required for a quorum. It defaults to `1`, must be an integer of at least `1`, and is validated against the size of `ORACLE_SIGNERS` when that allowlist is configured.
 
 If you use AWS KMS instead of a raw key:
 
