@@ -36,6 +36,7 @@ These are known validation and routing issues that developers should gracefully 
 | `SANCTIONED_CURRENCY`                         | The token involved in the transaction is on a sanctions list.              |
 | `SANCTIONED_WALLET_ADDRESS`                   | The sender or recipient wallet address is sanctioned or blacklisted.       |
 | `SERVICE_UNAVAILABLE`                         | Relay is experiencing a transient infrastructure issue. Retry with backoff. |
+| `SOLANA_TX_TOO_LARGE`                         | The compiled Solana deposit transaction exceeds Solana's 1232-byte wire limit and cannot be signed or broadcast. The response `message` reports the measured size and how many bytes it lands over. See [Solana Support](/references/api/api_guides/solana#transaction-size-optimization). |
 | `SWAP_IMPACT_TOO_HIGH`                        | The swap's price impact exceeds acceptable thresholds.                     |
 | `UNAUTHORIZED`                                | The user is not authenticated or lacks valid authorization.                |
 | `UNSUPPORTED_CHAIN`                           | The specified chain is not supported by the platform.                      |
@@ -89,5 +90,14 @@ These indicate infrastructure or downstream failures and are not common:
   "message": "Destination transaction failed",
   "errorCode": "DESTINATION_TX_FAILED",
   "errorData": "execution reverted"
+}
+```
+
+### Solana Transaction Too Large
+
+```json
+{
+  "message": "Generated Solana transaction is 1416 bytes, 184 over Solana's 1232 byte limit, so it cannot be signed or broadcast.",
+  "errorCode": "SOLANA_TX_TOO_LARGE"
 }
 ```
