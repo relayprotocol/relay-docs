@@ -39,7 +39,7 @@ When a client asks the oracle to attest an event:
 2. It reads chain state from the configured RPC endpoint or chain-specific service.
 3. It builds a protocol message that describes what happened.
 4. It signs the message with its configured signer.
-5. For endpoints that produce execution payloads, it may also collect corroborating signatures from peer oracles.
+5. For endpoints that produce execution payloads, it may also collect signatures from peer oracles.
 6. The caller can then use those signatures in the wider settlement flow.
 
 The service can be run as a single instance or as multiple cooperating instances.
@@ -108,17 +108,19 @@ The signer is used for:
 
 If your instance is meant to participate in active production signing, coordinate signer onboarding with Relay before expecting its signatures to be used downstream.
 
-If you are just getting started, run the instance first in shadow mode: it signs requests and proves operational readiness, but its signatures are not yet relied on for quorum by other operators or onchain.
+If you are just getting started, run the instance first in shadow mode: it signs requests and proves operational readiness, but its signatures are not yet relied on for quorum.
 
 ## Peer oracles and quorum
 
-A single oracle can answer requests on its own, and the service also supports peering across multiple oracle instances to collect corroborating signatures.
+A single oracle can answer requests on its own, and the code also supports peering across multiple oracle instances to collect signatures.
 
-When an incoming request sets `requestPeerSignatures=true` and `PEERS` is configured, the oracle starts its local attestation and every configured peer request concurrently.
+When an incoming request sets `requestPeerSignatures=true` and `PEERS` are configured, the oracle starts its local attestation and every configured peer request concurrently.
 
 When `ORACLE_SIGNERS` is also configured, the first response group whose unsigned payload accumulates the required number of unique allowlisted signatures is returned. The local oracle is not privileged on that path, so a quorum can be satisfied entirely by remote peers.
 
-Responses are combined only when their unsigned payloads and signing metadata match. The oracle rejects aggregation across:
+Responses are combined only when their unsigned payloads and signing metadata match.
+
+The oracle rejects aggregation across:
 
 - Differing attestation payloads.
 - Differing signing domains.
@@ -131,44 +133,32 @@ Responses are combined only when their unsigned payloads and signing metadata ma
 To enable quorum aggregation, define an allowlist of trusted signer addresses and the total number of signatures required:
 
 - `ORACLE_SIGNERS` is a semicolon-separated allowlist of authorized signer addresses.
-- `ORACLE_SIGNERS_THRESHOLD` is the total number of unique allowlisted signatures required for a valid quorum. It defaults to `1`.
+- `ORACLE_SIGNERS_THRESHOLD` is the total number of unique allowlisted signatures required for a valid quorum (defaults to `1`).
 
 Each instance applies its own `ORACLE_SIGNERS` list and never sends it to peers, so operators are not required to configure identical lists. A signature counts only at instances that list its signer, and the signer authorized onchain decides which signatures settlement accepts.
 
-For example, a 2-of-3 configuration is:
+For example, a 2-of-3 configuration looks like this:
 
 ```sh
 ORACLE_SIGNERS=0x1111111111111111111111111111111111111111;0x2222222222222222222222222222222222222222;0x3333333333333333333333333333333333333333
 ORACLE_SIGNERS_THRESHOLD=2
 ```
 
-The service always fails to start when `ORACLE_SIGNERS_THRESHOLD` is set to something that is not an integer, or to an integer below `1`. This is checked whether or not `ORACLE_SIGNERS` is configured.
+The code fails at startup when `ORACLE_SIGNERS_THRESHOLD` is set to something that is not an integer, or to an integer below `1`.
 
-When `ORACLE_SIGNERS` is configured, the service also fails to start when:
+When `ORACLE_SIGNERS` is configured, the code also fails at startup when:
 
 - `ORACLE_SIGNERS_THRESHOLD` exceeds the number of unique entries in `ORACLE_SIGNERS`.
 - Any entry in `ORACLE_SIGNERS` is not a valid nonzero address.
 - The local signer address is not included in `ORACLE_SIGNERS`.
 
-When `ORACLE_SIGNERS` is omitted, none of those three checks run and the threshold is ignored for quorum purposes, so a threshold set without an allowlist enforces nothing. The service logs a startup warning when a threshold is set without the allowlist.
-
-<Warning>
-`ORACLE_SIGNERS_THRESHOLD` counts the local oracle's own signature alongside peer signatures. A threshold of `1` is therefore satisfied by the local signature alone and requires no peer signatures, so a 2-of-3 configuration needs `2`.
-</Warning>
+When `ORACLE_SIGNERS` is omitted, the threshold is ignored for quorum purposes, so a threshold set without an allowlist doesn't enforce anything. The code provides a startup warning when a threshold is set without the allowlist.
 
 Without the allowlist, the service waits for the local operation and every configured peer, bounded by `PEER_REQUEST_TIMEOUT_MS`, instead of completing early at a threshold. Only peer responses that match the local unsigned payload are aggregated, and the request fails if the local attestation fails.
 
-Peer calls remain best-effort. If a peer times out, errors, fails response validation, or returns a payload that does not match any signable group, it is skipped and a structured warning is emitted.
+Peer calls are best-effort attempts. If a peer times out, errors, fails response validation, or returns a payload that does not match any signable group, it is skipped and a warning is emitted.
 
-With an allowlist, if no group reaches the threshold, the strongest valid partial group is returned once all sources settle, and a structured warning records the matched and required signature counts.
-
-<Warning>
-A quorum shortfall is not signalled to the caller: a partial group is returned with a normal success response, and the matched count appears only in the oracle's logs. Count the unique signatures in the response yourself if you require a full quorum.
-</Warning>
-
-Treating peer calls as best-effort allows a new oracle to be introduced in shadow mode without turning peer availability into a hard dependency for each request.
-
-Aggregated signatures are consumed onchain by a single authorized signer address, which can be an EIP-1271 contract such as `RelayOracleMultisig`. See [Oracle Contract](/references/protocol/components/oracle#oracle-contract) for how the signature threshold is checked on that side.
+With an allowlist, if no group reaches the threshold, the strongest valid partial group is returned once all sources settle, and a warning records the matched vs required signature counts.
 
 ## Security and trust model
 
