@@ -3,6 +3,14 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-08-13 — Solana quote size check returns `SOLANA_TX_TOO_LARGE`
+
+**Added** — `POST /quote`, `POST /quote/v2`, and `POST /price`: the response `errorCode` enum gains **`SOLANA_TX_TOO_LARGE`**, returned with `400` when the compiled Solana deposit transaction would exceed Solana's 1232-byte wire limit and cannot be signed or broadcast. The response `message` reports the measured transaction size and how many bytes it lands over, so clients can see how far over the quote is without recompiling the message themselves. See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors) and [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
+
+**Behavior change** — `POST /quote`, `POST /quote/v2`, and `POST /price`: same-chain Solana quotes now reject at quote time when the compiled deposit transaction would exceed 1232 bytes, matching the existing behavior for Solana-origin cross-chain quotes (see the [2026-05-29 entry](#2026-05-29-oversized-solana-aggregator-quotes-reject-at-quote-time)). Previously same-chain oversized quotes returned `200` with steps the wallet could not serialize.
+
+**Behavior change** — `POST /quote`, `POST /quote/v2`, and `POST /price`: the Solana deposit-transaction size gate now enforces the raw **1232-byte** wire limit. Quotes between 1173 and 1232 bytes — valid on the wire as returned — are now accepted, and the previously reserved 60-byte compute-budget headroom is advisory. Clients that prepend compute-budget instructions at send time are responsible for checking their remaining room against the returned steps. This reverses the [2026-07-09 change](#2026-07-09-solana-quote-size-check-reserves-compute-budget-headroom) that had cut the effective quote-time limit to 1172 bytes.
+
 ## 2026-08-07 — `failReason` and `refundFailReason` on `GET /intents/status/v3`
 
 **Added** — `GET /intents/status/v3`: the response now includes `failReason` and `refundFailReason`, matching the fields already returned on [`GET /requests/v3`](/references/api/get-requests) and the `request.status.updated` [webhook](/references/api/api_guides/webhooks) / [websocket](/references/api/api_guides/websockets) event. `failReason` returns `"N/A"` on non-failure statuses and the recorded reason (or `"UNKNOWN"`) on `failure`, `fallback`, and `refund` statuses. `refundFailReason` defaults to `"N/A"` when no refund-leg failure is recorded. Integrators polling status can now read these values directly without a follow-up call to `GET /requests/v3`. See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors) for the full enum.
