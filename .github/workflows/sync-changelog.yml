@@ -1,0 +1,46 @@
+name: Sync Changelog
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "references/api/changelog.mdx"
+      - "scripts/build-changelog.mjs"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-changelog
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Needs read access to relayprotocol/relay-kit and relayprotocol/relay-client.
+      - name: Rebuild changelog.mdx
+        env:
+          GITHUB_TOKEN: ${{ secrets.CHANGELOG_SOURCES_TOKEN }}
+        run: node scripts/build-changelog.mjs
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- changelog.mdx; then
+            echo "No changelog changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add changelog.mdx
+          git commit -m "docs: sync changelog"
+          git push

@@ -252,9 +252,10 @@ Automation design for this flow is intentionally deferred; the current rule is "
 Breaking changes are renames, removals, signature changes, return-shape changes, and endpoint path changes.
 
 - **Edit pages in place.** The page describing the changed surface is updated to reflect the new shape. Do not leave an "old version" trace in-line.
-- **Log in a per-product changelog.** Breaking-change narratives live in the product's changelog, not on the page itself. The changelogs are:
-  - `references/api/changelog.mdx` — for API endpoint changes (create this page; wire into the API Reference nav as a top-level entry).
-  - Future: `references/relay-kit/sdk/changelog.mdx`, `references/relay-kit/ui/changelog.mdx`, etc. — add when the first breaking change in that surface ships.
+- **Log in the product's changelog source.** Breaking-change narratives live in a changelog, not on the page itself. Each product line has one source, and all of them roll up into `changelog.mdx` (§4.6):
+  - `references/api/changelog.mdx` — API endpoint changes, hand-authored in this repo.
+  - `relay-kit` package `CHANGELOG.md` files — written as changesets in that repo, not here.
+  - `relay-client` `.changelog/*.md` entries — written in that repo, not here. This line is curated marketing copy rather than a log of merged PRs, so it is empty by default and the App section is omitted until an entry exists.
 - **Update inbound links.** Any page that referenced the old name / path / signature must be updated in the same PR.
 - **No inline `<Warning>` callout on the updated page.** The changelog is the record. Exception: when the rename has a migration subtlety that every reader must see (e.g. param reordering with silent behavior change), add a one-liner `<Info>` with the date and a pointer to the changelog entry.
 
@@ -278,9 +279,9 @@ Deprecation applies when the old surface continues to exist and work, but is mar
 - If the fix restores documented behavior, no doc update is required.
 - If the fix is invisible to integrators (internal refactor), no doc update is required.
 
-### 4.5 Changelog page format (API only, for now)
+### 4.5 API changelog page format
 
-`references/api/changelog.mdx` is a new page introduced by this guide. Structure:
+`references/api/changelog.mdx` is the API product line's changelog, hand-authored in this repo. It is deliberately kept out of `docs.json` — readers get the API entries through the unified changelog (§4.6), so this page is a source file, not a published surface. Structure:
 
 ```mdx
 ---
@@ -298,6 +299,21 @@ description: "Record of breaking changes, deprecations, and notable additions to
 ```
 
 Entries are newest-first. Each entry is a `##` heading with the date and a one-line summary. Body uses bolded change-type leads (`**Breaking**`, `**Deprecated**`, `**Added**`) on their own lines — matching the bolded-lead pattern already used on use-case pages (§3.2).
+
+The `## YYYY-MM-DD — <summary>` heading shape is parsed by `scripts/build-changelog.mjs`; an entry that deviates from it is silently dropped from the unified changelog.
+
+### 4.6 Unified changelog (`changelog.mdx`)
+
+`changelog.mdx` is generated — **never edit it by hand.** `scripts/build-changelog.mjs` merges the three sources listed in §4.2 into one date-ordered page of Mintlify `<Update>` blocks, and an hourly GitHub Action commits the result. It is its own tab in `docs.json` (`navigation.tabs`), alongside Overview, API Reference, RelayKit, and Relay Protocol. Because the tab holds this page alone, the page sets `mode: "center"` so no single-item sidebar renders.
+
+- Each day renders as one `<Update>` with `### API` / `### RelayKit` / `### App` sections.
+- Entry text is reproduced verbatim from its source. Fix wording upstream, not here.
+- **API and App changes group by change type across the whole day** — one `**Breaking**` / `**Deprecated**` / `**Behavior change**` / `**Added**` list per day, not per source entry, so a day reads as "here is what was added, here is what changed". Ordering comes from `CHANGE_TYPE_ORDER`; a type that is not listed there still renders, after the known ones. Source entry titles are dropped, and an API paragraph with no bolded type lead is folded into the change above it.
+- RelayKit versions are dated by npm publish time. Changeset bullets that only say "Updated dependencies" are dropped, and one changeset spanning several packages collapses into a single item naming each package.
+- **Filtering is custom.** Mintlify's own changelog filters render in the table of contents, which `mode: "center"` hides. Instead, `enhanceChangelogPage()` in `script.js` binds the tags Mintlify already renders under each date (`[data-component-part="update-tag"]`, from the `tags={[…]}` prop): click one to narrow to that product line, click it again to clear, several tags OR together, and the selection round-trips through `?tags=`. `style.css` gives those spans their chip look and active state. Filtering and the scroll reveal share one visibility pass, so a filter always shows a full batch of matching days rather than whatever happened to be revealed. Both hang off Mintlify's `data-component-part` attributes — if an upgrade renames them, the filter and the reveal silently stop working, so re-check them after a Mintlify bump.
+- **The page carries the full history** (currently back to 2024-02-05) and renders all of it. At ~275 days that is roughly 5.8k DOM elements and 28KB gzipped, so there is nothing to gain from paginating or lazily revealing it — and hiding entries would break browser find, which is the main way to locate something on a page with no table of contents. Revisit only if it grows several times over; splitting by year into separate pages would beat client-side fetching, which forfeits RSS, search indexing, and the contextual copy/markdown menu. Set `CHANGELOG_SINCE` to truncate.
+- RelayKit dates come from both npm scopes — `@relayprotocol` for anything after the 2025-08-16 rename, `@reservoir0x` before it — because a version dated by neither cannot be placed on the page at all.
+- Regenerate locally with `node scripts/build-changelog.mjs`; `--check` fails when the committed page is stale.
 
 ---
 
