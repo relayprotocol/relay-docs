@@ -10,12 +10,12 @@ The Relay Oracle attests to the onchain facts that drive Relay Protocol settleme
 
 ## What the Relay Oracle is
 
-The Relay Oracle is the service that attests to onchain facts used by the Relay Protocol settlement flow.
+Relay Oracle is the oracle service that attests to onchain facts used by the Relay Protocol settlement flow.
 
 It is:
 
-- An operationally stateless HTTP service.
-- A Dockerized service that exposes an HTTP API.
+- An operationally stateless oracle service.
+- A Dockerized oracle service that exposes an HTTP API.
 - A signer that produces authenticated messages and execution signatures.
 - A verifier that reads chain state from RPC endpoints and chain-specific APIs.
 
@@ -42,11 +42,11 @@ When a client asks the oracle to attest an event:
 5. For endpoints that produce execution payloads, it may also collect signatures from peer oracles.
 6. The caller can then use those signatures in the wider settlement flow.
 
-The service can be run as a single instance or as multiple cooperating instances.
+The oracle service can be run as a single instance or as multiple cooperating instances.
 
-## What the service actually does
+## What the oracle service actually does
 
-The service exposes HTTP endpoints for:
+The oracle service exposes HTTP endpoints for:
 
 - Health checks.
 - Chain discovery.
@@ -96,7 +96,7 @@ That means your real deployment depends on the quality of the RPC and service en
 
 Each running instance uses one configured signer.
 
-The service supports two signing modes:
+The oracle service supports two signing modes:
 
 - `raw-private-key`
 - `aws-kms`
@@ -112,7 +112,7 @@ If you are just getting started, run the instance first in shadow mode: it signs
 
 ## Peer oracles and quorum
 
-A single oracle can answer requests on its own, and the Relay Oracle service also supports peering across multiple oracle instances to collect signatures.
+A single oracle can answer requests on its own, and the oracle service also supports peering across multiple oracle instances to collect signatures.
 
 When an incoming request sets `requestPeerSignatures=true` and `PEERS` is configured, the oracle starts its local attestation and every configured peer request concurrently.
 
@@ -175,7 +175,7 @@ The oracle is stateless, but its signer is security-critical. If the signing key
 
 ## Infrastructure requirements
 
-You should run the oracle as a Dockerized service on a platform that can run a Docker container and expose an HTTP service.
+You should run the oracle service on a platform that can run a Docker container and expose it over HTTP.
 
 For most third-party operators, Railway should be treated as the preferred starting point. It is the recommended default when you want the simplest path to running a single external oracle instance.
 
@@ -194,7 +194,7 @@ You need:
 - Stable inbound access from callers and peer oracles.
 - Secure secret storage for signing material and API keys.
 
-Because the service is stateless, scaling horizontally is possible. In practice, the biggest operational constraints are uptime, RPC quality, and signer security.
+Because the oracle service is stateless, scaling horizontally is possible. In practice, the biggest operational constraints are uptime, RPC quality, and signer security.
 
 If you already operate production container infrastructure, another platform can be a valid choice. If not, default to Railway.
 
@@ -301,7 +301,7 @@ You do not need to expose internal provider choices publicly. You only need to e
 
 ## Authentication
 
-When `API_KEYS` is set, the service requires a valid `x-api-key` header for all protected routes.
+When `API_KEYS` is set, the oracle service requires a valid `x-api-key` header for all protected routes.
 
 These routes remain accessible without an API key:
 
@@ -349,17 +349,17 @@ The safest way to bring up a new third-party oracle is:
 2. Provision RPC and chain-service endpoints.
 3. Deploy the container on Railway first unless you already have an established alternative platform.
 4. Verify health and chain loading.
-5. Protect the service with API keys.
-6. Expose the service over HTTPS.
+5. Protect the oracle service with API keys.
+6. Expose the oracle service over HTTPS.
 7. Configure peering and receive live requests in shadow mode.
 8. Run long enough to observe stability, latency, and RPC usage.
 9. Only then consider onboarding the signer for active participation.
 
 This order lets you validate the infrastructure and chain dependencies before your signer becomes operationally important.
 
-## Running the service
+## Running the oracle service
 
-Build and run the service as a Docker container:
+Build and run the oracle service as a Docker container:
 
 ```sh
 docker build -t relay-protocol-oracle .
@@ -368,7 +368,7 @@ docker run --rm -p 3000:3000 --env-file .env relay-protocol-oracle
 
 The container entrypoint also loads secrets from `/vault/secrets` when present, which is useful for secret-injection systems.
 
-If your platform builds from source automatically, the important requirement is still the same: the service should be deployed and run as the repository's Docker image, with the required environment variables injected at runtime.
+If your platform builds from source automatically, the important requirement is still the same: the oracle service should be deployed and run as the repository's Docker image, with the required environment variables injected at runtime.
 
 ## First-run verification checklist
 
@@ -377,7 +377,7 @@ After deployment, verify:
 - `GET /lives/v1` returns `{"status":"ok"}`.
 - `GET /chains/v1` returns the chains expected for your selected `ENVIRONMENT` when called with a valid `x-api-key` if `API_KEYS` is configured.
 - `GET /documentation` loads the Swagger UI.
-- Your logs show the service started successfully.
+- Your logs show the oracle service started successfully.
 - Your logs show the signer address you expect, and that address matches one of the entries in `ORACLE_SIGNERS` if the allowlist is configured.
 
 Then test at least one real attestation flow, using a valid `x-api-key` if `API_KEYS` is configured.
