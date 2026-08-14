@@ -150,21 +150,18 @@ function ancestorsOf(element) {
 // container from two entries keeps this off Mintlify's class names without walking the tree
 // once per entry.
 function collectEntries(tagLists) {
-  if (tagLists.length < 2) {
-    return [...tagLists].map((list) => ({
-      element: list.parentElement || list,
-      tags: tagsOf(list),
-    }));
-  }
-
   const first = ancestorsOf(tagLists[0]);
   const last = new Set(ancestorsOf(tagLists[tagLists.length - 1]));
   const container = first.find((node) => last.has(node));
 
   return [...tagLists].map((list) => {
     let element = list;
-    while (element.parentElement && element.parentElement !== container) {
-      element = element.parentElement;
+    // Climbing without a container to stop at would run to <html>, and hiding that blanks
+    // the page — so fall back to filtering nothing.
+    if (container && container !== list && container.contains(list)) {
+      while (element.parentElement && element.parentElement !== container) {
+        element = element.parentElement;
+      }
     }
     return { element, tags: tagsOf(list) };
   });
@@ -183,7 +180,10 @@ function applyChangelogFilter() {
   }
 
   for (const chip of document.querySelectorAll(TAG)) {
-    chip.dataset.clActive = String(changelog.active.has(chip.textContent.trim()));
+    const isActive = changelog.active.has(chip.textContent.trim());
+    chip.dataset.clActive = String(isActive);
+    // The active state is otherwise only conveyed by colour.
+    chip.setAttribute("aria-pressed", String(isActive));
   }
 
   const url = new URL(window.location.href);
@@ -200,9 +200,16 @@ function applyChangelogFilter() {
 
 function enhanceChangelogPage() {
   const tagLists = document.querySelectorAll(TAG_LIST);
-  if (!tagLists.length) return;
+  // Below two entries there is no timeline container to derive and nothing worth filtering.
+  if (tagLists.length < 2) return;
 
-  if (!changelog || changelog.count !== tagLists.length) {
+  // A re-mount can swap every node while leaving the count intact, which would leave the
+  // cache pointing at detached elements and filtering silently doing nothing.
+  if (
+    !changelog ||
+    changelog.count !== tagLists.length ||
+    !changelog.entries[0].element.isConnected
+  ) {
     changelog = {
       count: tagLists.length,
       entries: collectEntries(tagLists),

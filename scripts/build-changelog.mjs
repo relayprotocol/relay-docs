@@ -10,7 +10,7 @@
 // Usage: node scripts/build-changelog.mjs [--check]
 
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -19,8 +19,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(ROOT, 'changelog.mdx')
 const API_CHANGELOG = join(ROOT, 'references', 'api', 'changelog.mdx')
 
-// Unset means the full history of every source — ~275 days is around 5.8k DOM elements and
-// 28KB gzipped, so the whole page renders at once. Set it to truncate.
+// Unset means the full history of every source. At ~272 days the deployed page is 113KB
+// gzipped and ~10.4k DOM elements; see AGENTS.md §4.6 before letting it grow much further.
 const SINCE = process.env.CHANGELOG_SINCE ?? '0000-00-00'
 const CHECK = process.argv.includes('--check')
 
@@ -84,6 +84,11 @@ const APP_CHANGE_TYPES = {
 }
 
 const warnings = []
+const clones = []
+
+process.on('exit', () => {
+  for (const dir of clones) rmSync(dir, { recursive: true, force: true })
+})
 
 function warn(message) {
   warnings.push(message)
@@ -99,24 +104,44 @@ function resolveRepo(name, envVar) {
   }
 
   const token = process.env.GITHUB_TOKEN
+  if (!token && process.env.CI) {
+    throw new Error(`GITHUB_TOKEN is empty — CI cannot clone ${name} over ssh. Check CHANGELOG_SOURCES_TOKEN.`)
+  }
+
   const url = token
     ? `https://x-access-token:${token}@github.com/relayprotocol/${name}.git`
     : `git@github.com:relayprotocol/${name}.git`
-  const target = join(mkdtempSync(join(tmpdir(), 'relay-changelog-')), name)
+  const parent = mkdtempSync(join(tmpdir(), 'relay-changelog-'))
+  clones.push(parent)
+  const target = join(parent, name)
   execFileSync('git', ['clone', '--quiet', '--depth=1', '--filter=blob:none', url, target], { stdio: 'inherit' })
   return target
 }
 
+// A failed lookup must not fall through to "this package has no releases" — that would
+// delete its history from the page and commit the deletion. Retry, then give up loudly.
 async function registryDates(pkg) {
-  const res = await fetch(`https://registry.npmjs.org/${pkg.replace('/', '%2F')}`)
-  if (res.status === 404) return {}
-  if (!res.ok) throw new Error(`npm registry returned ${res.status} for ${pkg}`)
-  const { time } = await res.json()
-  return Object.fromEntries(
-    Object.entries(time)
-      .filter(([version]) => version !== 'created' && version !== 'modified')
-      .map(([version, iso]) => [version, iso.slice(0, 10)])
-  )
+  const url = `https://registry.npmjs.org/${pkg.replace('/', '%2F')}`
+
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url)
+      if (res.status === 404) return {}
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+      const { time } = await res.json()
+      if (!time) throw new Error('response has no "time" field')
+
+      return Object.fromEntries(
+        Object.entries(time)
+          .filter(([version]) => version !== 'created' && version !== 'modified')
+          .map(([version, iso]) => [version, iso.slice(0, 10)])
+      )
+    } catch (error) {
+      if (attempt === 3) throw new Error(`npm registry lookup failed for ${pkg}: ${error.message}`)
+      await new Promise((resolve) => setTimeout(resolve, attempt * 500))
+    }
+  }
 }
 
 // Versions before the 2025-08-16 rename were published under @reservoir0x, so dating the
@@ -144,8 +169,12 @@ function parseApiChangelog(markdown) {
   matches.forEach((match, index) => {
     const start = match.index + match[0].length
     const end = index + 1 < matches.length ? matches[index + 1].index : body.length
-    // Same-page anchors in the source resolve against the API changelog, not this page.
-    const entryBody = body.slice(start, end).trim().replaceAll('](#', '](/references/api/changelog#')
+    // Source anchors are "#<date>-<slug>"; Mintlify gives each Update an id of just the
+    // date, so trimming the slug keeps cross-references on this page.
+    const entryBody = body
+      .slice(start, end)
+      .trim()
+      .replace(/\]\(#(\d{4}-\d{2}-\d{2})[^)]*\)/g, '](#$1)')
     entries.push({
       date: match[1],
       section: 'API',
@@ -278,7 +307,15 @@ async function collectRelayKitEntries(repoDir) {
     }
 
     const dates = await npmPublishDates(pkg.npm)
-    const releases = parseChangesetChangelog(readFileSync(path, 'utf8'))
+    // Canary builds (0.0.0-canary-*) are published to npm but are not releases a reader
+    // could install, so no prerelease version reaches the page.
+    const releases = parseChangesetChangelog(readFileSync(path, 'utf8')).filter(
+      (release) => !release.version.includes('-')
+    )
+
+    if (releases.length > 0 && Object.keys(dates).length === 0) {
+      throw new Error(`no npm publish dates for ${pkg.npm} — refusing to drop its history from the page`)
+    }
 
     // An undated version above the newest dated one is unpublished or a failed publish —
     // worth flagging, unlike the pre-rename versions further down the file.
@@ -319,11 +356,19 @@ function collectAppEntries(repoDir) {
     .filter((entry) => entry !== null && entry.date >= SINCE)
 }
 
-// Upstream text is plain markdown, so a stray `<` or `{` would break the MDX build.
+// Upstream text is plain markdown, so a stray `<` or `{` would break the MDX build. Fenced
+// blocks are split off first — escaping inside one renders the backslashes literally.
 function escapeMdx(text) {
   return text
-    .split(/(`[^`\n]*`)/)
-    .map((part, index) => (index % 2 === 1 ? part : part.replace(/[<{]/g, '\\$&')))
+    .split(/(```[\s\S]*?```)/)
+    .map((block, blockIndex) =>
+      blockIndex % 2 === 1
+        ? block
+        : block
+            .split(/(`[^`\n]*`)/)
+            .map((part, index) => (index % 2 === 1 ? part : part.replace(/[<{]/g, '\\$&')))
+            .join('')
+    )
     .join('')
 }
 
@@ -335,14 +380,33 @@ function indentBullet(text) {
 }
 
 function compareVersions(a, b) {
-  const parse = (version) => version.split(/[.-]/).map((part) => (/^\d+$/.test(part) ? Number(part) : part))
+  const parse = (version) => {
+    const [core, prerelease] = version.split('-', 2)
+    return {
+      core: core.split('.').map(Number),
+      // Absent prerelease outranks any prerelease: 1.2.0 > 1.2.0-beta.1.
+      prerelease: prerelease ? prerelease.split('.').map((part) => (/^\d+$/.test(part) ? Number(part) : part)) : null
+    }
+  }
+
   const left = parse(a)
   const right = parse(b)
-  for (let i = 0; i < Math.max(left.length, right.length); i++) {
-    if (left[i] === right[i]) continue
-    if (left[i] === undefined) return -1
-    if (right[i] === undefined) return 1
-    return left[i] < right[i] ? -1 : 1
+
+  for (let i = 0; i < 3; i++) {
+    if (left.core[i] !== right.core[i]) return left.core[i] < right.core[i] ? -1 : 1
+  }
+
+  if (!left.prerelease && !right.prerelease) return 0
+  if (!left.prerelease) return 1
+  if (!right.prerelease) return -1
+
+  for (let i = 0; i < Math.max(left.prerelease.length, right.prerelease.length); i++) {
+    const l = left.prerelease[i]
+    const r = right.prerelease[i]
+    if (l === r) continue
+    if (l === undefined) return -1
+    if (r === undefined) return 1
+    return l < r ? -1 : 1
   }
   return 0
 }
@@ -433,7 +497,7 @@ function renderPage(entries) {
   return `${frontmatter}\n${blocks.join('\n\n')}\n`
 }
 
-const relayKitDir = resolveRepo('relay-kit', 'RELAY_KIT_DIR', ['relay-kit', 'relay-sdk'])
+const relayKitDir = resolveRepo('relay-kit', 'RELAY_KIT_DIR')
 const relayClientDir = resolveRepo('relay-client', 'RELAY_CLIENT_DIR')
 
 const entries = [

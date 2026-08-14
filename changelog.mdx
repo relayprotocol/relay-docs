@@ -27,8 +27,8 @@ mode: "center"
 
 **Behavior change**
 
-- `POST /quote`, `POST /quote/v2`, and `POST /price`: same-chain Solana quotes now reject at quote time when the compiled deposit transaction would exceed 1232 bytes, matching the existing behavior for Solana-origin cross-chain quotes (see the [2026-05-29 entry](/references/api/changelog#2026-05-29-oversized-solana-aggregator-quotes-reject-at-quote-time)). Previously same-chain oversized quotes returned `200` with steps the wallet could not serialize.
-- `POST /quote`, `POST /quote/v2`, and `POST /price`: the Solana deposit-transaction size gate now enforces the raw **1232-byte** wire limit. Quotes between 1173 and 1232 bytes — valid on the wire as returned — are now accepted, and the previously reserved 60-byte compute-budget headroom is advisory. Clients that prepend compute-budget instructions at send time are responsible for checking their remaining room against the returned steps. This reverses the [2026-07-09 change](/references/api/changelog#2026-07-09-solana-quote-size-check-reserves-compute-budget-headroom) that had cut the effective quote-time limit to 1172 bytes.
+- `POST /quote`, `POST /quote/v2`, and `POST /price`: same-chain Solana quotes now reject at quote time when the compiled deposit transaction would exceed 1232 bytes, matching the existing behavior for Solana-origin cross-chain quotes (see the [2026-05-29 entry](#2026-05-29)). Previously same-chain oversized quotes returned `200` with steps the wallet could not serialize.
+- `POST /quote`, `POST /quote/v2`, and `POST /price`: the Solana deposit-transaction size gate now enforces the raw **1232-byte** wire limit. Quotes between 1173 and 1232 bytes — valid on the wire as returned — are now accepted, and the previously reserved 60-byte compute-budget headroom is advisory. Clients that prepend compute-budget instructions at send time are responsible for checking their remaining room against the returned steps. This reverses the [2026-07-09 change](#2026-07-09) that had cut the effective quote-time limit to 1172 bytes.
 
 **Added**
 
@@ -1327,20 +1327,6 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-08-22" tags={["SDK", "UI Kit", "Hooks", "Adapters"]}>
-
-### RelayKit
-
-**SDK `0.0.0-canary-20250822183549`, UI Kit `0.0.0-canary-20250822183549`, Hooks `0.0.0-canary-20250822183549`, Bitcoin adapter `0.0.0-canary-20250822183549`, Ethers adapter `0.0.0-canary-20250822183549`, SVM adapter `0.0.0-canary-20250822183549`** — Patch
-
-- Fix Unverified modal buttons
-
-**SDK `0.0.0-canary-20250822181909`, UI Kit `0.0.0-canary-20250822181909`, Hooks `0.0.0-canary-20250822181909`, Bitcoin adapter `0.0.0-canary-20250822181909`, Ethers adapter `0.0.0-canary-20250822181909`, SVM adapter `0.0.0-canary-20250822181909`** — Patch
-
-- Implement final share link
-
-</Update>
-
 <Update label="2025-08-21" tags={["UI Kit"]}>
 
 ### RelayKit
@@ -1351,13 +1337,9 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-08-20" tags={["SDK", "UI Kit", "Hooks", "Adapters"]}>
+<Update label="2025-08-20" tags={["SDK", "UI Kit", "Hooks"]}>
 
 ### RelayKit
-
-**SDK `0.0.0-canary-20250820191554`, UI Kit `0.0.0-canary-20250820191554`, Hooks `0.0.0-canary-20250820191554`, Bitcoin adapter `0.0.0-canary-20250820191554`, Ethers adapter `0.0.0-canary-20250820191554`, SVM adapter `0.0.0-canary-20250820191554`** — Patch
-
-- Sync with main branch
 
 **SDK `2.4.1`, UI Kit `2.17.4`, Hooks `1.12.1`** — Patch
 
@@ -1385,27 +1367,13 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-08-14" tags={["SDK", "UI Kit", "Hooks", "Adapters"]}>
+<Update label="2025-08-14" tags={["UI Kit"]}>
 
 ### RelayKit
-
-**SDK `0.0.0-canary-20250814020954`, UI Kit `0.0.0-canary-20250814020954`, Hooks `0.0.0-canary-20250814020954`, Bitcoin adapter `0.0.0-canary-20250814020954`, Ethers adapter `0.0.0-canary-20250814020954`, SVM adapter `0.0.0-canary-20250814020954`** — Patch
-
-- Rebuild canary build
 
 **UI Kit `2.17.1`** — Patch
 
 - Disable protocol v2 on solana
-
-</Update>
-
-<Update label="2025-08-13" tags={["SDK", "UI Kit"]}>
-
-### RelayKit
-
-**SDK `0.0.0-canary-20250813132716`, UI Kit `0.0.0-canary-20250813132716`** — Minor
-
-- Update theme to better match Relay brand
 
 </Update>
 
