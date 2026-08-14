@@ -10,12 +10,12 @@ The Relay Oracle attests to the onchain facts that drive Relay Protocol settleme
 
 ## What the Relay Oracle is
 
-The Relay Oracle is the service that attests to onchain facts used by the Relay Protocol settlement flow.
+Relay Oracle is the oracle service that attests to onchain facts used by the Relay Protocol settlement flow.
 
 It is:
 
-- An operationally stateless HTTP service.
-- A Dockerized service that exposes an HTTP API.
+- An operationally stateless oracle service.
+- A Dockerized oracle service that exposes an HTTP API.
 - A signer that produces authenticated messages and execution signatures.
 - A verifier that reads chain state from RPC endpoints and chain-specific APIs.
 
@@ -39,14 +39,14 @@ When a client asks the oracle to attest an event:
 2. It reads chain state from the configured RPC endpoint or chain-specific service.
 3. It builds a protocol message that describes what happened.
 4. It signs the message with its configured signer.
-5. For endpoints that produce execution payloads, it may also collect corroborating signatures from peer oracles.
+5. For endpoints that produce execution payloads, it may also collect signatures from peer oracles.
 6. The caller can then use those signatures in the wider settlement flow.
 
-The service can be run as a single instance or as multiple cooperating instances.
+The oracle service can be run as a single instance or as multiple cooperating instances.
 
-## What the service actually does
+## What the oracle service actually does
 
-The service exposes HTTP endpoints for:
+The oracle service exposes HTTP endpoints for:
 
 - Health checks.
 - Chain discovery.
@@ -96,7 +96,7 @@ That means your real deployment depends on the quality of the RPC and service en
 
 Each running instance uses one configured signer.
 
-The service supports two signing modes:
+The oracle service supports two signing modes:
 
 - `raw-private-key`
 - `aws-kms`
@@ -112,21 +112,51 @@ If you are just getting started, run the instance first in shadow mode: it signs
 
 ## Peer oracles and quorum
 
-A single oracle can answer requests on its own, and the code also supports peering across multiple oracle instances.
+A single oracle can answer requests on its own, and the oracle service also supports peering across multiple oracle instances to collect signatures.
 
-For execution-producing endpoints, an oracle can fan out the same request to configured peer oracles and aggregate their signatures when:
+When an incoming request sets `requestPeerSignatures=true` and `PEERS` is configured, the oracle starts its local attestation and every configured peer request concurrently.
 
-- The incoming request sets `requestPeerSignatures=true`.
-- Peer URLs are configured in `PEERS`.
-- A peer agrees with the local oracle's assessment for that request.
+When `ORACLE_SIGNERS` is also configured, the oracle service returns early when a response group reaches the configured threshold of unique allowlisted signatures. The local oracle is not privileged on that path, so a quorum can be satisfied entirely by remote peers.
 
-Important operational behavior:
+The oracle service combines responses only when their attestation payloads, signing domains, and non-signature array order match. It skips responses that fail the endpoint schema.
 
-- Peer calls are best-effort.
-- If a peer times out, returns an error, or does not agree with the local result, that peer is skipped.
-- One bad peer does not fail the whole request path.
+During aggregation, the oracle service excludes duplicate signatures, signatures from non-allowlisted signers when `ORACLE_SIGNERS` is configured, and signers missing from any signature array in a multi-message response.
 
-This allows a new oracle to be introduced in shadow mode without turning peer availability into a hard dependency for each request.
+To enable quorum aggregation, define an allowlist of trusted signer addresses and an early-return signature target:
+
+- `ORACLE_SIGNERS` is a semicolon-separated allowlist of authorized signer addresses.
+- `ORACLE_SIGNERS_THRESHOLD` is the target number of unique allowlisted signatures for early return (defaults to `1`). It does not prevent the oracle service from returning fewer signatures.
+
+Each instance applies its own `ORACLE_SIGNERS` list and never sends it to peers, so operators are not required to configure identical lists. A signature counts only at instances that list its signer, and the signer authorized onchain decides which signatures settlement accepts.
+
+`ORACLE_SIGNERS_THRESHOLD` counts the local oracle's signature along with peer signatures. A threshold of `1` can be met by the local oracle alone, so a 2-of-3 configuration uses `2`.
+
+<Warning>
+`ORACLE_SIGNERS_THRESHOLD` controls early return but does not enforce quorum. During peer aggregation, Relay Oracle can return the strongest valid partial group with a success response when no group reaches the threshold, and logs the matched and required counts. Callers must verify the unique allowlisted signature count before relying on the response, and operators should alert on quorum-shortfall warnings.
+</Warning>
+
+For example, a 2-of-3 configuration looks like this:
+
+```sh
+ORACLE_SIGNERS=0x1111111111111111111111111111111111111111;0x2222222222222222222222222222222222222222;0x3333333333333333333333333333333333333333
+ORACLE_SIGNERS_THRESHOLD=2
+```
+
+The oracle service fails at startup when `ORACLE_SIGNERS_THRESHOLD` is not an integer or is less than `1`.
+
+When `ORACLE_SIGNERS` is configured, the oracle service also fails at startup when:
+
+- `ORACLE_SIGNERS_THRESHOLD` exceeds the number of unique entries in `ORACLE_SIGNERS`.
+- Any entry in `ORACLE_SIGNERS` is not a valid nonzero address.
+- The local signer address is not included in `ORACLE_SIGNERS`.
+
+When `ORACLE_SIGNERS` is omitted, the threshold is ignored for quorum purposes, so a threshold set without an allowlist doesn't enforce anything. The oracle service logs a startup warning when a threshold is set without the allowlist.
+
+Without the allowlist, the oracle service waits for the local operation and every configured peer, bounded by `PEER_REQUEST_TIMEOUT_MS`, instead of completing early at a threshold. Only peer responses that match the local unsigned payload are aggregated, and the request fails if the local attestation fails.
+
+With an allowlist, a failed local attestation is logged but does not by itself fail the request. The oracle service can return a full or partial response using only allowlisted peer signatures. If the local attestation fails, the request fails only when no valid allowlisted group is available.
+
+Peer calls are best-effort attempts. If a peer times out, errors, fails response validation, or returns a payload that does not match any signable group, it is skipped and a warning is emitted.
 
 ## Security and trust model
 
@@ -136,16 +166,16 @@ Minimum security expectations:
 
 - Use a dedicated signing key that is not shared with any other oracle.
 - Prefer a hardened key-management approach. `aws-kms` is supported; if you use raw keys, store them in a real secret manager.
-- Require API keys on your public endpoints.
+- Enforce access control at an API gateway or reverse proxy when public access is not intended.
 - Use HTTPS for any publicly reachable deployment.
-- Use dedicated peer API keys when exchanging traffic with other oracle operators.
+- Use dedicated peer API keys so peer traffic bypasses the unauthenticated rate limit.
 - Restrict management access to the host platform and secret storage.
 
 The oracle is stateless, but its signer is security-critical. If the signing key is compromised, the instance should be treated as compromised immediately.
 
 ## Infrastructure requirements
 
-You should run the oracle as a Dockerized service on a platform that can run a Docker container and expose an HTTP service.
+You should run the oracle service on a platform that can run a Docker container and expose it over HTTP.
 
 For most third-party operators, Railway should be treated as the preferred starting point. It is the recommended default when you want the simplest path to running a single external oracle instance.
 
@@ -164,7 +194,7 @@ You need:
 - Stable inbound access from callers and peer oracles.
 - Secure secret storage for signing material and API keys.
 
-Because the service is stateless, scaling horizontally is possible. In practice, the biggest operational constraints are uptime, RPC quality, and signer security.
+Because the oracle service is stateless, scaling horizontally is possible. In practice, the biggest operational constraints are uptime, RPC quality, and signer security.
 
 If you already operate production container infrastructure, another platform can be a valid choice. If not, default to Railway.
 
@@ -186,15 +216,22 @@ You can also set:
 
 ```sh
 HTTP_PORT=3000
+UNAUTHENTICATED_RATE_LIMIT_MAX=2
+UNAUTHENTICATED_RATE_LIMIT_WINDOW_MS=1000
 PEERS=https://peer-one.example.com|peer-api-key;https://peer-two.example.com|peer-api-key
-PEER_REQUEST_TIMEOUT_MS=5000
+PEER_REQUEST_TIMEOUT_MS=10000
+ORACLE_SIGNERS=0x1111111111111111111111111111111111111111;0x2222222222222222222222222222222222222222;0x3333333333333333333333333333333333333333
+ORACLE_SIGNERS_THRESHOLD=2
 ```
 
 Notes:
 
 - `HTTP_PORT` is optional if your platform injects `PORT`. The server resolves ports in this order: `HTTP_PORT`, then `PORT`, then `3000`.
-- `API_KEYS` is optional in code, but strongly recommended for any deployment that is reachable over a network.
-- `PEER_REQUEST_TIMEOUT_MS` defaults to `5000`.
+- `API_KEYS` defines keys that bypass the unauthenticated rate limit and authorize the `force` option on solver fill and refund attestations.
+- `UNAUTHENTICATED_RATE_LIMIT_MAX` and `UNAUTHENTICATED_RATE_LIMIT_WINDOW_MS` default to `2` requests per `1000` ms.
+- `PEER_REQUEST_TIMEOUT_MS` defaults to `10000`.
+- `ORACLE_SIGNERS` is the semicolon-separated allowlist used to count unique oracle signatures during quorum aggregation.
+- `ORACLE_SIGNERS_THRESHOLD` sets the target number of unique allowlisted signatures for early return. It defaults to `1`, must be an integer of at least `1`, and is validated against the size of `ORACLE_SIGNERS` when that allowlist is configured. It does not prevent a successful response with fewer signatures.
 
 If you use AWS KMS instead of a raw key:
 
@@ -265,16 +302,23 @@ You do not need to expose internal provider choices publicly. You only need to e
 - Hyperliquid and Bitcoin commonly need supplemental services, not just a single RPC URL.
 - When adding or removing supported chains, recheck the required environment variables before deploying.
 
-## Authentication
+## Authentication and rate limiting
 
-When `API_KEYS` is set, the service requires a valid `x-api-key` header for all protected routes.
+Requests without a valid `x-api-key` remain publicly accessible but are rate limited. Valid API keys bypass this limit.
 
-These routes remain accessible without an API key:
+The oracle service applies one fixed-window limit per client IP across all routes except:
 
-- `/documentation`
-- `/lives/v1`
+- `/`
+- `/documentation` and its subpaths
+- `/lives/*`
 
-`/chains/v1` and all attestation endpoints should be treated as protected endpoints in a real deployment.
+The default limit is `2` requests per `1000` ms for each oracle process. Requests over the limit receive a `429` response with rate-limit and `retry-after` headers.
+
+<Warning>
+`API_KEYS` does not enforce access control for `/chains/v1` or the attestation endpoints. If these routes must not be public, enforce authentication at an API gateway, reverse proxy, or firewall.
+</Warning>
+
+The `force` option on solver fill and refund attestations is an exception and requires a valid API key.
 
 `API_KEYS` uses this format:
 
@@ -304,7 +348,7 @@ Each entry is:
 If Relay-managed oracles need to call your instance, the usual pattern is:
 
 1. You expose a stable public HTTPS URL.
-2. You create a dedicated incoming API key for peer traffic.
+2. You create a dedicated incoming API key so peer traffic bypasses the unauthenticated rate limit.
 3. Relay adds your URL and that key to the `PEERS` list used by its oracle instances.
 
 ## Recommended deployment sequence
@@ -315,17 +359,17 @@ The safest way to bring up a new third-party oracle is:
 2. Provision RPC and chain-service endpoints.
 3. Deploy the container on Railway first unless you already have an established alternative platform.
 4. Verify health and chain loading.
-5. Protect the service with API keys.
-6. Expose the service over HTTPS.
+5. Configure API keys for trusted callers, and add edge access controls if unauthenticated public access is not intended.
+6. Expose the oracle service over HTTPS.
 7. Configure peering and receive live requests in shadow mode.
 8. Run long enough to observe stability, latency, and RPC usage.
 9. Only then consider onboarding the signer for active participation.
 
 This order lets you validate the infrastructure and chain dependencies before your signer becomes operationally important.
 
-## Running the service
+## Running the oracle service
 
-Build and run the service as a Docker container:
+Build and run the oracle service as a Docker container:
 
 ```sh
 docker build -t relay-protocol-oracle .
@@ -334,19 +378,19 @@ docker run --rm -p 3000:3000 --env-file .env relay-protocol-oracle
 
 The container entrypoint also loads secrets from `/vault/secrets` when present, which is useful for secret-injection systems.
 
-If your platform builds from source automatically, the important requirement is still the same: the service should be deployed and run as the repository's Docker image, with the required environment variables injected at runtime.
+If your platform builds from source automatically, the important requirement is still the same: the oracle service should be deployed and run as the repository's Docker image, with the required environment variables injected at runtime.
 
 ## First-run verification checklist
 
 After deployment, verify:
 
 - `GET /lives/v1` returns `{"status":"ok"}`.
-- `GET /chains/v1` returns the chains expected for your selected `ENVIRONMENT` when called with a valid `x-api-key` if `API_KEYS` is configured.
+- `GET /chains/v1` returns the chains expected for your selected `ENVIRONMENT`. A valid `x-api-key` bypasses the unauthenticated rate limit.
 - `GET /documentation` loads the Swagger UI.
-- Your logs show the service started successfully.
-- Your logs show the signer address you expect.
+- Your logs show the oracle service started successfully.
+- Your logs show the signer address you expect, and that address matches one of the entries in `ORACLE_SIGNERS` if the allowlist is configured.
 
-Then test at least one real attestation flow, using a valid `x-api-key` if `API_KEYS` is configured.
+Then test at least one real attestation flow. Use a valid `x-api-key` to bypass the unauthenticated rate limit.
 
 ## Operational monitoring
 
@@ -355,6 +399,7 @@ At minimum, monitor:
 - Container restarts.
 - Request latency.
 - Error rate by endpoint.
+- Unauthenticated `429` responses.
 - Peer timeout and peer mismatch warnings.
 - RPC provider failures and rate limits.
 - Memory and CPU consumption.
