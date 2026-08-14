@@ -116,20 +116,20 @@ A single oracle can answer requests on its own, and the oracle service also supp
 
 When an incoming request sets `requestPeerSignatures=true` and `PEERS` is configured, the oracle starts its local attestation and every configured peer request concurrently.
 
-When `ORACLE_SIGNERS` is also configured, the first response group whose unsigned payload accumulates the required number of unique allowlisted signatures is returned. The local oracle is not privileged on that path, so a quorum can be satisfied entirely by remote peers.
+When `ORACLE_SIGNERS` is also configured, the oracle service returns early when a response group reaches the configured threshold of unique allowlisted signatures. The local oracle is not privileged on that path, so a quorum can be satisfied entirely by remote peers.
 
 The oracle service combines responses only when their attestation payloads, signing domains, and non-signature array order match. It skips responses that fail the endpoint schema.
 
 During aggregation, the oracle service excludes duplicate signatures, signatures from non-allowlisted signers when `ORACLE_SIGNERS` is configured, and signers missing from any signature array in a multi-message response.
 
-To enable quorum aggregation, define an allowlist of trusted signer addresses and the total number of signatures required:
+To enable quorum aggregation, define an allowlist of trusted signer addresses and an early-return signature target:
 
 - `ORACLE_SIGNERS` is a semicolon-separated allowlist of authorized signer addresses.
-- `ORACLE_SIGNERS_THRESHOLD` is the total number of unique allowlisted signatures required for a valid quorum (defaults to `1`).
+- `ORACLE_SIGNERS_THRESHOLD` is the target number of unique allowlisted signatures for early return (defaults to `1`). It does not prevent the oracle service from returning fewer signatures.
 
 Each instance applies its own `ORACLE_SIGNERS` list and never sends it to peers, so operators are not required to configure identical lists. A signature counts only at instances that list its signer, and the signer authorized onchain decides which signatures settlement accepts.
 
-`ORACLE_SIGNERS_THRESHOLD` counts the local oracle's signature along with peer signatures. A threshold of `1` can be met by the local oracle alone, so a 2-of-3 configuration requires `2`.
+`ORACLE_SIGNERS_THRESHOLD` counts the local oracle's signature along with peer signatures. A threshold of `1` can be met by the local oracle alone, so a 2-of-3 configuration uses `2`.
 
 <Warning>
 `ORACLE_SIGNERS_THRESHOLD` controls early return but does not enforce quorum. During peer aggregation, Relay Oracle can return the strongest valid partial group with a success response when no group reaches the threshold, and logs the matched and required counts. Callers must verify the unique allowlisted signature count before relying on the response, and operators should alert on quorum-shortfall warnings.
@@ -228,7 +228,7 @@ Notes:
 - `API_KEYS` is optional in code, but strongly recommended for any deployment that is reachable over a network.
 - `PEER_REQUEST_TIMEOUT_MS` defaults to `10000`.
 - `ORACLE_SIGNERS` is the semicolon-separated allowlist used to count unique oracle signatures during quorum aggregation.
-- `ORACLE_SIGNERS_THRESHOLD` is the total number of unique allowlisted signatures required for a quorum. It defaults to `1`, must be an integer of at least `1`, and is validated against the size of `ORACLE_SIGNERS` when that allowlist is configured.
+- `ORACLE_SIGNERS_THRESHOLD` sets the target number of unique allowlisted signatures for early return. It defaults to `1`, must be an integer of at least `1`, and is validated against the size of `ORACLE_SIGNERS` when that allowlist is configured. It does not prevent a successful response with fewer signatures.
 
 If you use AWS KMS instead of a raw key:
 
