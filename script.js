@@ -171,6 +171,16 @@ function tagsOf(list) {
   return [...list.querySelectorAll(TAG)].map((tag) => tag.textContent.trim());
 }
 
+// The query string is the source of truth for which filters are on, so a shared link, a
+// back/forward step, and a click on the Changelog tab all land on the filter they name.
+function activeTagsFromUrl() {
+  return new Set(
+    (new URLSearchParams(window.location.search).get("tags") || "")
+      .split(",")
+      .filter(Boolean),
+  );
+}
+
 function applyChangelogFilter() {
   for (const entry of changelog.entries) {
     const matches =
@@ -213,11 +223,7 @@ function enhanceChangelogPage() {
     changelog = {
       count: tagLists.length,
       entries: collectEntries(tagLists),
-      active: new Set(
-        (new URLSearchParams(window.location.search).get("tags") || "")
-          .split(",")
-          .filter(Boolean),
-      ),
+      active: activeTagsFromUrl(),
     };
   }
 
@@ -259,11 +265,15 @@ function onPageChange() {
     pageObserver = null;
   }
 
-  // Toggling a filter rewrites the query string, which fires this too — only a real page
-  // change should discard the cached entries and the active filter.
+  // Toggling a filter rewrites the query string, which fires this too, so only a real page
+  // change discards the cached entries. A query-only change still has to be honoured: the
+  // URL decides which filters are on, or a shared link and back/forward would both be
+  // overwritten by whatever was last clicked.
   if (path !== lastPath) {
     changelog = null;
     lastPath = path;
+  } else if (changelog) {
+    changelog.active = activeTagsFromUrl();
   }
 
   if (path.includes("/references/api/get-quote-v2")) {
