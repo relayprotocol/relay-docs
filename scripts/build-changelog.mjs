@@ -24,6 +24,12 @@ const API_CHANGELOG = join(ROOT, 'references', 'api', 'changelog.mdx')
 const SINCE = process.env.CHANGELOG_SINCE ?? '0000-00-00'
 const CHECK = process.argv.includes('--check')
 
+// relay-kit is public, so the commit hash changesets records on each bullet can be linked.
+// Its changesets config is `@changesets/cli/changelog`, which writes a bare hash rather than
+// the PR/commit links `@changesets/changelog-github` would produce — hence building the URL
+// here. The commit page names the PR it came from, so one link covers both.
+const RELAY_KIT_COMMIT_URL = 'https://github.com/relayprotocol/relay-kit/commit'
+
 const SECTION_ORDER = ['API', 'RelayKit', 'App']
 const TAG_ORDER = ['API', 'SDK', 'UI Kit', 'Hooks', 'Adapters', 'App']
 
@@ -216,12 +222,14 @@ function parseChangesetChangelog(markdown) {
   let release = null
   let kind = null
   let bullet = null
+  let commit = null
 
   const flushBullet = () => {
     if (!bullet) return
     const text = bullet.join('\n').trimEnd()
-    if (text && !/^Updated dependencies\b/.test(text)) release.changes.push({ kind, text })
+    if (text && !/^Updated dependencies\b/.test(text)) release.changes.push({ kind, text, commit })
     bullet = null
+    commit = null
   }
 
   for (const line of lines) {
@@ -244,14 +252,17 @@ function parseChangesetChangelog(markdown) {
 
     if (/^- /.test(line)) {
       flushBullet()
-      bullet = [line.replace(/^- /, '').replace(/^[0-9a-f]{7,40}: /, '')]
+      const body = line.replace(/^- /, '')
+      const hash = body.match(/^([0-9a-f]{7,40}): /)
+      commit = hash ? hash[1] : null
+      bullet = [hash ? body.slice(hash[0].length) : body]
       continue
     }
 
-    // Continuation lines of the current bullet are indented by two spaces.
-    if (bullet && (line.trim() === '' || /^\s{2,}/.test(line))) {
-      bullet.push(line.replace(/^ {2}/, ''))
-    }
+    // Everything up to the next bullet or heading continues the current one. Requiring an
+    // indent here would silently drop lazily-continued, tab-indented, and single-space
+    // lines, truncating the release note mid-sentence.
+    if (bullet) bullet.push(line.replace(/^(\t| {1,2})/, ''))
   }
 
   flushBullet()
@@ -372,6 +383,13 @@ function escapeMdx(text) {
     .join('')
 }
 
+// The link belongs on the summary line, not after any nested bullets that follow it.
+function withCommitLink(text, commit) {
+  if (!commit) return text
+  const [summary, ...rest] = text.split('\n')
+  return [`${summary} ([\`${commit}\`](${RELAY_KIT_COMMIT_URL}/${commit}))`, ...rest].join('\n')
+}
+
 function indentBullet(text) {
   return text
     .split('\n')
@@ -439,7 +457,9 @@ function renderRelayKit(entries) {
   for (const entry of entries) {
     for (const change of entry.changes) {
       const key = `${change.kind} ${change.text}`
-      if (!groups.has(key)) groups.set(key, { kind: change.kind, text: change.text, packages: new Map() })
+      if (!groups.has(key)) {
+        groups.set(key, { kind: change.kind, text: change.text, commit: change.commit, packages: new Map() })
+      }
       // A package can publish twice in a day; credit the newest version carrying the change.
       const seen = groups.get(key).packages.get(entry.label)
       if (!seen || compareVersions(entry.version, seen) > 0) groups.get(key).packages.set(entry.label, entry.version)
@@ -449,7 +469,7 @@ function renderRelayKit(entries) {
   return [...groups.values()]
     .map((group) => {
       const packages = [...group.packages].map(([label, version]) => `${label} \`${version}\``)
-      const body = indentBullet(escapeMdx(group.text))
+      const body = indentBullet(withCommitLink(escapeMdx(group.text), group.commit))
       return `**${packages.join(', ')}** — ${group.kind}\n\n${body}`
     })
     .join('\n\n')
