@@ -103,7 +103,7 @@ Parameter tables are the dominant structured element on reference pages.
 - Keep cell descriptions concise; move long explanations into prose below the table.
 - `Required` column uses ✅ / ❌. **Only include the `Required` column when the table has a mix of required and optional params** — if everything is required (or everything is optional), omit the column entirely. Use a compound value like `✅ (❌ if X)` when requirement is conditional.
 - Precede every parameter table with a one-line intro sentence ("Arguments:" / "Parameters:" are acceptable, but a full sentence reads better).
-- When the table intentionally shows only a subset of parameters, call that out in the intro sentence and link to the full reference (e.g. "The most commonly used parameters are below; see [<full ref>](/...) for the complete list.").
+- When the table intentionally shows only a subset of parameters, call that out in the intro sentence and link to the full reference (e.g. "The most commonly used parameters are below; see [`<full ref>`](/...) for the complete list.").
 
 ### 2.8 Code examples
 
