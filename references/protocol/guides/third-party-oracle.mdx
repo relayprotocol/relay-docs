@@ -166,9 +166,9 @@ Minimum security expectations:
 
 - Use a dedicated signing key that is not shared with any other oracle.
 - Prefer a hardened key-management approach. `aws-kms` is supported; if you use raw keys, store them in a real secret manager.
-- Require API keys on your public endpoints.
+- Enforce access control at an API gateway or reverse proxy when public access is not intended.
 - Use HTTPS for any publicly reachable deployment.
-- Use dedicated peer API keys when exchanging traffic with other oracle operators.
+- Use dedicated peer API keys so peer traffic bypasses the unauthenticated rate limit.
 - Restrict management access to the host platform and secret storage.
 
 The oracle is stateless, but its signer is security-critical. If the signing key is compromised, the instance should be treated as compromised immediately.
@@ -216,6 +216,8 @@ You can also set:
 
 ```sh
 HTTP_PORT=3000
+UNAUTHENTICATED_RATE_LIMIT_MAX=2
+UNAUTHENTICATED_RATE_LIMIT_WINDOW_MS=1000
 PEERS=https://peer-one.example.com|peer-api-key;https://peer-two.example.com|peer-api-key
 PEER_REQUEST_TIMEOUT_MS=10000
 ORACLE_SIGNERS=0x1111111111111111111111111111111111111111;0x2222222222222222222222222222222222222222;0x3333333333333333333333333333333333333333
@@ -225,7 +227,8 @@ ORACLE_SIGNERS_THRESHOLD=2
 Notes:
 
 - `HTTP_PORT` is optional if your platform injects `PORT`. The server resolves ports in this order: `HTTP_PORT`, then `PORT`, then `3000`.
-- `API_KEYS` is optional in code, but strongly recommended for any deployment that is reachable over a network.
+- `API_KEYS` defines keys that bypass the unauthenticated rate limit and authorize the `force` option on solver fill and refund attestations.
+- `UNAUTHENTICATED_RATE_LIMIT_MAX` and `UNAUTHENTICATED_RATE_LIMIT_WINDOW_MS` default to `2` requests per `1000` ms.
 - `PEER_REQUEST_TIMEOUT_MS` defaults to `10000`.
 - `ORACLE_SIGNERS` is the semicolon-separated allowlist used to count unique oracle signatures during quorum aggregation.
 - `ORACLE_SIGNERS_THRESHOLD` sets the target number of unique allowlisted signatures for early return. It defaults to `1`, must be an integer of at least `1`, and is validated against the size of `ORACLE_SIGNERS` when that allowlist is configured. It does not prevent a successful response with fewer signatures.
@@ -299,16 +302,23 @@ You do not need to expose internal provider choices publicly. You only need to e
 - Hyperliquid and Bitcoin commonly need supplemental services, not just a single RPC URL.
 - When adding or removing supported chains, recheck the required environment variables before deploying.
 
-## Authentication
+## Authentication and rate limiting
 
-When `API_KEYS` is set, the oracle service requires a valid `x-api-key` header for all protected routes.
+Requests without a valid `x-api-key` remain publicly accessible but are rate limited. Valid API keys bypass this limit.
 
-These routes remain accessible without an API key:
+The oracle service applies one fixed-window limit per client IP across all routes except:
 
-- `/documentation`
-- `/lives/v1`
+- `/`
+- `/documentation` and its subpaths
+- `/lives/*`
 
-`/chains/v1` and all attestation endpoints should be treated as protected endpoints in a real deployment.
+The default limit is `2` requests per `1000` ms for each oracle process. Requests over the limit receive a `429` response with rate-limit and `retry-after` headers.
+
+<Warning>
+`API_KEYS` does not enforce access control for `/chains/v1` or the attestation endpoints. If these routes must not be public, enforce authentication at an API gateway, reverse proxy, or firewall.
+</Warning>
+
+The `force` option on solver fill and refund attestations is an exception and requires a valid API key.
 
 `API_KEYS` uses this format:
 
@@ -338,7 +348,7 @@ Each entry is:
 If Relay-managed oracles need to call your instance, the usual pattern is:
 
 1. You expose a stable public HTTPS URL.
-2. You create a dedicated incoming API key for peer traffic.
+2. You create a dedicated incoming API key so peer traffic bypasses the unauthenticated rate limit.
 3. Relay adds your URL and that key to the `PEERS` list used by its oracle instances.
 
 ## Recommended deployment sequence
@@ -349,7 +359,7 @@ The safest way to bring up a new third-party oracle is:
 2. Provision RPC and chain-service endpoints.
 3. Deploy the container on Railway first unless you already have an established alternative platform.
 4. Verify health and chain loading.
-5. Protect the oracle service with API keys.
+5. Configure API keys for trusted callers, and add edge access controls if unauthenticated public access is not intended.
 6. Expose the oracle service over HTTPS.
 7. Configure peering and receive live requests in shadow mode.
 8. Run long enough to observe stability, latency, and RPC usage.
@@ -375,12 +385,12 @@ If your platform builds from source automatically, the important requirement is 
 After deployment, verify:
 
 - `GET /lives/v1` returns `{"status":"ok"}`.
-- `GET /chains/v1` returns the chains expected for your selected `ENVIRONMENT` when called with a valid `x-api-key` if `API_KEYS` is configured.
+- `GET /chains/v1` returns the chains expected for your selected `ENVIRONMENT`. A valid `x-api-key` bypasses the unauthenticated rate limit.
 - `GET /documentation` loads the Swagger UI.
 - Your logs show the oracle service started successfully.
 - Your logs show the signer address you expect, and that address matches one of the entries in `ORACLE_SIGNERS` if the allowlist is configured.
 
-Then test at least one real attestation flow, using a valid `x-api-key` if `API_KEYS` is configured.
+Then test at least one real attestation flow. Use a valid `x-api-key` to bypass the unauthenticated rate limit.
 
 ## Operational monitoring
 
@@ -389,6 +399,7 @@ At minimum, monitor:
 - Container restarts.
 - Request latency.
 - Error rate by endpoint.
+- Unauthenticated `429` responses.
 - Peer timeout and peer mismatch warnings.
 - RPC provider failures and rate limits.
 - Memory and CPU consumption.
