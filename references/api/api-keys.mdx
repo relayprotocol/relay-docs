@@ -42,7 +42,7 @@ The following limits apply per API key:
 
 ## Elevated Rate Limits
 
-Higher limits are available on request, applied per key:
+Higher limits are available on request. The standard production upgrade raises a key from the default 50 requests per minute to the elevated limits below. Relay applies an upgrade to the complete API key, not to an individual endpoint such as `/quote`.
 
 | Endpoint               | Limit                   |
 | ---------------------- | ----------------------- |
@@ -54,7 +54,7 @@ Higher limits are available on request, applied per key:
 
 `/requests` and `/requests/v2` share the 10 rps bucket; `/requests/v3` has its own 20 rps bucket.
 
-To request higher limits, get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link).
+To request this upgrade, get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link). Include your production use case, why the current limit is insufficient, your expected average and peak request rates, and the API endpoints you plan to use. Requests above the elevated limits require additional review.
 
 <Tip>
 Already hitting a limit? See [Handling Rate Limits](/references/api/api_core_concepts/handling-rate-limits) for how to recover from `429` responses and reduce your request volume before requesting an upgrade.
