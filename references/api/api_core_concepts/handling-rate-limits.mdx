@@ -19,7 +19,7 @@ Quote traffic is the next place to look. `/quote` carries the tightest default l
 
 Validation belongs on the client too. Amounts below Relay's minimum come back as [`AMOUNT_TOO_LOW`](/references/api/api_core_concepts/handling-errors), so a sub-cent value a user types should fail your own check before it turns into a quote call. Where your interface already knows the user's balance, apply the same treatment to amounts they can't cover.
 
-If you poll for status, widen the interval and stop polling once a request reaches a terminal status (`success`, `failure`, or `refund`). When you need many records at once, [`GET /requests/v3`](/references/api/get-requests) retrieves them in a single filtered call instead of one call per request ID.
+If a polling request returns a `429` response, retry with exponential backoff instead of retrying immediately.
 
 ---
 
@@ -37,6 +37,6 @@ Either option eliminates polling for status. Keep a low-frequency reconciliation
 
 ## Request an elevated rate limit
 
-If your workflow is already optimized and you've moved off polling, reach out to our support team to request an elevated rate limit. The standard production upgrade raises a key from 50 requests per minute to 10 requests per second for `/quote`; the [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits) table lists the limits for other endpoints. Relay applies an upgrade to the complete API key, not to an individual endpoint.
+If your workflow is already optimized and you've moved off polling, reach out to our support team to request an elevated rate limit. Elevated limits are applied per key. The [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits) table lists what's available.
 
-Get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link). Tell us the label of the API key as it appears in the Dashboard rather than the key itself, your production use case, why the current limit is insufficient, your expected average and peak request rates, and every endpoint you plan to use. Requests above the elevated limits require additional review.
+Get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link). Tell us the label of the API key as it appears in the Dashboard rather than the key itself, the endpoints involved, your expected sustained and peak volume in requests per second, and what you've already optimized.
