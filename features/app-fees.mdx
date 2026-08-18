@@ -59,7 +59,9 @@ App fees are supported on the following transaction types:
 
 You can verify that app fees are being collected correctly using the following endpoints:
 
-**Per-transaction:** Use `/requests/v2` which returns both `appFees` (the fee quoted to the user) and `paidAppFees` (the fee actually collected). If `appFees` is present but `paidAppFees` is empty or zero, the fee was not collected for that transaction.
+**Per-transaction (v3):** Call [`GET /requests/v3`](/references/api/get-requests) with your API key and `includeAuthenticatedData=true`. The response's `data.appFees.quoted[]` shows what was quoted to the user and `data.appFees.actual[]` shows what was actually collected — if `quoted` has entries but `actual` is empty or its amounts are zero, the fee was not collected for that transaction. Without `includeAuthenticatedData=true` (or when authenticating with a different integrator's key), the app fee fields are `null`.
+
+**Per-transaction (v2, deprecated):** [`GET /requests/v2`](/references/api/get-requests-v2) returns `appFees` (the fee quoted to the user) and `paidAppFees` (the fee actually collected) on your own requests without an `includeAuthenticatedData` opt-in. v2 is scheduled for [sunset](/references/api/api_guides/migrating-to-requests-v3#sunset-timeline) on November 24, 2026 — migrate to v3.
 
 **Accumulated balance:** Use `/app-fees/{address}/balances` to check your total accumulated app fee balance available for withdrawal.
 
