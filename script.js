@@ -145,6 +145,9 @@ const CONTENT = '[data-component-part="update-content"]';
 // Order the global filter bar follows; mirrors TAG_ORDER in scripts/build-changelog.mjs.
 const TAG_ORDER = ["API", "RelayKit", "SDK", "UI Kit", "Hooks", "Adapters", "App"];
 
+// Breathing room between the bar and whatever parks beneath it.
+const STICKY_GAP = 8;
+
 // A package name followed by a version is an attribution. Anchoring on the version keeps
 // prose that merely mentions "the SDK" from being read as one.
 const ATTRIBUTION = /\b(SDK|UI Kit|Hooks|[A-Z][A-Za-z]* adapter) \d+\.\d+\.\d+/g;
@@ -252,18 +255,45 @@ function matchesTags(tags) {
   return tags.some((tag) => changelog.active.has(tag));
 }
 
+// With no filter there is nothing to decide, so every element this script hides is restored
+// outright. Voting on visibility with an empty filter risks hiding content over a parser
+// mismatch — a worse failure than the filter quietly not working.
+function showEverything() {
+  for (const entry of changelog.entries) {
+    entry.element.style.display = "";
+    for (const section of entry.sections) {
+      section.element.style.display = "";
+      for (const group of section.groups) {
+        if (group.header) group.header.style.display = "";
+        if (group.list) group.list.style.display = "";
+        for (const item of group.items) item.element.style.display = "";
+      }
+    }
+  }
+}
+
 function applyChangelogFilter() {
+  if (changelog.active.size === 0) {
+    showEverything();
+    syncChipState();
+    return;
+  }
+
   for (const entry of changelog.entries) {
     entry.element.style.display = matchesTags(entry.tags) ? "" : "none";
 
     for (const section of entry.sections) {
-      let sectionVisible = false;
+      // A section the parser found no groups in stays visible for the same reason.
+      let sectionVisible = section.groups.length === 0;
 
       for (const group of section.groups) {
         let groupVisible;
         if (group.tags) {
           groupVisible = matchesTags(group.tags);
           for (const item of group.items) item.element.style.display = "";
+        } else if (group.items.length === 0) {
+          // Nothing to go on: the filter narrows, it never guesses.
+          groupVisible = true;
         } else {
           groupVisible = false;
           for (const item of group.items) {
@@ -282,8 +312,13 @@ function applyChangelogFilter() {
     }
   }
 
+  syncChipState();
+}
+
+function syncChipState() {
   for (const chip of document.querySelectorAll(`${TAG}, [data-cl-tag]`)) {
-    const isActive = changelog.active.has(chip.textContent.trim());
+    // Injected chips carry the tag as data; a future label change cannot desync them.
+    const isActive = changelog.active.has(chip.dataset.clTag ?? chip.textContent.trim());
     chip.dataset.clActive = String(isActive);
     // The active state is otherwise only conveyed by colour.
     chip.setAttribute("aria-pressed", String(isActive));
@@ -320,8 +355,11 @@ function activeTagsFromUrl() {
 function bindChip(chip, tag) {
   if (chip.dataset.clBound === "true") return;
   chip.dataset.clBound = "true";
-  chip.setAttribute("role", "button");
-  chip.setAttribute("tabindex", "0");
+  // Mintlify's per-day tags are spans; the injected chips are already buttons.
+  if (chip.tagName !== "BUTTON") {
+    chip.setAttribute("role", "button");
+    chip.setAttribute("tabindex", "0");
+  }
 
   const activate = () => {
     if (tag === null) {
@@ -354,6 +392,8 @@ function buildFilterBar(container) {
 
   const bar = document.createElement("div");
   bar.setAttribute("data-cl-filter-bar", "");
+  bar.setAttribute("role", "group");
+  bar.setAttribute("aria-label", "Filter the changelog by product");
   // Mintlify's own sticky elements use these classes for the page background.
   bar.className = "bg-background-light dark:bg-background-dark";
 
@@ -390,7 +430,7 @@ function positionFilterBar(bar) {
   // calc(), which keeps their value and its unit intact.
   const parent = bar.parentElement;
   const barHeight = Math.round(bar.getBoundingClientRect().height);
-  if (parent && barHeight > 0) parent.style.setProperty("--cl-bar-height", `${barHeight + 8}px`);
+  if (parent && barHeight > 0) parent.style.setProperty("--cl-bar-height", `${barHeight + STICKY_GAP}px`);
 }
 
 function enhanceChangelogPage() {
@@ -405,12 +445,20 @@ function enhanceChangelogPage() {
     changelog.count !== tagLists.length ||
     !changelog.entries[0].element.isConnected
   ) {
+    const container = timelineContainer(tagLists);
     changelog = {
       count: tagLists.length,
-      container: timelineContainer(tagLists),
-      entries: collectEntries(tagLists, timelineContainer(tagLists)),
+      container,
+      entries: collectEntries(tagLists, container),
       active: activeTagsFromUrl(),
     };
+
+    // A shared link naming a tag this page does not carry would otherwise filter everything
+    // away and read as a broken page.
+    const present = new Set(changelog.entries.flatMap((entry) => entry.tags));
+    for (const tag of [...changelog.active]) {
+      if (!present.has(tag)) changelog.active.delete(tag);
+    }
   }
 
   if (changelog.container && changelog.container.parentElement) {

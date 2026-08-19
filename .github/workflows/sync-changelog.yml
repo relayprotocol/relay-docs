@@ -64,6 +64,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # Resolved before the content comparison below: matching content only means "nothing
+          # to do" when a PR is actually open on it. If a previous `gh pr create` failed, or
+          # someone closed the PR and left the branch, the branch is up to date and every later
+          # run would exit green with no PR in existence.
+          state=$(gh pr view "$SYNC_BRANCH" --json state --jq .state 2>/dev/null || echo NONE)
+
           # Rebuilt as main plus one commit every run, so the PR diff is always exactly what is
           # pending — no rebase, no conflict, and no pile of intermediate snapshots to read.
           git checkout -B "$SYNC_BRANCH"
@@ -74,16 +80,17 @@ jobs:
           # The generator is byte-deterministic, so an hour with no upstream change compares
           # equal and pushes nothing. `|| true` because set -e would otherwise kill the job if
           # that branch existed without the file on it.
-          current=$(git rev-parse "HEAD:changelog.mdx")
-          published=$(git rev-parse "origin/$SYNC_BRANCH:changelog.mdx" 2>/dev/null || true)
-          if [ "$current" = "$published" ]; then
-            echo "the open pull request already carries this changelog"
-            exit 0
+          if [ "$state" = "OPEN" ]; then
+            current=$(git rev-parse "HEAD:changelog.mdx")
+            published=$(git rev-parse "origin/$SYNC_BRANCH:changelog.mdx" 2>/dev/null || true)
+            if [ "$current" = "$published" ]; then
+              echo "the open pull request already carries this changelog"
+              exit 0
+            fi
           fi
 
           git push --force origin "$SYNC_BRANCH"
 
-          state=$(gh pr view "$SYNC_BRANCH" --json state --jq .state 2>/dev/null || echo NONE)
           if [ "$state" = "OPEN" ]; then
             echo "updated the open pull request"
             exit 0
