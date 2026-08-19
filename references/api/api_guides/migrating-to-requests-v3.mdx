@@ -324,7 +324,7 @@ Every individual change, grouped by request side and response side.
     | **Search** | `term` (request id, wallet, deposit address, every tx hash), `id`, `orderId`, `depositTxHash`, `fillTxHash`, `refundTxHash` |
     | **Chain** | `originChainId`, `destinationChainId`, `chainId` (either direction), `privateChainsToInclude` |
     | **Address** | `user`, `depositAddress`, `recipient` |
-    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKey`, `requestType` |
+    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKey`, `requestType`, `referrer` |
     | **Currency** | `currencyInChainId`, `currencyOutChainId`, `currencyInAddress`, `currencyOutAddress`, `currencyInSymbol`, `currencyOutSymbol` |
     | **Ranges** | `startTimestamp`, `endTimestamp`, `startBlock`, `endBlock`, `amountUsdMin`/`Max`, `appFeesAmountUsdMin`/`Max`, `fillTimeMin`/`Max` |
     | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData`, `includeTotal` |
@@ -351,9 +351,19 @@ Every individual change, grouped by request side and response side.
 
     <Note>OR groups support identity, address, chain, currency, and status-style fields. Range filters and `features` are top-level only. Null-checks work on any recognised `filters` key, including the composite `user` field and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. `null` cannot be combined with real values in an array for the same key — that returns `400`.</Note>
 
+    **Referrer filtering (owner-scoped).** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Because referrer values are supplied by the caller and are guessable, a referrer filter **must be paired with the top-level `apiKey` parameter**, and every API key you list must belong to the authenticating integrator. Empty `referrer` values are rejected. Requests without the `apiKey` pairing return `400`; requests whose supplied keys are not owned by the caller integrator (or which cannot resolve to an integrator identity) return `403`.
+
+    ```bash
+    # exact referrer match; apiKey pairing scopes the result to your own requests
+    GET /requests/v3?referrer=my-app|user-123&apiKey=YOUR_KEY
+
+    # same requirement when the key appears inside filters (including not:)
+    GET /requests/v3?filters=[{"referrer":"my-app|user-123"}]&apiKey=YOUR_KEY
+    GET /requests/v3?filters=[{"not:referrer":"other-app"}]&apiKey=YOUR_KEY,YOUR_OTHER_KEY
+    ```
+
     **Removed & changed parameters.**
     - `hash` is removed; use `term`, or the targeted `depositTxHash` / `fillTxHash` / `refundTxHash`.
-    - `referrer` is no longer a query parameter; it's still returned in the response, but only when `includeAuthenticatedData=true`.
 
     **Total match count.** Pass `includeTotal=true` to receive the exact total count of matching requests as `total` on the response (independent of `limit` and `continuation`). Omit it — or set `includeTotal=false` — when you only need the current page; computing the total adds meaningful query latency, so it is opt-in.
   </Accordion>
@@ -463,7 +473,7 @@ Every individual change, grouped by request side and response side.
   <Accordion title="Moved, added & nulled fields" icon="arrows-up-down-left-right">
     - `moonpayId` moves from the root to **`data.externalMetadata.moonpayId`**.
     - `sender` is **promoted to the root** (next to `recipient`); it previously lived in `data.metadata.sender`.
-    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It's also no longer a query parameter.
+    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It remains a supported query filter (see [Filtering, search & sorting](#what-changed)) but referrer-filtered queries must pair with the `apiKey` parameter using keys owned by the authenticating integrator.
     - **`refundTo`** (refund target for deposit-address transactions) is **added** at the root.
     - **`requestType`** (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
     - **`features`** (e.g. `gasless_execution`, `fast_fill`, `gas_top_up`, `app_fees`, `deposit_address`) is **added** at the root.
@@ -505,7 +515,7 @@ Every individual change, grouped by request side and response side.
     | `data.subsidizedRequest` / `data.subsidizedFee` | `data.feeSponsorship` |
     | `data.metadata` (catch-all) | `data.route.{quoted,actual}` (`sender` promoted to root) |
     | `data.price` | read `data.route.actual.destination.inputCurrency` |
-    | `referrer` (query parameter) | removed as a filter; still returned in the response when `includeAuthenticatedData=true` |
+    | `referrer` (query parameter, cross-integrator) | supported as an owner-scoped filter; must pair with the `apiKey` parameter using keys owned by the authenticating integrator. Still returned in the response body only when `includeAuthenticatedData=true` |
     | `?hash` | `term` / `depositTxHash` / `fillTxHash` / `refundTxHash` |
     | status `delayed` | `depositing` / `submitted` |
   </Accordion>
@@ -531,7 +541,7 @@ Every individual change, grouped by request side and response side.
 
 <Steps>
   <Step title="Switch the endpoint and headers">
-    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Drop the `referrer` query parameter. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
+    Point requests at `GET /requests/v3` and send `x-api-key` (now required). `referrer` filtering is still supported, but you must now pair it with the `apiKey` parameter using keys owned by your integrator — cross-integrator referrer lookups are no longer possible. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
   </Step>
   <Step title="Update fee reads">
     Stop reading `data.fees.gas` / `feesUsd`. Read the per-component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
