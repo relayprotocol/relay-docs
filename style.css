@@ -389,9 +389,28 @@
     margin-top: 0;
   }
 
-/* Changelog tag filters — Mintlify renders these tags under each date; script.js makes
-   them the filter control (its own filters live in the hidden table of contents). */
-[data-component-part="update-tag"] {
+/* Changelog tag filters — Mintlify renders per-day tags under each date; script.js makes
+   them the filter control and injects a matching sticky bar above the timeline. */
+[data-cl-filter-bar] {
+  position: sticky;
+  /* script.js measures the navbar, since Mintlify exposes no variable for its height. */
+  top: var(--cl-sticky-top, 5rem);
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.dark [data-cl-filter-bar] {
+  border-bottom-color: rgb(55 65 81);
+}
+
+[data-component-part="update-tag"],
+[data-cl-filter-bar] button {
   cursor: pointer;
   padding: 2px 8px;
   border: 1px solid var(--gray-200);
@@ -402,27 +421,44 @@
     background-color 0.15s;
 }
 
+/* The injected chips carry none of Mintlify's type classes, so they set their own. */
+[data-cl-filter-bar] button {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: rgb(107 114 128);
+  background: transparent;
+}
+
 [data-component-part="update-tag"]:hover,
-[data-component-part="update-tag"][data-cl-active="true"] {
+[data-component-part="update-tag"][data-cl-active="true"],
+[data-cl-filter-bar] button:hover,
+[data-cl-filter-bar] button[data-cl-active="true"] {
   border-color: rgb(var(--primary) / var(--tw-text-opacity, 1));
   color: rgb(var(--primary) / var(--tw-text-opacity, 1));
 }
 
-[data-component-part="update-tag"][data-cl-active="true"] {
+[data-component-part="update-tag"][data-cl-active="true"],
+[data-cl-filter-bar] button[data-cl-active="true"] {
   background: rgb(var(--primary) / 0.08);
 }
 
 /* --primary is too dark to read on a dark background; the light tint takes over. */
-.dark [data-component-part="update-tag"] {
+.dark [data-component-part="update-tag"],
+.dark [data-cl-filter-bar] button {
   border-color: rgb(55 65 81);
+  color: rgb(156 163 175);
 }
 
 .dark [data-component-part="update-tag"]:hover,
-.dark [data-component-part="update-tag"][data-cl-active="true"] {
+.dark [data-component-part="update-tag"][data-cl-active="true"],
+.dark [data-cl-filter-bar] button:hover,
+.dark [data-cl-filter-bar] button[data-cl-active="true"] {
   border-color: rgb(var(--primary-light));
   color: rgb(var(--primary-light));
 }
 
-.dark [data-component-part="update-tag"][data-cl-active="true"] {
+.dark [data-component-part="update-tag"][data-cl-active="true"],
+.dark [data-cl-filter-bar] button[data-cl-active="true"] {
   background: rgb(var(--primary-light) / 0.14);
 }
