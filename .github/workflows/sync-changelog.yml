@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - "references/api/changelog.mdx"
+      - ".changelog/relay-kit.md"
       - "scripts/build-changelog.mjs"
 
 permissions:
@@ -29,7 +30,8 @@ jobs:
         with:
           node-version: 22
 
-      # Needs read access to relayprotocol/relay-kit and relayprotocol/relay-client.
+      # Needs read access to relayprotocol/relay-client only — the RelayKit and API
+      # sources live in this repo.
       - name: Rebuild changelog.mdx
         env:
           GITHUB_TOKEN: ${{ secrets.CHANGELOG_SOURCES_TOKEN }}

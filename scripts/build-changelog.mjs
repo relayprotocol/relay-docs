@@ -18,6 +18,10 @@ import { fileURLToPath } from 'node:url'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(ROOT, 'changelog.mdx')
 const API_CHANGELOG = join(ROOT, 'references', 'api', 'changelog.mdx')
+// Editorial layer for the RelayKit line: customer-facing entries that supersede the
+// changeset text they name in `covers`. Written by hand or by Scout's write-changelog-entry
+// skill, reviewed in a PR. Anything not covered still renders verbatim from upstream.
+const OVERRIDES = join(ROOT, '.changelog', 'relay-kit-overrides.md')
 
 // Unset means the full history of every source. At ~272 days the deployed page is 113KB
 // gzipped and ~10.4k DOM elements; see AGENTS.md §4.6 before letting it grow much further.
@@ -31,7 +35,7 @@ const CHECK = process.argv.includes('--check')
 const RELAY_KIT_COMMIT_URL = 'https://github.com/relayprotocol/relay-kit/commit'
 
 const SECTION_ORDER = ['API', 'RelayKit', 'App']
-const TAG_ORDER = ['API', 'SDK', 'UI Kit', 'Hooks', 'Adapters', 'App']
+const TAG_ORDER = ['API', 'RelayKit', 'SDK', 'UI Kit', 'Hooks', 'Adapters', 'App']
 
 // Change-type groups within a day's API and App sections, most consequential first.
 // Types not listed here still render, after these, in the order they first appear.
@@ -101,7 +105,7 @@ function warn(message) {
   console.warn(`warn: ${message}`)
 }
 
-function resolveRepo(name, envVar) {
+function resolveRepo(name, envVar, { history = false } = {}) {
   const fromEnv = process.env[envVar]
   if (fromEnv) {
     if (!existsSync(fromEnv)) throw new Error(`${envVar} points at a missing path: ${fromEnv}`)
@@ -120,47 +124,34 @@ function resolveRepo(name, envVar) {
   const parent = mkdtempSync(join(tmpdir(), 'relay-changelog-'))
   clones.push(parent)
   const target = join(parent, name)
-  execFileSync('git', ['clone', '--quiet', '--depth=1', '--filter=blob:none', url, target], { stdio: 'inherit' })
+  // Dating reads each CHANGELOG's commit history, so that repo needs a full clone (17MB,
+  // ~3s for relay-kit). Everything else only needs the tip.
+  const shallow = history ? [] : ['--depth=1', '--filter=blob:none']
+  execFileSync('git', ['clone', '--quiet', ...shallow, url, target], { stdio: 'inherit' })
   return target
 }
 
-// A failed lookup must not fall through to "this package has no releases" — that would
-// delete its history from the page and commit the deletion. Retry, then give up loudly.
-async function registryDates(pkg) {
-  const url = `https://registry.npmjs.org/${pkg.replace('/', '%2F')}`
+// A release is dated by the commit that added its section to the package CHANGELOG — the
+// "Version Packages" merge, which is what triggers publishing. That needs nothing but the
+// clone: no registry, and unlike version tags it covers every release in the file.
+function changelogDates(repoDir, relPath) {
+  const marker = '__COMMIT__'
+  const output = execFileSync('git', ['log', `--format=${marker}%cs`, '-p', '--', relPath], {
+    cwd: repoDir,
+    encoding: 'utf8',
+    maxBuffer: 128 * 1024 * 1024
+  })
 
-  for (let attempt = 1; ; attempt++) {
-    try {
-      const res = await fetch(url)
-      if (res.status === 404) return {}
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-
-      const { time } = await res.json()
-      if (!time) throw new Error('response has no "time" field')
-
-      return Object.fromEntries(
-        Object.entries(time)
-          .filter(([version]) => version !== 'created' && version !== 'modified')
-          .map(([version, iso]) => [version, iso.slice(0, 10)])
-      )
-    } catch (error) {
-      if (attempt === 3) throw new Error(`npm registry lookup failed for ${pkg}: ${error.message}`)
-      await new Promise((resolve) => setTimeout(resolve, attempt * 500))
+  const dates = new Map()
+  let date = null
+  for (const line of output.split('\n')) {
+    if (line.startsWith(marker)) {
+      date = line.slice(marker.length).trim()
+      continue
     }
-  }
-}
-
-// Versions before the 2025-08-16 rename were published under @reservoir0x, so dating the
-// full CHANGELOG needs both scopes. A version in both keeps its first publish date.
-async function npmPublishDates(pkg) {
-  const [current, legacy] = await Promise.all([
-    registryDates(pkg),
-    registryDates(pkg.replace('@relayprotocol/', '@reservoir0x/'))
-  ])
-
-  const dates = { ...legacy }
-  for (const [version, date] of Object.entries(current)) {
-    if (!dates[version] || date < dates[version]) dates[version] = date
+    // Newest commit first, so the first sighting of an added heading wins.
+    const added = line.match(/^\+## (\d+\.\d+\.\d+\S*)\s*$/)
+    if (added && date && !dates.has(added[1])) dates.set(added[1], date)
   }
   return dates
 }
@@ -227,7 +218,9 @@ function parseChangesetChangelog(markdown) {
   const flushBullet = () => {
     if (!bullet) return
     const text = bullet.join('\n').trimEnd()
-    if (text && !/^Updated dependencies\b/.test(text)) release.changes.push({ kind, text, commit })
+    // "[internal]" is relay-kit's marker for a change with no customer-visible effect.
+    const publishable = text && !/^Updated dependencies\b/.test(text) && !/^\[internal\]/i.test(text)
+    if (publishable) release.changes.push({ kind, text, commit })
     bullet = null
     commit = null
   }
@@ -255,7 +248,8 @@ function parseChangesetChangelog(markdown) {
       const body = line.replace(/^- /, '')
       const hash = body.match(/^([0-9a-f]{7,40}): /)
       commit = hash ? hash[1] : null
-      bullet = [hash ? body.slice(hash[0].length) : body]
+      const withoutHash = hash ? body.slice(hash[0].length) : body
+      bullet = [withoutHash.replace(/^(feat|fix|chore|refactor|docs|test|ci|build|perf|style)(\([^)]*\))?!?:\s*/i, '')]
       continue
     }
 
@@ -307,8 +301,77 @@ function parseAppEntry(filename, raw) {
   }
 }
 
-async function collectRelayKitEntries(repoDir) {
+// Overrides supersede the changeset text they name in `Covers:`. Everything else publishes
+// raw, so this file only has to hold the entries worth rewriting.
+function collectOverrides() {
+  if (!existsSync(OVERRIDES)) {
+    warn(`no override file at ${OVERRIDES} — every RelayKit changeset will publish raw`)
+    return []
+  }
+
+  const body = readFileSync(OVERRIDES, 'utf8')
+  // Blank fenced blocks, preserving length, so a `##` inside the file's own format example
+  // is not read as a heading.
+  const scan = body.replace(/```[\s\S]*?```/g, (block) => block.replace(/[^\n]/g, ' '))
+  const matches = [...scan.matchAll(/^## (.+)$/gm)]
+
+  return matches
+    .map((match, index) => {
+      const title = match[1].trim()
+      const from = match.index + match[0].length
+      const to = index + 1 < matches.length ? matches[index + 1].index : body.length
+      const section = body.slice(from, to).trim()
+      // Fields are read from a fence-free copy for the same reason, but the body keeps its
+      // fences so an entry can contain a code block.
+      const fieldSource = section.replace(/```[\s\S]*?```/g, '')
+
+      let text = section
+      const field = (name) => {
+        const found = fieldSource.match(new RegExp(`^${name}:\\s*(.+)$`, 'm'))
+        if (!found) return null
+        text = text.replace(found[0], '')
+        return found[1].trim()
+      }
+
+      const covers = (field('Covers') ?? '')
+        .split(',')
+        .map((hash) => hash.trim())
+        .filter(Boolean)
+      const type = (field('Type') ?? '').toLowerCase()
+      const declaredTags = (field('Tags') ?? '')
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+      const date = field('Date')
+
+      // A section with no Covers: is prose in this file's own header, not an override.
+      if (covers.length === 0) return null
+
+      if (!APP_CHANGE_TYPES[type]) {
+        warn(`override "${title}" has a missing or unrecognized Type: "${type}" — skipped`)
+        return null
+      }
+      if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        warn(`override "${title}" has a malformed Date: "${date}" — skipped`)
+        return null
+      }
+
+      text = text.trim()
+      if (!text) {
+        warn(`override "${title}" has an empty body — skipped`)
+        return null
+      }
+
+      return { title, covers, kind: APP_CHANGE_TYPES[type], declaredTags, date, body: text }
+    })
+    .filter(Boolean)
+}
+
+function collectRelayKitEntries(repoDir, overrides) {
+
   const entries = []
+  const rawQueue = []
+  const covered = new Map(overrides.flatMap((entry) => entry.covers.map((hash) => [hash, []])))
 
   for (const pkg of RELAY_KIT_PACKAGES) {
     const path = join(repoDir, 'packages', pkg.dir, 'CHANGELOG.md')
@@ -317,37 +380,104 @@ async function collectRelayKitEntries(repoDir) {
       continue
     }
 
-    const dates = await npmPublishDates(pkg.npm)
     // Canary builds (0.0.0-canary-*) are published to npm but are not releases a reader
     // could install, so no prerelease version reaches the page.
+    const dates = changelogDates(repoDir, `packages/${pkg.dir}/CHANGELOG.md`)
     const releases = parseChangesetChangelog(readFileSync(path, 'utf8')).filter(
       (release) => !release.version.includes('-')
     )
 
-    if (releases.length > 0 && Object.keys(dates).length === 0) {
-      throw new Error(`no npm publish dates for ${pkg.npm} — refusing to drop its history from the page`)
-    }
 
     // An undated version above the newest dated one is unpublished or a failed publish —
     // worth flagging, unlike the pre-rename versions further down the file.
-    const newestDated = releases.findIndex((release) => dates[release.version])
+    const newestDated = releases.findIndex((release) => dates.get(release.version))
     const unpublished = newestDated === -1 ? releases : releases.slice(0, newestDated)
     if (unpublished.length > 0) {
-      warn(`${pkg.npm} has no npm publish date for ${unpublished.map((r) => r.version).join(', ')} — skipped`)
+      warn(`${pkg.npm} has no dated release for ${unpublished.map((r) => r.version).join(', ')} — skipped`)
     }
 
     for (const release of releases) {
-      const date = dates[release.version]
+      const date = dates.get(release.version)
       if (!date) continue
       if (date < SINCE) continue
+
+      // An override owns the outcome, so the changesets it covers must not also render raw.
+      const changes = release.changes.filter((change) => {
+        if (!change.commit || !covered.has(change.commit)) return true
+        covered.get(change.commit).push({ label: pkg.label, version: release.version, date })
+        return false
+      })
+      if (changes.length === 0) continue
+
+      for (const change of changes) {
+        rawQueue.push({ date, commit: change.commit, label: pkg.label, version: release.version })
+      }
+
       entries.push({
         date,
         section: 'RelayKit',
         tag: pkg.tag,
         label: pkg.label,
         version: release.version,
-        changes: release.changes
+        changes
       })
+    }
+  }
+
+  for (const entry of overrides) {
+    const packages = entry.covers.flatMap((hash) => covered.get(hash))
+    if (packages.length === 0) {
+      warn(`override "${entry.title}" covers no changeset on this page (${entry.covers.join(', ')}) — skipped, raw text still renders`)
+      continue
+    }
+
+    // An override lands on the day its last covered release shipped unless it says otherwise.
+    const date = entry.date ?? packages.map((p) => p.date).sort().at(-1)
+    if (date < SINCE) continue
+
+    // Versions and links come from the changesets the entry claims, never hand-typed.
+    const versions = new Map()
+    for (const { label, version } of packages) {
+      if (!versions.has(label) || compareVersions(version, versions.get(label)) > 0) versions.set(label, version)
+    }
+    const tags = new Set(
+      packages.map((p) => RELAY_KIT_PACKAGES.find((pkg) => pkg.label === p.label).tag)
+    )
+
+    const finalTags = entry.declaredTags.length > 0 ? entry.declaredTags : [...tags]
+    entries.push({
+      date,
+      section: 'RelayKit',
+      tag: finalTags[0],
+      extraTags: finalTags.slice(1),
+      editorial: {
+        kind: entry.kind,
+        body: escapeMdx(entry.body),
+        versions: [...versions].map(([label, version]) => `${label} \`${version}\``),
+        commits: entry.covers.filter((hash) => covered.get(hash).length > 0)
+      }
+    })
+  }
+
+  // One changeset spans every package it touched, so the queue is keyed by commit — the unit
+  // an override covers. This list is the work queue for writing overrides; nothing needs to
+  // track a last-synced cursor.
+  const byCommit = new Map()
+  for (const item of rawQueue) {
+    const key = item.commit ?? `${item.date} ${item.label} ${item.version}`
+    if (!byCommit.has(key)) byCommit.set(key, { ...item, packages: [] })
+    byCommit.get(key).packages.push(`${item.label} \`${item.version}\``)
+  }
+
+  const queue = [...byCommit.values()].sort((a, b) => (a.date < b.date ? 1 : -1))
+  const coveredCount = [...covered.values()].filter((p) => p.length > 0).length
+  console.log(`RelayKit: ${coveredCount} changeset(s) rewritten by overrides, ${queue.length} publishing raw`)
+
+  const shown = queue.slice(0, 15)
+  if (shown.length > 0) {
+    console.log(`  publishing raw, newest first — override candidates${queue.length > shown.length ? ` (showing ${shown.length} of ${queue.length})` : ''}:`)
+    for (const item of shown) {
+      console.log(`    ${item.date}  ${item.commit ?? '(no commit)'}  ${item.packages.join(', ')}`)
     }
   }
 
@@ -449,9 +579,45 @@ function renderTypeGroups(entries) {
     .join('\n\n')
 }
 
+// Editorial entries lead the section, in the same change-type grouping the API line uses.
+// Their version list and commit links are derived from the changesets they cover.
+function renderEditorial(entries) {
+  const groups = new Map()
+  for (const { editorial } of entries) {
+    if (!groups.has(editorial.kind)) groups.set(editorial.kind, [])
+    groups.get(editorial.kind).push(editorial)
+  }
+
+  const known = CHANGE_TYPE_ORDER.filter((kind) => groups.has(kind))
+  const rest = [...groups.keys()].filter((kind) => !CHANGE_TYPE_ORDER.includes(kind))
+
+  return [...known, ...rest]
+    .map((kind) => {
+      const bullets = groups.get(kind).map((item) => {
+        const links = item.commits.map((hash) => `[\`${hash}\`](${RELAY_KIT_COMMIT_URL}/${hash})`).join(', ')
+        // Bodies are hard-wrapped, so the attribution goes after the first paragraph rather
+        // than the first line, which would land mid-sentence.
+        const [lead, ...rest] = item.body.split(/\n{2,}/)
+        const attributed = `${lead.trimEnd()} — ${item.versions.join(', ')} (${links})`
+        return indentBullet([attributed, ...rest].join('\n\n'))
+      })
+      return `**${kind}**\n\n${bullets.join('\n')}`
+    })
+    .join('\n\n')
+}
+
+function renderRelayKit(entries) {
+  const blocks = []
+  const editorial = entries.filter((entry) => entry.editorial)
+  const verbatim = entries.filter((entry) => entry.changes)
+  if (editorial.length > 0) blocks.push(renderEditorial(editorial))
+  if (verbatim.length > 0) blocks.push(renderVerbatim(verbatim))
+  return blocks.join('\n\n')
+}
+
 // One changeset lands in every package it touches, so the same text repeats across
 // CHANGELOGs on the same day. Collapse it into a single item naming each package.
-function renderRelayKit(entries) {
+function renderVerbatim(entries) {
   const groups = new Map()
 
   for (const entry of entries) {
@@ -494,7 +660,7 @@ function renderPage(entries) {
     )
 
     // Mintlify renders these tags under the date; script.js makes them the filter control.
-    const dayTags = new Set(dayEntries.map((entry) => entry.tag))
+    const dayTags = new Set(dayEntries.flatMap((entry) => [entry.tag, ...(entry.extraTags ?? [])]))
     const tagProp = TAG_ORDER.filter((tag) => dayTags.has(tag))
       .map((tag) => `"${tag}"`)
       .join(', ')
@@ -517,12 +683,14 @@ function renderPage(entries) {
   return `${frontmatter}\n${blocks.join('\n\n')}\n`
 }
 
-const relayKitDir = resolveRepo('relay-kit', 'RELAY_KIT_DIR')
+const relayKitDir = resolveRepo('relay-kit', 'RELAY_KIT_DIR', { history: true })
 const relayClientDir = resolveRepo('relay-client', 'RELAY_CLIENT_DIR')
+
+const overrides = collectOverrides()
 
 const entries = [
   ...parseApiChangelog(readFileSync(API_CHANGELOG, 'utf8')).filter((entry) => entry.date >= SINCE),
-  ...(await collectRelayKitEntries(relayKitDir)),
+  ...collectRelayKitEntries(relayKitDir, overrides),
   ...collectAppEntries(relayClientDir)
 ]
 

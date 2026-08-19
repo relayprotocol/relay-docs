@@ -11,13 +11,10 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `7.0.2`** — Patch
+**Added**
 
-- Add XRP dead address and include the Tron, Zero and XRP dead addresses in isDeadAddress ([`e9dbac1`](https://github.com/relayprotocol/relay-kit/commit/e9dbac1))
-
-**UI Kit `11.0.3`** — Patch
-
-- Add XRP vm support for destination transactions ([`e9dbac1`](https://github.com/relayprotocol/relay-kit/commit/e9dbac1))
+- Pricing an XRP route before a wallet connects now works, and `isDeadAddress` recognises the
+  Tron, Zero, and XRP placeholder addresses alongside the existing ones. — SDK `7.0.2`, UI Kit `11.0.3` ([`e9dbac1`](https://github.com/relayprotocol/relay-kit/commit/e9dbac1))
 
 </Update>
 
@@ -73,9 +70,10 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `7.0.1`** — Patch
+**Changed**
 
-- Sync SDK types ([`fb843c4`](https://github.com/relayprotocol/relay-kit/commit/fb843c4))
+- The SDK's generated API types were regenerated to match the API schema. No runtime behavior
+  changed. — SDK `7.0.1` ([`fb843c4`](https://github.com/relayprotocol/relay-kit/commit/fb843c4), [`a443358`](https://github.com/relayprotocol/relay-kit/commit/a443358), [`ef54ef1`](https://github.com/relayprotocol/relay-kit/commit/ef54ef1))
 
 **UI Kit `11.0.2`** — Patch
 
@@ -177,7 +175,7 @@ mode: "center"
 
 **UI Kit `10.0.1`, Hooks `4.0.1`** — Patch
 
-- fix: block token contract addresses in recipient field ([`23e4ecf`](https://github.com/relayprotocol/relay-kit/commit/23e4ecf))
+- block token contract addresses in recipient field ([`23e4ecf`](https://github.com/relayprotocol/relay-kit/commit/23e4ecf))
 
 </Update>
 
@@ -217,7 +215,7 @@ mode: "center"
 
 **UI Kit `10.0.0`** — Patch
 
-- fix: update wallet rejection errors in swap widget ([`b4a3f7c`](https://github.com/relayprotocol/relay-kit/commit/b4a3f7c))
+- update wallet rejection errors in swap widget ([`b4a3f7c`](https://github.com/relayprotocol/relay-kit/commit/b4a3f7c))
 
 </Update>
 
@@ -225,9 +223,10 @@ mode: "center"
 
 ### RelayKit
 
-**UI Kit `9.1.4`** — Patch
+**Changed**
 
-- Block base wallet from receiving / sending on rh chain ([`a29e409`](https://github.com/relayprotocol/relay-kit/commit/a29e409))
+- The Base wallet can no longer send to or receive on Robinhood Chain, which it does not
+  support. — UI Kit `9.1.4` ([`a29e409`](https://github.com/relayprotocol/relay-kit/commit/a29e409))
 
 </Update>
 
@@ -269,27 +268,22 @@ mode: "center"
 
 </Update>
 
-<Update label="2026-07-01" tags={["SDK"]}>
-
-### RelayKit
-
-**SDK `6.1.2`** — Patch
-
-- Fix BTC dead address preview error ([`88a63b6`](https://github.com/relayprotocol/relay-kit/commit/88a63b6))
-
-**SDK `6.1.2`** — Patch
-
-- Fix bitcoin dead address ([`88a63b6`](https://github.com/relayprotocol/relay-kit/commit/88a63b6))
-
-</Update>
-
 <Update label="2026-06-30" tags={["SDK", "UI Kit", "Adapters"]}>
 
 ### RelayKit
 
+**Fixed**
+
+- The placeholder address the SDK uses to price a Bitcoin route before a wallet connects has
+  been replaced. Previewing a Bitcoin route no longer returns an error. — SDK `6.1.2` ([`88a63b6`](https://github.com/relayprotocol/relay-kit/commit/88a63b6), [`ce4d192`](https://github.com/relayprotocol/relay-kit/commit/ce4d192))
+
 **SDK `6.1.0`, UI Kit `9.1.0`, TON adapter `2.0.0`** — Minor
 
 - Add TON support: new `@relayprotocol/relay-ton-wallet-adapter` package exporting `adaptTonWallet`, plus `tonvm` support across the SDK (vmType, TON receipt, transaction step messages, dead address) and UI kit (native TON balance, token selector). ([`4711f4b`](https://github.com/relayprotocol/relay-kit/commit/4711f4b))
+
+**TON adapter `1.0.0`** — Minor
+
+- Add TON wallet adapter (`adaptTonWallet`, `vmType: 'tonvm'`)
 
 </Update>
 
@@ -307,9 +301,9 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `6.0.0`, UI Kit `9.0.0`** — Major
+**Removed**
 
-- Remove Sui support ([`4149ded`](https://github.com/relayprotocol/relay-kit/commit/4149ded))
+- The SDK and UI kit no longer support Sui. Remove it from any chain configuration you pass in. — SDK `6.0.0`, UI Kit `9.0.0` ([`4149ded`](https://github.com/relayprotocol/relay-kit/commit/4149ded))
 
 **SDK `6.0.0`, UI Kit `9.0.0`, Tron adapter `7.0.0`** — Patch
 
@@ -345,9 +339,10 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `5.2.8`** — Patch
+**Added**
 
-- Add TON dead address ([`1fc8190`](https://github.com/relayprotocol/relay-kit/commit/1fc8190))
+- Pricing a TON route before a wallet connects now works, and `isDeadAddress` recognises the
+  TON placeholder address. — SDK `5.2.8` ([`1fc8190`](https://github.com/relayprotocol/relay-kit/commit/1fc8190))
 
 **UI Kit `8.0.11`** — Patch
 
@@ -419,9 +414,11 @@ mode: "center"
 
 ### RelayKit
 
-**UI Kit `8.0.10`** — Patch
+**Changed**
 
-- Update CEX address url ([`4d73aeb`](https://github.com/relayprotocol/relay-kit/commit/4d73aeb))
+- The UI kit fetches its centralized-exchange address list from
+  `https://assets.relay.link/app/cexAddresses.json` instead of a GitHub raw URL. Update any
+  host allowlist that covered the old address. — UI Kit `8.0.10` ([`4d73aeb`](https://github.com/relayprotocol/relay-kit/commit/4d73aeb))
 
 </Update>
 
@@ -465,9 +462,10 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `5.2.7`** — Patch
+**Added**
 
-- Add testnet ws ([`eab4c8f`](https://github.com/relayprotocol/relay-kit/commit/eab4c8f))
+- The SDK exports a testnet websocket endpoint, `wss://ws.testnets.relay.link`, alongside the
+  mainnet one. — SDK `5.2.7` ([`eab4c8f`](https://github.com/relayprotocol/relay-kit/commit/eab4c8f))
 
 **UI Kit `8.0.9`** — Patch
 
@@ -475,7 +473,7 @@ mode: "center"
 
 </Update>
 
-<Update label="2026-05-07" tags={["API", "SDK", "UI Kit"]}>
+<Update label="2026-05-07" tags={["API", "UI Kit"]}>
 
 ### API
 
@@ -485,17 +483,14 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `5.2.6`** — Patch
+**Fixed**
 
-- Sync api types ([`a443358`](https://github.com/relayprotocol/relay-kit/commit/a443358))
-
-**UI Kit `8.0.8`** — Patch
-
-- Differentiate hyperliquid usdc pills ([`22aa1f9`](https://github.com/relayprotocol/relay-kit/commit/22aa1f9))
+- Hyperliquid's spot and perps USDC both display as `USDC`, so the suggested-token pills were
+  indistinguishable. They now show the token name on Hyperliquid. — UI Kit `8.0.8` ([`22aa1f9`](https://github.com/relayprotocol/relay-kit/commit/22aa1f9))
 
 </Update>
 
-<Update label="2026-04-28" tags={["API", "SDK", "UI Kit"]}>
+<Update label="2026-04-28" tags={["API", "UI Kit"]}>
 
 ### API
 
@@ -504,10 +499,6 @@ mode: "center"
 - `POST /quote/v2`: same-chain swap requests whose quoted USD value is greater than `0` and less than `$0.05` now return `400` with `errorCode: "AMOUNT_TOO_LOW"`. Previously these requests returned `200` with calldata that reverted on-chain. Wrap and unwrap quotes (e.g. same-chain `ETH` ↔ `WETH`) and quotes that include attached calls continue to be accepted at any size.
 
 ### RelayKit
-
-**SDK `5.2.5`** — Patch
-
-- Sync api types ([`ef54ef1`](https://github.com/relayprotocol/relay-kit/commit/ef54ef1))
 
 **UI Kit `8.0.7`** — Patch
 
@@ -519,9 +510,10 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `5.2.4`, Lighter adapter `0.1.1`** — Patch
+**Added**
 
-- lighter sdk adapter ([`670737f`](https://github.com/relayprotocol/relay-kit/commit/670737f))
+- New `@relayprotocol/relay-lighter-wallet-adapter` package, with the SDK wallet types and
+  transaction steps needed to execute a route through a Lighter wallet. — SDK `5.2.4`, Lighter adapter `0.1.1` ([`670737f`](https://github.com/relayprotocol/relay-kit/commit/670737f))
 
 **SDK `5.2.4`** — Patch
 
@@ -539,13 +531,14 @@ mode: "center"
 
 </Update>
 
-<Update label="2026-04-17" tags={["SDK", "UI Kit", "Hooks"]}>
+<Update label="2026-04-16" tags={["SDK", "UI Kit", "Hooks"]}>
 
 ### RelayKit
 
-**SDK `5.2.2`, UI Kit `8.0.4`, Hooks `3.0.12`** — Patch
+**Added**
 
-- Sync api types and add depositing step to deposit address status ([`8d8aa50`](https://github.com/relayprotocol/relay-kit/commit/8d8aa50))
+- `GET` deposit-address status now reports a `depositing` step, so a client can show that state
+  while a deposit is in progress. — SDK `5.2.2`, UI Kit `8.0.4`, Hooks `3.0.12` ([`8d8aa50`](https://github.com/relayprotocol/relay-kit/commit/8d8aa50))
 
 **UI Kit `8.0.4`** — Patch
 
@@ -593,13 +586,13 @@ mode: "center"
 
 ### RelayKit
 
+**Changed**
+
+- The Bitcoin wallet adapter moved to a newer `bitcoinjs-lib`. — Bitcoin adapter `17.0.2` ([`daaae5b`](https://github.com/relayprotocol/relay-kit/commit/daaae5b))
+
 **Hooks `3.0.11`** — Patch
 
 - Add default stale time to useTokenPrice hook ([`ad4f08c`](https://github.com/relayprotocol/relay-kit/commit/ad4f08c))
-
-**Bitcoin adapter `17.0.2`** — Patch
-
-- bump bitcoinjs-lib dep version ([`daaae5b`](https://github.com/relayprotocol/relay-kit/commit/daaae5b))
 
 </Update>
 
@@ -607,13 +600,18 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `5.2.1`, Hooks `3.0.10`** — Patch
+**Changed**
 
-- Fix async errors not caught ([`7b351ab`](https://github.com/relayprotocol/relay-kit/commit/7b351ab))
+- `useQuote` and the swap and token widgets threw bare strings such as `'Missing a quote'`.
+  They now throw `Error` objects, so a `catch` block can read `error.message` and error
+  reporters record a stack. Reading a status code from a failed request no longer throws when
+  the error carries no response. — UI Kit `7.1.5`, Hooks `3.0.10` ([`2f0d6de`](https://github.com/relayprotocol/relay-kit/commit/2f0d6de))
 
-**UI Kit `7.1.5`, Hooks `3.0.10`** — Patch
+**Fixed**
 
-- Fix minor errors ([`2f0d6de`](https://github.com/relayprotocol/relay-kit/commit/2f0d6de))
+- `useExecutionStatus` and the SDK's transaction helpers could leave a promise rejection
+  unhandled, which terminates a Node process. Server-side rendering and scripted use were
+  affected. Both now handle the rejection. — SDK `5.2.1`, Hooks `3.0.10` ([`7b351ab`](https://github.com/relayprotocol/relay-kit/commit/7b351ab))
 
 </Update>
 
@@ -639,13 +637,15 @@ mode: "center"
 
 ### RelayKit
 
+**Changed**
+
+- The Solana wallet adapter checks that the signature a wallet returns is base58 and throws
+  `Invalid Solana signature: expected base58.` when it is not, instead of passing a malformed
+  signature on. — SVM adapter `17.0.2` ([`20db8bc`](https://github.com/relayprotocol/relay-kit/commit/20db8bc))
+
 **UI Kit `7.1.3`** — Patch
 
 - Enable multi wallet dropdown for hyperliquid ([`5b4830b`](https://github.com/relayprotocol/relay-kit/commit/5b4830b))
-
-**SVM adapter `17.0.2`** — Patch
-
-- Add checks for base58 signature ([`20db8bc`](https://github.com/relayprotocol/relay-kit/commit/20db8bc))
 
 </Update>
 
@@ -653,21 +653,21 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `5.1.1`, UI Kit `7.1.2`** — Patch
+**Added**
 
-- Refactor token selector currency metadata fetching ([`f851b3c`](https://github.com/relayprotocol/relay-kit/commit/f851b3c))
+- The chain selector accepts a `sameChainOption`, letting a user pick the origin chain as the
+  destination for a same-chain swap. — UI Kit `7.1.2` ([`8aa2bca`](https://github.com/relayprotocol/relay-kit/commit/8aa2bca))
 
-**UI Kit `7.1.2`** — Patch
+**Changed**
 
-- Implement AGW logic when hyperliquid is selected as destination ([`00cad1c`](https://github.com/relayprotocol/relay-kit/commit/00cad1c))
-
-**UI Kit `7.1.2`** — Patch
-
-- Add same chain selector ([`8aa2bca`](https://github.com/relayprotocol/relay-kit/commit/8aa2bca))
-
-**UI Kit `7.1.2`** — Patch
-
-- Universal max amount buffering ([`c7da389`](https://github.com/relayprotocol/relay-kit/commit/c7da389))
+- Selecting the maximum amount now holds back a small execution buffer on every origin chain,
+  where previously only native-token routes reserved one for fees. The native gas buffer applies
+  to EVM and SVM origins. — UI Kit `7.1.2` ([`c7da389`](https://github.com/relayprotocol/relay-kit/commit/c7da389))
+- Hyperliquid operates like a centralized exchange, so wallet compatibility checks are skipped
+  for it. Abstract Global Wallet recipients are the exception — they cannot receive a
+  Hyperliquid deposit and are now rejected. — UI Kit `7.1.2` ([`00cad1c`](https://github.com/relayprotocol/relay-kit/commit/00cad1c))
+- The token selector takes its suggested-token metadata from the API's trending currencies and
+  each chain's `solverCurrencies`, rather than from local storage. — SDK `5.1.1`, UI Kit `7.1.2` ([`f851b3c`](https://github.com/relayprotocol/relay-kit/commit/f851b3c))
 
 </Update>
 
@@ -675,9 +675,9 @@ mode: "center"
 
 ### RelayKit
 
-**UI Kit `7.1.1`, Hooks `3.0.7`** — Patch
+**Changed**
 
-- Refactor deposit address transaction tracking to use requests API ([`448ec7c`](https://github.com/relayprotocol/relay-kit/commit/448ec7c))
+- Deposit-address transaction tracking reads from the Requests API. — UI Kit `7.1.1`, Hooks `3.0.7` ([`448ec7c`](https://github.com/relayprotocol/relay-kit/commit/448ec7c))
 
 </Update>
 
@@ -685,9 +685,10 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `5.1.0`, UI Kit `7.1.0`** — Minor
+**Breaking**
 
-- Refactor EOA detection to improve ux ([`56123ee`](https://github.com/relayprotocol/relay-kit/commit/56123ee))
+- The UI kit no longer exports `useEOADetection`. `useExplicitDeposit` replaces it — update
+  your imports if you called the hook directly. — SDK `5.1.0`, UI Kit `7.1.0` ([`56123ee`](https://github.com/relayprotocol/relay-kit/commit/56123ee))
 
 </Update>
 
@@ -695,17 +696,17 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `5.0.3`** — Patch
+**Added**
 
-- Fast fill sdk action ([`0f0ad9f`](https://github.com/relayprotocol/relay-kit/commit/0f0ad9f))
+- New `fastFill` action on the SDK, with `FastFillParameters`, `FastFillBody`, and
+  `FastFillResponse` types. A failed fast fill throws an `APIError` carrying the failure message
+  and status, including transport failures that never returned a response. — SDK `5.0.3` ([`0f0ad9f`](https://github.com/relayprotocol/relay-kit/commit/0f0ad9f), [`7acfaed`](https://github.com/relayprotocol/relay-kit/commit/7acfaed))
 
-**SDK `5.0.3`** — Patch
+**Changed**
 
-- Improve fast fills error handling ([`7acfaed`](https://github.com/relayprotocol/relay-kit/commit/7acfaed))
-
-**UI Kit `7.0.11`** — Patch
-
-- Use expandedPriceImpact from quote response ([`6ff1ba6`](https://github.com/relayprotocol/relay-kit/commit/6ff1ba6))
+- The widget's fee breakdown reads `details.expandedPriceImpact` from the quote instead of
+  deriving figures from `fees.relayerService` and `details.swapImpact`, and links to the fee
+  documentation. — UI Kit `7.0.11` ([`6ff1ba6`](https://github.com/relayprotocol/relay-kit/commit/6ff1ba6))
 
 </Update>
 
@@ -713,13 +714,14 @@ mode: "center"
 
 ### RelayKit
 
+**Added**
+
+- Every request the SDK makes now sends a `relay-sdk-version` header, reporting the client
+  version or `unknown`. — SDK `5.0.2` ([`b86a59d`](https://github.com/relayprotocol/relay-kit/commit/b86a59d))
+
 **SDK `5.0.2`** — Patch
 
 - Add support for custom logger function in createClient initializer ([`efa0aae`](https://github.com/relayprotocol/relay-kit/commit/efa0aae))
-
-**SDK `5.0.2`** — Patch
-
-- Add relay sdk version headers ([`b86a59d`](https://github.com/relayprotocol/relay-kit/commit/b86a59d))
 
 **UI Kit `7.0.10`** — Patch
 
@@ -751,19 +753,11 @@ mode: "center"
 
 ### RelayKit
 
-**UI Kit `7.0.7`** — Patch
+**Changed**
 
-- Refactored timeout logic ([`9cc3fac`](https://github.com/relayprotocol/relay-kit/commit/9cc3fac))
-
-</Update>
-
-<Update label="2026-01-09" tags={["UI Kit"]}>
-
-### RelayKit
-
-**UI Kit `7.0.6`** — Patch
-
-- Lenient eoa detection timeout ([`6c804bc`](https://github.com/relayprotocol/relay-kit/commit/6c804bc))
+- EOA detection now allows 2.5 seconds instead of 1 second, so a slow wallet or RPC is less
+  likely to be misread. The timeout was then reimplemented without any further change in
+  behavior. — UI Kit `7.0.7` ([`6c804bc`](https://github.com/relayprotocol/relay-kit/commit/6c804bc), [`9cc3fac`](https://github.com/relayprotocol/relay-kit/commit/9cc3fac))
 
 </Update>
 
@@ -1781,7 +1775,7 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-05-23" tags={["SDK", "UI Kit"]}>
+<Update label="2025-05-22" tags={["SDK", "UI Kit"]}>
 
 ### RelayKit
 
@@ -1831,7 +1825,7 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-05-15" tags={["SDK", "UI Kit", "Adapters"]}>
+<Update label="2025-05-13" tags={["SDK", "UI Kit", "Adapters"]}>
 
 ### RelayKit
 
@@ -1839,27 +1833,21 @@ mode: "center"
 
 - [BREAKING] Update sdk getQuote method to optionally include defaults ([`5759fd0`](https://github.com/relayprotocol/relay-kit/commit/5759fd0))
 
-**UI Kit `2.10.5`** — Patch
-
-- Fix receipt validation ([`2ee2f44`](https://github.com/relayprotocol/relay-kit/commit/2ee2f44))
-
-**Ethers adapter `18.0.0`** — Patch
-
-- [BREAKING] Update sdk getQuote method to optionally include defaults ([`5759fd0`](https://github.com/relayprotocol/relay-kit/commit/5759fd0))
-
-</Update>
-
-<Update label="2025-05-13" tags={["SDK", "UI Kit"]}>
-
-### RelayKit
-
 **SDK `1.8.1`** — Patch
 
 - Sync api types ([`e5d8e39`](https://github.com/relayprotocol/relay-kit/commit/e5d8e39))
 
+**UI Kit `2.10.5`** — Patch
+
+- Fix receipt validation ([`2ee2f44`](https://github.com/relayprotocol/relay-kit/commit/2ee2f44))
+
 **UI Kit `2.10.4`** — Patch
 
 - Fix gas top up bigint error ([`eed08f3`](https://github.com/relayprotocol/relay-kit/commit/eed08f3))
+
+**Ethers adapter `18.0.0`** — Patch
+
+- [BREAKING] Update sdk getQuote method to optionally include defaults ([`5759fd0`](https://github.com/relayprotocol/relay-kit/commit/5759fd0))
 
 </Update>
 
@@ -2039,13 +2027,21 @@ mode: "center"
 
 ### RelayKit
 
-**SDK `1.6.14`** — Patch
+**SDK `1.6.14`, UI Kit `2.9.6`** — Patch
 
 - Add endpoint to APIError for debugging ([`b2782e9`](https://github.com/relayprotocol/relay-kit/commit/b2782e9))
 
 **UI Kit `2.9.7`** — Patch
 
 - Fix chain scroll bug ([`ed9cddb`](https://github.com/relayprotocol/relay-kit/commit/ed9cddb))
+
+**UI Kit `2.9.6`** — Patch
+
+- Fix chain filter scroll into view ([`74929ec`](https://github.com/relayprotocol/relay-kit/commit/74929ec))
+
+**UI Kit `2.9.6`** — Patch
+
+- Add additional data to token select exit event ([`975b6d1`](https://github.com/relayprotocol/relay-kit/commit/975b6d1))
 
 </Update>
 
@@ -2205,7 +2201,7 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-03-19" tags={["UI Kit"]}>
+<Update label="2025-03-18" tags={["UI Kit"]}>
 
 ### RelayKit
 
@@ -2487,7 +2483,7 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-02-11" tags={["UI Kit", "Hooks"]}>
+<Update label="2025-02-11" tags={["UI Kit"]}>
 
 ### RelayKit
 
@@ -2495,15 +2491,15 @@ mode: "center"
 
 - Fix bugs with onramping input ([`5a8bcfc`](https://github.com/relayprotocol/relay-kit/commit/5a8bcfc))
 
+</Update>
+
+<Update label="2025-02-10" tags={["UI Kit", "Hooks"]}>
+
+### RelayKit
+
 **UI Kit `2.6.0`, Hooks `1.7.0`** — Minor
 
 - OnrampWidget and useTokenPrice hook ([`dc81aac`](https://github.com/relayprotocol/relay-kit/commit/dc81aac))
-
-</Update>
-
-<Update label="2025-02-10" tags={["UI Kit"]}>
-
-### RelayKit
 
 **UI Kit `2.5.6`** — Patch
 
@@ -2515,7 +2511,7 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-01-25" tags={["UI Kit"]}>
+<Update label="2025-01-24" tags={["UI Kit"]}>
 
 ### RelayKit
 
@@ -2523,11 +2519,9 @@ mode: "center"
 
 - Update radix dialog version ([`72cdfad`](https://github.com/relayprotocol/relay-kit/commit/72cdfad))
 
-</Update>
+**UI Kit `2.5.3`** — Patch
 
-<Update label="2025-01-24" tags={["UI Kit"]}>
-
-### RelayKit
+- Add slippageTolerance prop to swap widget ([`f0c558e`](https://github.com/relayprotocol/relay-kit/commit/f0c558e))
 
 **UI Kit `2.5.2`** — Patch
 
@@ -2641,7 +2635,7 @@ mode: "center"
 
 </Update>
 
-<Update label="2025-01-04" tags={["SDK", "UI Kit", "Adapters"]}>
+<Update label="2025-01-03" tags={["SDK", "UI Kit", "Adapters"]}>
 
 ### RelayKit
 
@@ -2715,7 +2709,7 @@ mode: "center"
 
 **Hooks `1.4.12`** — Patch
 
-- feat: optimize usePrice hook to skip invalid canonical routes ([`1a593b5`](https://github.com/relayprotocol/relay-kit/commit/1a593b5))
+- optimize usePrice hook to skip invalid canonical routes ([`1a593b5`](https://github.com/relayprotocol/relay-kit/commit/1a593b5))
 
 </Update>
 
@@ -2889,6 +2883,16 @@ mode: "center"
 
 </Update>
 
+<Update label="2024-11-01" tags={["Adapters"]}>
+
+### RelayKit
+
+**SVM adapter `1.0.0`** — Minor
+
+- Abstract txs in Adapted Wallet + new Solana Adapter ([`a8215cf`](https://github.com/relayprotocol/relay-kit/commit/a8215cf))
+
+</Update>
+
 <Update label="2024-10-31" tags={["SDK", "UI Kit"]}>
 
 ### RelayKit
@@ -3037,19 +3041,23 @@ mode: "center"
 
 </Update>
 
-<Update label="2024-10-18" tags={["SDK", "UI Kit"]}>
+<Update label="2024-10-18" tags={["UI Kit"]}>
+
+### RelayKit
+
+**UI Kit `2.1.8`** — Patch
+
+- Add input and output amount to max capacity event ([`ac81750`](https://github.com/relayprotocol/relay-kit/commit/ac81750))
+
+</Update>
+
+<Update label="2024-10-17" tags={["SDK", "UI Kit"]}>
 
 ### RelayKit
 
 **SDK `1.3.4`, UI Kit `2.1.7`** — Patch
 
 - Replace exact_output with expected_output tradeType ([`2134530`](https://github.com/relayprotocol/relay-kit/commit/2134530))
-
-</Update>
-
-<Update label="2024-10-17" tags={["UI Kit"]}>
-
-### RelayKit
 
 **UI Kit `2.1.6`** — Patch
 
@@ -3117,6 +3125,10 @@ mode: "center"
 
 - Fix token selector balance display ([`e3044ff`](https://github.com/relayprotocol/relay-kit/commit/e3044ff))
 
+**UI Kit `2.0.7`** — Patch
+
+- Fix swap modal closing when dynamic embedded wallet tx modal is prompted and clicked on ([`49cd085`](https://github.com/relayprotocol/relay-kit/commit/49cd085))
+
 </Update>
 
 <Update label="2024-09-20" tags={["UI Kit"]}>
@@ -3173,7 +3185,7 @@ mode: "center"
 
 </Update>
 
-<Update label="2024-09-17" tags={["UI Kit"]}>
+<Update label="2024-09-16" tags={["UI Kit"]}>
 
 ### RelayKit
 
@@ -3890,12 +3902,6 @@ mode: "center"
 **SDK `0.5.1`, Ethers adapter `6.0.1`** — Patch
 
 - Swaps action and getSwapQuote method ([`597371e`](https://github.com/relayprotocol/relay-kit/commit/597371e))
-
-</Update>
-
-<Update label="2024-04-29" tags={["SDK"]}>
-
-### RelayKit
 
 **SDK `0.5.0`** — Minor
 
