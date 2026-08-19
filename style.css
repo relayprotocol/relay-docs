@@ -409,6 +409,15 @@
   border-bottom-color: rgb(55 65 81);
 }
 
+/* Each day's date column is sticky at Mintlify's --scroll-mt, which is measured from the same
+   viewport top the filter bar occupies, so it parks behind the bar. Add the bar's height to
+   their offset rather than replacing it — calc() keeps whatever unit they used. :has() is the
+   only way to reach the sticky wrapper, which carries no data attribute of its own; with no
+   bar on the page --cl-bar-height is 0 and this changes nothing. */
+div:has(> [data-component-part="update-label"]) {
+  top: calc(var(--scroll-mt, 5rem) + var(--cl-bar-height, 0px));
+}
+
 [data-component-part="update-tag"],
 [data-cl-filter-bar] button {
   cursor: pointer;

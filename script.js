@@ -382,8 +382,15 @@ function buildFilterBar(container) {
 // clear its height, and Mintlify exposes no variable carrying it.
 function positionFilterBar(bar) {
   const navbar = document.getElementById("navbar");
-  const height = navbar ? Math.round(navbar.getBoundingClientRect().height) : 0;
-  if (height > 0) bar.style.setProperty("--cl-sticky-top", `${height}px`);
+  const navHeight = navbar ? Math.round(navbar.getBoundingClientRect().height) : 0;
+  if (navHeight > 0) bar.style.setProperty("--cl-sticky-top", `${navHeight}px`);
+
+  // Each day's date column is sticky at Mintlify's --scroll-mt, the same offset the bar
+  // occupies, so it would park behind the bar. style.css adds this height to that offset in
+  // calc(), which keeps their value and its unit intact.
+  const parent = bar.parentElement;
+  const barHeight = Math.round(bar.getBoundingClientRect().height);
+  if (parent && barHeight > 0) parent.style.setProperty("--cl-bar-height", `${barHeight + 8}px`);
 }
 
 function enhanceChangelogPage() {
@@ -446,6 +453,11 @@ function onPageChange() {
   }
 }
 
+
+window.addEventListener("resize", () => {
+  const bar = document.querySelector("[data-cl-filter-bar]");
+  if (bar && bar.isConnected) positionFilterBar(bar);
+});
 
 // Run on first page load
 onPageChange();
