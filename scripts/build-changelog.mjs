@@ -100,6 +100,17 @@ process.on('exit', () => {
   for (const dir of clones) rmSync(dir, { recursive: true, force: true })
 })
 
+// `2026-02-30` matches the shape but is not a day. Date.UTC rolls it over to March 2, so a
+// round-trip through the parsed components is what catches it.
+function isCalendarDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value ?? '')) return false
+  const [year, month, day] = value.split('-').map(Number)
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return (
+    parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day
+  )
+}
+
 function warn(message) {
   warnings.push(message)
   console.warn(`warn: ${message}`)
@@ -166,6 +177,10 @@ function parseApiChangelog(markdown) {
   matches.forEach((match, index) => {
     const start = match.index + match[0].length
     const end = index + 1 < matches.length ? matches[index + 1].index : body.length
+    if (!isCalendarDate(match[1])) {
+      warn(`API changelog entry dated "${match[1]}" is not a real date — skipped`)
+      return
+    }
     // Source anchors are "#<date>-<slug>"; Mintlify gives each Update an id of just the
     // date, so trimming the slug keeps cross-references on this page.
     const entryBody = body
@@ -177,7 +192,9 @@ function parseApiChangelog(markdown) {
       section: 'API',
       tag: 'API',
       title: match[2].trim(),
-      items: splitChangeTypes(entryBody, `API entry "${match[2].trim()}"`)
+      // Escaped like every other source: a `{template}` in prose is an MDX expression, and
+      // the source file is no longer built as a page to catch it (see .mintignore).
+      items: splitChangeTypes(escapeMdx(entryBody), `API entry "${match[2].trim()}"`)
     })
   })
 
@@ -276,8 +293,8 @@ function parseAppEntry(filename, raw) {
     if (field) meta[field[1]] = field[2].trim().replace(/^["']|["']$/g, '')
   }
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(meta.date ?? '')) {
-    warn(`relay-client .changelog/${filename} has a missing or malformed date — skipped`)
+  if (!isCalendarDate(meta.date)) {
+    warn(`relay-client .changelog/${filename} has a missing or impossible date "${meta.date ?? ''}" — skipped`)
     return null
   }
 
@@ -351,8 +368,8 @@ function collectOverrides() {
         warn(`override "${title}" has a missing or unrecognized Type: "${type}" — skipped`)
         return null
       }
-      if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        warn(`override "${title}" has a malformed Date: "${date}" — skipped`)
+      if (date && !isCalendarDate(date)) {
+        warn(`override "${title}" has an impossible Date: "${date}" — skipped`)
         return null
       }
 
