@@ -50,13 +50,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Nothing pending. An open PR's diff would now be empty, so retire its branch —
-          # deleting the branch closes the PR.
+          # Nothing pending for this job. Retire the sync branch only if it carries nothing at
+          # all: deleting a PR head branch closes the PR and discards its review, and the
+          # branch may hold something this job did not put there. Comparing the whole tree,
+          # not just changelog.mdx, is the point.
           if git diff --quiet -- changelog.mdx; then
             echo "changelog.mdx already matches main"
             if git ls-remote --exit-code --heads origin "$SYNC_BRANCH" >/dev/null 2>&1; then
-              echo "main has caught up; deleting the stale sync branch"
-              git push origin --delete "$SYNC_BRANCH"
+              if git diff --quiet "origin/main" "origin/$SYNC_BRANCH"; then
+                echo "main has caught up and the sync branch carries nothing; deleting it"
+                git push origin --delete "$SYNC_BRANCH"
+              else
+                echo "::warning::$SYNC_BRANCH still differs from main — leaving it, and any open pull request, alone"
+              fi
             fi
             exit 0
           fi
