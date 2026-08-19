@@ -388,3 +388,41 @@
   .callout .prose > :first-child {
     margin-top: 0;
   }
+
+/* Changelog tag filters — Mintlify renders these tags under each date; script.js makes
+   them the filter control (its own filters live in the hidden table of contents). */
+[data-component-part="update-tag"] {
+  cursor: pointer;
+  padding: 2px 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: 9999px;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background-color 0.15s;
+}
+
+[data-component-part="update-tag"]:hover,
+[data-component-part="update-tag"][data-cl-active="true"] {
+  border-color: rgb(var(--primary) / var(--tw-text-opacity, 1));
+  color: rgb(var(--primary) / var(--tw-text-opacity, 1));
+}
+
+[data-component-part="update-tag"][data-cl-active="true"] {
+  background: rgb(var(--primary) / 0.08);
+}
+
+/* --primary is too dark to read on a dark background; the light tint takes over. */
+.dark [data-component-part="update-tag"] {
+  border-color: rgb(55 65 81);
+}
+
+.dark [data-component-part="update-tag"]:hover,
+.dark [data-component-part="update-tag"][data-cl-active="true"] {
+  border-color: rgb(var(--primary-light));
+  color: rgb(var(--primary-light));
+}
+
+.dark [data-component-part="update-tag"][data-cl-active="true"] {
+  background: rgb(var(--primary-light) / 0.14);
+}

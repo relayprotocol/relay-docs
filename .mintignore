@@ -1,0 +1,6 @@
+# Internal guidance and repo scaffolding, not docs pages. Without this they are parsed as
+# MDX on every edit, so a `<placeholder>` in prose fails the whole deployment.
+AGENTS.md
+CLAUDE.md
+README.md
+.changelog/

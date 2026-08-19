@@ -1,5 +1,6 @@
 // ---- GLOBAL STATE -------------------------
 let pageObserver = null;
+let lastPath = null;
 
 const addLearnMore = (
   targetId,
@@ -128,6 +129,131 @@ function enhanceGetChainsPage() {
   });
 }
 
+// Mintlify's own changelog filters live in the table of contents, which `mode: "center"`
+// hides. Instead, the tags it renders under each date become the filter control: click one
+// to narrow to that product line, click it again to clear.
+//
+// Entries are cached at module scope: startPageObserver re-runs this on every DOM mutation,
+// and the page carries ~275 of them.
+const TAG_LIST = '[data-component-part="update-tag-list"]';
+const TAG = '[data-component-part="update-tag"]';
+
+let changelog = null;
+
+function ancestorsOf(element) {
+  const chain = [];
+  for (let node = element; node; node = node.parentElement) chain.push(node);
+  return chain;
+}
+
+// Each day is the child of the shared timeline container holding one tag list. Deriving the
+// container from two entries keeps this off Mintlify's class names without walking the tree
+// once per entry.
+function collectEntries(tagLists) {
+  const first = ancestorsOf(tagLists[0]);
+  const last = new Set(ancestorsOf(tagLists[tagLists.length - 1]));
+  const container = first.find((node) => last.has(node));
+
+  return [...tagLists].map((list) => {
+    let element = list;
+    // Climbing without a container to stop at would run to <html>, and hiding that blanks
+    // the page — so fall back to filtering nothing.
+    if (container && container !== list && container.contains(list)) {
+      while (element.parentElement && element.parentElement !== container) {
+        element = element.parentElement;
+      }
+    }
+    return { element, tags: tagsOf(list) };
+  });
+}
+
+function tagsOf(list) {
+  return [...list.querySelectorAll(TAG)].map((tag) => tag.textContent.trim());
+}
+
+// The query string is the source of truth for which filters are on, so a shared link, a
+// back/forward step, and a click on the Changelog tab all land on the filter they name.
+function activeTagsFromUrl() {
+  return new Set(
+    (new URLSearchParams(window.location.search).get("tags") || "")
+      .split(",")
+      .filter(Boolean),
+  );
+}
+
+function applyChangelogFilter() {
+  for (const entry of changelog.entries) {
+    const matches =
+      changelog.active.size === 0 ||
+      entry.tags.some((tag) => changelog.active.has(tag));
+    entry.element.style.display = matches ? "" : "none";
+  }
+
+  for (const chip of document.querySelectorAll(TAG)) {
+    const isActive = changelog.active.has(chip.textContent.trim());
+    chip.dataset.clActive = String(isActive);
+    // The active state is otherwise only conveyed by colour.
+    chip.setAttribute("aria-pressed", String(isActive));
+  }
+
+  const url = new URL(window.location.href);
+  if (changelog.active.size) {
+    url.searchParams.set("tags", [...changelog.active].join(","));
+  } else {
+    url.searchParams.delete("tags");
+  }
+  // replaceState is patched to emit mintlify:navigation — only call it on a real change.
+  if (url.toString() !== window.location.href) {
+    history.replaceState(null, "", url);
+  }
+}
+
+function enhanceChangelogPage() {
+  const tagLists = document.querySelectorAll(TAG_LIST);
+  // Below two entries there is no timeline container to derive and nothing worth filtering.
+  if (tagLists.length < 2) return;
+
+  // A re-mount can swap every node while leaving the count intact, which would leave the
+  // cache pointing at detached elements and filtering silently doing nothing.
+  if (
+    !changelog ||
+    changelog.count !== tagLists.length ||
+    !changelog.entries[0].element.isConnected
+  ) {
+    changelog = {
+      count: tagLists.length,
+      entries: collectEntries(tagLists),
+      active: activeTagsFromUrl(),
+    };
+  }
+
+  for (const chip of document.querySelectorAll(TAG)) {
+    if (chip.dataset.clBound === "true") continue;
+    chip.dataset.clBound = "true";
+    chip.setAttribute("role", "button");
+    chip.setAttribute("tabindex", "0");
+
+    const toggle = () => {
+      const tag = chip.textContent.trim();
+      if (changelog.active.has(tag)) {
+        changelog.active.delete(tag);
+      } else {
+        changelog.active.add(tag);
+      }
+      applyChangelogFilter();
+    };
+
+    chip.addEventListener("click", toggle);
+    chip.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      toggle();
+    });
+  }
+
+  applyChangelogFilter();
+}
+
 // ---- MAIN NAVIGATION HANDLER --------------
 
 function onPageChange() {
@@ -139,12 +265,26 @@ function onPageChange() {
     pageObserver = null;
   }
 
+  // Toggling a filter rewrites the query string, which fires this too, so only a real page
+  // change discards the cached entries. A query-only change still has to be honoured: the
+  // URL decides which filters are on, or a shared link and back/forward would both be
+  // overwritten by whatever was last clicked.
+  if (path !== lastPath) {
+    changelog = null;
+    lastPath = path;
+  } else if (changelog) {
+    changelog.active = activeTagsFromUrl();
+  }
+
   if (path.includes("/references/api/get-quote-v2")) {
     startPageObserver(enhanceGetQuotePage);
   } else if (path.includes("/references/api/get-chains")) {
     startPageObserver(enhanceGetChainsPage);
+  } else if (path.replace(/\/$/, "").endsWith("/changelog")) {
+    startPageObserver(enhanceChangelogPage);
   }
 }
+
 
 // Run on first page load
 onPageChange();

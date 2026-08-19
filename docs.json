@@ -299,6 +299,10 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Changelog",
+        "pages": ["changelog"]
       }
     ]
   },
