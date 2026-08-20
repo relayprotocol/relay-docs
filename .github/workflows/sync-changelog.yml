@@ -9,6 +9,7 @@ on:
     paths:
       - "references/api/changelog.mdx"
       - ".changelog/relay-kit-overrides.md"
+      - ".changelog/app.md"
       - "scripts/build-changelog.mjs"
 
 permissions:
@@ -37,11 +38,12 @@ jobs:
         with:
           node-version: 22
 
-      # Needs read access to relayprotocol/relay-kit (cloned at full depth, for the CHANGELOG
-      # history the release dates come from) and relayprotocol/relay-client.
+      # No secret required: every hand-written source lives in this repo, and relay-kit is
+      # public. GITHUB_TOKEN is passed only so the clone spends a per-token rate limit rather
+      # than the runner's shared per-IP one.
       - name: Rebuild changelog.mdx
         env:
-          GITHUB_TOKEN: ${{ secrets.CHANGELOG_SOURCES_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/build-changelog.mjs
 
       - name: Open or update the sync pull request
