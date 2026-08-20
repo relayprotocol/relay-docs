@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-// Generates changelog.mdx by merging three upstream sources into one date-ordered page:
+// Generates changelog.mdx by merging three sources into one date-ordered page:
 //   API       references/api/changelog.mdx in this repo (hand-authored, "## YYYY-MM-DD — title")
-//   RelayKit  packages/*/CHANGELOG.md in relayprotocol/relay-kit, dated by npm publish time
-//   App       .changelog/*.md entries in relayprotocol/relay-client
+//   RelayKit  packages/*/CHANGELOG.md in relayprotocol/relay-kit, dated by the commit that
+//             added each version's section, and rewritten by .changelog/relay-kit-overrides.md
+//   App       .changelog/app.md in this repo (hand-authored, same shape as the API file)
 //
-// Upstream repos are shallow-cloned from main (https + GITHUB_TOKEN in CI, ssh locally).
-// Set RELAY_KIT_DIR / RELAY_CLIENT_DIR to read an existing checkout's working tree instead.
+// The only external source is relay-kit, which is public and clones without a credential.
+// Set RELAY_KIT_DIR to read an existing checkout's working tree instead.
 //
 // Usage: node scripts/build-changelog.mjs [--check]
 
@@ -18,6 +19,10 @@ import { fileURLToPath } from 'node:url'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(ROOT, 'changelog.mdx')
 const API_CHANGELOG = join(ROOT, 'references', 'api', 'changelog.mdx')
+// The App line is curated copy about relay.link, written here rather than in relay-client:
+// nothing derives it from that repo's code, so reading a private repo bought only a token
+// requirement and a cross-repo clone.
+const APP_CHANGELOG = join(ROOT, '.changelog', 'app.md')
 // Editorial layer for the RelayKit line: customer-facing entries that supersede the
 // changeset text they name in `covers`. Written by hand or by Scout's write-changelog-entry
 // skill, reviewed in a PR. Anything not covered still renders verbatim from upstream.
@@ -84,7 +89,8 @@ const RELAY_KIT_PACKAGES = [
   }
 ]
 
-const APP_CHANGE_TYPES = {
+// Change types an override may declare in `Type:`.
+const CHANGE_TYPES = {
   added: 'Added',
   changed: 'Changed',
   fixed: 'Fixed',
@@ -124,14 +130,12 @@ function resolveRepo(name, envVar, { history = false } = {}) {
     return fromEnv
   }
 
+  // relay-kit is public, so no credential is involved. GITHUB_TOKEN is honoured when present
+  // only to spend a rate limit that is per-token rather than per-IP.
   const token = process.env.GITHUB_TOKEN
-  if (!token && process.env.CI) {
-    throw new Error(`GITHUB_TOKEN is empty — CI cannot clone ${name} over ssh. Check CHANGELOG_SOURCES_TOKEN.`)
-  }
-
   const url = token
     ? `https://x-access-token:${token}@github.com/relayprotocol/${name}.git`
-    : `git@github.com:relayprotocol/${name}.git`
+    : `https://github.com/relayprotocol/${name}.git`
   const parent = mkdtempSync(join(tmpdir(), 'relay-changelog-'))
   clones.push(parent)
   const target = join(parent, name)
@@ -168,17 +172,20 @@ function changelogDates(repoDir, relPath) {
 }
 
 // "## 2026-08-13 — Solana quote size check returns `SOLANA_TX_TOO_LARGE`" + body until the next ##
-function parseApiChangelog(markdown) {
+function parseSectionedChangelog(markdown, { section, tag, label }) {
   const body = markdown.replace(/^---\n[\s\S]*?\n---\n/, '')
   const entries = []
+  // Blank the inside of fenced blocks first, preserving length so the match offsets still
+  // index into `body` — a file that documents its own format must not parse the example.
+  const scan = body.replace(/```[\s\S]*?```/g, (block) => block.replace(/[^\n]/g, ' '))
   const pattern = /^## (\d{4}-\d{2}-\d{2})\s*—\s*(.+)$/gm
-  const matches = [...body.matchAll(pattern)]
+  const matches = [...scan.matchAll(pattern)]
 
   matches.forEach((match, index) => {
     const start = match.index + match[0].length
     const end = index + 1 < matches.length ? matches[index + 1].index : body.length
     if (!isCalendarDate(match[1])) {
-      warn(`API changelog entry dated "${match[1]}" is not a real date — skipped`)
+      warn(`${label} entry dated "${match[1]}" is not a real date — skipped`)
       return
     }
     // Source anchors are "#<date>-<slug>"; Mintlify gives each Update an id of just the
@@ -189,12 +196,12 @@ function parseApiChangelog(markdown) {
       .replace(/\]\(#(\d{4}-\d{2}-\d{2})[^)]*\)/g, '](#$1)')
     entries.push({
       date: match[1],
-      section: 'API',
-      tag: 'API',
+      section,
+      tag,
       title: match[2].trim(),
       // Escaped like every other source: a `{template}` in prose is an MDX expression, and
       // the source file is no longer built as a page to catch it (see .mintignore).
-      items: splitChangeTypes(escapeMdx(entryBody), `API entry "${match[2].trim()}"`)
+      items: splitChangeTypes(escapeMdx(entryBody), `${label} entry "${match[2].trim()}"`)
     })
   })
 
@@ -280,44 +287,6 @@ function parseChangesetChangelog(markdown) {
   return releases.filter((entry) => entry.changes.length > 0)
 }
 
-function parseAppEntry(filename, raw) {
-  const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
-  if (!match) {
-    warn(`relay-client .changelog/${filename} has no frontmatter — skipped`)
-    return null
-  }
-
-  const meta = {}
-  for (const line of match[1].split('\n')) {
-    const field = line.match(/^([A-Za-z_]+):\s*(.*)$/)
-    if (field) meta[field[1]] = field[2].trim().replace(/^["']|["']$/g, '')
-  }
-
-  if (!isCalendarDate(meta.date)) {
-    warn(`relay-client .changelog/${filename} has a missing or impossible date "${meta.date ?? ''}" — skipped`)
-    return null
-  }
-
-  const type = (meta.type ?? 'changed').toLowerCase()
-  if (!APP_CHANGE_TYPES[type]) {
-    warn(`relay-client .changelog/${filename} has an unrecognized type "${type}" — skipped`)
-    return null
-  }
-
-  const body = match[2].trim()
-  if (!body) {
-    warn(`relay-client .changelog/${filename} has an empty body — skipped`)
-    return null
-  }
-
-  return {
-    date: meta.date,
-    section: 'App',
-    tag: 'App',
-    items: [{ type: APP_CHANGE_TYPES[type], text: escapeMdx(body) }]
-  }
-}
-
 // Overrides supersede the changeset text they name in `Covers:`. Everything else publishes
 // raw, so this file only has to hold the entries worth rewriting.
 function collectOverrides() {
@@ -364,7 +333,7 @@ function collectOverrides() {
       // A section with no Covers: is prose in this file's own header, not an override.
       if (covers.length === 0) return null
 
-      if (!APP_CHANGE_TYPES[type]) {
+      if (!CHANGE_TYPES[type]) {
         warn(`override "${title}" has a missing or unrecognized Type: "${type}" — skipped`)
         return null
       }
@@ -379,7 +348,7 @@ function collectOverrides() {
         return null
       }
 
-      return { title, covers, kind: APP_CHANGE_TYPES[type], declaredTags, date, body: text }
+      return { title, covers, kind: CHANGE_TYPES[type], declaredTags, date, body: text }
     })
     .filter(Boolean)
 }
@@ -499,19 +468,6 @@ function collectRelayKitEntries(repoDir, overrides) {
   }
 
   return entries
-}
-
-function collectAppEntries(repoDir) {
-  const dir = join(repoDir, '.changelog')
-  if (!existsSync(dir)) {
-    warn('relay-client has no .changelog directory — the App section will be empty')
-    return []
-  }
-
-  return readdirSync(dir)
-    .filter((file) => file.endsWith('.md') && file !== 'README.md')
-    .map((file) => parseAppEntry(file, readFileSync(join(dir, file), 'utf8')))
-    .filter((entry) => entry !== null && entry.date >= SINCE)
 }
 
 // Upstream text is plain markdown, so a stray `<` or `{` would break the MDX build. Fenced
@@ -701,14 +657,21 @@ function renderPage(entries) {
 }
 
 const relayKitDir = resolveRepo('relay-kit', 'RELAY_KIT_DIR', { history: true })
-const relayClientDir = resolveRepo('relay-client', 'RELAY_CLIENT_DIR')
+
+function readSectioned(path, options) {
+  if (!existsSync(path)) {
+    warn(`${options.label} source is missing at ${path} — the ${options.section} section will be empty`)
+    return []
+  }
+  return parseSectionedChangelog(readFileSync(path, 'utf8'), options).filter((entry) => entry.date >= SINCE)
+}
 
 const overrides = collectOverrides()
 
 const entries = [
-  ...parseApiChangelog(readFileSync(API_CHANGELOG, 'utf8')).filter((entry) => entry.date >= SINCE),
+  ...readSectioned(API_CHANGELOG, { section: 'API', tag: 'API', label: 'API changelog' }),
   ...collectRelayKitEntries(relayKitDir, overrides),
-  ...collectAppEntries(relayClientDir)
+  ...readSectioned(APP_CHANGELOG, { section: 'App', tag: 'App', label: 'App changelog' })
 ]
 
 const page = renderPage(entries)
