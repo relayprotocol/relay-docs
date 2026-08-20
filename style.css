@@ -388,3 +388,86 @@
   .callout .prose > :first-child {
     margin-top: 0;
   }
+
+/* Changelog tag filters — Mintlify renders per-day tags under each date; script.js makes
+   them the filter control and injects a matching sticky bar above the timeline. */
+[data-cl-filter-bar] {
+  position: sticky;
+  /* script.js measures the navbar, since Mintlify exposes no variable for its height. */
+  top: var(--cl-sticky-top, 5rem);
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.dark [data-cl-filter-bar] {
+  border-bottom-color: rgb(55 65 81);
+}
+
+/* Each day's date column is sticky at Mintlify's --scroll-mt, which is measured from the same
+   viewport top the filter bar occupies, so it parks behind the bar. Add the bar's height to
+   their offset rather than replacing it — calc() keeps whatever unit they used. :has() is the
+   only way to reach the sticky wrapper, which carries no data attribute of its own; with no
+   bar on the page --cl-bar-height is 0 and this changes nothing. */
+div:has(> [data-component-part="update-label"]) {
+  top: calc(var(--scroll-mt, 5rem) + var(--cl-bar-height, 0px));
+}
+
+[data-component-part="update-tag"],
+[data-cl-filter-bar] button {
+  cursor: pointer;
+  padding: 2px 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: 9999px;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background-color 0.15s;
+}
+
+/* The injected chips carry none of Mintlify's type classes, so they set their own. */
+[data-cl-filter-bar] button {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: rgb(107 114 128);
+  background: transparent;
+}
+
+[data-component-part="update-tag"]:hover,
+[data-component-part="update-tag"][data-cl-active="true"],
+[data-cl-filter-bar] button:hover,
+[data-cl-filter-bar] button[data-cl-active="true"] {
+  border-color: rgb(var(--primary) / var(--tw-text-opacity, 1));
+  color: rgb(var(--primary) / var(--tw-text-opacity, 1));
+}
+
+[data-component-part="update-tag"][data-cl-active="true"],
+[data-cl-filter-bar] button[data-cl-active="true"] {
+  background: rgb(var(--primary) / 0.08);
+}
+
+/* --primary is too dark to read on a dark background; the light tint takes over. */
+.dark [data-component-part="update-tag"],
+.dark [data-cl-filter-bar] button {
+  border-color: rgb(55 65 81);
+  color: rgb(156 163 175);
+}
+
+.dark [data-component-part="update-tag"]:hover,
+.dark [data-component-part="update-tag"][data-cl-active="true"],
+.dark [data-cl-filter-bar] button:hover,
+.dark [data-cl-filter-bar] button[data-cl-active="true"] {
+  border-color: rgb(var(--primary-light));
+  color: rgb(var(--primary-light));
+}
+
+.dark [data-component-part="update-tag"][data-cl-active="true"],
+.dark [data-cl-filter-bar] button[data-cl-active="true"] {
+  background: rgb(var(--primary-light) / 0.14);
+}

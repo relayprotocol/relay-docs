@@ -1,0 +1,10 @@
+# Internal guidance and repo scaffolding, not docs pages. Without this they are parsed as
+# MDX on every edit, so a `<placeholder>` in prose fails the whole deployment.
+AGENTS.md
+CLAUDE.md
+README.md
+.changelog/
+# Source for the API line of the changelog, not a page. AGENTS.md §4.5 already treats it that
+# way; leaving it built published an unlinked page and made its MDX validity load-bearing for
+# every deploy.
+references/api/changelog.mdx
