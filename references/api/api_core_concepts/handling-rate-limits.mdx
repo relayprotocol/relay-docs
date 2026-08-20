@@ -21,6 +21,8 @@ Validation belongs on the client too. Amounts below Relay's minimum come back as
 
 If you poll for status, widen the interval and stop polling once a request reaches a terminal status (`success`, `failure`, or `refund`). When you need many records at once, [`GET /requests/v3`](/references/api/get-requests) retrieves them in a single filtered call instead of one call per request ID.
 
+If you receive a `429` response, retry the request after an exponential backoff. This will prevent you from hammering the API with requests that will likely fail again.
+
 ---
 
 ## Replace polling with webhooks or websockets
