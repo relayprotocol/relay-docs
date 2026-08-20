@@ -16,16 +16,16 @@
         "groups": [
           {
             "group": "Introduction",
-            "pages": ["what-is-relay"]
+            "pages": ["what-is-relay", "how-relay-works"]
           },
           {
             "group": "Solutions",
             "pages": [
+              "solutions/payment-service-providers",
               "solutions/wallets-and-wallet-providers",
               "solutions/multichain-apps",
               "solutions/chains",
-              "solutions/commerce-and-payments",
-              "solutions/payment-service-providers"
+              "solutions/commerce-and-payments"
             ]
           },
           {
@@ -92,6 +92,7 @@
                   "references/api/api_core_concepts/trade-types",
                   "references/api/api_core_concepts/surplus-and-shortage",
                   "references/api/api_core_concepts/handling-errors",
+                  "references/api/api_core_concepts/handling-rate-limits",
                   "references/api/api_core_concepts/execution-errors",
                   "references/api/api_core_concepts/contract-compatibility"
                 ]
@@ -154,6 +155,7 @@
               "references/api/deposit-address-reindex",
               "references/api/get-app-fee-balances",
               "references/api/claim-app-fees",
+              "references/api/get-usage",
               "references/api/advanced",
               "references/api/fast-fill",
               "references/api/get-swap-sources",
@@ -297,6 +299,10 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Changelog",
+        "pages": ["changelog"]
       }
     ]
   },

@@ -134,6 +134,7 @@ A crafted cross-chain message bricks a specific pool's accounting, locking all f
 - **"The bug only exists under specific token configurations."** If the configuration is live in production, the report is treated as real. If only theoretical, likelihood drops to L1.
 - **"The reporter also proposed the fix."** Does not change the tier, but is strong grounds for a discretionary bonus.
 - **Duplicate reports.** The first submission gets the full payout. A duplicate submitted within 7 days receives 10% of the first report's payout as a courtesy payment. Duplicates submitted after 7 days are not eligible for payment.
+- **Previously known issues.** We treat a finding as already known only when, before your submission, the same root cause was recorded in a dated internal record showing we were already tracking it for remediation, such as an internal ticket or a triaged finding. Raw automated scanner output or an untriaged internal note does not count. When a qualifying record predates your report, the duplicate schedule above applies (10% within 7 days of that record, not eligible after). We will not reduce a payout based on internal discovery we cannot date to before your submission, and, as above, a report never loses value because we detected, triaged, or fixed the issue after you submitted it.
 
 ## Discretionary bonuses
 
