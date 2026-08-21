@@ -103,7 +103,7 @@ Parameter tables are the dominant structured element on reference pages.
 - Keep cell descriptions concise; move long explanations into prose below the table.
 - `Required` column uses ✅ / ❌. **Only include the `Required` column when the table has a mix of required and optional params** — if everything is required (or everything is optional), omit the column entirely. Use a compound value like `✅ (❌ if X)` when requirement is conditional.
 - Precede every parameter table with a one-line intro sentence ("Arguments:" / "Parameters:" are acceptable, but a full sentence reads better).
-- When the table intentionally shows only a subset of parameters, call that out in the intro sentence and link to the full reference (e.g. "The most commonly used parameters are below; see [<full ref>](/...) for the complete list.").
+- When the table intentionally shows only a subset of parameters, call that out in the intro sentence and link to the full reference (e.g. "The most commonly used parameters are below; see [`<full ref>`](/...) for the complete list.").
 
 ### 2.8 Code examples
 
@@ -252,9 +252,10 @@ Automation design for this flow is intentionally deferred; the current rule is "
 Breaking changes are renames, removals, signature changes, return-shape changes, and endpoint path changes.
 
 - **Edit pages in place.** The page describing the changed surface is updated to reflect the new shape. Do not leave an "old version" trace in-line.
-- **Log in a per-product changelog.** Breaking-change narratives live in the product's changelog, not on the page itself. The changelogs are:
-  - `references/api/changelog.mdx` — for API endpoint changes (create this page; wire into the API Reference nav as a top-level entry).
-  - Future: `references/relay-kit/sdk/changelog.mdx`, `references/relay-kit/ui/changelog.mdx`, etc. — add when the first breaking change in that surface ships.
+- **Log in the product's changelog source.** Breaking-change narratives live in a changelog, not on the page itself. Each product line has one source, and all of them roll up into `changelog.mdx` (§4.6):
+  - `references/api/changelog.mdx` — API endpoint changes, hand-authored in this repo.
+  - `relay-kit` package `CHANGELOG.md` files — written as changesets in that repo, and published as written. `.changelog/relay-kit-overrides.md` here rewrites individual entries after the fact (§4.6).
+  - `.changelog/app.md` — the relay.link line, hand-authored here in the same shape as the API file. Curated copy rather than a log of merged PRs, so it is empty by default and the App section is omitted until an entry exists.
 - **Update inbound links.** Any page that referenced the old name / path / signature must be updated in the same PR.
 - **No inline `<Warning>` callout on the updated page.** The changelog is the record. Exception: when the rename has a migration subtlety that every reader must see (e.g. param reordering with silent behavior change), add a one-liner `<Info>` with the date and a pointer to the changelog entry.
 
@@ -278,9 +279,9 @@ Deprecation applies when the old surface continues to exist and work, but is mar
 - If the fix restores documented behavior, no doc update is required.
 - If the fix is invisible to integrators (internal refactor), no doc update is required.
 
-### 4.5 Changelog page format (API only, for now)
+### 4.5 API changelog page format
 
-`references/api/changelog.mdx` is a new page introduced by this guide. Structure:
+`references/api/changelog.mdx` is the API product line's changelog, hand-authored in this repo. It is deliberately kept out of `docs.json` — readers get the API entries through the unified changelog (§4.6), so this page is a source file, not a published surface. Structure:
 
 ```mdx
 ---
@@ -298,6 +299,28 @@ description: "Record of breaking changes, deprecations, and notable additions to
 ```
 
 Entries are newest-first. Each entry is a `##` heading with the date and a one-line summary. Body uses bolded change-type leads (`**Breaking**`, `**Deprecated**`, `**Added**`) on their own lines — matching the bolded-lead pattern already used on use-case pages (§3.2).
+
+The `## YYYY-MM-DD — <summary>` heading shape is parsed by `scripts/build-changelog.mjs`; an entry that deviates from it is silently dropped from the unified changelog.
+
+### 4.6 Unified changelog (`changelog.mdx`)
+
+`changelog.mdx` is generated — **never edit it by hand.** `scripts/build-changelog.mjs` merges the three sources listed in §4.2 into one date-ordered page of Mintlify `<Update>` blocks, and an hourly GitHub Action opens or updates a pull request with the result. It is its own tab in `docs.json` (`navigation.tabs`), alongside Overview, API Reference, RelayKit, and Relay Protocol. Because the tab holds this page alone, the page sets `mode: "center"` so no single-item sidebar renders.
+
+- Each day renders as one `<Update>` with `### API` / `### RelayKit` / `### App` sections.
+- **API and App entry text is reproduced verbatim from its source.** Fix wording in that source, not here.
+- **RelayKit changesets publish as written, and `.changelog/relay-kit-overrides.md` rewrites the ones worth rewriting.** An override names the changeset commits it replaces in `Covers:`, plus `Type:` and optional `Tags:`/`Date:`; see that file's header for the format. Package versions and commit links are **derived from `Covers`**, never hand-written, so they cannot drift. A changeset with no override renders raw — which is why relay-kit carries changeset guidance and a `lint:changesets` floor.
+- **Every build prints the changesets publishing raw, newest first, keyed by commit.** That list is the work queue for overrides, so nothing tracks a last-synced cursor. Scout's `write-changelog-entry` skill reads it, appends to the override file, and opens a review PR. Never edit `changelog.mdx` — it is generated.
+- **Filtering is custom.** Mintlify's own changelog filters render in the table of contents, which `mode: "center"` hides. Instead, `enhanceChangelogPage()` in `script.js` binds the tags Mintlify renders under each date (`[data-component-part="update-tag"]`, from the `tags={[…]}` prop): click one to narrow to that product line, click it again to clear, several tags OR together. **The `?tags=` query string is the source of truth**, re-read on every navigation event, so a shared link, a back/forward step, and a click on the Changelog tab each land on the filter the URL names.
+- **A sticky filter bar sits above the timeline.** `script.js` injects it from the tags actually present on the page, in `TAG_ORDER`, with an `All` chip that clears the filter. Both chip sets drive the same state, so clicking either updates both.
+- **The bar's offset is measured, not declared.** It clears the navbar using a height read at runtime, and publishes its own height as `--cl-bar-height`, which `style.css` adds to Mintlify's `--scroll-mt` in a `calc()` on the day's sticky date column — that column parks at the same offset and would otherwise sit behind the bar. Adding rather than replacing keeps their value and its unit; reading the variable in JS and re-emitting it in pixels mis-converts a `rem`.
+- **The bar is injected, not generated into the MDX**, and borrows `bg-background-light dark:bg-background-dark` from Mintlify's own sticky elements. Filtering needs the script either way, so no script means no bar rather than an inert control.
+- **The filter reaches inside a day.** A date that survives it still hides the sections and entries belonging to other product lines, down to individual bullets inside a change-type group. Sections map to tags by heading (`API`, `App`); inside `### RelayKit` the tags come from the package attribution the generator appends (`SDK 7.0.0`), matched only when a version follows the name so prose mentioning "the SDK" is not read as one.
+- **Anything the parser cannot judge stays visible** — an item-less group, a section with no groups, an entry with no attribution — and with no filter active every element the script hides is restored outright rather than re-derived. Hiding content over a markup mismatch is a worse failure than the filter quietly not working.
+- The filter hangs off Mintlify's `data-component-part` attributes (`update-tag`, `update-tag-list`, `update-content`), verified against a deployed build. If an upgrade renames them the filter stops working, so re-check it after a Mintlify bump.
+- **Releases are dated by the commit that added their CHANGELOG section**, read from a full clone of relay-kit. No npm registry: that dates every release in the file (989 versions) rather than only tagged or currently-published ones, and keeps the build offline apart from the clones.
+- A changeset whose body starts with `[internal]` never publishes. That is relay-kit's marker for a change with no customer-visible effect.
+- **The sync opens a pull request, it does not push to `main`.** `bot/changelog-sync` is rebuilt as `main` plus one commit on every run, so the diff is always exactly what is pending; an existing open PR is updated in place, and is left untouched when the content has not changed. When `main` catches up the branch is deleted, which closes the PR — but only if the branch carries nothing beyond `main`, since deleting a PR head branch discards its review. **The page therefore only updates when someone merges** — the sync is hourly, publication is not.
+- Regenerate with `node scripts/build-changelog.mjs`; `--check` fails when the committed page differs from a fresh build. Its only external input is a full-depth clone of relay-kit, which is public — no registry, no secret, and every hand-written source lives in this repo; a PR gate is viable on non-fork branches, and unlike an npm-backed build it will not start failing the moment relay-kit publishes. It would not run on the sync PR itself: `gh` opens that with `GITHUB_TOKEN`, and events from that token trigger no workflows. Consequence to expect either way: a PR that edits a source file gets a preview without that entry, which appears after merge at the next `:17`.
 
 ---
 

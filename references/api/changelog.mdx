@@ -3,6 +3,58 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-08-19 — Owner-scoped `referrer` filter on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: `referrer` is again supported as a filter — both as a top-level query parameter and as a `referrer` / `not:referrer` key inside any `filters` group — with exact-match semantics. Because referrer values are guessable, a referrer filter must be paired with the top-level `apiKey` parameter, and every supplied key must belong to the authenticating integrator. Requests without the `apiKey` pairing return `400`; requests whose supplied keys are not owned by the caller (or which cannot resolve to an integrator identity) return `403`. Empty `referrer` values are rejected. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+
+## 2026-08-13 — Solana quote size check returns `SOLANA_TX_TOO_LARGE`
+
+**Added** — `POST /quote`, `POST /quote/v2`, and `POST /price`: the response `errorCode` enum gains **`SOLANA_TX_TOO_LARGE`**, returned with `400` when the compiled Solana deposit transaction would exceed Solana's 1232-byte wire limit and cannot be signed or broadcast. The response `message` reports the measured transaction size and how many bytes it lands over, so clients can see how far over the quote is without recompiling the message themselves. See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors) and [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
+
+**Behavior change** — `POST /quote`, `POST /quote/v2`, and `POST /price`: same-chain Solana quotes now reject at quote time when the compiled deposit transaction would exceed 1232 bytes, matching the existing behavior for Solana-origin cross-chain quotes (see the [2026-05-29 entry](#2026-05-29-oversized-solana-aggregator-quotes-reject-at-quote-time)). Previously same-chain oversized quotes returned `200` with steps the wallet could not serialize.
+
+**Behavior change** — `POST /quote`, `POST /quote/v2`, and `POST /price`: the Solana deposit-transaction size gate now enforces the raw **1232-byte** wire limit. Quotes between 1173 and 1232 bytes — valid on the wire as returned — are now accepted, and the previously reserved 60-byte compute-budget headroom is advisory. Clients that prepend compute-budget instructions at send time are responsible for checking their remaining room against the returned steps. This reverses the [2026-07-09 change](#2026-07-09-solana-quote-size-check-reserves-compute-budget-headroom) that had cut the effective quote-time limit to 1172 bytes.
+
+## 2026-08-07 — `failReason` and `refundFailReason` on `GET /intents/status/v3`
+
+**Added** — `GET /intents/status/v3`: the response now includes `failReason` and `refundFailReason`, matching the fields already returned on [`GET /requests/v3`](/references/api/get-requests) and the `request.status.updated` [webhook](/references/api/api_guides/webhooks) / [websocket](/references/api/api_guides/websockets) event. `failReason` returns `"N/A"` on non-failure statuses and the recorded reason (or `"UNKNOWN"`) on `failure`, `fallback`, and `refund` statuses. `refundFailReason` defaults to `"N/A"` when no refund-leg failure is recorded. Integrators polling status can now read these values directly without a follow-up call to `GET /requests/v3`. See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors) for the full enum.
+
+**Added** — `GET /intents/status/v3`, `GET /requests/v3`, and the `request.status.updated` webhook: the `refundFailReason` enum gains **`MANUAL_REFUND_REQUIRED`**, returned when the refund leg could not be automatically executed and requires manual intervention (for example, when the origin funds cannot be programmatically returned to the depositor).
+
+## 2026-08-06 — `data.apiKeyName` on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: the response `data` object now includes `apiKeyName`, the display name of the API key that created the request. It is returned only when the caller authenticates with an API key belonging to the request's owning integrator and passes `includeAuthenticatedData=true` — the same gate as `data.referrer` and `data.platformFee`. `null` when the owning API key has no name set. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+
+## 2026-08-04 — Null-check filters on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: the `filters` AND/OR parameter now accepts `null` as a null-check operator on any recognised key. `{"depositAddress": null}` matches requests where the field is empty (does not exist); `{"not:depositAddress": null}` matches requests where the field is present. Null-checks work across identity, address, chain, currency, and status-style fields, including the composite `user` filter and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. Arrays that mix `null` with real values for the same key return `400`. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+
+## 2026-08-04 — In-band deprecation signaling on `GET /requests/v2`
+
+**Added** — `GET /requests/v2`: every response now carries `Deprecation`, `Sunset`, and `Link` headers pointing to `GET /requests/v3` and the [migration guide](/references/api/api_guides/migrating-to-requests-v3), on `2xx`, `4xx`, and `5xx` alike. The `Deprecation` header is a structured-field Date (`@<unix-seconds>`), `Sunset` is an RFC 7231 HTTP-date, and `Link` includes three relations — `deprecation`, `sunset`, and `successor-version`. The three headers are also listed in the API's `Access-Control-Expose-Headers`, so browser clients using `fetch` or `XMLHttpRequest` can read them cross-origin.
+
+**Added** — `GET /requests/v2`: the `200` response body gains a top-level `deprecation` object with `message`, `deprecatedAt`, `throttledFrom`, `sunsetAt`, `successor`, and `migrationGuide`, mirroring the header timeline for clients that read the body rather than headers.
+
+**Behavior change** — `GET /requests/v2`: `429` responses now return a route-specific body — `message`, `successor`, `migrationGuide` — distinct from the generic rate-limit body used by every other endpoint. No `Retry-After` header or field is emitted. Migrate to [`GET /requests/v3`](/references/api/get-requests) — see the [sunset timeline](/references/api/api_guides/migrating-to-requests-v3#sunset-timeline).
+
+## 2026-08-03 — Optional total match count on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: the new opt-in `includeTotal` boolean query parameter (defaults to `false`) returns an exact `total` field on the response with the count of requests matching the current filters, independent of `limit` and `continuation`. The count reflects all matches across the full data window, not just the returned page. Because computing the exact count adds meaningful query latency, keep `includeTotal` off on the hot list-fetch path and enable it only when the total is needed (e.g. rendering a "X of Y results" header). Pagination behavior is unchanged.
+
+## 2026-07-30 — `route.actual.origin` reflects the observed deposit when no fill occurred
+
+**Behavior change** — `GET /requests/v3`: for requests where an origin deposit was observed on-chain but no fill was ever attempted (for example, a double-spent Bitcoin deposit that fails before solve), `data.route.actual.origin.inputCurrency` now reflects the actual deposited amount and currency instead of mirroring `data.route.quoted.origin.inputCurrency`. `data.route.actual.origin.outputCurrency` is `null` in this case — no fill occurred, so no output currency was observed — and `data.route.actual.destination` continues to fall back to `data.route.quoted.destination`. Previously the entire `data.route.actual` object silently mirrored `data.route.quoted` on these rows, hiding the real deposit amount from integrators reading the actual-side fields. Requests that reached a fill attempt are unaffected.
+
+## 2026-07-30 — TON inbound `inTxs[].txHash` now an explorer-ready hex hash
+
+**Behavior change** — `GET /requests/v3`: for TON-origin requests, `data.inTxs[].txHash` is now the bare 64-character hex transaction hash, suitable for opening on Tonviewer at `/transaction/{TX_HASH}`. Previously this field returned an internal composite identifier that had to be parsed before it could be linked to an explorer. Non-TON origins and `data.outTxs[]` are unaffected. This mirrors the fix previously shipped for [`GET /requests/v2`](/references/api/get-requests-v2) on 2026-06-19.
+
+## 2026-07-28 — Reasonless quote failures classified into specific error codes
+
+**Behavior change** — `POST /quote`, `POST /quote/v2`, and `POST /price`: transient failures that previously collapsed into a generic `500` with `errorCode: "UNKNOWN_ERROR"` are now classified. Transient infrastructure failures (including raw transport timeouts) return `503` with `errorCode: "SERVICE_UNAVAILABLE"`, transient price-feed failures return `503` with `errorCode: "PRICE_FETCH_FAILED"`, and quote requests for token pairs that cannot be priced return `400` with `errorCode: "UNSUPPORTED_CURRENCY"`. Only genuinely unclassified failures still return `500 UNKNOWN_ERROR`. Both `503` codes are retryable — see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
+**Added** — `POST /quote`, `POST /quote/v2`, and `POST /price`: the response `errorCode` enum gains `SERVICE_UNAVAILABLE` and `PRICE_FETCH_FAILED` for transient upstream failures where the request should be retried.
+
 ## 2026-07-28 — Higher elevated rate limit for `GET /requests/v3`
 
 **Added** — `GET /requests/v3`: the elevated per-key rate limit is now **20 requests per second**, up from the previously shared 10 rps bucket. `GET /requests` and `GET /requests/v2` continue at 10 rps. Default (non-elevated) limits are unchanged. See [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits).
