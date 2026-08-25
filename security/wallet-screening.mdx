@@ -1,0 +1,42 @@
+---
+title: "Wallet Screening"
+description: "Learn how Relay screens wallet addresses for sanctions and illicit activity across every flow."
+---
+
+Relay screens every transaction for sanctioned and high-risk wallet addresses. This page covers which flows are screened, which sources are used, what happens on a match, and how to request evidence of a screen.
+
+## Which flows are screened
+
+Screening applies uniformly across all Relay flows — bridges, swaps, and deposit-address transactions — whether initiated via the API, SDK, or Relay-hosted UI. There are no unscreened flows.
+
+For every transaction, all addresses involved are screened:
+
+- The depositor (the wallet sending funds)
+- The recipient (the wallet receiving funds on the destination chain)
+- The refund address (`refundTo`), if one is specified
+- The recovery address (`recoveryAddress`), if one is specified
+- Any fee recipient addresses
+
+Screening is performed both at quote time and again at fill time, before funds are forwarded to the destination.
+
+## Which lists are screened against
+
+Every address is screened against four sources in parallel:
+
+- **TRM Labs**
+- **Chainalysis**
+- **ZeroShadow**
+- **Relay's internal blocklist**
+
+A wallet is blocked if any source flags it. Compliance operators can additionally apply a manual ALLOW or BLOCK override with a documented reason.
+
+## What happens when there's a match
+
+- If any address is blocked at **quote time**, the quote fails and a `400` error is returned.
+- If any address is blocked at **fill time**, the fill is aborted and funds remain in the protocol. Funds can be withdrawn by the depositor address.
+
+## Evidence of screening
+
+Screening results are persisted on Relay's side (TRM results are retained for 6 months). Each screening result records the verdict from every source individually, so a record can show which list (if any) triggered a block for a given address.
+
+If a partner requires evidence of a specific screen, Relay can provide the screening record for the relevant address(es) on request through your support channel.
