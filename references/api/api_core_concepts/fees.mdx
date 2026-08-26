@@ -1,20 +1,20 @@
 ---
-title: "Fee Structure"
-description: "Learn about Relay's fee structure"
+title: "Cost & Fee Structure"
+description: "Learn about Relay's cost and fee structure"
 ---
 
-In any given token swap or bridge powered by Relay, there are four potential fees:
+In any given token swap or bridge powered by Relay, there are four potential fee and cost components:
 
-1. **Execution Fees**
+1. **Execution Cost (formerly Execution Fees)**
 
    Covers execution costs including network gas on the origin and/or destination chain, and includes:
    - $0.02 flat fee — always included
    - Destination (fill) gas estimate — always included, covers transaction fulfillment on the destination chain
    - Origin gas estimate — only included for gasless transactions, covers transaction submission on the origin chain on the user's behalf
 
-   For regular (non-gasless) transactions, the user pays origin gas directly from their own wallet to the network — it's not part of the Execution fee.
+   For regular (non-gasless) transactions, the user pays origin gas directly from their own wallet to the network — it's not part of the Execution Cost.
 
-2. **Swap Fees**
+2. **Swap Cost (formerly Swap Fees)**
 
    Covers payments to liquidity providers that facilitate cross-asset and cross-chain token swaps, and includes:
    - DEX fees
@@ -23,7 +23,7 @@ In any given token swap or bridge powered by Relay, there are four potential fee
 
    Note: Hyperliquid charges a $1 activation fee for new deposits. Relay cannot change this fee — it is passed through to users.
 
-3. **Relay Fees**
+3. **Platform Fees (formerly Relay Fees)**
 
    A flat basis point fee charged for using the Relay API gateway and related services, including via the Relay.link frontend.
 
@@ -39,7 +39,7 @@ In any given token swap or bridge powered by Relay, there are four potential fee
      </thead>
      <tbody>
        <tr>
-         <td>Relay Fee charged to end users</td>
+         <td>Platform Fees charged to end users</td>
          <td>0.00%</td>
          <td>0.01%</td>
          <td>0.06%</td>
@@ -48,7 +48,7 @@ In any given token swap or bridge powered by Relay, there are four potential fee
      </tbody>
    </table>
 
-   Relay integrators can receive a revenue share on the Relay Fee. The revenue share varies by asset pair type and volume tier, as detailed below. To qualify, integrators must:
+   Relay integrators can receive a revenue share on the Platform Fees. The revenue share varies by asset pair type and volume tier, as detailed below. To qualify, integrators must:
 
    1. Pass an API key in the Relay quote
    2. Complete Know Your Business (KYB) verification
@@ -117,11 +117,11 @@ _Please note that the above fee structure applies to standard cases. In certain 
 
 [`GET /requests/v3`](/references/api/get-requests) returns a request's fees in the `data.fees` object, with `quoted` (estimated at quote time) and `actual` (computed at fill time) values. It breaks fees down into the following components:
 
-**execution** - Execution fees covering network gas on the origin and/or destination chain plus the flat fee.
+**execution** - Execution costs covering network gas on the origin and/or destination chain plus the flat fee.
 
 **swap** - Swap costs from cross-currency and cross-chain exchange, including DEX fees, swap slippage, and solver rebalancing.
 
-**platform** - The platform fee, the flat basis-point fee charged by Relay for routing and meta-aggregation services.
+**platform** - The Platform Fees, a flat basis-point fee charged by Relay for routing and meta-aggregation services.
 
 **app** - App fees added on top by the integrator, when present.
 
@@ -129,9 +129,10 @@ _Please note that the above fee structure applies to standard cases. In certain 
 
 <Tip>
 When displaying fees to users, we recommend mapping the `data.fees` fields as follows:
-- **platform** → Provider Fee
-- **app** → Your App's Fee
-- **swap** + **execution** → Swap Impact
+- **execution** → Execution Cost
+- **swap** → Swap Cost
+- **platform** → Platform Fees
+- **app** → App Fee
 </Tip>
 
 <Note>
@@ -142,7 +143,7 @@ In the quote API and [`GET /requests/v2`](/references/api/get-requests-v2), this
 
 Integrators with [Fee Sponsorship](/features/fee-sponsorship) enabled can subsidize fees for their users. By default, setting **`subsidizeFees`** to `true` sponsors all fee components.
 
-For more granular control, use the **`sponsoredFeeComponents`** parameter in the quote request to choose which specific fee components to sponsor. This allows you to sponsor some fees (e.g. execution and relay fees) while letting the user pay others (e.g. swap fees).
+For more granular control, use the **`sponsoredFeeComponents`** parameter in the quote request to choose which specific fee components to sponsor. This allows you to sponsor some components (e.g. `execution` and `platform`) while letting the user pay others (e.g. `swap`).
 
 Deposit addresses do not support `sponsoredFeeComponents`.
 
