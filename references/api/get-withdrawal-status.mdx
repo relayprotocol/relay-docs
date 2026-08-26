@@ -1,0 +1,11 @@
+---
+title: "Get Withdrawal Status"
+description: "Poll the status of a user-triggered withdrawal job"
+openapi: get /withdrawals/status
+---
+
+[How do programmatic withdrawals work?](/references/protocol/guides/withdrawals)
+
+<Note>
+Pass the `jobId` returned by [Request Withdrawal](/references/api/request-withdrawal) as `id`. On most chains a `ready` status includes a `transaction` the owner wallet must broadcast. Status entries are retained for 24 hours.
+</Note>
