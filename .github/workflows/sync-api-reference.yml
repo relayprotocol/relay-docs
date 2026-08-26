@@ -1,0 +1,75 @@
+name: Sync API Reference
+
+# The API endpoint pages render from the live OpenAPI spec at build time — the MDX files are
+# only stubs naming an operation (AGENTS.md §3.3). So the published reference picks up an API
+# change when the docs redeploy, and nothing in this repo changes when the solver ships. Left
+# alone the reference can sit stale indefinitely; this queues a Mintlify deployment hourly.
+#
+# It writes nothing — no checkout, no commit, no pull request. The hourly unit of work is the
+# deployment itself, not a diff for someone to review and merge.
+
+on:
+  schedule:
+    # Offset from Sync Changelog's :17 so the two never queue a deployment in the same minute.
+    - cron: "37 * * * *"
+  workflow_dispatch:
+
+# Touches nothing in the repo; the Mintlify credentials do all the work.
+permissions: {}
+
+concurrency:
+  group: sync-api-reference
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Queue a deployment and wait for it
+        env:
+          MINTLIFY_API_KEY: ${{ secrets.MINTLIFY_API_KEY }}
+          MINTLIFY_PROJECT_ID: ${{ secrets.MINTLIFY_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+
+          status_id=$(
+            curl -sS --fail-with-body --retry 3 --retry-connrefused -X POST \
+              -H "Authorization: Bearer $MINTLIFY_API_KEY" \
+              "https://api.mintlify.com/v1/project/update/$MINTLIFY_PROJECT_ID" \
+            | jq -er '.statusId'
+          )
+          echo "queued deployment $status_id"
+
+          # Polled rather than fire-and-forget. A deployment that fails — an unreachable or
+          # invalid hosted OpenAPI file being the usual cause — is exactly what this job is in
+          # a position to notice first, and a green check over a failed deploy would bury that
+          # an hour at a time.
+          deadline=$(( SECONDS + 900 ))
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            sleep 20
+
+            body=$(curl -sS --fail-with-body \
+              -H "Authorization: Bearer $MINTLIFY_API_KEY" \
+              "https://api.mintlify.com/v1/project/update-status/$status_id")
+
+            case "$(jq -er '.status' <<<"$body")" in
+              success)
+                echo "deployment succeeded"
+                exit 0
+                ;;
+              failure)
+                echo "::error::Mintlify deployment $status_id failed: $(jq -r '.summary // "no summary"' <<<"$body")"
+                jq -r '.logs[]? | "  " + .' <<<"$body"
+                exit 1
+                ;;
+              queued | in_progress)
+                ;;
+              *)
+                echo "::error::unexpected status for deployment $status_id"
+                exit 1
+                ;;
+            esac
+          done
+
+          echo "::error::deployment $status_id did not finish within 15 minutes"
+          exit 1
