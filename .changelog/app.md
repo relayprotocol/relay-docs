@@ -21,3 +21,7 @@ of opening the first match directly.
 - Write for someone using the app: what changed, and what it means for them.
 
 <!-- Entries below, newest first. -->
+
+## 2026-08-27 — Story chain no longer supported
+
+**Removed** — Support for the Story chain (EVM chain id `1514`) has been removed. Bridges, swaps, and deep links targeting Story are no longer available on relay.link. Choose a different destination chain when creating a new route.
