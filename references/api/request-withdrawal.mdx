@@ -1,0 +1,11 @@
+---
+title: "Request Withdrawal"
+description: "Prepare or execute a user-triggered withdrawal from the Relay Depository"
+openapi: post /withdrawals/request
+---
+
+[How do programmatic withdrawals work?](/references/protocol/guides/withdrawals)
+
+<Note>
+Call this endpoint twice per withdrawal: first without `signature` to prepare (returns the `nonce`, validated `amount`, and any `additionalData` to sign), then with the `nonce` and owner `signature` to execute (returns a `jobId`). `chainId` and `ownerChainId` are protocol chain slugs, not numeric ids. These endpoints power [relay.link/withdraw](https://relay.link/withdraw) and are not yet a versioned API surface.
+</Note>

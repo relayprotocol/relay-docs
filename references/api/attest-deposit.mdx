@@ -1,0 +1,11 @@
+---
+title: "Attest Deposit"
+description: "Attest a deposit transaction so its funds become claimable via the withdrawal flow"
+openapi: post /withdrawals/attest-deposit
+---
+
+[How do programmatic withdrawals work?](/references/protocol/guides/withdrawals)
+
+<Note>
+Unlike the other withdrawal endpoints, `chainId` here is the numeric Relay chain id. These endpoints power [relay.link/withdraw](https://relay.link/withdraw) and are not yet a versioned API surface.
+</Note>

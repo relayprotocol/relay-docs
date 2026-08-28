@@ -161,6 +161,14 @@
               "references/api/get-swap-sources",
               "references/api/execute",
               {
+                "group": "Withdrawals",
+                "pages": [
+                  "references/api/attest-deposit",
+                  "references/api/request-withdrawal",
+                  "references/api/get-withdrawal-status"
+                ]
+              },
+              {
                 "group": "Deprecated",
                 "pages": [
                   "references/api/get-requests-v2",
@@ -259,6 +267,7 @@
                 "pages": [
                   "references/protocol/guides/for-solvers",
                   "references/protocol/guides/for-apps",
+                  "references/protocol/guides/withdrawals",
                   "references/protocol/guides/third-party-oracle"
                 ]
               },
