@@ -1,17 +1,69 @@
 ---
 title: "Fee Sponsorship"
-description: "Sponsor your users' transaction fees to improve UX and reduce friction"
+description: "Cover transaction fees from your app balance so stablecoin payments arrive whole"
 ---
 
 import AppBalance from "/snippets/AppBalance.mdx";
 
-## What is Fee Sponsorship?
+Fee Sponsorship is a feature that lets you cover some or all of your users' transaction fees from your app balance. Use it to make stablecoin payments arrive whole, remove gas-token friction, and control the cost experience in your product.
 
-Fee Sponsorship allows you to cover the destination chain fees for your users' Relay transactions. By sponsoring these fees, you can reduce costs for your users and create a more seamless experience. This is particularly valuable for onboarding new users or providing a premium experience for your application.
+Every stablecoin payment has a quiet failure mode: your user sends 100 USDC and 99.80 USDT arrives. Bridge fees, gas, and execution costs came out of the payment, and their first thought is, “Where did my dollars go?” For stablecoin payments, anything less than the expected amount can feel broken.
+
+Cover some or all of your users' fees so they transact without a surprise deduction at the finish line. You decide what they pay, what you absorb, and the maximum amount you will sponsor per transaction.
+
+## How it works
+
+1. **Fund** an app balance with an API key and linked funding address.
+2. **Set** what you will cover in the quote: all destination fees or selected fee components, with an optional per-transaction cap.
+3. **Transact:** the user completes the payment while Relay applies your sponsorship.
+4. **Settle:** Relay handles routing, conversion, gas, and settlement behind the scenes.
+
+## Why it matters
+
+### For your business
+
+- **Remove a silent trust-killer.** Avoid “Why did I get less than I sent?” moments at the finish line.
+- **Create a growth lever.** Sponsor onboarding, promotions, premium tiers, or specific cohorts, then adjust coverage as needed.
+- **Keep spend predictable.** Cap how much you sponsor per transaction.
+- **Own the cost experience.** Decide how fees appear in your product from end to end.
+
+### For your users
+
+- **Payments arrive whole.** Sponsorship prevents covered fees from reducing the amount they receive.
+- **Fewer gas tokens to manage.** Pair fee sponsorship with Relay's other gas features to abstract chain-specific costs.
+- **Fewer interruptions.** Users can complete flows without stopping to source destination gas.
+
+## Who it's for
+
+Fee sponsorship works best for stablecoin flows such as onboarding, stablecoin orchestration, and payments. Sponsoring spreads on volatile pairs rarely makes sense.
+
+- **Payment service providers:** sponsor fees so the merchant receives the intended payment amount.
+- **Wallets and wallet infrastructure:** remove fee friction from a new user's first transaction.
+- **Onramps and offramps:** sponsor the first onchain action after a fiat conversion, where users are most likely to drop off.
+
+Deploy sponsorship deliberately for onboarding, promotions, premium tiers, or contract partners. It is a growth and reliability lever, not necessarily a permanent giveaway.
+
+## Combine it with other gas features
+
+Fee sponsorship is one of four ways to get gas out of your users' way. Combine it with [gasless execution](/features/gasless-swaps), [just-in-time gas](/features/gas-top-up), and paying fees with the token already being transferred.
+
+For an exact 1:1 stablecoin exchange rate, pair fee sponsorship with [fixed rates](/features/price-stabilization#fixed-rates). Pair it with [deposit addresses](/features/deposit-addresses) when users need to pay from a CEX or another source without connecting a wallet.
+
+## What you can control
+
+Choose full or partial coverage, sponsor all destination fees or selected fee components, and set a per-transaction cap. Deposit-address flows support full sponsorship and a maximum cap, but not selective fee components.
+
+Fee sponsorship is generally available and does not require an enterprise partnership.
+
+## What to consider
+
+Sponsorship draws from your app balance, so compare the cost against the conversion and retention benefit. It covers destination fees, not origin gas, except for Solana origins when you provide a designated fee payer. Deposit-address and CEX flows reduce origin gas to a plain transfer, while gasless execution can remove it for supported EVM flows.
 
 <Note>
-Fee sponsorship covers all destination chain fees (including gas topup amounts), but **not** the origin chain gas fee. Users will still need to pay the gas required to submit their transaction on the origin chain.
+Fee sponsorship covers destination chain fees, including gas top-up amounts, but not the origin chain gas fee. Users still pay origin gas unless the flow uses a supported origin-fee mechanism such as a Solana fee payer.
 </Note>
+
+---
 
 ## Requirements
 
