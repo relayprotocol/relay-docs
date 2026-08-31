@@ -84,6 +84,8 @@ mode: "center"
 
 **Added**
 
+- `POST /quote` and `POST /quote/v2`: the new optional `subsidizationBps` request field lets sponsors cover a fixed share of each selected sponsorable fee bucket instead of covering it in full. Values are integer basis points in the range `0`–`10000` (`10000` = 100%). Requires `subsidizeFees: true`. Applied per bucket **before** `maxSubsidizationAmount`, which continues to cap the sponsor's total contribution. Currently supported only on swap execution flows — bridge and deposit-address flows return `400` when set. Omitting the field preserves the previous full-coverage behavior. See [Fee Sponsorship](/features/fee-sponsorship#how-subsidizationbps-works).
+- `GET /requests/v2`, `GET /requests/v3`, and `GET /integrators/quote-data`: the `feeSponsorship` object now includes `subsidizationBps` on both the quoted and actual phases, reflecting the share configured at quote time when one was set. Absent when the field was not configured on the request.
 - `POST /quote`, `POST /quote/v2`, and `POST /price`: the response `errorCode` enum gains **`SOLANA_TX_TOO_LARGE`**, returned with `400` when the compiled Solana deposit transaction would exceed Solana's 1232-byte wire limit and cannot be signed or broadcast. The response `message` reports the measured transaction size and how many bytes it lands over, so clients can see how far over the quote is without recompiling the message themselves. See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors) and [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).
 
 </Update>
