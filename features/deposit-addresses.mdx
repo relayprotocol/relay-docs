@@ -63,7 +63,7 @@ Strict deposit addresses are bound to the original order and should be treated a
 | Wrong token (non-solver) | Not supported and not currently recoverable | Not supported and not currently recoverable |
 | Wrong chain (same VM) | Supported, but may require [manual reindexing](#reindexing-stuck-deposits) before the deposit is recognized; some chain families refund instead | Not supported — no automatic wrong-chain recovery |
 | Wrong chain (different VM) | Not supported | Not supported |
-| Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments fill the quoted amount and refund the excess |
+| Amount mismatch | Usually requotes for actual amount; too-small deposits may refund | Underpayments refund; exact payments fill; overpayments depend on trade type — `EXACT_INPUT` fills the full deposited amount with no refund of the excess, `EXACT_OUTPUT` fills the quoted amount and refunds the excess |
 | `refundTo` | Recommended (omitting disables automatic refund) | Required |
 | Address reuse | Yes, same route | No — bound to original order |
 
@@ -897,7 +897,8 @@ Strict addresses are bound to the original order. The handling is narrower:
 
 - **Exact amount** — The fill proceeds using the original order.
 - **Underpayment** — The deposit fails and is refunded to `refundTo`. The fill does not proceed.
-- **Overpayment** — The fill proceeds for the originally quoted amount and the excess is returned to `refundTo` as a separate refund leg. The fill itself is never scaled up.
+- **Overpayment (`EXACT_INPUT`)** — The full deposited amount is filled. The excess is **not** refunded — the fill scales up to cover everything that was deposited.
+- **Overpayment (`EXACT_OUTPUT`)** — The fill proceeds for the originally quoted amount and the excess is returned to `refundTo` as a separate refund leg. The fill itself is never scaled up.
 - **Wrong token or wrong chain** — Not supported. Strict addresses do not have automatic wrong-token or wrong-chain recovery paths.
 
 <Warning>
