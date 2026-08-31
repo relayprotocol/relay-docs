@@ -47,12 +47,13 @@ Add these parameters to your [Get Quote](/references/api/get-quote-v2) API reque
 |-----------|------|-------------|
 | `subsidizeFees` | `boolean` | Set to `true` to have the sponsor pay for all fees associated with the request, including gas topup amounts. |
 | `maxSubsidizationAmount` | `string` | _(Optional)_ The maximum amount to subsidize in USDC with 6 decimal places (e.g., `"1000000"` = $1.00). If the total fees exceed this threshold, the sponsor pays up to the cap and the user pays the remainder. |
+| `subsidizationBps` | `integer` | _(Optional)_ The share of each selected fee bucket the sponsor covers, in basis points from `0` to `10000` (e.g., `10000` = 100%, `2500` = 25%). Requires `subsidizeFees: true`. Defaults to full coverage when omitted; the user pays the remainder. Applied per bucket before `maxSubsidizationAmount`, which still caps the sponsor's total. Only supported on swap execution flows. See [How `subsidizationBps` Works](#how-subsidizationbps-works). |
 | `subsidizeRent` | `boolean` | _(Optional)_ Set to `true` to sponsor Solana ATA rent fees. Requires `subsidizeFees` to also be enabled. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 | `depositFeePayer` | `string` | _(Optional)_ A Solana address to pay deposit transaction fees for Solana origin transactions. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
-| `sponsoredFeeComponents` | `string[]` | _(Optional)_ You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees.
+| `sponsoredFeeComponents` | `string[]` | _(Optional)_ You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees. |
 
 <Warning>
-[Deposit addresses](/features/deposit-addresses) do not support `sponsoredFeeComponents`. `maxSubsidizationAmount` is supported by deposit addresses but if the amount exceeds the maximum the user pays all fees and nothing is subsidized.
+[Deposit addresses](/features/deposit-addresses) do not support `sponsoredFeeComponents` or `subsidizationBps`. `maxSubsidizationAmount` is supported by deposit addresses but if the amount exceeds the maximum the user pays all fees and nothing is subsidized.
 </Warning>
 
 ### Example Request
@@ -97,6 +98,28 @@ With partial fee sponsorship, users always receive some benefit from your sponso
 <Warning>
 Partial fee sponsorship is not supported for deposit addresses, if the fees exceed the `maxSubsidizationAmount` the user will cover the fees completely and nothing will be sponsored.
 </Warning>
+
+### How `subsidizationBps` Works
+
+The **`subsidizationBps`** parameter controls the **share** of each selected fee bucket the sponsor covers, expressed in basis points where `10000` equals 100%. Use it when you want to co-fund fees with your user at a fixed ratio instead of covering everything up to a USD cap.
+
+- `10000` — the sponsor covers the full bucket (same as omitting the parameter).
+- Values between `0` and `10000` — the sponsor covers that share of each selected bucket, and the user pays the remainder.
+- `0` — the sponsor covers nothing on selected buckets.
+
+The share is applied to every bucket named in `sponsoredFeeComponents` (or every eligible bucket when `sponsoredFeeComponents` is omitted). Unselected buckets remain fully user-paid, as they would without a bps share.
+
+**Interaction with `maxSubsidizationAmount`.** The bps share is applied to each bucket first, then the USD cap bounds the resulting sponsor total. `maxSubsidizationAmount` continues to limit the sponsor's exposure even when a bps share is set — if the bps-scaled sponsored amount would exceed the cap, the sponsor still pays only up to the cap and the user pays the remainder.
+
+**Example.** With `sponsoredFeeComponents: ["execution", "swap"]` and `subsidizationBps: 5000`, the sponsor covers 50% of the execution bucket and 50% of the swap bucket; the user pays the other 50% of each plus any unselected buckets. Adding `maxSubsidizationAmount: "3000000"` on top caps the sponsor's total contribution at $3.00 regardless of the bps calculation.
+
+<Info>
+`subsidizationBps` is currently supported only on swap execution flows. Bridge and [deposit address](/features/deposit-addresses) flows return `400` when the field is set — use `maxSubsidizationAmount` for those flows instead.
+</Info>
+
+<Info>
+Rounding is truncated per bucket, so the sponsor's share is always at or below the requested percentage — any single-unit remainder is user-paid.
+</Info>
 
 ---
 
