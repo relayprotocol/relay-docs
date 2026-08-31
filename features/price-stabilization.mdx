@@ -3,21 +3,51 @@ title: "Price Stabilization"
 description: "Deliver consistent stablecoin pricing across chains"
 ---
 
-Price Stabilization gives you two mechanisms for stablecoin swaps: [fee sponsorship](#fee-sponsorship), where you cover transaction fees so the user receives the full market-rate output, or [fixed rates](#fixed-rates), where you lock in a specific exchange rate (e.g. 1:1) and absorb the volatility yourself.
+**Price Stabilization: set the rate. 1:1, exactly.**
 
-Stablecoins don't actually trade at 1:1. When users swap between stablecoins cross-chain, the output fluctuates based on market rates, swap impact, and fees. For a $100 USDC-to-USDT swap, even small deviations from peg mean the user might receive 99.95 or 100.05 USDT instead of a clean 100.
+Anything in, exactly what you quoted out. You absorb the small variance; users don't.
 
-With fixed rates, you sometimes sponsor and sometimes earn the difference, with the expectation that it nets out over time.
+Stablecoins don't actually trade at exactly 1:1. Market rates drift around the peg, and fees come out of the flow, so $100 of USDC in becomes 99.95 or 100.05 USDT out. For trading, that's noise. For payments, it reads as an error: a dollar in should be a dollar out.
 
-For a cross-chain swap between major stablecoins, the cost is roughly: \$0.02 + 1bps.
+Price Stabilization lets you fix the rate. Set 1:1 on the quote and your user receives exactly what the rate says: 100 in, 100 out, whatever the market is doing. You absorb the small difference between your fixed rate and the market—sometimes covering a few cents, sometimes earning them—with the expectation that it nets out over time.
 
-For \$100 USDC input, the user would get \$99.97 worth of USDT
+The rate is yours to set. Fix it at 1:1.0005 and you've built 5 bps of pricing into every swap instead.
 
-This is on top of the market rate for the pair:
+It completes the 1:1 stablecoin story: [fee sponsorship](/features/fee-sponsorship) covers the fees, while fixed rates lock the rate. Stablecoin pairs make this affordable because swap impact between major stablecoins is typically under 1 bps, so what you absorb is small and predictable.
 
-If 1 USDT = 1.0000 USDC, that's 99.97 USDT <br/>
-If 1 USDT = 0.9995 USDC, that's 100.02 USDT <br/>
-If 1 USDT = 1.0005 USDC, that's 99.92 USDT
+## How It Works
+
+1. **Set the rate** on the quote (`fixedRate: "1:1"`) alongside fee sponsorship.
+2. **Transact:** The user sends 100 and receives exactly 100.
+3. **Absorb:** The gap between your rate and the market lands on your balance in both directions.
+4. **Net out:** Over time, the variance washes. Monitor your balance during peg deviations.
+
+## Why It Matters
+
+### For Integrators
+
+- **A price you can print.** Quote 1:1 in your product and mean it on every transaction.
+- **Predictable, not charitable.** You absorb basis points that cut both ways and net out, rather than paying a permanent subsidy.
+- **Your pricing, built in.** Set the rate above 1:1 and stabilization doubles as your spread.
+
+### For Your Users
+
+- **A dollar is a dollar.** 100 in, 100 out, every time.
+- **No decimal surprises.** The amount quoted is the amount received.
+
+## Who It's For
+
+- **Payment service providers:** Merchants price in dollars, and settlement should match the price. Fixed rates make 1:1 stablecoin settlement something you can put in your product, not just your pitch.
+- **On- and off-ramps:** A deposit quoted at $100 should credit as $100. Fixed rates remove the reconciliation noise between what users send and what they're credited.
+- **Wallets and wallet infrastructure:** Stablecoin conversions inside the wallet should feel like moving money, not trading. 1:1 makes the balance do what users expect.
+
+## What to Watch
+
+Fixed rates are supported between major stablecoins (USDC, USDC.e, USDT, USDe, USDH, mUSD, and DAI). When your fixed rate is above the market rate, monitor for arbitrage: a rate that deviates from the market can be drained. Worked examples and rate mechanics are in the guide below.
+
+For the full 1:1 experience, pair fixed rates with [fee sponsorship](/features/fee-sponsorship) to cover fees and [deposit addresses](/features/deposit-addresses) so users have nothing to connect or sign.
+
+---
 
 ## Price Stabilization Options
 
