@@ -4,7 +4,7 @@ description: "Verify a quote deterministically before you pay for it"
 ---
 
 <Warning>
-`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated and will be retired. Do not build new integrations against them. Use the deterministic verification described on this page instead — it does not depend on trusting a solver signature, works before the request is finalized, and is consistent across every chain we support.
+`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` have been removed and now return `404`. Use the deterministic verification described on this page — it does not depend on trusting a solver signature, works before the request is finalized, and is consistent across every chain we support.
 </Warning>
 
 Relay quotes are paid for with an unvalidated transfer by default, which keeps gas cost to a minimum. If you want to check that a quote is genuine and untampered before you pay for it, you can do so **offline and deterministically** — no extra API call, and nothing to trust beyond the data you already received.
@@ -223,10 +223,10 @@ If you rely on deposit addresses and need to validate them before sending funds,
 ## Migrating from the signature API
 
 <Warning>
-`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated. They remain available for now, but they will be retired and should not be used in new integrations.
+`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` have been removed. Calls now return `404`.
 </Warning>
 
-The signature API returned a solver signature over a small subset of intent fields — origin and destination chain, user, currency, and (on v2) destination currency. It has several problems that the deterministic flow does not:
+The signature API returned a solver signature over a small subset of intent fields — origin and destination chain, user, currency, and (on v2) destination currency. It had several problems that the deterministic flow does not:
 
 - It never covered the fields that matter most, such as the minimum output amount, so it could not tell you the trade was priced correctly.
 - It required a second API call after the quote, and returned only partial data until the request reached a terminal state.
