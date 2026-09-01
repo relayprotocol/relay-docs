@@ -7,15 +7,17 @@ description: "Verify a quote locally before you send the transaction"
 `GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated and will be retired. Do not use these endpoints in new integrations. For quotes that contain `protocol.v2`, use the deterministic verification method on this page. This method runs locally before you send the transaction and does not require a solver signature.
 </Warning>
 
-By default, you pay for a Relay quote with a transfer that the chain does not check against the quote terms. You can verify a supported quote locally before you send the transaction. This verification uses the quote data and the Relay settlement SDK. It does not require another API request.
+By default, you pay for a Relay quote with a transfer that the chain does not check against the quote terms, which keeps gas cost to a minimum.
 
-The signature API asked Relay for a signature over a small set of intent fields and had you check that signature onchain. A signature only proves that Relay said something; it does not let you confirm that what Relay said matches the transaction you are about to send. The verification on this page inverts that:
+You can verify a supported quote locally before you send the transaction. This verification uses the quote data, the Relay settlement SDK, and the chain metadata from `GET /chains`. It does not require another API request at quote time.
+
+With the signature API, you asked Relay for a signature over a small set of intent fields and checked that signature onchain. A signature only proves that Relay said something; it does not let you confirm that what Relay said matches the transaction you are about to send. The verification on this page inverts that:
 
 1. Read the output amount, recipient, currency, and deadline from the order.
 2. Recompute the order ID from these properties.
-3. Confirm that the transaction commits to the recomputed order ID.
+3. Confirm that the transaction commits to the recomputed order ID, and pays what the order says.
 
-If the order settles, it can only settle according to the order that you inspected.
+If all three checks pass and the order settles, settlement follows the order you inspected.
 
 <Note>
 This method applies only to quotes that contain `protocol.v2`. It does not apply to deposit-address deposits. If your integration uses deposit addresses, contact Relay before you migrate from the signature API.
@@ -28,7 +30,7 @@ This method applies only to quotes that contain `protocol.v2`. It does not apply
 - The input and output currencies and chains are correct
 - The amount you are being asked to pay matches the quoted input
 - The order has not expired
-- The deposit transaction pays the protocol depository, and commits to this exact order
+- The deposit transaction pays Relay's canonical depository, commits to this exact order, and transfers exactly the order's input payment
 
 ## Guide
 
@@ -109,7 +111,7 @@ The response carries a `protocol.v2` block:
 
 ### 2. Check the order properties
 
-Read the values you care about from `orderData` and compare them against your own expectations. This check verifies the transaction — the order ID checks that follow only bind the transaction to the properties you inspect here.
+Read the values you care about from `orderData` and compare them against your own expectations. This is the step where you decide whether the order is acceptable — the checks that follow only bind the transaction to the properties you inspect here.
 
 | What to check | Where |
 | --- | --- |
@@ -131,17 +133,40 @@ Install the settlement SDK:
 npm install @relay-protocol/settlement-sdk
 ```
 
+`getOrderId` needs a map from protocol chain ID to VM type. Build it from `GET /chains` rather than from the quote, and cache it — it changes only when Relay adds a chain. The same response carries the canonical depository address per chain, which step 4 needs.
+
+```ts
+const VM_TYPES = {
+  bvm: "bitcoin-vm",
+  evm: "ethereum-vm",
+  hypevm: "hyperliquid-vm",
+  lvm: "lighter-vm",
+  svm: "solana-vm",
+  tonvm: "ton-vm",
+  tvm: "tron-vm",
+  xrpvm: "xrp-vm",
+} as const;
+
+const { chains } = await fetch("https://api.relay.link/chains").then((r) => r.json());
+
+const CHAINS: Record<string, string> = {};
+const DEPOSITORIES: Record<string, string> = {};
+
+for (const chain of chains) {
+  const protocolChainId = chain.protocol?.v2?.chainId;
+  if (!protocolChainId) continue;
+
+  CHAINS[protocolChainId] = VM_TYPES[chain.vmType as keyof typeof VM_TYPES];
+  if (chain.protocol.v2.depository) {
+    DEPOSITORIES[protocolChainId] = chain.protocol.v2.depository.toLowerCase();
+  }
+}
+```
+
 `getOrderId` hashes the order data into the order ID. Recomputing it locally and comparing against `protocol.v2.orderId` confirms that the ID Relay returned corresponds to the properties you just inspected.
 
 ```ts
 import { getOrderId } from "@relay-protocol/settlement-sdk";
-
-// Every chainId that appears in orderData must be present in this map.
-// The keys are protocol chain ids (the slugs used inside orderData).
-const CHAINS = {
-  ethereum: "ethereum-vm",
-  base: "ethereum-vm",
-} as const;
 
 const { orderId, orderData } = quote.protocol.v2;
 
@@ -152,25 +177,41 @@ if (computedOrderId.toLowerCase() !== orderId.toLowerCase()) {
 }
 ```
 
-### 4. Confirm the transaction commits to that order ID
+### 4. Confirm the transaction matches the order
 
-The deposit transaction in the quote's steps pays the protocol depository and passes the order ID as the deposit `id`. Decode it and check both.
+The deposit transaction pays the protocol depository, passes the order ID as the deposit `id`, and transfers the order's input payment. Check all three.
+
+<Warning>
+Select the deposit transaction using the depository address from `GET /chains`, not `protocol.v2.depository` from the quote. Using the quote's own field to validate the quote proves nothing — a tampered response could name an attacker's address in both places and still pass.
+</Warning>
+
+The order ID does not cover the value or token amount the transaction transfers, so those need checking separately.
 
 ```ts
 import { decodeFunctionData, parseAbi } from "viem";
 
-const { paymentDetails } = quote.protocol.v2;
+const payment = quote.protocol.v2.orderData.inputs[0].payment;
+
+const depository = DEPOSITORIES[payment.chainId];
+if (!depository) {
+  throw new Error(`No known depository for chain ${payment.chainId}`);
+}
+
+// Cross-check the quote's own claim against the canonical address.
+if (quote.protocol.v2.paymentDetails.depository.toLowerCase() !== depository) {
+  throw new Error("Quote names an unexpected depository");
+}
 
 const depositTx = quote.steps
   .flatMap((step) => step.items)
   .map((item) => item.data)
-  .find((tx) => tx?.to?.toLowerCase() === paymentDetails.depository.toLowerCase());
+  .find((tx) => tx?.to?.toLowerCase() === depository);
 
 if (!depositTx) {
-  throw new Error("Deposit transaction does not pay the expected depository");
+  throw new Error("No step pays the canonical depository");
 }
 
-const { args } = decodeFunctionData({
+const { functionName, args } = decodeFunctionData({
   abi: parseAbi([
     "function depositNative(address depositor, bytes32 id)",
     "function depositErc20(address depositor, address token, uint256 amount, bytes32 id)",
@@ -178,14 +219,35 @@ const { args } = decodeFunctionData({
   data: depositTx.data,
 });
 
-const depositId = args[args.length - 1] as string;
-
-if (depositId.toLowerCase() !== computedOrderId.toLowerCase()) {
+// The order ID must be the deposit id.
+if ((args[args.length - 1] as string).toLowerCase() !== computedOrderId.toLowerCase()) {
   throw new Error("Deposit transaction does not commit to the verified order");
+}
+
+// The depositor must be the account you expect to pay.
+if ((args[0] as string).toLowerCase() !== expectedPayer.toLowerCase()) {
+  throw new Error("Deposit transaction credits an unexpected depositor");
+}
+
+// The transaction must move exactly the order's input payment.
+if (functionName === "depositNative") {
+  if (BigInt(depositTx.value) !== BigInt(payment.amount)) {
+    throw new Error("Native value does not match the order payment amount");
+  }
+} else {
+  if ((args[1] as string).toLowerCase() !== payment.currency.toLowerCase()) {
+    throw new Error("Deposit token does not match the order payment currency");
+  }
+  if (BigInt(args[2] as bigint) !== BigInt(payment.amount)) {
+    throw new Error("Deposit amount does not match the order payment amount");
+  }
+  if (BigInt(depositTx.value ?? 0) !== 0n) {
+    throw new Error("ERC-20 deposit must not send native value");
+  }
 }
 ```
 
-At this point the transaction is bound to the order you inspected in step 2. If the order settles, the settlement uses the recipient, output amount, currency, deadline, and destination chain encoded in the verified order. Verification confirms the encoded order. It does not guarantee that the order will fill.
+At this point the transaction is bound to the order you inspected in step 2. If all the checks pass and the order settles, settlement uses the recipient, minimum output amount, currency, deadline, and destination chain encoded in the verified order. Verification confirms the encoded order. It does not guarantee that the order will fill.
 
 ## Validating onchain
 
@@ -211,12 +273,12 @@ require(ECDSA.recover(digest, orderSignature) == RELAY_SOLVER, "bad signature");
 ```
 
 <Note>
-The signature only attests to the order ID. It is not a substitute for steps 2 and 3 — recompute the order ID from `orderData` so you know which order the ID refers to.
+The signature only attests to the order ID. It is not a substitute for steps 2 to 4 — recompute the order ID from `orderData` so you know which order the ID refers to, and check the transaction against it.
 </Note>
 
 ## Deposit addresses
 
-Deposit address deposits cannot yet be verified this way. The order ID checks above bind a *transaction* to an order; a deposit address has no calldata to bind, so verifying one requires deriving the address itself from the order properties. That derivation is not yet available to integrators.
+Deposit address deposits cannot yet be verified this way. The order ID checks above bind a **transaction** to an order; a deposit address has no calldata to bind, so verifying one requires deriving the address itself from the order properties. That derivation is not yet available to integrators.
 
 If you rely on deposit addresses and need to validate them before sending funds, contact Relay so your use case can be factored into that work.
 
@@ -231,6 +293,6 @@ The signature API returned a solver signature over a small subset of intent fiel
 - It never covered the fields that matter most, such as the minimum output amount, so it could not tell you the trade was priced correctly.
 - It required a second API call after the quote, and returned only partial data until the request reached a terminal state.
 - Its behavior was inconsistent across chains.
-- The signature API response described a request shape that does not map cleanly onto protocol orders.
+- It attested to a request shape that does not map cleanly onto protocol orders.
 
 To migrate, replace the `GET /requests/:requestId/signature/v2` call with `includeProtocolData: true` on your existing `/quote/v2` request, and follow steps 2 to 4 above. The verification happens locally, so you remove a network round trip in the process.
