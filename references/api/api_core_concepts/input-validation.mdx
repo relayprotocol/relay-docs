@@ -127,7 +127,7 @@ Compare `minimumAmount`, not `expectedAmount`. `expectedAmount` is the quoted es
 
 ### 3. Recompute the order ID
 
-Install the settlement SDK:
+The examples below assume `quote` is the parsed `/quote/v2` response from step 1. Install the settlement SDK:
 
 ```bash
 npm install @relay-protocol/settlement-sdk
@@ -136,6 +136,8 @@ npm install @relay-protocol/settlement-sdk
 `getOrderId` needs a map from protocol chain ID to VM type. Build it from `GET /chains` rather than from the quote, and cache it — it changes only when Relay adds a chain. The same response carries the canonical depository address per chain, which step 4 needs.
 
 ```ts
+import type { VmType } from "@relay-protocol/settlement-sdk";
+
 const VM_TYPES = {
   bvm: "bitcoin-vm",
   evm: "ethereum-vm",
@@ -149,7 +151,7 @@ const VM_TYPES = {
 
 const { chains } = await fetch("https://api.relay.link/chains").then((r) => r.json());
 
-const CHAINS: Record<string, string> = {};
+const CHAINS: Record<string, VmType> = {};
 const DEPOSITORIES: Record<string, string> = {};
 
 for (const chain of chains) {
@@ -189,6 +191,11 @@ The order ID does not cover the value or token amount the transaction transfers,
 
 ```ts
 import { decodeFunctionData, parseAbi } from "viem";
+
+// The wallet your app will send the deposit from — the same address you passed
+// as `user` in the quote request. Read it from your own state, never from the
+// quote response, for the same reason the depository is pinned above.
+const expectedPayer = "0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e";
 
 const payment = quote.protocol.v2.orderData.inputs[0].payment;
 
