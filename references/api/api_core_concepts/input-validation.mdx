@@ -1,21 +1,25 @@
 ---
 title: "Input Validation"
-description: "Verify a quote deterministically before you pay for it"
+description: "Verify a quote locally before you send the transaction"
 ---
 
 <Warning>
-`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated and will be retired. Do not build new integrations against them. Use the deterministic verification described on this page instead — it does not depend on trusting a solver signature, works before the request is finalized, and is consistent across every chain we support.
+`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated and will be retired. Do not use these endpoints in new integrations. For quotes that contain `protocol.v2`, use the deterministic verification method on this page. This method runs locally before you send the transaction and does not require a solver signature.
 </Warning>
 
-Relay quotes are paid for with an unvalidated transfer by default, which keeps gas cost to a minimum. If you want to check that a quote is genuine and untampered before you pay for it, you can do so **offline and deterministically** — no extra API call, and nothing to trust beyond the data you already received.
+By default, you pay for a Relay quote with a transfer that the chain does not check against the quote terms. You can verify a supported quote locally before you send the transaction. This verification uses the quote data and the Relay settlement SDK. It does not require another API request.
 
-The old approach asked Relay for a signature over a handful of intent fields and had you check that signature onchain. The problem with a signature is that it only proves *we* said something; it does not let you confirm that what we said matches the transaction you are about to send. The current approach inverts that:
+The signature API asked Relay for a signature over a small set of intent fields and had you check that signature onchain. A signature only proves that Relay said something; it does not let you confirm that what Relay said matches the transaction you are about to send. The verification on this page inverts that:
 
-1. **Read the order properties** — output amount, recipient, currency, deadline — and confirm they are what you expect.
-2. **Recompute the order id yourself** from those properties.
-3. **Confirm the transaction you are about to send commits to that order id.**
+1. Read the output amount, recipient, currency, and deadline from the order.
+2. Recompute the order ID from these properties.
+3. Confirm that the transaction commits to the recomputed order ID.
 
-If all three hold, the transaction cannot settle into anything other than the order you inspected. You are trusting arithmetic rather than a signer.
+If the order settles, it can only settle according to the order that you inspected.
+
+<Note>
+This method applies only to quotes that contain `protocol.v2`. It does not apply to deposit-address deposits. If your integration uses deposit addresses, contact Relay before you migrate from the signature API.
+</Note>
 
 ## What you can verify
 
@@ -103,13 +107,9 @@ The response carries a `protocol.v2` block:
 
 `orderData` is the complete, canonical description of the order. Everything else in this guide is derived from it.
 
-<Note>
-`protocol.v2.orderData` is present on quotes settled through the Relay settlement protocol. If a quote does not include a `protocol.v2` block, it is not a protocol-settled route and this verification flow does not apply.
-</Note>
-
 ### 2. Check the order properties
 
-Read the values you care about straight off `orderData` and compare them against your own expectations. This is the step that actually protects you — the order id checks that follow only bind the transaction to the properties you inspect here.
+Read the values you care about from `orderData` and compare them against your own expectations. This check verifies the transaction — the order ID checks that follow only bind the transaction to the properties you inspect here.
 
 | What to check | Where |
 | --- | --- |
@@ -123,7 +123,7 @@ Read the values you care about straight off `orderData` and compare them against
 Compare `minimumAmount`, not `expectedAmount`. `expectedAmount` is the quoted estimate; `minimumAmount` is the floor the protocol enforces at settlement.
 </Warning>
 
-### 3. Recompute the order id
+### 3. Recompute the order ID
 
 Install the settlement SDK:
 
@@ -131,7 +131,7 @@ Install the settlement SDK:
 npm install @relay-protocol/settlement-sdk
 ```
 
-`getOrderId` hashes the order data into the order id. Recomputing it locally and comparing against `protocol.v2.orderId` confirms that the id we returned really does correspond to the properties you just inspected.
+`getOrderId` hashes the order data into the order ID. Recomputing it locally and comparing against `protocol.v2.orderId` confirms that the ID Relay returned corresponds to the properties you just inspected.
 
 ```ts
 import { getOrderId } from "@relay-protocol/settlement-sdk";
@@ -148,13 +148,13 @@ const { orderId, orderData } = quote.protocol.v2;
 const computedOrderId = getOrderId(orderData, CHAINS);
 
 if (computedOrderId.toLowerCase() !== orderId.toLowerCase()) {
-  throw new Error("Order id does not match the order data");
+  throw new Error("Order ID does not match the order data");
 }
 ```
 
-### 4. Confirm the transaction commits to that order id
+### 4. Confirm the transaction commits to that order ID
 
-The deposit transaction in the quote's steps pays the protocol depository and passes the order id as the deposit `id`. Decode it and check both.
+The deposit transaction in the quote's steps pays the protocol depository and passes the order ID as the deposit `id`. Decode it and check both.
 
 ```ts
 import { decodeFunctionData, parseAbi } from "viem";
@@ -185,11 +185,11 @@ if (depositId.toLowerCase() !== computedOrderId.toLowerCase()) {
 }
 ```
 
-At this point the transaction is bound to the order you inspected in step 2. Sending it cannot result in a different recipient, a smaller guaranteed output, or a different destination chain.
+At this point the transaction is bound to the order you inspected in step 2. If the order settles, the settlement uses the recipient, output amount, currency, deadline, and destination chain encoded in the verified order. Verification confirms the encoded order. It does not guarantee that the order will fill.
 
 ## Validating onchain
 
-If you need the check to happen inside a contract rather than in your backend, use `protocol.v2.orderSignature`. It is the solver's ECDSA signature over the 32 raw bytes of the order id, following EIP-191, and it is produced by our EVM solver wallet `0xf70da97812cb96acdf810712aa562db8dfa3dbef` — the same address on every chain we support.
+If you need the check to happen inside a contract rather than in your backend, use `protocol.v2.orderSignature`. It is the solver's ECDSA signature over the 32 raw bytes of the order ID, following EIP-191, and it is produced by the Relay EVM solver wallet `0xf70da97812cb96acdf810712aa562db8dfa3dbef` — the same address on every chain Relay supports.
 
 ```ts
 import { recoverMessageAddress, hexToBytes } from "viem";
@@ -211,14 +211,14 @@ require(ECDSA.recover(digest, orderSignature) == RELAY_SOLVER, "bad signature");
 ```
 
 <Note>
-The signature only attests to the order id. It is not a substitute for steps 2 and 3 — recompute the order id from `orderData` so you know *which* order the id refers to.
+The signature only attests to the order ID. It is not a substitute for steps 2 and 3 — recompute the order ID from `orderData` so you know which order the ID refers to.
 </Note>
 
 ## Deposit addresses
 
-Deposit address deposits cannot yet be verified this way. The order id checks above bind a *transaction* to an order; a deposit address has no calldata to bind, so verifying one requires deriving the address itself from the order properties. That derivation is not yet available to integrators.
+Deposit address deposits cannot yet be verified this way. The order ID checks above bind a *transaction* to an order; a deposit address has no calldata to bind, so verifying one requires deriving the address itself from the order properties. That derivation is not yet available to integrators.
 
-If you rely on deposit addresses and need to validate them before sending funds, contact us so we can factor your use case into that work.
+If you rely on deposit addresses and need to validate them before sending funds, contact Relay so your use case can be factored into that work.
 
 ## Migrating from the signature API
 
@@ -231,6 +231,6 @@ The signature API returned a solver signature over a small subset of intent fiel
 - It never covered the fields that matter most, such as the minimum output amount, so it could not tell you the trade was priced correctly.
 - It required a second API call after the quote, and returned only partial data until the request reached a terminal state.
 - Its behavior was inconsistent across chains.
-- It attested to a legacy request shape that does not map cleanly onto protocol orders.
+- The signature API response described a request shape that does not map cleanly onto protocol orders.
 
 To migrate, replace the `GET /requests/:requestId/signature/v2` call with `includeProtocolData: true` on your existing `/quote/v2` request, and follow steps 2 to 4 above. The verification happens locally, so you remove a network round trip in the process.
