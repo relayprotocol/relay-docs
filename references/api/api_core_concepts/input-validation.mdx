@@ -1,73 +1,236 @@
 ---
 title: "Input Validation"
-description: "Perform optional onchain validation of requests"
+description: "Verify a quote deterministically before you pay for it"
 ---
 
-By default, Relay quotes are paid for with an unvalidated transfer. This keeps gas cost to an absolute minimum. However, if you want to do your own onchain validation, this is possible. We offer an Attestation API where the Solver will attest to any subset of the order parameters, which you can check onchain. For example, you could validate that:
+<Warning>
+`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated and will be retired. Do not build new integrations against them. Use the deterministic verification described on this page instead — it does not depend on trusting a solver signature, works before the request is finalized, and is consistent across every chain we support.
+</Warning>
 
-- Correct amount was sent
-- Request has not already been paid for
-- Request ID is valid
-- Request has not expired
-- Recipient is on a known whitelist
+Relay quotes are paid for with an unvalidated transfer by default, which keeps gas cost to a minimum. If you want to check that a quote is genuine and untampered before you pay for it, you can do so **offline and deterministically** — no extra API call, and nothing to trust beyond the data you already received.
+
+The old approach asked Relay for a signature over a handful of intent fields and had you check that signature onchain. The problem with a signature is that it only proves *we* said something; it does not let you confirm that what we said matches the transaction you are about to send. The current approach inverts that:
+
+1. **Read the order properties** — output amount, recipient, currency, deadline — and confirm they are what you expect.
+2. **Recompute the order id yourself** from those properties.
+3. **Confirm the transaction you are about to send commits to that order id.**
+
+If all three hold, the transaction cannot settle into anything other than the order you inspected. You are trusting arithmetic rather than a signer.
+
+## What you can verify
+
+- The recipient is who you expect, and is on your whitelist
+- The minimum output amount is acceptable
+- The input and output currencies and chains are correct
+- The amount you are being asked to pay matches the quoted input
+- The order has not expired
+- The deposit transaction pays the protocol depository, and commits to this exact order
 
 ## Guide
 
-First of all, you can make a regular request via the /quote/v2 API
+### 1. Request a quote with protocol data
 
-```
-curl -X POST https://api.relay.link/quote/v2 -H 'Content-Type: application/json' -d
-'{
-    "user":"0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
-    "originChainId":1,"destinationChainId":7777777,"originCurrency":"0x0000000000000000000000000000000000000000",
-    "destinationCurrency":"0x0000000000000000000000000000000000000000",
-    "recipient":"0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
-    "tradeType":"EXACT_INPUT",
-    "amount":"700000000000000000",
-    "referrer":"relay.link/swap","useExternalLiquidity":false
-}' | jq
-```
+Pass `includeProtocolData: true` so the response includes the full protocol order alongside the quote.
 
-In the steps data we return you'll see the corresponding request id associated to this quote
-you can take the request id and pass it to the /requests/:requestId/signature API
-
-```
-curl -X GET https://api.relay.link/requests/0x910113af21b5771f35712ab2680b578e5551a2e358916d9c540aa4f613418e2a/signature
-```
-
-The signature API will get you a response as below:
-
-```
-{
-  "requestData": {
+```bash
+curl -X POST https://api.relay.link/quote/v2 \
+  -H 'Content-Type: application/json' \
+  -H 'x-api-key: YOUR_API_KEY' \
+  -d '{
+    "user": "0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
     "originChainId": 1,
-    "originUser": "0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
+    "destinationChainId": 8453,
     "originCurrency": "0x0000000000000000000000000000000000000000",
-    "originAmount": "700000000000000000",
-    "destinationChainId": 7777777,
-    "destinationUser": "0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e"
-  },
-  "signature": "0x4c320680bbb7f4d46892cd93eddf04884d997c8a3dbd8af20ca502e6bf5323a07bb467f97e290dfd53350683ea494e4fcb02a445ac129d1741a81c12eed066a11b"
+    "destinationCurrency": "0x0000000000000000000000000000000000000000",
+    "recipient": "0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
+    "tradeType": "EXACT_INPUT",
+    "amount": "100000000000000000",
+    "includeProtocolData": true
+  }' | jq
+```
+
+The response carries a `protocol.v2` block:
+
+```json
+{
+  "protocol": {
+    "v2": {
+      "orderId": "0xd4f71fa132a005aa7fc1596fffaea5a168e06a6fc4960d0c3a6f61cc702a6904",
+      "hubType": "onchain",
+      "orderData": {
+        "version": "v1",
+        "solverChainId": "base",
+        "solver": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+        "salt": "0xfd839ebcf726a1569c120b0038f705432a151a7f586aefce852bb7b5428d057b",
+        "inputs": [
+          {
+            "payment": {
+              "chainId": "ethereum",
+              "currency": "0x0000000000000000000000000000000000000000",
+              "amount": "100000000000000000",
+              "weight": "1"
+            },
+            "refunds": ["..."]
+          }
+        ],
+        "output": {
+          "chainId": "base",
+          "payments": [
+            {
+              "recipient": "0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e",
+              "currency": "0x0000000000000000000000000000000000000000",
+              "minimumAmount": "97991321030687428",
+              "expectedAmount": "99991143908864722"
+            }
+          ],
+          "calls": [],
+          "deadline": 1788888266,
+          "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+        },
+        "fees": []
+      },
+      "orderSignature": "0x...",
+      "paymentDetails": {
+        "chainId": "ethereum",
+        "depository": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+        "currency": "0x0000000000000000000000000000000000000000",
+        "amount": "100000000000000000"
+      }
+    }
+  }
 }
 ```
 
-You can use the data to do various validations onchain. The signature is always generated by our EVM solver wallet (`0xf70da97812cb96acdf810712aa562db8dfa3dbef`), which has the same address across all chains we support - below is the signature generation code which you can replicate in Solidity to check that indeed the signed request data is coming from our solver:
+`orderData` is the complete, canonical description of the order. Everything else in this guide is derived from it.
 
-```
-export const signRequestData = async (requestId: string, requestData: RequestData) => {
-  const packedRequestData = defaultAbiCoder.encode(
-    ["bytes32", "uint256", "bytes32", "bytes32", "uint256", "uint256", "bytes32"],
-    [
-      requestId,
-      requestData.originChainId,
-      requestData.originUser,
-      requestData.originCurrency,
-      requestData.originAmount,
-      requestData.destinationChainId,
-      requestData.destinationUser,
-    ]
-  );
+<Note>
+`protocol.v2.orderData` is present on quotes settled through the Relay settlement protocol. If a quote does not include a `protocol.v2` block, it is not a protocol-settled route and this verification flow does not apply.
+</Note>
 
-  return getSolver().signMessage(arrayify(keccak256(packedRequestData)));
-};
+### 2. Check the order properties
+
+Read the values you care about straight off `orderData` and compare them against your own expectations. This is the step that actually protects you — the order id checks that follow only bind the transaction to the properties you inspect here.
+
+| What to check | Where |
+| --- | --- |
+| Recipient | `output.payments[].recipient` |
+| Guaranteed output | `output.payments[].minimumAmount` |
+| Output currency and chain | `output.payments[].currency`, `output.chainId` |
+| What you pay | `inputs[].payment.amount`, `inputs[].payment.currency` |
+| Expiry | `output.deadline` (unix seconds) |
+
+<Warning>
+Compare `minimumAmount`, not `expectedAmount`. `expectedAmount` is the quoted estimate; `minimumAmount` is the floor the protocol enforces at settlement.
+</Warning>
+
+### 3. Recompute the order id
+
+Install the settlement SDK:
+
+```bash
+npm install @relay-protocol/settlement-sdk
 ```
+
+`getOrderId` hashes the order data into the order id. Recomputing it locally and comparing against `protocol.v2.orderId` confirms that the id we returned really does correspond to the properties you just inspected.
+
+```ts
+import { getOrderId } from "@relay-protocol/settlement-sdk";
+
+// Every chainId that appears in orderData must be present in this map.
+// The keys are protocol chain ids (the slugs used inside orderData).
+const CHAINS = {
+  ethereum: "ethereum-vm",
+  base: "ethereum-vm",
+} as const;
+
+const { orderId, orderData } = quote.protocol.v2;
+
+const computedOrderId = getOrderId(orderData, CHAINS);
+
+if (computedOrderId.toLowerCase() !== orderId.toLowerCase()) {
+  throw new Error("Order id does not match the order data");
+}
+```
+
+### 4. Confirm the transaction commits to that order id
+
+The deposit transaction in the quote's steps pays the protocol depository and passes the order id as the deposit `id`. Decode it and check both.
+
+```ts
+import { decodeFunctionData, parseAbi } from "viem";
+
+const { paymentDetails } = quote.protocol.v2;
+
+const depositTx = quote.steps
+  .flatMap((step) => step.items)
+  .map((item) => item.data)
+  .find((tx) => tx?.to?.toLowerCase() === paymentDetails.depository.toLowerCase());
+
+if (!depositTx) {
+  throw new Error("Deposit transaction does not pay the expected depository");
+}
+
+const { args } = decodeFunctionData({
+  abi: parseAbi([
+    "function depositNative(address depositor, bytes32 id)",
+    "function depositErc20(address depositor, address token, uint256 amount, bytes32 id)",
+  ]),
+  data: depositTx.data,
+});
+
+const depositId = args[args.length - 1] as string;
+
+if (depositId.toLowerCase() !== computedOrderId.toLowerCase()) {
+  throw new Error("Deposit transaction does not commit to the verified order");
+}
+```
+
+At this point the transaction is bound to the order you inspected in step 2. Sending it cannot result in a different recipient, a smaller guaranteed output, or a different destination chain.
+
+## Validating onchain
+
+If you need the check to happen inside a contract rather than in your backend, use `protocol.v2.orderSignature`. It is the solver's ECDSA signature over the 32 raw bytes of the order id, following EIP-191, and it is produced by our EVM solver wallet `0xf70da97812cb96acdf810712aa562db8dfa3dbef` — the same address on every chain we support.
+
+```ts
+import { recoverMessageAddress, hexToBytes } from "viem";
+
+const signer = await recoverMessageAddress({
+  message: { raw: hexToBytes(computedOrderId) },
+  signature: quote.protocol.v2.orderSignature,
+});
+// 0xf70da97812CB96acDF810712Aa562db8dfA3dbEF
+```
+
+The equivalent Solidity check:
+
+```solidity
+bytes32 digest = keccak256(
+    abi.encodePacked("\x19Ethereum Signed Message:\n32", orderId)
+);
+require(ECDSA.recover(digest, orderSignature) == RELAY_SOLVER, "bad signature");
+```
+
+<Note>
+The signature only attests to the order id. It is not a substitute for steps 2 and 3 — recompute the order id from `orderData` so you know *which* order the id refers to.
+</Note>
+
+## Deposit addresses
+
+Deposit address deposits cannot yet be verified this way. The order id checks above bind a *transaction* to an order; a deposit address has no calldata to bind, so verifying one requires deriving the address itself from the order properties. That derivation is not yet available to integrators.
+
+If you rely on deposit addresses and need to validate them before sending funds, contact us so we can factor your use case into that work.
+
+## Migrating from the signature API
+
+<Warning>
+`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated. They remain available for now, but they will be retired and should not be used in new integrations.
+</Warning>
+
+The signature API returned a solver signature over a small subset of intent fields — origin and destination chain, user, currency, and (on v2) destination currency. It has several problems that the deterministic flow does not:
+
+- It never covered the fields that matter most, such as the minimum output amount, so it could not tell you the trade was priced correctly.
+- It required a second API call after the quote, and returned only partial data until the request reached a terminal state.
+- Its behavior was inconsistent across chains.
+- It attested to a legacy request shape that does not map cleanly onto protocol orders.
+
+To migrate, replace the `GET /requests/:requestId/signature/v2` call with `includeProtocolData: true` on your existing `/quote/v2` request, and follow steps 2 to 4 above. The verification happens locally, so you remove a network round trip in the process.
