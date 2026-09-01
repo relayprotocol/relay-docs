@@ -57,7 +57,7 @@ curl -X POST https://api.relay.link/quote/v2 \
 
 The response carries a `protocol.v2` block:
 
-```json
+```json expandable
 {
   "protocol": {
     "v2": {
@@ -187,28 +187,31 @@ The deposit transaction pays the protocol depository, passes the order ID as the
 Select the deposit transaction using the depository address from `GET /chains`, not `protocol.v2.depository` from the quote. Using the quote's own field to validate the quote proves nothing — a tampered response could name an attacker's address in both places and still pass.
 </Warning>
 
-The order ID does not cover the value or token amount the transaction transfers, so those need checking separately.
+The order ID does not cover the currency, value, or token amount the transaction transfers, so those need checking separately — and which deposit function is correct follows from the order, not from the calldata.
 
-```ts
+```ts expandable
 import { decodeFunctionData, parseAbi } from "viem";
+import { getVmTypeNativeCurrency } from "@relay-protocol/settlement-sdk";
 
 // The wallet your app will send the deposit from — the same address you passed
 // as `user` in the quote request. Read it from your own state, never from the
 // quote response, for the same reason the depository is pinned above.
-const expectedPayer = "0xf3d63166F0Ca56C3c1A3508FcE03Ff0Cf3Fb691e";
+const expectedPayer = "WALLET_ADDRESS";
 
 const payment = quote.protocol.v2.orderData.inputs[0].payment;
 
+// 1. Resolve the canonical depository for the payment chain.
 const depository = DEPOSITORIES[payment.chainId];
 if (!depository) {
   throw new Error(`No known depository for chain ${payment.chainId}`);
 }
 
-// Cross-check the quote's own claim against the canonical address.
+// 2. Cross-check the quote's own claim against the canonical address.
 if (quote.protocol.v2.paymentDetails.depository.toLowerCase() !== depository) {
   throw new Error("Quote names an unexpected depository");
 }
 
+// 3. Find the step that pays it.
 const depositTx = quote.steps
   .flatMap((step) => step.items)
   .map((item) => item.data)
@@ -226,18 +229,28 @@ const { functionName, args } = decodeFunctionData({
   data: depositTx.data,
 });
 
-// The order ID must be the deposit id.
+// 4. The order ID must be the deposit id.
 if ((args[args.length - 1] as string).toLowerCase() !== computedOrderId.toLowerCase()) {
   throw new Error("Deposit transaction does not commit to the verified order");
 }
 
-// The depositor must be the account you expect to pay.
+// 5. The depositor must be the account you expect to pay.
 if ((args[0] as string).toLowerCase() !== expectedPayer.toLowerCase()) {
   throw new Error("Deposit transaction credits an unexpected depositor");
 }
 
-// The transaction must move exactly the order's input payment.
-if (functionName === "depositNative") {
+// 6. Decide which deposit function the ORDER calls for, then require the
+// transaction to use it. Branching on functionName alone would let a native
+// transfer satisfy an order whose input payment is an ERC-20.
+const nativeCurrency = getVmTypeNativeCurrency(CHAINS[payment.chainId]);
+const orderWantsNative = payment.currency.toLowerCase() === nativeCurrency.toLowerCase();
+
+if (orderWantsNative !== (functionName === "depositNative")) {
+  throw new Error("Deposit function does not match the order payment currency");
+}
+
+// 7. The transaction must move exactly the order's input payment.
+if (orderWantsNative) {
   if (BigInt(depositTx.value) !== BigInt(payment.amount)) {
     throw new Error("Native value does not match the order payment amount");
   }
