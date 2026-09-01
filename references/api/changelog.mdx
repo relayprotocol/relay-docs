@@ -3,9 +3,9 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
-## 2026-09-01 — Request signature endpoints deprecated in favor of deterministic verification
+## 2026-09-01 — Request signature endpoints removed
 
-**Deprecated** — `GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated. They keep working for now, but they should not be used in new integrations and will be retired. Both returned a solver signature over a small subset of intent fields, which never covered the minimum output amount, required a second call after the quote, returned only partial data until the request reached a terminal state, and behaved inconsistently across chains.
+**Breaking** — `GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` have been removed. Calls to both endpoints now return `404`. Both returned a solver signature over a small subset of intent fields, which never covered the minimum output amount, required a second call after the quote, returned only partial data until the request reached a terminal state, and behaved inconsistently across chains.
 
 **Replacement** — verify a quote deterministically and offline instead: pass `includeProtocolData: true` to `POST /quote/v2`, inspect the returned `protocol.v2.orderData`, recompute the order id with `getOrderId` from the public [`@relay-protocol/settlement-sdk`](https://www.npmjs.com/package/@relay-protocol/settlement-sdk) package, and confirm the deposit transaction commits to that order id. See [Input Validation](/references/api/api_core_concepts/input-validation). Deposit address deposits are not yet covered by this flow.
 
