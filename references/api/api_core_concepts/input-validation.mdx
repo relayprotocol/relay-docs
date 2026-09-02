@@ -3,10 +3,6 @@ title: "Input Validation"
 description: "Verify a quote locally before you send the transaction"
 ---
 
-<Warning>
-`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated and will be retired. Do not use these endpoints in new integrations. For quotes that contain `protocol.v2`, use the deterministic verification method on this page. This method runs locally before you send the transaction and does not require a solver signature.
-</Warning>
-
 By default, you pay for a Relay quote with a transfer that the chain does not check against the quote terms, which keeps gas cost to a minimum.
 
 You can verify a supported quote locally before you send the transaction. This verification uses the quote data, the Relay settlement SDK, and the chain metadata from `GET /chains`. It does not require another API request at quote time.
@@ -305,10 +301,10 @@ If you rely on deposit addresses and need to validate them before sending funds,
 ## Migrating from the signature API
 
 <Warning>
-`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` are deprecated. They remain available for now, but they will be retired and should not be used in new integrations.
+`GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` have been removed. Calls now return `404`.
 </Warning>
 
-The signature API returned a solver signature over a small subset of intent fields — origin and destination chain, user, currency, and (on v2) destination currency. It has several problems that the deterministic flow does not:
+The signature API returned a solver signature over a small subset of intent fields — origin and destination chain, user, currency, and (on v2) destination currency. It had several problems that the deterministic flow does not:
 
 - It never covered the fields that matter most, such as the minimum output amount, so it could not tell you the trade was priced correctly.
 - It required a second API call after the quote, and returned only partial data until the request reached a terminal state.
