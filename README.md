@@ -26,7 +26,7 @@ Please make sure you add changes to a new branch and open a PR to be reviewed wh
 
 ### Publishing Changes
 
-Install our Github App to autopropagate changes from youre repo to your deployment. Changes will be deployed to production automatically after pushing to the default branch. Find the link to install on your dashboard.
+Install our GitHub App to automatically propagate changes from your repo to your deployment. Changes will be deployed to production automatically after pushing to the default branch. Find the link to install on your dashboard.
 
 #### Troubleshooting
 
