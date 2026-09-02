@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-09-02 — Route racing opt-in on `POST /quote`
+
+**Added** — `POST /quote` and `POST /quote/v2`: the new optional `useRouteRacing` request field lets integrators opt into on-chain multi-route execution, which trials multiple candidate swap routes in a single transaction and executes the one producing the best output. The companion `routeRacingMinUsdSize` field (number, default `100`) sets the minimum fill USD size eligible to race — smaller fills fall back to the single-quote path. Both fields require the API key to be granted route racing access; requests from unauthorized keys are accepted but not raced. Racing is currently EVM-only and applies only to `EXACT_INPUT` quotes. See [Route Racing](/features/route-racing).
+
 ## 2026-09-01 — Request signature endpoints removed
 
 **Breaking** — `GET /requests/:requestId/signature` and `GET /requests/:requestId/signature/v2` have been removed. Calls to both endpoints now return `404`. Both returned a solver signature over a small subset of intent fields, which never covered the minimum output amount, required a second call after the quote, returned only partial data until the request reached a terminal state, and behaved inconsistently across chains.

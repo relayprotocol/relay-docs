@@ -1,0 +1,78 @@
+---
+title: "Route Racing"
+description: "Opt into on-chain multi-route execution that picks the best swap output at fill time."
+---
+
+Route Racing is a feature that trials multiple candidate swap routes on-chain in a single transaction and executes the one producing the best output. Instead of committing the fill to a single provider quote picked at solve time, Relay submits a bundle of routes through a periphery contract that isolates each route in a reverting subcall, measures the actual output, and settles the winner — turning provider-selection risk into a deterministic on-chain comparison.
+
+## Requirements
+
+Before you can start route racing, you need:
+
+1. **An API key** — Required to authenticate your quote requests. Create one in the [Relay Dashboard](https://dashboard.relay.link); see [API keys and Rate Limits](/references/api/api-keys) for details.
+2. **Route racing enabled on your API key** — Route racing is gated per API key. Contact Relay to have the feature enabled on the key you plan to use.
+
+Once your key is enabled, opt into racing on individual quote requests.
+
+---
+
+## How to use it?
+
+To route race a fill, call [`POST /quote/v2`](/references/api/get-quote-v2) with **`useRouteRacing`** set to `true`. Racing only activates when every eligibility condition is met — otherwise the fill falls back to the single-quote path with no error.
+
+### Eligibility
+
+Route racing applies to a fill only when **all** of the following are true:
+
+1. **Your API key is authorized** — the **`useRouteRacing: true`** request field takes effect only when the key has the grant. Requests from unauthorized keys are accepted but not raced.
+2. **Trade type is `EXACT_INPUT`** — racing picks the winner by maximum output, which matches the exact-input objective. Expected-output quotes do not race.
+3. **Destination chain is EVM and route-racing-enabled** — the chain must have the RouteRacer periphery contract deployed. Non-EVM chains (Solana, Bitcoin, etc.) never race.
+4. **Fill size is above the minimum** — the input amount's USD value must exceed **`routeRacingMinUsdSize`** (default `100`). There is no upper bound.
+5. **At least two viable candidate routes are returned** — if fewer than two competitive routes are available at fill time, the fill takes the single-quote path.
+
+When any condition fails, the fill silently falls back to the standard single-quote execution path, so opting in is safe on every request.
+
+### Example
+
+<CodeGroup>
+```typescript API
+const API_KEY = "YOUR_API_KEY";
+
+const quoteResponse = await fetch("https://api.relay.link/quote/v2", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${API_KEY}`,
+  },
+  body: JSON.stringify({
+    user: "WALLET_ADDRESS",
+    originChainId: 1,
+    destinationChainId: 8453,
+    originCurrency: "0x0000000000000000000000000000000000000000",
+    destinationCurrency: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", // USDC on Base
+    amount: "1000000000000000000",
+    tradeType: "EXACT_INPUT",
+    // Opt into route racing for this quote
+    useRouteRacing: true,
+    // Optional: only race when the fill is above $250 (default is $100)
+    routeRacingMinUsdSize: 250,
+  }),
+});
+
+const quote = await quoteResponse.json();
+```
+</CodeGroup>
+
+<Info>
+The **`routeRacingMinUsdSize`** parameter is a floor, not a target. Fills at or below the threshold — or whose input cannot be priced — take the single-quote path. Racing has no maximum fill size.
+</Info>
+
+---
+
+## Caveats
+
+- Route racing runs at fill time on the destination chain — the initial quote returned to the user does not reflect the raced execution, and the improved output surfaces only after settlement.
+- The reported **`minimumAmountOut`** is the smallest guaranteed minimum across candidates, because any candidate may end up winning. The realized output will meet or exceed the best candidate's expected output on success.
+- Racing is EVM-only and EXACT_INPUT-only today.
+- The API-key grant is re-checked at fill time. If the grant is removed between quote and fill, subsequent regenerations stop racing and fall back to the single-quote path.
+- We recommend protecting your API key on the backend by not exposing it to the client.
