@@ -39,6 +39,7 @@ These are known validation and routing issues that developers should gracefully 
 | `SOLANA_TX_TOO_LARGE`                         | The compiled Solana deposit transaction exceeds Solana's 1232-byte wire limit and cannot be signed or broadcast. The response `message` reports the measured size and how many bytes it lands over. See [Solana Support](/references/api/api_guides/solana#transaction-size-optimization). |
 | `SWAP_IMPACT_TOO_HIGH`                        | The swap's price impact exceeds acceptable thresholds.                     |
 | `UNAUTHORIZED`                                | The user is not authenticated or lacks valid authorization.                |
+| `UNAUTHORIZED_QUOTE`                          | The quote request includes a `referrer` but no valid `x-api-key` header.   |
 | `UNSUPPORTED_CHAIN`                           | The specified chain is not supported by the platform.                      |
 | `UNSUPPORTED_CURRENCY`                        | The specified currency is not supported for input or output, or the token pair cannot be priced. |
 | `UNSUPPORTED_EXECUTION_TYPE`                  | The execution type used is not supported for fee estimation or execution.  |
