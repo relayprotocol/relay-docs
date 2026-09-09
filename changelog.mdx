@@ -79,7 +79,13 @@ mode: "center"
 
 </Update>
 
-<Update label="2026-09-03" tags={["SDK", "UI Kit"]}>
+<Update label="2026-09-03" tags={["API", "SDK", "UI Kit"]}>
+
+### API
+
+**Breaking**
+
+- `POST /quote` and `POST /quote/v2`: requests that include a `referrer` in the body now require a valid `x-api-key` header. Requests with a referrer but no valid key return `401` with `errorCode: "UNAUTHORIZED_QUOTE"`. Note that the Relay SDK sets `referrer` automatically, so SDK integrations must configure **`apiKey`** on `createClient` or pass the key per call via the `headers` parameter. Create and manage API keys in the [Relay Dashboard](https://dashboard.relay.link) — see [API keys and Rate Limits](/references/api/api-keys).
 
 ### RelayKit
 
