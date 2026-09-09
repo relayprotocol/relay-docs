@@ -42,11 +42,7 @@ flowchart TD
 Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an off-chain EIP-3009 or Permit2 message, and Relay's solver handles everything else — no approval transaction, no gas.
 
 <Warning>
-  USDC is fully gasless. Other ERC20 tokens require a one-time approval transaction.
-</Warning>
-
-<Warning>
-Same-chain ERC-20 → ERC-20 swaps do not support the permit flow on their own. Passing **`usePermit: true`** on a same-chain quote is ignored and the quote returns `approve` and `swap` transaction steps instead of a permit signature step.
+  USDC is fully gasless. Other ERC-20 tokens require a one-time approval transaction. Same-chain ERC-20 → ERC-20 swaps do not support the permit flow: passing **`usePermit: true`** is ignored and the quote returns `approve` and `swap` transaction steps instead of a permit signature step. Same-chain ERC-20 → native swaps do return the [`authorize2`](/references/api/api_core_concepts/step-execution#authorize2) permit step.
 </Warning>
 
 ### How it works
