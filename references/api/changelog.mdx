@@ -15,7 +15,7 @@ description: "Record of breaking changes, deprecations, and notable additions to
 
 ## 2026-09-03 — Quote requests with a `referrer` require an API key
 
-**Breaking** — `POST /quote` and `POST /quote/v2`: requests that include a `referrer` in the body now require a valid `x-api-key` header. Requests with a referrer but no valid key return `401` with `errorCode: "UNAUTHORIZED_QUOTE"`. Requests that omit `referrer` are unaffected and continue to work unauthenticated at the public rate limit. Note that the Relay SDK sets `referrer` automatically, so SDK integrations must configure **`apiKey`** on `createClient` or pass the key per call via the `headers` parameter. Create and manage API keys in the [Relay Dashboard](https://dashboard.relay.link) — see [API keys and Rate Limits](/references/api/api-keys).
+**Breaking** — `POST /quote` and `POST /quote/v2`: requests that include a `referrer` in the body now require a valid `x-api-key` header. Requests with a referrer but no valid key return `401` with `errorCode: "UNAUTHORIZED_QUOTE"`. Note that the Relay SDK sets `referrer` automatically, so SDK integrations must configure **`apiKey`** on `createClient` or pass the key per call via the `headers` parameter. Create and manage API keys in the [Relay Dashboard](https://dashboard.relay.link) — see [API keys and Rate Limits](/references/api/api-keys).
 
 ## 2026-09-01 — Request signature endpoints removed
 
