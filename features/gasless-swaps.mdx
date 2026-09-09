@@ -45,6 +45,10 @@ Use this approach when your app does **not** control the user's wallet (e.g. Met
   USDC is fully gasless. Other ERC20 tokens require a one-time approval transaction.
 </Warning>
 
+<Warning>
+Same-chain ERC-20 → ERC-20 swaps do not support the permit flow on their own. Passing **`usePermit: true`** on a same-chain quote is ignored and the quote returns `approve` and `swap` transaction steps instead of a permit signature step.
+</Warning>
+
 ### How it works
 
 <Steps>
