@@ -553,7 +553,11 @@ If Relay cannot map a custom error selector to a known contract error, the respo
             encodeAbiParameters,
             toHex,
           } from "viem";
-          import { packUserOp } from "viem/account-abstraction";
+          import {
+            toPackedUserOperation,
+            getUserOperationHash,
+            entryPoint07Abi,
+          } from "viem/account-abstraction";
           import { base } from "viem/chains";
           import { UserOperation } from "./types.ts";
           import { entryPointAbi, smartAccountAbi } from "./abis.ts";
@@ -591,29 +595,26 @@ If Relay cannot map a custom error selector to a known contract error, the respo
             signature: "0x",
           };
 
-          const userOpPackHash = keccak256(packUserOp(userOp));
+          const packedUserOp = toPackedUserOperation(userOp);
 
-          const encoded = encodeAbiParameters(
-            [
-              { type: "bytes32" }, // userOp hash
-              { type: "address" }, // entryPoint
-              { type: "uint256" }, // chainId
-            ],
-            [userOpPackHash, ENTRY_POINT, BigInt(base.id)],
-          );
-
-          const userOpHash = keccak256(encoded);
+          const userOpHash = getUserOperationHash({
+            chainId: base.id,
+            entryPointAddress: ENTRY_POINT,
+            entryPointVersion: "0.7",
+            userOperation: packedUserOp,
+          });
 
           const signature = await walletClient.signMessage({
             message: { raw: userOpHash },
           });
 
           const signedUserOp: UserOperation = { ...userOp, signature };
+          const packedSignedUserOp = toPackedUserOperation(signedUserOp);
 
           const handleOpsData = encodeFunctionData({
-            abi: entryPointAbi,
+            abi: entryPoint07Abi,
             functionName: "handleOps",
-            args: [[signedUserOp], BENEFICIARY],
+            args: [[packedSignedUserOp], BENEFICIARY],
           });
           ```
           ```typescript types.ts
