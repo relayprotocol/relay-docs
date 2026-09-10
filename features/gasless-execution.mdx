@@ -595,13 +595,11 @@ If Relay cannot map a custom error selector to a known contract error, the respo
             signature: "0x",
           };
 
-          const packedUserOp = toPackedUserOperation(userOp);
-
           const userOpHash = getUserOperationHash({
             chainId: base.id,
             entryPointAddress: ENTRY_POINT,
             entryPointVersion: "0.7",
-            userOperation: packedUserOp,
+            userOperation: userOp,
           });
 
           const signature = await walletClient.signMessage({
