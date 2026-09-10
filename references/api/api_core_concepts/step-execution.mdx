@@ -11,7 +11,9 @@ description: "How step execution works when driving Relay directly from the API"
 
 ## Step Execution using the API
 
-When executing orders using the API directly, there are often multiple steps, like submitting a deposit transaction to the solver or signing a message. These steps differ based on the desired action and best route to execute the action. To make this simple, you can use the [quote endpoint](/references/api/get-quote-v2), which return the exact steps that you need to follow, including descriptions that you can display to users.
+The [Relay platform](/references/api/overview) returns the steps needed to execute a quote, such as submitting a deposit transaction or signing a message. Follow the transaction targets, calldata, and amounts returned by the [quote endpoint](/references/api/get-quote-v2); they depend on the route and deposit method.
+
+Step descriptions are display text, not a specification of fund ownership or settlement. Some API responses retain legacy “relayer” wording; use **`id`**, **`kind`**, and **`items`** to drive execution, and see [Input Validation](/references/api/api_core_concepts/input-validation) for verifying protocol deposits.
 
 The flow looks like this:
 
@@ -230,8 +232,8 @@ Each step has a unique `id` that identifies the type of action required. Underst
 
 | Step ID                   | Description                                            | When Used                                                                           |
 | ------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| [`deposit`](#deposit)     | Deposit funds to the relayer for cross-chain execution | Used for cross-chain swaps and bridges.                                             |
-| [`approve`](#approve)     | Approve the transfer of an ERC20 token                 | Required before `deposit` or `swap` steps for ERC20 tokens the solver doesn't hold. |
+| [`deposit`](#deposit)     | Submit the quoted deposit for cross-chain execution   | Used for cross-chain swaps and bridges.                                             |
+| [`approve`](#approve)     | Approve the transfer of an ERC20 token                 | Used before `deposit` or `swap` when the quoted flow requires a token allowance. |
 | `approval`                | Approve token for deposit                              | Token approval for deposit operations.                                              |
 | `swap`                    | Execute a same-chain token swap                        | For same-chain swaps. May require an approval step first for EVM swaps.             |
 | [`send`](#send)           | Send funds to the recipient                            | When sending the same asset on the same chain to a different recipient.             |
@@ -264,13 +266,12 @@ Below are detailed examples of each step type you may encounter when working wit
 
 ### deposit
 
-Deposit funds to the relayer to execute the swap. Used when the Relay solver holds the destination token.
+Submit the deposit transaction returned in the quote. A solver uses its own liquidity to complete the cross-chain fill; the deposit target depends on the quoted route. The following historical response illustrates the step shape, not an address to reuse for new deposits.
 
 ```json expandable
 {
   "id": "deposit",
   "action": "Confirm transaction in your wallet",
-  "description": "Depositing funds to the relayer to execute the swap for ETH",
   "kind": "transaction",
   "items": [
     {

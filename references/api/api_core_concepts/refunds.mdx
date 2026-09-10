@@ -3,9 +3,7 @@ title: 'Refunds'
 description: 'Learn how Relay handles refunds.'
 ---
 
-Relay strives for 100% successful bridges & swaps. Occasionally, due to a variety of 
-possible circumstances, a bridge or swap might be refunded instead of completed. 
-Learn more about Relay's refund logic and how it works. 
+The Relay platform tracks refunds when a bridge or swap cannot complete. Solvers can return funds on the origin chain instead of filling on the destination chain. This page describes platform refund behavior; see [protocol refunds](/references/protocol/how-it-works#refunds) for how those transfers settle.
 
 ## What is a refund?
 A refund returns funds to a user when a swap or bridge cannot be completed. Refunds are paid on the origin chain to the `refundTo` address supplied on the quote. If `refundTo` is not set, automatic refund is disabled.
@@ -33,7 +31,7 @@ The refund amount may be less than what you originally deposited due to several 
 - **Gas costs are deducted:** The gas cost of processing the refund transaction is deducted from the refunded amount.
 - **Origin swaps:** If your transaction included an origin swap, you will only receive what the depository contract actually received after the swap, not your original deposit amount.
 
-For example, if you send us a memecoin it will be swapped to USDC as a part of the deposit transaction. In the case of a refund we will refund in USDC for the amount the deposit contract received after the swap into USDC minus the cost of gas.
+For example, if your deposit transaction swaps a memecoin into USDC, the refundable amount is the USDC deposited after that swap, minus refund gas costs.
 
 ## When is there no refund given?
 If the refund amount is not enough to cover the cost of gas, Relay will 
@@ -44,9 +42,7 @@ The refund currency can vary by route. Relay will always attempt to refund the u
 
 
 ## Are refunds automatic & instant?
-Yes, refunds happen automatically when swaps or bridges fail to complete.
-If a failure occurs, Relay will refund the user's funds almost instantly. Please 
-remember no refund is given if the refund amount cannot cover the cost of gas.
+Automatic refunds require **`refundTo`** to be set and a refundable balance large enough to cover gas. A solver submits the refund when the route's checks permit it; completion depends on the origin chain. [Screening failures](/references/api/api_core_concepts/execution-errors) and other execution errors can prevent automatic refunds.
 
 ## How can I force a refund for testing purposes?
 You can force a refund by passing `debug-force-refund` as the referrer.

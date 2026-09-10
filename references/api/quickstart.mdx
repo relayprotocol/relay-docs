@@ -5,7 +5,7 @@ description: 'Execute your first cross-chain transaction in under 5 minutes.'
 
 import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
 
-Relay is a multichain payments network. You define the **Intent** (what the user wants), and Relay handles the **Execution** (how to get there).
+Swap, pay, and transact across supported chains with the [Relay API](/references/api/overview). In this walkthrough, you'll bridge ETH from Base to Arbitrum: get a quote, execute the returned steps, and track the result.
 
 Follow this 5-step flow to integrate Relay into your application:
 
@@ -162,7 +162,6 @@ Follow this 5-step flow to integrate Relay into your application:
           {
             "id": "deposit",
             "action": "Confirm transaction in your wallet",
-            "description": "Deposit funds to the relayer to execute the bridge",
             "kind": "transaction",
             "requestId": "0x8a9b3c...", 
             "items": [
@@ -310,7 +309,7 @@ Follow this 5-step flow to integrate Relay into your application:
     ```
   </Step>
   <Step title="Monitor">
-    Once you submit the transaction, the Relay Solver detects the deposit and fills the request on the destination chain. 
+    Once the deposit is indexed, a solver prepares and submits the destination-chain fill. The platform reports progress through the status API.
 
     Use the [status endpoint](/references/api/get-intents-status-v3) with the  `requestId` located inside each step object in your [quote response](/references/api/quickstart#request) to track status and confirm success. You can also use the `check.endpoint` property inside the step item object as the endpoint for checking the status of the request. <br/>
     _Note: Replace with the requestId returned in your quote_
@@ -337,16 +336,14 @@ Follow this 5-step flow to integrate Relay into your application:
     <StatusWebsockets />
 
     ## Status Lifecycle
-    The diagram below illustrates the journey of a cross-chain transaction through Relay's infrastructure and the corresponding API statuses. Below are descriptions for each status. Refer to the [Get Status](/references/api/get-intents-status-v3) endpoint for a full list of statuses and what they mean.
+    These statuses track the application's transaction, not the protocol's internal settlement and withdrawal lifecycle. Refer to [Get Status](/references/api/get-intents-status-v3) for the full list.
 
-    - `waiting`: The user is submitting or has submitted the deposit transaction to the Relay Depository contract on the origin chain, but it has not yet been indexed by the system.
-    - `depositing`: The origin chain deposit has been confirmed via the /execute API. The system is preparing to fill on the destination chain.
-    - `pending`: The deposit was successfully indexed. The Relay Solver is now monitoring the request and preparing the fill transaction on the destination chain.
-    - `success`: The Relay Solver successfully executed the "Fill Tx", and the funds have reached the recipient.
-    
-    ![Status Lifecycle](/images/status-lifecycle.png)
+    - `waiting`: The deposit transaction has not yet been indexed. Execute the deposit steps returned in the quote.
+    - `depositing`: The origin deposit is being processed after submission through the `/execute` API.
+    - `pending`: The deposit was indexed and the request is awaiting completion of the destination fill.
+    - `success`: The destination fill completed and the requested output reached the recipient.
 
-    The diagram also depicts paths where a transaction may end up in a failure or refund state if the fill cannot be completed. Learn more about how Relay helps you handle [refunds](https://docs.relay.link/references/api/api_core_concepts/refunds).
+    A request can also fail or enter a refund flow if the fill cannot complete. See [Refunds](/references/api/api_core_concepts/refunds) for the conditions and recovery paths.
   </Step>
   <Step title="Optimize">
     You have successfully executed your first cross-chain transaction with Relay!

@@ -6,7 +6,7 @@ sidebarTitle: Security & Audits
 
 ## Trust Model
 
-Relay Settlement is designed to be **non-custodial** — no single entity can unilaterally access user funds. Each component has different trust properties:
+Relay Settlement separates deposits, fill verification, balance accounting, and withdrawal authorization. User deposits remain in Depository contracts until an authorized withdrawal; solvers fill orders using their own capital. Each component has different trust properties:
 
 ### Depository
 
@@ -14,7 +14,7 @@ The Depository contracts are the most trust-minimized component:
 
 - **Non-upgradable** — Contract logic is immutable after deployment
 - **Single authorization path** — Only the registered Allocator can authorize withdrawals
-- **Short custody duration** — Funds are typically held for seconds to minutes, not hours or days
+- **Deposit duration** — Funds typically remain in the contracts for seconds to minutes, not hours or days
 - **No admin withdrawal** — There is no backdoor function for the contract owner to withdraw user funds
 
 The Depository's security relies on the Allocator's signing authority. If the Allocator is compromised, it could authorize unauthorized withdrawals — but it cannot create balances that don't exist on the Hub.

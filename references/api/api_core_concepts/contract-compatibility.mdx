@@ -3,17 +3,17 @@ title: "Contract Compatibility"
 description: "How to make your contract compatible with Relay"
 ---
 
-Relay allows a user to pay on Chain A for an arbitrary set of transactions to be executed on Chain B. These transactions are executed by a relayer, not the user themselves, which means you need to make special considerations to make sure your contract is compatible.
+The Relay platform lets users pay on Chain A for transactions on Chain B. Solvers execute cross-chain fills, so your contract must distinguish the transaction submitter from the intended user.
 
 ## General overview
 
-When Relayers execute transactions on behalf of users, they do so via a multicall contract (to be specific, we use Vectorized's gas-optimized [Multicaller](https://github.com/Vectorized/multicaller) contract). This protects the Relayer from malicious transactions.
+For the call-execution routes described here, solvers use Vectorized's [Multicaller](https://github.com/Vectorized/multicaller) contract. The multicall isolates execution from the solver's wallet.
 
-One exception is simple bridge transactions, where the `data` is empty. For these, the Relayer will execute them directly to avoid the gas overhead of using Multicaller.
+One exception is a simple bridge transaction with empty `data`. A solver can execute that transfer directly to avoid Multicaller gas overhead.
 
 ## Sender Attribution
 
-Because transactions are executed via the Relayer / Multicaller, you can't rely on `msg.sender` for authentication. There are a couple of ways around this:
+Because transactions execute through a solver or Multicaller, you can't assume `msg.sender` identifies the user. There are a couple of ways around this:
 
 #### Unauthenticated Delegation
 

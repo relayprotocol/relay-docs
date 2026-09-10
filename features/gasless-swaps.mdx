@@ -39,7 +39,7 @@ flowchart TD
 
 ## Permit-based Gasless
 
-Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an off-chain EIP-3009 or Permit2 message, and Relay's solver handles everything else — no approval transaction, no gas.
+Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an offchain EIP-3009 or Permit2 message and submits it through the Relay platform. Solvers execute the authorized flow and pay transaction gas.
 
 <Warning>
   USDC is fully gasless. Other ERC20 tokens require a one-time approval transaction.
@@ -58,7 +58,7 @@ Use this approach when your app does **not** control the user's wallet (e.g. Met
     Submit the signed permit to Relay
   </Step>
   <Step title="Fulfillment">
-    Relay's solver withdraws tokens from the user's EOA and fulfills the destination transaction
+    The signed permit authorizes the token transfer. A solver completes the destination transaction using its own capital.
   </Step>
 </Steps>
 
@@ -72,7 +72,7 @@ _See the full working example: [<Icon icon="github" size={16} /> byo-eoa-permit]
 
 ## ERC-4337 Gasless
 
-Use this approach if your app already uses ERC-4337 smart accounts. ERC-4337 UserOperations normally require gas fees, either paid by the sender or a paymaster. With Relay, you set all gas fee fields to 0 and submit the `handleOps` call via Relay's [/execute](/references/api/execute) endpoint instead of directly to the EntryPoint. Relay's relayer submits the transaction and covers the gas.
+Use this approach if your app already uses ERC-4337 smart accounts. ERC-4337 UserOperations normally require gas fees, either paid by the sender or a paymaster. Set all gas fee fields to 0 and submit the `handleOps` call through the platform's [/execute](/references/api/execute) endpoint; a relayer broadcasts the transaction and pays gas.
 
 ### `originGasOverhead`
 
