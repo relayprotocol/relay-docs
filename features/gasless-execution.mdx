@@ -584,14 +584,18 @@ If Relay cannot map a custom error selector to a known contract error, the respo
           const userOp: UserOperation = {
             sender: YOUR_WALLET_ADDRESS,
             nonce: 0n, // Replace with actual nonce from smartAccountAbi.getNonce()
-            initCode: "0x",
+            factory: "0x",
+            factoryData: "0x",
             callData: "0x", // Replace with the actual call data for the operation
             callGasLimit: 50000n,
             verificationGasLimit: 100000n,
             preVerificationGas: 50000n,
             maxFeePerGas: 0n,
             maxPriorityFeePerGas: 0n,
-            paymasterAndData: "0x",
+            paymaster: "0x",
+            paymasterVerificationGasLimit: 0n,
+            paymasterPostOpGasLimit: 0n,
+            paymasterData: "0x",
             signature: "0x",
           };
 
