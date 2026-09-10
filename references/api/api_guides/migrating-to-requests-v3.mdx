@@ -5,6 +5,8 @@ description: "What changed in GET /requests/v3 and how to upgrade from v2."
 
 `GET /requests/v3` is the latest version of the Requests API. It gives you a richer query surface with advanced filtering across status, chains, amounts, addresses, time, and more, plus a cleaner and more consistent response. This guide covers every change and how to upgrade. `GET /requests/v2` remains available during a deprecation window (see the [sunset timeline](#sunset-timeline) below) — migrate before it's retired.
 
+This migration changes the platform API response and query surface. The `v3` endpoint suffix does not mean a request uses a particular version of [Relay Protocol](/references/protocol/overview).
+
 <Warning>
   `x-api-key` is now required. Every v3 request authenticates against an active API key. See [API Keys](/references/api/api-keys) for details.
 </Warning>
@@ -565,5 +567,4 @@ Every individual change, grouped by request side and response side.
 <Tip>
   Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key tied to those requests.
 </Tip>
-
 

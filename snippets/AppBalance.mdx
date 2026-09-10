@@ -8,11 +8,11 @@ The simplest way to deposit funds is through the [Relay App Balance UI](https://
 
 ### Option 2: Direct On-Chain Deposit
 
-You can programmatically deposit to your app balance by sending a transaction on Base to the Relay solver. This method involves appending specific calldata in place of the request ID to identify the deposit.
+You can programmatically fund your app balance through the Base address below. This app-balance flow uses a direct transfer to a solver address, not a Relay Protocol Depository deposit. Appending specific calldata identifies the account to credit.
 
 #### How It Works
 
-When you transfer funds to the solver using specific calldata, Relay treats it as a deposit to your app balance. This method uses a fixed 12-character prefix and suffix (`012345abcdef`) with the middle portion specifying which address to credit:
+The platform indexes the transfer and credits your app balance using the appended calldata. This method uses a fixed 12-character prefix and suffix (`012345abcdef`) with the middle portion specifying which address to credit:
 
 **Calldata Format:**
 ```
@@ -34,9 +34,9 @@ When you transfer funds to the solver using specific calldata, Relay treats it a
 The ability to specify a different address is useful for building auto-topup systems or having more granular control over which accounts receive deposits.
 </Tip>
 
-#### Solver Address
+#### App Balance Funding Address
 
-Deposits should be sent to the Relay solver on Base:
+Use this address only for the app-balance funding flow described here. For transaction deposits, use the steps returned by the quote API instead.
 
 | Network | Address |
 |---------|---------|
@@ -49,7 +49,7 @@ import { erc20Abi, encodeFunctionData, createWalletClient } from 'viem'
 import { base } from 'viem/chains'
 
 const BASE_USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as const
-const RELAY_BASE_SOLVER_ADDRESS = '0xf70da97812cb96acdf810712aa562db8dfa3dbef' as const
+const APP_BALANCE_FUNDING_ADDRESS = '0xf70da97812cb96acdf810712aa562db8dfa3dbef' as const
 const REQUEST_ID_PREFIX = '012345abcdef'
 
 const walletClient = createWalletClient({
@@ -65,7 +65,7 @@ const amountInWei = '100000000' // 100 USDC
 const transferData = encodeFunctionData({
   abi: erc20Abi,
   functionName: 'transfer',
-  args: [RELAY_BASE_SOLVER_ADDRESS, amountInWei]
+  args: [APP_BALANCE_FUNDING_ADDRESS, amountInWei]
 })
 
 // Add custom calldata to credit the wallet address
