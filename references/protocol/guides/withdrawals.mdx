@@ -21,6 +21,7 @@ There is no API key. Authorization is cryptographic: only the wallet that made t
 | Endpoint | Purpose |
 | --- | --- |
 | [`POST /withdrawals/attest-deposit`](/references/api/attest-deposit) | Claim a stuck or flagged deposit so its balance becomes withdrawable |
+| [`GET /withdrawals/balances`](/references/api/get-withdrawal-balances) | List balances already credited to a recovery owner on the hub |
 | [`POST /withdrawals/request`](/references/api/request-withdrawal) | Prepare a withdrawal (no signature), then execute it (with signature) |
 | [`GET /withdrawals/status`](/references/api/get-withdrawal-status) | Poll the withdrawal job to completion |
 
@@ -61,6 +62,23 @@ curl -X POST "https://api.relay.link/withdrawals/attest-deposit" \
 Note that `chainId` here is the numeric Relay chain id of the deposit chain. This is the one exception in the flow — every other `chainId` is a protocol slug (see the next step). A successful attestation returns `{ "success": true }`.
 
 The call is idempotent and safe to retry. A `503` (for example "Transaction not yet finalized" or "Recovery in progress") means wait and retry. A `400` is terminal for that transaction.
+
+### Discover Credited Balances (optional)
+
+Once a deposit is attested (or if the depositor already has credit on the hub from a prior recovery), you can enumerate what's available to withdraw for a given recovery owner:
+
+```bash
+curl "https://api.relay.link/withdrawals/balances?recoveryAddress=0xDEPOSITOR_ADDRESS&ownerChainId=8453&limit=20"
+```
+
+- **`recoveryAddress`** — the depositor / owner address
+- **`ownerChainId`** — the numeric Relay chain id that identifies the recovery owner's protocol account (the same EVM address on different owner chains derives different hub accounts)
+- **`limit`** — page size, default `20`, max `50`
+- **`continuation`** — opaque cursor returned by the previous page; keep calling until it is `null`
+
+Each entry in `balances` includes the raw `amount` (integer string), an optional `currency` block (`chainId`, `address`, `name`, `symbol`, `decimals`), plus `amountFormatted` and `amountUsd` when metadata and price are available. `currency` (and the enriched fields) can be `null` when the asset can't be verified against public solver configuration — the raw `hubTokenId` and `amount` are still returned.
+
+This endpoint is public; an optional `x-api-key` uses the standard rate-limit tiers. It is a read-only discovery step — it does not attest, reserve, enqueue, or execute anything. Use it to build a picklist before prepare; a null `currency` is not a usable withdrawal target.
 
 ### Step 3: Prepare
 
