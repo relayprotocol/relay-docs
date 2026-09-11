@@ -164,6 +164,7 @@
                 "group": "Withdrawals",
                 "pages": [
                   "references/api/attest-deposit",
+                  "references/api/get-withdrawal-balances",
                   "references/api/request-withdrawal",
                   "references/api/get-withdrawal-status"
                 ]
