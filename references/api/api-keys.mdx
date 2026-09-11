@@ -65,6 +65,10 @@ Already hitting a limit? See [Handling Rate Limits](/references/api/api_core_con
 
 ## How to Use an API key
 
+<Warning>
+Quote requests that set a `referrer` must be authenticated: pass your API key in the `x-api-key` header on `POST /quote` and `POST /quote/v2`. Requests with a referrer but no valid key return `401` with `errorCode: "UNAUTHORIZED_QUOTE"`.
+</Warning>
+
 ### HTTP requests
 
 Pass the key in the request headers on every request:

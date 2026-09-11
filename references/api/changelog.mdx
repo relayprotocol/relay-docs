@@ -3,11 +3,23 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-09-11 — Per-pair maximum quote size returns `AMOUNT_TOO_HIGH`
+
+**Added** — `POST /quote`, `POST /quote/v2`, and `POST /price`: the response `errorCode` enum gains **`AMOUNT_TOO_HIGH`**, returned with `400` when the requested quote amount exceeds the per-pair maximum configured for the selected token pair. The response `message` is `Quote amount exceeds the maximum for this pair`. Reduce the requested amount (or split into smaller quotes) and retry. The same code surfaces on deposit-address create-quote requests (`POST /quote/v2` with `useDepositAddress: true`). See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
+
+## 2026-09-08 — `data.blockedAddresses` on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: for requests that failed with `failReason: "BLOCKED_WALLET"`, the response `data` object now includes `blockedAddresses`, an array of the wallet address(es) whose screening caused the failure. It is returned only when the caller authenticates with an API key belonging to the request's owning integrator and passes `includeAuthenticatedData=true` — the same gate as `data.referrer`, `data.platformFee`, and `data.apiKeyName`. Returns `null` on non-`BLOCKED_WALLET` failures and on rows where no blocked addresses were recorded. The field never carries screening-provider scores or reasons — addresses only. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+
 ## 2026-09-05 — `POST /execute/swap` removed
 
 **Breaking** — `POST /execute/swap` has been removed. Calls to the endpoint now return `404`. The endpoint was a legacy execution path that predated the unified quote flow and had been superseded for some time.
 
 **Replacement** — use [`POST /quote/v2`](/references/api/get-quote-v2) to request a quote and follow the returned steps to execute it. The Quote API covers bridging, swapping, and calling through a single unified surface, and is the same flow already recommended by the [`POST /price`](/references/api/get-price) and [`POST /execute`](/references/api/execute) references. See [Step Execution](/references/api/api_core_concepts/step-execution) for how to submit each step returned by the quote.
+
+## 2026-09-03 — Quote requests with a `referrer` require an API key
+
+**Breaking** — `POST /quote` and `POST /quote/v2`: requests that include a `referrer` in the body now require a valid `x-api-key` header. Requests with a referrer but no valid key return `401` with `errorCode: "UNAUTHORIZED_QUOTE"`. Note that the Relay SDK sets `referrer` automatically, so SDK integrations must configure **`apiKey`** on `createClient` or pass the key per call via the `headers` parameter. Create and manage API keys in the [Relay Dashboard](https://dashboard.relay.link) — see [API keys and Rate Limits](/references/api/api-keys).
 
 ## 2026-09-01 — Request signature endpoints removed
 
