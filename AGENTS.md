@@ -29,6 +29,24 @@ Pages in `solutions/`, `resources/`, `security/`, `references/protocol/`, `refer
 
 **Nav-organization stubs (ignore):** `references/api/advanced.mdx`, `references/api/core.mdx`, and `references/api/utilities.mdx` are empty files that exist only to create group headers in the API Reference sidebar. They render no content, so frontmatter requirements and other §2 / §3 rules do not apply. Automation should skip them.
 
+### 1.2 Platform, protocol, and solver positioning
+
+These rules apply to all public surfaces, including pages outside the profile table, examples, snippets, diagrams, and generated content:
+
+- **Approved headline:** “Swap, pay, and transact across every chain, instantly.”
+- **Approved introduction:** “Relay is a developer platform that gives you instant global access to the onchain economy. Swap, pay, and transact across every blockchain from a single onchain balance using a simple set of enterprise-grade APIs.” Use this on `what-is-relay.mdx`; adapt supporting pages to their audience rather than repeating it everywhere.
+- **Relay platform** provides quotes, routing, transaction steps, tracking, and application tooling (API, RelayKit, Relay App). **Relay Protocol** provides settlement infrastructure. **Solvers** supply liquidity and fill cross-chain orders using their own capital. Keep these roles distinct.
+- **What is Relay?** describes the platform only. Keep protocol positioning in the separate Relay Protocol section. Explain solvers as part of transaction mechanics (“a solver fills the order”), not as a public integration audience; do not add solver onboarding guides or position the protocol as an open solver market.
+- Lead supporting platform overviews, solutions, and use cases with what the reader can do: swap, pay, and transact from their existing balance. Use “developer platform” when defining Relay; do not substitute “payments network” or “onchain transaction platform.” Keep explanations of internal layers in the relevant walkthroughs and references.
+- Keep route support, gas requirements, timing, refund conditions, and security assumptions explicit in technical docs. The headline does not replace those constraints or imply pooled custody, zero-latency guarantees, or availability on unsupported routes.
+- Use “solvers” for the participant class and “a solver” for one order. Do not frame Relay as a single solver or use “our solver,” “Relay's solver,” or “the Relay Solver” as a product identity. Do not imply an auction, open participation, or a live multi-solver platform unless verified.
+- Describe actual fund flows: deposits, solver-funded fills, settlement, and withdrawals. Do not describe protocol deposits as payments directly to a solver. If an integration actually uses a direct transfer (for example app-balance funding), state that exception accurately; never relabel an EOA as a Depository or change a transaction target for positioning.
+- Distinguish deployed platform routes from protocol capabilities and future rollouts. API suffixes (`/requests/v3`), response namespaces (`protocol.v2`), and contract versions are not interchangeable release labels.
+- Ground “decentralized,” “trustless,” and “non-custodial” in verified mechanics and scope. Preserve signer, permission, upgrade, halt, and recovery assumptions. Do not replace security explanations with absolute guarantees.
+- Keep regulatory, licensing, and fundraising arguments out of public positioning. Document screening behavior and restrictions without making legal conclusions or removing safety information.
+- Preserve API field names, signed payloads, addresses, and historical changelog facts. Response excerpts may omit display-only descriptions; do not invent replacement strings and present them as live API output. Fix generated wording at its source, and flag upstream changes for review.
+- Entry-point changes must keep platform integration and protocol settlement paths distinct. Update inbound links, check reachable legacy pages, and inspect rendered diagrams and navigation. Flag quickstart walkthrough changes for human review before publication.
+
 ---
 
 ## 2. Global rules (apply to every in-scope page)
@@ -228,7 +246,9 @@ Treat structurally like a **feature guide** (§3.1). Usually end-to-end walkthro
 
 ### 3.7 Quickstart (exception)
 
-`references/api/quickstart.mdx` is intentionally one-of-a-kind. Do not impose a profile on it. It gets its own treatment because its job is different from reference and different from feature guides — it is the single "you are here" entry point. When editing quickstart, pattern-match against the existing page; when changes originate from upstream (new onboarding step, new default parameter), flag for human review rather than letting automation rewrite it.
+`references/api/quickstart.mdx` is intentionally one-of-a-kind. Do not impose a profile on it. It gets its own treatment because its job is different from reference and different from feature guides — it is the "you are here" entry point for API integration. When editing quickstart, pattern-match against the existing page; when changes originate from upstream (new onboarding step, new default parameter), flag for human review rather than letting automation rewrite it.
+
+**Entry path.** The homepage cards point at `what-is-relay`, `references/api/overview`, and `references/protocol/overview` — quickstart is not one of them. It is reached through the API Reference tab in `docs.json` and through the lead paragraph of `references/api/overview.mdx`, which is now its only inbound link from the top of the platform path. Treat that link as load-bearing: a change to the homepage cards, the API Reference tab, or that lead must keep a path to quickstart, and any such change is a human review step.
 
 ---
 
@@ -304,7 +324,7 @@ The `## YYYY-MM-DD — <summary>` heading shape is parsed by `scripts/build-chan
 
 ### 4.6 Unified changelog (`changelog.mdx`)
 
-`changelog.mdx` is generated — **never edit it by hand.** `scripts/build-changelog.mjs` merges the three sources listed in §4.2 into one date-ordered page of Mintlify `<Update>` blocks, and an hourly GitHub Action opens or updates a pull request with the result. It is its own tab in `docs.json` (`navigation.tabs`), alongside Overview, API Reference, RelayKit, and Relay Protocol. Because the tab holds this page alone, the page sets `mode: "center"` so no single-item sidebar renders.
+`changelog.mdx` is generated — **never edit it by hand.** `scripts/build-changelog.mjs` merges the three sources listed in §4.2 into one date-ordered page of Mintlify `<Update>` blocks, and an hourly GitHub Action opens or updates a pull request with the result. It is its own tab in `docs.json` (`navigation.tabs`), alongside Relay Platform, API Reference, RelayKit, and Relay Protocol. Because the tab holds this page alone, the page sets `mode: "center"` so no single-item sidebar renders.
 
 - Each day renders as one `<Update>` with `### API` / `### RelayKit` / `### App` sections.
 - **API and App entry text is reproduced verbatim from its source.** Fix wording in that source, not here.
@@ -326,13 +346,15 @@ The `## YYYY-MM-DD — <summary>` heading shape is parsed by `scripts/build-chan
 
 ## 5. Terminology
 
-- **Relay** — the product, always capitalized, no italics.
-- **Relay Network** — capitalized when referring to the cross-chain infrastructure as a named thing.
+- **Relay** — the umbrella name, always capitalized, no italics. Name the platform or protocol when describing a specific responsibility.
+- **Relay platform** — quotes, routing, tracking, and application tooling. Capitalize Platform in titles and navigation labels.
+- **Relay Protocol** — the protocol integration surface; **Relay Settlement** names its intent-settlement system. Keep Relay Vaults' separate liquidity role explicit.
+- **Relay Network** — avoid as a substitute for the platform, protocol, or solver participants; name the responsible layer.
 - **Relay Depository Contract** — capitalized, link to `/references/protocol/overview` on first mention.
 - **RelayKit** — one word, both caps, when referring to the suite of SDK + Hooks + UI packages. Package names on disk / in imports are lowercase-hyphenated (`relay-kit`, `relay-sdk`, `relay-kit-hooks`, `relay-kit-ui`).
 - **SDK** — all caps in prose. The full name is "Relay SDK" on first mention, "the SDK" thereafter.
-- **solver** — lowercase in prose (role, not proper noun). Capitalize only at the start of a sentence.
-- **relayer** — lowercase in prose.
+- **solver** — lowercase in prose (participant role, not a product identity). Use the plural for general descriptions; singular is appropriate for the solver filling an individual order.
+- **relayer** — lowercase; use for the transaction-broadcasting role, or when explaining existing API fields. Do not rename wire fields such as `relayerGas` or `RelayerWitness`.
 - **quote** / **Quote** — lowercase in prose ("get a quote"); capitalized only when referring to the API/SDK type (e.g. "the `Quote` object").
 - **API key** — capital `API`, lowercase `key`. Normalize `API Key` and `api key` variants to `API key` in prose (do not touch code, URLs, or HTTP header names).
 - **cross-chain** — hyphenated, lowercase.

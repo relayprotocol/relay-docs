@@ -6,13 +6,13 @@ sidebarTitle: For Apps
 
 ## Overview
 
-Application developers typically interact with Relay through the [Relay API](/references/api/overview), which abstracts the settlement protocol entirely. However, understanding the protocol flow can help when debugging transactions or building advanced integrations.
+Application developers typically use the [Relay platform API](/references/api/overview) for quotes, transaction steps, and status. This guide covers orders that use Relay Protocol settlement; it does not describe every platform route.
 
 This page explains how the protocol surfaces in API responses and how to trace an order through the settlement flow.
 
 ## orderId vs. requestId
 
-Every Relay request has two identifiers, and they serve different purposes.
+Requests using protocol settlement have two identifiers with different purposes.
 
 The `requestId` is the Relay-level intent identifier. It covers the overall intent — including any origin or destination swaps — and is what most of the API works in: the [quote api](/references/api/get-quote-v2) returns it as `steps[].requestId`, and status polling, webhooks, and the [requests api](/references/api/get-requests) all key off it. It is not derivable from on-chain data alone.
 
@@ -22,18 +22,20 @@ If you only have an `orderId` from on-chain data, look it up via the [requests a
 
 ## Protocol Deposits via the API
 
-When requesting a quote using the Relay [quote api](/references/api/get-quote-v2), the response includes a **`protocol`** field when the order will be settled through the Relay Settlement protocol:
+When a [quote](/references/api/get-quote-v2) includes protocol data, use **`protocol.v2`** to inspect the order and its deposit details. The following is an abbreviated example; API field names and endpoint versions do not identify a protocol rollout version.
 
 ```json
 {
-  "steps": [...],
   "protocol": {
-    "orderId": "0x1234...abcd",
-    "depositChainId": 10,
-    "paymentDetails": {
-      "recipient": "0xDepositoryAddress...",
-      "amount": "1000000",
-      "token": "0xUSDCAddress..."
+    "v2": {
+      "orderId": "0x1234...abcd",
+      "hubType": "onchain",
+      "paymentDetails": {
+        "chainId": "optimism",
+        "depository": "0xDepositoryAddress...",
+        "currency": "0xUSDCAddress...",
+        "amount": "1000000"
+      }
     }
   }
 }
@@ -42,11 +44,11 @@ When requesting a quote using the Relay [quote api](/references/api/get-quote-v2
 The key fields:
 
 - **`orderId`** — A unique identifier for this order, used to track it through the settlement flow
-- **`depositChainId`** — The chain where the user's deposit will go
+- **`paymentDetails.chainId`** — The protocol chain identifier for the origin chain, as a string slug (`"optimism"`, `"arbitrum"`, `"base"`), not the numeric EVM chain ID
 - **`paymentDetails`** — The Depository address, token, and amount for the deposit
 
 <Info>
-The `protocol` field only appears when the order uses the settlement protocol. Some routes may use alternative execution paths.
+Use the actual transaction steps to execute a quote. For checking the order data and deposit transaction together, see [Input Validation](/references/api/api_core_concepts/input-validation).
 </Info>
 
 ## Tracing an Order
@@ -80,13 +82,13 @@ After the solver fills the order, the [Oracle](/references/protocol/components/o
 
 For application debugging, treat the **`orderId`** as the stable correlation key across the whole lifecycle:
 
-- Use `paymentDetails.recipient` and `depositChainId` to find the origin-chain deposit transaction
+- Use `protocol.v2.paymentDetails.depository` and `protocol.v2.paymentDetails.chainId` to find the origin-chain deposit transaction
 - Use your destination-chain execution transaction to confirm the solver fill
 - Use the Relay Chain attestation submitted after the fill to confirm settlement
 
 If you need to trace the Hub's internal **order address** directly, note that it is **not** derived from `orderId` alone. The settlement SDK derives it from:
 
-- `chainId` as a string
+- `chainId` as a string — the same protocol chain identifier returned in `paymentDetails.chainId`
 - `depositor` encoded for its VM type
 - `timestamp`
 - `depositId`
@@ -112,7 +114,7 @@ For the Relay request `0xd5695a549c7e71a3258f9c07a659231d4852513d7da6e30f0c93079
 
 The deposit parameters used by the Oracle are:
 
-- `chainId = "42161"`
+- `chainId = "arbitrum"`
 - `depositor = "0x710227b881611b30ee794aa63a7da7086888f3c8"`
 - `timestamp = 1773954184`
 - `depositId = 0xcc7ec6bbf43d40717e5556fa50b232d866ade6c9a3c654434b1124322fbcf414`
@@ -122,12 +124,12 @@ The `depositId` above comes from the trailing 32 bytes of the ERC20 transfer cal
 Using the settlement SDK formula yields the Hub order address:
 
 ```ts
-const orderAddress = "0xab73c17f93668cda196db73334e5f1f2ba08257a"
+const orderAddress = "0xe6a139cd260c28b3a41eafe27d6c008f316db488"
 ```
 
 You can inspect that balance owner on the Relay Chain Explorer here:
 
-- [Relay Chain order address: `0xab73c17f93668cda196db73334e5f1f2ba08257a`](https://explorer.chain.relay.link/address/0xab73c17f93668cda196db73334e5f1f2ba08257a)
+- [Relay Chain order address: `0xe6a139cd260c28b3a41eafe27d6c008f316db488`](https://explorer.chain.relay.link/address/0xe6a139cd260c28b3a41eafe27d6c008f316db488)
 
 ### 3. Fill Transaction
 

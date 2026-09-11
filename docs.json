@@ -12,7 +12,7 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Overview",
+        "tab": "Relay Platform",
         "groups": [
           {
             "group": "Introduction",
@@ -164,6 +164,7 @@
                 "group": "Withdrawals",
                 "pages": [
                   "references/api/attest-deposit",
+                  "references/api/get-withdrawal-balances",
                   "references/api/request-withdrawal",
                   "references/api/get-withdrawal-status"
                 ]
@@ -265,7 +266,6 @@
               {
                 "group": "Guides",
                 "pages": [
-                  "references/protocol/guides/for-solvers",
                   "references/protocol/guides/for-apps",
                   "references/protocol/guides/withdrawals",
                   "references/protocol/guides/third-party-oracle"
@@ -373,6 +373,14 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/references/protocol/guides/for-solvers",
+      "destination": "/references/protocol/how-it-works"
+    },
+    {
+      "source": "/resources/understanding-relay",
+      "destination": "/how-relay-works"
+    },
     {
       "source": "/references/overview",
       "destination": "/references/api/overview"

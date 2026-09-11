@@ -77,7 +77,7 @@ curl --request POST \
     {
       "id": "deposit",
       "action": "Confirm transaction in your wallet",
-      "description": "Depositing funds to the relayer to execute the swap for USDT",
+      "description": "Depositing funds to the depository contract",
       "kind": "transaction",
       "items": [
         {
@@ -683,7 +683,7 @@ If 1 USDT = 1.0005 USDC, user gets 99.97 USDT, you sponsor \$0.05
 
 Turning off `subsidizeFees` moves the Relay fee onto the user; it does not turn off fixed-rate settlement.
 
-Fixed rates work for all stablecoins that Relay holds as solver currencies — common examples include USDC, USDC.e, USDT, USDe, USDH, mUSD, and DAI. Solver currencies vary by chain: to check which stablecoins are supported on a given chain, call the [chains API](/references/api/get-chains) and inspect that chain's **`solverCurrencies`** array. For example, on MegaETH the solver holds USDT and USDm, so fixed rates work for both.
+Fixed rates work for stablecoins listed as solver currencies on the requested chain, such as USDC, USDC.e, USDT, USDe, USDH, mUSD, and DAI. Solvers supply this liquidity; the platform exposes supported currencies through each chain's **`solverCurrencies`** array in the [chains API](/references/api/get-chains). Check that array for current support rather than assuming the same inventory across chains.
 
 <CodeGroup>
 ```bash Request
@@ -733,7 +733,7 @@ curl --request POST \
     {
       "id": "deposit",
       "action": "Confirm transaction in your wallet",
-      "description": "Depositing funds to the relayer to execute the swap for USDT",
+      "description": "Depositing funds to the depository contract",
       "kind": "transaction",
       "items": [
         {
