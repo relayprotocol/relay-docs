@@ -654,7 +654,7 @@ Learn more about how [fee sponsorship](/features/fee-sponsorship) works.
 ### Fixed Rates
 If your goal is to give the user 1:1, you can use fixed rates. In this case, the user would always get 100 USDT, and you would sponsor a dynamic amount. If USDT is worth less than USDC, you actually would earn the difference as fees.
 
-The figures below assume you are sponsoring fees as well (`"subsidizeFees": true`, as in the request example at the end of this section). See [Fixed rates without fee sponsorship](#fixed-rates-without-fee-sponsorship) for the other case:
+The figures below assume you are sponsoring fees as well (`"subsidizeFees": true`, as in the request example at the end of this section); the case without fee sponsorship is covered further down:
 
 If 1 USDT = 1.0000 USDC, user gets 100 USDT, you sponsor \$0.03 <br/>
 If 1 USDT = 0.9995 USDC, user gets 100 USDT, you earn \$0.02 <br/>
@@ -673,9 +673,7 @@ If 1 USDT = 1.0000 USDC, user gets 99.95 USDT, you earn \$0.02 <br/>
 If 1 USDT = 0.9995 USDC, user gets 99.95 USDT, you earn \$0.07 <br/>
 If 1 USDT = 1.0005 USDC, user gets 99.95 USDT, you sponsor \$0.03
 
-#### Fixed Rates Without Fee Sponsorship
-
-`fixedRate` and `subsidizeFees` are independent settings — you can pass a fixed rate with `"subsidizeFees": false`. A fixed rate always pins the **pre-fee** conversion; `subsidizeFees` decides who pays the Relay fee on top of it.
+**Fixed rates without fee sponsorship.** `fixedRate` and `subsidizeFees` are independent settings — you can pass a fixed rate with `"subsidizeFees": false`. A fixed rate always pins the **pre-fee** conversion; `subsidizeFees` decides who pays the Relay fee on top of it.
 
 So with `"fixedRate": "1:1"` and `"subsidizeFees": false`, the pre-fee output is pinned at 100 USDT and the \~\$0.03 fee comes out of it. The user receives 99.97 USDT at any market rate, and your position is the spread alone:
 
@@ -1310,9 +1308,7 @@ curl --request POST \
 ```
 </CodeGroup>
 
-#### Tracking What You Sponsored or Earned
-
-Fixed-rate quotes return a **`fixedRateFee`** object on `details`, alongside `isFixedRate`:
+**Tracking what you sponsored or earned.** Fixed-rate quotes return a `fixedRateFee` object on `details`, alongside `isFixedRate`:
 
 ```json
 "isFixedRate": true,
