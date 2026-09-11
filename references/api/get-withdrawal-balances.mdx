@@ -7,5 +7,7 @@ openapi: get /withdrawals/balances
 [How do programmatic withdrawals work?](/references/protocol/guides/withdrawals)
 
 <Note>
-Lists balances already credited to the recovery owner's account on the hub. Deposits still awaiting attestation are excluded — call [Attest Deposit](/references/api/attest-deposit) first. Discovery is eventually consistent. `ownerChainId` here is the numeric Relay chain id (as in Attest Deposit); [Request Withdrawal](/references/api/request-withdrawal) takes protocol chain slugs. These endpoints power [relay.link/withdraw](https://relay.link/withdraw) and are not yet a versioned API surface.
+Lists balances already credited to the recovery owner's account on the hub. Deposits awaiting attestation or recovery are excluded — see [Attest Deposit](/references/api/attest-deposit) to credit eligible deposits. Discovery is eventually consistent.
+
+`ownerChainId` is the numeric Relay chain id of the recovery owner's account; [Request Withdrawal](/references/api/request-withdrawal) takes protocol chain slugs. A returned balance does not guarantee withdrawal eligibility; the withdrawal flow checks eligibility and the executable amount.
 </Note>
