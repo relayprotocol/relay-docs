@@ -3,6 +3,9 @@ title: "Bridging Integration Guide"
 description: "How to integrate the Relay API for bridging and onboarding"
 ---
 
+import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+
+
 import GetAnApiKey from "/snippets/GetAnApiKey.mdx";
 import QuickstartCallout from "/snippets/QuickstartCallout.mdx";
 import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
@@ -28,6 +31,8 @@ While not mandatory for integration, doing the following will improve the UX for
     - **`EXACT_INPUT`** — specify the amount you want to send; the output amount may vary based on fees and slippage.
     - **`EXPECTED_OUTPUT`** — specify the approximate amount you want to receive; the input amount is calculated accordingly and the output may vary slightly due to slippage.
     - **`EXACT_OUTPUT`** — specify the exact amount you want to receive; the input amount is calculated accordingly. If the exact output cannot be filled, the request fails and the user is refunded on the origin chain.
+
+<QuoteV2AuthCallout />
 
     <CodeGroup>
     ```bash EXACT_INPUT
