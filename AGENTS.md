@@ -246,7 +246,9 @@ Treat structurally like a **feature guide** (§3.1). Usually end-to-end walkthro
 
 ### 3.7 Quickstart (exception)
 
-`references/api/quickstart.mdx` is intentionally one-of-a-kind. Do not impose a profile on it. It gets its own treatment because its job is different from reference and different from feature guides — it is the single "you are here" entry point. When editing quickstart, pattern-match against the existing page; when changes originate from upstream (new onboarding step, new default parameter), flag for human review rather than letting automation rewrite it.
+`references/api/quickstart.mdx` is intentionally one-of-a-kind. Do not impose a profile on it. It gets its own treatment because its job is different from reference and different from feature guides — it is the "you are here" entry point for API integration. When editing quickstart, pattern-match against the existing page; when changes originate from upstream (new onboarding step, new default parameter), flag for human review rather than letting automation rewrite it.
+
+**Entry path.** The homepage cards point at `what-is-relay`, `references/api/overview`, and `references/protocol/overview` — quickstart is not one of them. It is reached through the API Reference tab in `docs.json` and through the lead paragraph of `references/api/overview.mdx`, which is now its only inbound link from the top of the platform path. Treat that link as load-bearing: a change to the homepage cards, the API Reference tab, or that lead must keep a path to quickstart, and any such change is a human review step.
 
 ---
 
@@ -322,7 +324,7 @@ The `## YYYY-MM-DD — <summary>` heading shape is parsed by `scripts/build-chan
 
 ### 4.6 Unified changelog (`changelog.mdx`)
 
-`changelog.mdx` is generated — **never edit it by hand.** `scripts/build-changelog.mjs` merges the three sources listed in §4.2 into one date-ordered page of Mintlify `<Update>` blocks, and an hourly GitHub Action opens or updates a pull request with the result. It is its own tab in `docs.json` (`navigation.tabs`), alongside Overview, API Reference, RelayKit, and Relay Protocol. Because the tab holds this page alone, the page sets `mode: "center"` so no single-item sidebar renders.
+`changelog.mdx` is generated — **never edit it by hand.** `scripts/build-changelog.mjs` merges the three sources listed in §4.2 into one date-ordered page of Mintlify `<Update>` blocks, and an hourly GitHub Action opens or updates a pull request with the result. It is its own tab in `docs.json` (`navigation.tabs`), alongside Relay Platform, API Reference, RelayKit, and Relay Protocol. Because the tab holds this page alone, the page sets `mode: "center"` so no single-item sidebar renders.
 
 - Each day renders as one `<Update>` with `### API` / `### RelayKit` / `### App` sections.
 - **API and App entry text is reproduced verbatim from its source.** Fix wording in that source, not here.

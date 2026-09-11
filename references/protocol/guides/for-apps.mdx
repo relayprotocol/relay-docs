@@ -44,7 +44,7 @@ When a [quote](/references/api/get-quote-v2) includes protocol data, use **`prot
 The key fields:
 
 - **`orderId`** — A unique identifier for this order, used to track it through the settlement flow
-- **`paymentDetails.chainId`** — The protocol chain ID where the user's deposit will go
+- **`paymentDetails.chainId`** — The protocol chain identifier for the origin chain, as a string slug (`"optimism"`, `"arbitrum"`, `"base"`), not the numeric EVM chain ID
 - **`paymentDetails`** — The Depository address, token, and amount for the deposit
 
 <Info>
@@ -88,7 +88,7 @@ For application debugging, treat the **`orderId`** as the stable correlation key
 
 If you need to trace the Hub's internal **order address** directly, note that it is **not** derived from `orderId` alone. The settlement SDK derives it from:
 
-- `chainId` as a string
+- `chainId` as a string — the same protocol chain identifier returned in `paymentDetails.chainId`
 - `depositor` encoded for its VM type
 - `timestamp`
 - `depositId`
@@ -114,7 +114,7 @@ For the Relay request `0xd5695a549c7e71a3258f9c07a659231d4852513d7da6e30f0c93079
 
 The deposit parameters used by the Oracle are:
 
-- `chainId = "42161"`
+- `chainId = "arbitrum"`
 - `depositor = "0x710227b881611b30ee794aa63a7da7086888f3c8"`
 - `timestamp = 1773954184`
 - `depositId = 0xcc7ec6bbf43d40717e5556fa50b232d866ade6c9a3c654434b1124322fbcf414`
@@ -124,12 +124,12 @@ The `depositId` above comes from the trailing 32 bytes of the ERC20 transfer cal
 Using the settlement SDK formula yields the Hub order address:
 
 ```ts
-const orderAddress = "0xab73c17f93668cda196db73334e5f1f2ba08257a"
+const orderAddress = "0xe6a139cd260c28b3a41eafe27d6c008f316db488"
 ```
 
 You can inspect that balance owner on the Relay Chain Explorer here:
 
-- [Relay Chain order address: `0xab73c17f93668cda196db73334e5f1f2ba08257a`](https://explorer.chain.relay.link/address/0xab73c17f93668cda196db73334e5f1f2ba08257a)
+- [Relay Chain order address: `0xe6a139cd260c28b3a41eafe27d6c008f316db488`](https://explorer.chain.relay.link/address/0xe6a139cd260c28b3a41eafe27d6c008f316db488)
 
 ### 3. Fill Transaction
 
