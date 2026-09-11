@@ -10,7 +10,7 @@ The simplest way to deposit funds is through the [Relay App Balance UI](https://
 
 You can programmatically fund your app balance through the Base address below. This app-balance flow uses a direct transfer to a solver address, not a Relay Protocol Depository deposit. Appending specific calldata identifies the account to credit.
 
-#### How It Works
+**How It Works**
 
 The platform indexes the transfer and credits your app balance using the appended calldata. This method uses a fixed 12-character prefix and suffix (`012345abcdef`) with the middle portion specifying which address to credit:
 
@@ -23,7 +23,7 @@ The platform indexes the transfer and credits your app balance using the appende
 - **Address to Credit:** The wallet address to deposit funds for (use `0000000000000000000000000000000000000000` for `msg.sender`)
 - **Suffix:** `012345abcdef`
 
-#### Examples
+**Examples**
 
 | Calldata | Behavior |
 |------------|----------|
@@ -34,7 +34,7 @@ The platform indexes the transfer and credits your app balance using the appende
 The ability to specify a different address is useful for building auto-topup systems or having more granular control over which accounts receive deposits.
 </Tip>
 
-#### App Balance Funding Address
+**App Balance Funding Address**
 
 Use this address only for the app-balance funding flow described here. For transaction deposits, use the steps returned by the quote API instead.
 
@@ -42,7 +42,7 @@ Use this address only for the app-balance funding flow described here. For trans
 |---------|---------|
 | Base | `0xf70da97812cb96acdf810712aa562db8dfa3dbef` |
 
-#### TypeScript Example
+**TypeScript Example**
 
 ```typescript expandable
 import { erc20Abi, encodeFunctionData, createWalletClient } from 'viem'

@@ -15,7 +15,7 @@ One exception is a simple bridge transaction with empty `data`. A solver can exe
 
 Because transactions execute through a solver or Multicaller, you can't assume `msg.sender` identifies the user. There are a couple of ways around this:
 
-#### Unauthenticated Delegation
+### Unauthenticated Delegation
 
 The simplest solution is if your contract allows one user to take an action on behalf of another user. This works great for actions that don't require authentication, because they are purely net beneficial to the user:
 
@@ -31,7 +31,7 @@ You just need to allow passing the address that the action is being done on beha
 
 Some contracts don't require authentication, but also don't have native delegation built into them. In such scenarios, it might be possible to use a router contract. E.g. if an NFT only supported minting to `msg.sender`, you could mint via a router contract then have it forwarded the NFT to the user.
 
-#### Authenticated Delegation
+### Authenticated Delegation
 
 For authenticated actions, you can do those by passing in proof that the user authenticated the action. Currently, you need to build custom signature authentication into your contract, however, in the near future we will be adding support for more standardized flows, such as:
 
@@ -39,7 +39,7 @@ For authenticated actions, you can do those by passing in proof that the user au
 - MulticallerWithSigner
 - ERC2771 Trusted Forwarder
 
-#### Just-In-Time Gas
+### Just-In-Time Gas
 
 Alternatively, you can simply bridge a small amount of gas and have the user execute the transaction themselves. This is viable because of how fast and cheap Relay is, and is backwards compatible with any contract.
 

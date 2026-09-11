@@ -97,6 +97,7 @@ curl -X POST \
     {
       "id": "deposit",
       "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the depository contract",
       "kind": "transaction",
       "items": [
         {
@@ -491,6 +492,7 @@ curl -X POST \
     {
       "id": "deposit",
       "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the depository contract",
       "kind": "transaction",
       "items": [
         {
@@ -867,17 +869,17 @@ When funds arrive at a deposit address, Relay evaluates what was sent versus wha
 
 ### Open-Ended Addresses
 
-#### Same Token, Different Amount
+**Same Token, Different Amount**
 
 - **Exact match** — The original quote is reused and the fill proceeds directly.
 - **More than quoted** — A new quote is generated for the larger amount, and the fill proceeds.
 - **Less than quoted** — If the smaller amount still covers fees and the minimum fill, a new quote is generated and the fill proceeds. If not, the deposit is refunded to the `refundTo` address (if set).
 
-#### Different Token (Solver Currency)
+**Different Token (Solver Currency)**
 
 On some chain families, if the user sends a different token that is a [solver currency](#caveats), Relay can regenerate the quote using the actual currency deposited and fill the order. This is not universal across all chains — some chain families will fail or refund on token mismatch. If a different supported token was sent and nothing happens immediately, use the [reindex endpoint](#reindexing-stuck-deposits) as a fallback.
 
-#### Different Chain (Same VM)
+**Different Chain (Same VM)**
 
 Open and custodial deposit addresses exist at the same address across chains within a VM family (e.g. all EVM chains), so a deposit can land on a chain other than the one quoted. This is **supported but not always automatic**: Relay's background monitor watches the chain the address was registered on, so a wrong-chain deposit may not be recognized until it is reindexed.
 
@@ -885,7 +887,7 @@ If a wrong-chain deposit isn't picked up within a few minutes, trigger detection
 
 Behavior varies by chain family — some families refund a wrong-chain deposit instead of re-routing it. Strict addresses have no wrong-chain recovery (see [Strict Addresses](#strict-addresses)).
 
-#### Different Chain (Different VM)
+**Different Chain (Different VM)**
 
 This is not possible — deposit address formats differ across VM types (e.g., EVM vs Solana vs Bitcoin), so a user cannot accidentally send to the wrong VM.
 
