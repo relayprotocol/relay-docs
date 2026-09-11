@@ -652,7 +652,9 @@ curl --request POST \
 Learn more about how [fee sponsorship](/features/fee-sponsorship) works.
 
 ### Fixed Rates
-If your goal is to give the user 1:1, you can use fixed rates. In this case, the user would always get 100 USDT, and you would sponsor a dynamic amount. If USDT is worth less than USDC, you actually would earn the difference as fees:
+If your goal is to give the user 1:1, you can use fixed rates. In this case, the user would always get 100 USDT, and you would sponsor a dynamic amount. If USDT is worth less than USDC, you actually would earn the difference as fees.
+
+The figures below assume you are sponsoring fees as well (`"subsidizeFees": true`, as in the request example at the end of this section); the case without fee sponsorship is covered further down:
 
 If 1 USDT = 1.0000 USDC, user gets 100 USDT, you sponsor \$0.03 <br/>
 If 1 USDT = 0.9995 USDC, user gets 100 USDT, you earn \$0.02 <br/>
@@ -670,6 +672,16 @@ If you want, you can set rates other than 1:1. E.g. if you set it to 1:1.0005, t
 If 1 USDT = 1.0000 USDC, user gets 99.95 USDT, you earn \$0.02 <br/>
 If 1 USDT = 0.9995 USDC, user gets 99.95 USDT, you earn \$0.07 <br/>
 If 1 USDT = 1.0005 USDC, user gets 99.95 USDT, you sponsor \$0.03
+
+**Fixed rates without fee sponsorship.** `fixedRate` and `subsidizeFees` are independent settings — you can pass a fixed rate with `"subsidizeFees": false`. A fixed rate always pins the **pre-fee** conversion; `subsidizeFees` decides who pays the Relay fee on top of it.
+
+So with `"fixedRate": "1:1"` and `"subsidizeFees": false`, the pre-fee output is pinned at 100 USDT and the \~\$0.03 fee comes out of it. The user receives 99.97 USDT at any market rate, and your position is the spread alone:
+
+If 1 USDT = 1.0000 USDC, user gets 99.97 USDT, you neither sponsor nor earn <br/>
+If 1 USDT = 0.9995 USDC, user gets 99.97 USDT, you earn \$0.05 <br/>
+If 1 USDT = 1.0005 USDC, user gets 99.97 USDT, you sponsor \$0.05
+
+Turning off `subsidizeFees` moves the Relay fee onto the user; it does not turn off fixed-rate settlement.
 
 Fixed rates work for stablecoins listed as solver currencies on the requested chain, such as USDC, USDC.e, USDT, USDe, USDH, mUSD, and DAI. Solvers supply this liquidity; the platform exposes supported currencies through each chain's **`solverCurrencies`** array in the [chains API](/references/api/get-chains). Check that array for current support rather than assuming the same inventory across chains.
 
@@ -1295,6 +1307,24 @@ curl --request POST \
 }
 ```
 </CodeGroup>
+
+**Tracking what you sponsored or earned.** Fixed-rate quotes return a `fixedRateFee` object on `details`, alongside `isFixedRate`:
+
+```json
+"isFixedRate": true,
+"fixedRateFee": {
+  "usd": "-0.049092"
+}
+```
+
+A positive value means the fixed rate was worse for the user than the market rate, so you earn the difference. A negative value means it was better for the user, so you sponsor the difference.
+
+<Warning>
+`fixedRateFee` is a **quote-time estimate**. The amount you are actually credited or debited is
+recalculated after the fill, from the executed amounts and the market rate at the time of the
+request, and settles against your sponsoring wallet's balance. The settled amount can differ from
+the quoted estimate in both size and direction, so do not treat the quote as a commitment.
+</Warning>
 
 ## Why This Works for Stablecoins
 
