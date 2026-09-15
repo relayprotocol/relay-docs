@@ -65,18 +65,32 @@ jobs:
             gh api -X POST "repos/${REPO}/issues/${PR}/labels" -f "labels[]=$1" --silent
           }
 
+          find_comment() {
+            gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+              --jq "[.[] | select(.body | contains(\"${MARKER}\")) | .id] | first // empty"
+          }
+
           # Sticky comment: update the existing one so a PR never accumulates a
           # trail of stale status comments across pushes and reviews.
           upsert_comment() {
             local body="$1"
             local existing
-            existing=$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
-              --jq "[.[] | select(.body | contains(\"${MARKER}\")) | .id] | first // empty")
+            existing=$(find_comment)
             if [ -n "$existing" ]; then
               gh api -X PATCH "repos/${REPO}/issues/comments/${existing}" -f body="$body" --silent
             else
               gh api -X POST "repos/${REPO}/issues/${PR}/comments" -f body="$body" --silent
             fi
+          }
+
+          # Deliberately never creates: a PR that never touched the fee docs
+          # must stay clean, so this only rewrites a comment already there.
+          update_comment_if_exists() {
+            local body="$1"
+            local existing
+            existing=$(find_comment)
+            [ -n "$existing" ] || return 0
+            gh api -X PATCH "repos/${REPO}/issues/comments/${existing}" -f body="$body" --silent
           }
 
           gh api "repos/${REPO}/pulls/${PR}/files" --paginate --jq '.[].filename' > /tmp/changed.txt
@@ -88,6 +102,12 @@ jobs:
             echo "No watched fee docs touched; clearing any prior status."
             remove_label "$PENDING_LABEL"
             remove_label "$COMPLETE_LABEL"
+            update_comment_if_exists "${MARKER}
+          ### ✅ Legal review no longer required
+
+          An earlier revision of this PR changed the Fee Structure documentation, but the current diff no longer does. Nothing here needs Legal approval.
+
+          If a later push touches those files again, this comment and the labels come back."
             exit 0
           fi
 
