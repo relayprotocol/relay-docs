@@ -1,0 +1,141 @@
+name: Legal Review Gate
+
+# Records, on the PR itself, whether Legal sign-off on the Fee Structure doc is
+# pending or complete. The *enforcement* is the `main` ruleset's
+# `require_code_owner_review` plus .github/CODEOWNERS — this workflow only makes
+# the state visible, so it never needs to be a required check.
+#
+# `pull_request_target` runs in the base-repo context with a write token, which
+# is what lets this label and comment on PRs from forks. It is safe here only
+# because this workflow never checks out, builds, or executes PR head code — it
+# talks to the GitHub API and nothing else. Do not add a checkout step.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: legal-review-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # Paths requiring Legal approval. Keep in sync with .github/CODEOWNERS.
+  FEE_DOC_PATHS: |
+    references/api/api_core_concepts/fees.mdx
+  # Approving as any of these logins satisfies the gate. Keep in sync with
+  # the owners on the matching .github/CODEOWNERS line.
+  LEGAL_OWNERS: |
+    PeterPython
+  # Hyphens only: these names go into a DELETE .../labels/{name} path and
+  # `gh api` does not URL-encode path segments.
+  PENDING_LABEL: "legal-review-pending"
+  COMPLETE_LABEL: "legal-review-complete"
+  MARKER: "<!-- legal-review-gate -->"
+
+jobs:
+  record-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record Legal review status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          ensure_label() {
+            local name="$1" color="$2" desc="$3"
+            gh label create "$name" --repo "$REPO" --color "$color" --description "$desc" 2>/dev/null \
+              || true
+          }
+
+          remove_label() {
+            gh api -X DELETE "repos/${REPO}/issues/${PR}/labels/$1" --silent 2>/dev/null || true
+          }
+
+          add_label() {
+            gh api -X POST "repos/${REPO}/issues/${PR}/labels" -f "labels[]=$1" --silent
+          }
+
+          # Sticky comment: update the existing one so a PR never accumulates a
+          # trail of stale status comments across pushes and reviews.
+          upsert_comment() {
+            local body="$1"
+            local existing
+            existing=$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+              --jq "[.[] | select(.body | contains(\"${MARKER}\")) | .id] | first // empty")
+            if [ -n "$existing" ]; then
+              gh api -X PATCH "repos/${REPO}/issues/comments/${existing}" -f body="$body" --silent
+            else
+              gh api -X POST "repos/${REPO}/issues/${PR}/comments" -f body="$body" --silent
+            fi
+          }
+
+          gh api "repos/${REPO}/pulls/${PR}/files" --paginate --jq '.[].filename' > /tmp/changed.txt
+          printf '%s\n' "$FEE_DOC_PATHS" | sed '/^[[:space:]]*$/d;s/^[[:space:]]*//;s/[[:space:]]*$//' > /tmp/watched.txt
+
+          touched=$(grep -xF -f /tmp/watched.txt /tmp/changed.txt || true)
+
+          if [ -z "$touched" ]; then
+            echo "No watched fee docs touched; clearing any prior status."
+            remove_label "$PENDING_LABEL"
+            remove_label "$COMPLETE_LABEL"
+            exit 0
+          fi
+
+          echo "Watched fee docs touched:"
+          printf '%s\n' "$touched"
+
+          # Latest non-comment review per user. group_by sorts by login and jq
+          # sorts stably, so `last` in each group is that user's current state.
+          # `dismiss_stale_reviews_on_push` means a push turns APPROVED into
+          # DISMISSED, which correctly flips this back to pending.
+          gh api "repos/${REPO}/pulls/${PR}/reviews" --paginate --jq '
+            [ .[] | select(.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED") ]
+            | group_by(.user.login) | map(last)
+            | map(select(.state == "APPROVED") | .user.login) | .[]
+          ' > /tmp/approvers.txt || true
+
+          printf '%s\n' "$LEGAL_OWNERS" | sed '/^[[:space:]]*$/d;s/^[[:space:]]*//;s/[[:space:]]*$//' > /tmp/owners.txt
+          legal_approvers=$(grep -xiF -f /tmp/owners.txt /tmp/approvers.txt || true)
+
+          files_md=$(printf '%s\n' "$touched" | sed 's/^/- `/;s/$/`/')
+          owners_md=$(sed 's/^/@/' /tmp/owners.txt | paste -sd ' ' -)
+
+          ensure_label "$PENDING_LABEL" "d93f0b" "Fee Structure doc changed; awaiting Legal approval"
+          ensure_label "$COMPLETE_LABEL" "0e8a16" "Legal approved the Fee Structure doc change"
+
+          if [ -n "$legal_approvers" ]; then
+            approved_md=$(printf '%s\n' "$legal_approvers" | sed 's/^/@/' | paste -sd ', ' -)
+            remove_label "$PENDING_LABEL"
+            add_label "$COMPLETE_LABEL"
+            upsert_comment "${MARKER}
+          ### ✅ Legal review complete
+
+          Approved by ${approved_md}.
+
+          This PR changes the Fee Structure documentation:
+          ${files_md}
+
+          Fee terminology here is mirrored in BD proposals and legal agreement templates. If you push further commits, the approval is dismissed and Legal has to re-approve."
+          else
+            remove_label "$COMPLETE_LABEL"
+            add_label "$PENDING_LABEL"
+            upsert_comment "${MARKER}
+          ### ⏳ Legal review pending
+
+          This PR changes the Fee Structure documentation:
+          ${files_md}
+
+          Fee terminology here is mirrored in BD proposals and legal agreement templates, so renaming or redefining a fee can break signed agreements. ${owners_md} must approve before this can merge.
+
+          Merging is blocked by \`.github/CODEOWNERS\` until then. If this PR is a draft, GitHub requests the review when you mark it ready."
+          fi
