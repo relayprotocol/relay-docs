@@ -254,6 +254,23 @@ mode: "center"
 
 </Update>
 
+<Update label="2026-08-11" tags={["Dashboard"]}>
+
+### Dashboard
+
+**Added**
+
+- A new Observability page shows what your integration is actually doing: request
+  volume, error rates, and rate limit pressure over any time range, broken down by endpoint and
+  by API key. Start from the overview, then open a single endpoint to see where throttling or
+  errors concentrate.
+
+  This is the context the rate limit alert emails were missing. When a key hits its limit you can
+  now see how often, on which endpoint, and whether it is worth acting on — instead of an alert
+  with nowhere to go.
+
+</Update>
+
 <Update label="2026-08-07" tags={["API"]}>
 
 ### API
@@ -315,6 +332,19 @@ mode: "center"
 **UI Kit `11.0.1`** — Patch
 
 - Normalize Uniswap Wallet connector name so its chain restrictions apply ([`4ed6905`](https://github.com/relayprotocol/relay-kit/commit/4ed6905))
+
+</Update>
+
+<Update label="2026-07-31" tags={["Dashboard"]}>
+
+### Dashboard
+
+**Added**
+
+- Invite teammates as Support and they get the Requests surface — search, filters,
+  saved views, request detail, and reindexing — without access to API keys, credentials, or
+  billing. Keys surface to them as names only, so support can narrow a search to the right one
+  without ever seeing its value.
 
 </Update>
 
@@ -437,6 +467,31 @@ mode: "center"
 **UI Kit `10.0.0`** — Patch
 
 - update wallet rejection errors in swap widget ([`b4a3f7c`](https://github.com/relayprotocol/relay-kit/commit/b4a3f7c))
+
+</Update>
+
+<Update label="2026-07-16" tags={["Dashboard"]}>
+
+### Dashboard
+
+**Added**
+
+- The Relay Dashboard is out of pilot and open to every integrator at
+  [dashboard.relay.link](https://dashboard.relay.link) — one operational interface for your
+  integration, self-serve from day one.
+
+  - **Org and team management** — invite teammates, assign roles, and control access.
+  - **API keys** — create and configure keys, each with its own webhooks, allowlists, and rate
+    limits, and get alerted by email when one hits its limit.
+  - **App fees and fee sponsorship** — track balances, withdraw earnings, link a sponsorship
+    wallet, and sponsor your users' fees.
+  - **Request visibility** — compose filters across status, chains, currencies, amounts, and
+    time; open built-in views like Failed and Refunds in one click; save your own named views
+    with the columns you want; and drill into any request for its full route, status, and
+    component-level fee breakdown.
+
+  Provisioning a standard-tier key no longer goes through a form and a Slack thread — sign up and
+  create one yourself.
 
 </Update>
 

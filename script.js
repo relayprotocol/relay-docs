@@ -143,7 +143,7 @@ const TAG = '[data-component-part="update-tag"]';
 const CONTENT = '[data-component-part="update-content"]';
 
 // Order the global filter bar follows; mirrors TAG_ORDER in scripts/build-changelog.mjs.
-const TAG_ORDER = ["API", "RelayKit", "SDK", "UI Kit", "Hooks", "Adapters", "App"];
+const TAG_ORDER = ["API", "RelayKit", "SDK", "UI Kit", "Hooks", "Adapters", "App", "Dashboard"];
 
 // Breathing room between the bar and whatever parks beneath it.
 const STICKY_GAP = 8;
@@ -190,6 +190,7 @@ function tagsOf(list) {
 function sectionTags(name) {
   if (name === "API") return ["API"];
   if (name === "App") return ["App"];
+  if (name === "Dashboard") return ["Dashboard"];
   return [];
 }
 
