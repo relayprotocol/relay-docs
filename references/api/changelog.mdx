@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-09-21 — `forJitoBundle` on `POST /quote`
+
+**Added** — `POST /quote` and `POST /quote/v2`: the new optional `forJitoBundle` boolean request field restricts Solana swap routing to routes that are compatible with [Jito](https://www.jito.wtf/) bundles. When set to `true`, aggregator quotes drop DEXes and instructions (such as those that touch vote accounts) that would cause a Jito bundle containing the transaction to be rejected. Only takes effect on Solana-origin routing and only when the caller sets it — the default (omitted / `false`) preserves existing route selection. Set it only when the returned transaction will actually be executed inside a Jito bundle, since it narrows the route search. See [Solana Support](/references/api/api_guides/solana).
+
 ## 2026-09-11 — Per-pair maximum quote size returns `AMOUNT_TOO_HIGH`
 
 **Added** — `POST /quote`, `POST /quote/v2`, and `POST /price`: the response `errorCode` enum gains **`AMOUNT_TOO_HIGH`**, returned with `400` when the requested quote amount exceeds the per-pair maximum configured for the selected token pair. The response `message` is `Quote amount exceeds the maximum for this pair`. Reduce the requested amount (or split into smaller quotes) and retry. The same code surfaces on deposit-address create-quote requests (`POST /quote/v2` with `useDepositAddress: true`). See [Handling Quote Errors](/references/api/api_core_concepts/handling-errors).
