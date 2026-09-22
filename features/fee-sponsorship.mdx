@@ -235,8 +235,15 @@ In this example, a user bridges USDC from Solana to Base. The `depositFeePayer` 
 Fee sponsorship is designed to cover relay and execution costs, but certain fees remain outside its scope:
 
 - **Origin chain gas fees** — Users must pay the gas required to submit their transaction on the origin chain (unless using `depositFeePayer` for Solana origins).
-- **App fees** — Fees configured via the `appFees` parameter are not deducted from your sponsor balance. These are separate charges that accrue to the specified recipient addresses.
+- **Solana ATA rent** — The `rent` component is user-paid unless you select it explicitly in `sponsoredFeeComponents` or set `subsidizeRent`. See [Solana Fee Sponsorship](#solana-fee-sponsorship).
 - **First-time approval transactions when using `usePermit`** — The initial approval transaction required for permit-based flows is not covered by fee sponsorship. However, all subsequent requests after the approval will be sponsored.
+
+<Note>
+**Swap costs and app fees are sponsored by default.** With `subsidizeFees: true` and no **`sponsoredFeeComponents`**, the sponsor covers `execution`, `swap`, `relay`, and `app`:
+
+- **Swap costs** (`swap`) cover DEX fees, DEX swap impact, and solver rebalancing. To leave them with the user, omit `swap` from `sponsoredFeeComponents`.
+- **App fees** (`app`) are drawn from your app balance and still accrue to the recipients named in `appFees`. Omit `app` from `sponsoredFeeComponents` to keep collecting app fees from the user while sponsoring the rest.
+</Note>
 
 ---
 
