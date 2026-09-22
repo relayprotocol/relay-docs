@@ -17,6 +17,16 @@ mode: "center"
 
 </Update>
 
+<Update label="2026-09-15" tags={["API"]}>
+
+### API
+
+**Behavior change**
+
+- `GET /requests` and `GET /requests/v2`: the per-key rate limit is now half of what it was on both default and elevated keys. Default keys drop from 200 to **100 requests per minute**; elevated keys drop from 10 to **5 requests per second**. `/requests/v3` is unaffected — it keeps its dedicated bucket at 200 requests per minute (default) and 20 requests per second (elevated), and on default keys now has an explicitly separate limit from `/requests` (previously the two shared one bucket). Migrate polling and batch-fetch traffic to [`GET /requests/v3`](/references/api/get-requests) to stay under the new limits; see the [migration guide](/references/api/api_guides/migrating-to-requests-v3). See [Default Rate Limits](/references/api/api-keys#default-rate-limits) and [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits).
+
+</Update>
+
 <Update label="2026-09-11" tags={["API"]}>
 
 ### API
