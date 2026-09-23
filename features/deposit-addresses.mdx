@@ -871,9 +871,9 @@ When funds arrive at a deposit address, Relay evaluates what was sent versus wha
 
 **Same Token, Different Amount**
 
-- **Exact match** — The original quote is reused and the fill proceeds directly.
-- **More than quoted** — A new quote is generated for the larger amount, and the fill proceeds.
-- **Less than quoted** — If the smaller amount still covers fees and the minimum fill, a new quote is generated and the fill proceeds. If not, the deposit is refunded to the `refundTo` address (if set).
+- **Exact match** — The original quote can be reused, in which case the fill proceeds under the original `requestId`. Relay can still requote an exact match at sweep time (see [Which Request Owns the Fill](#which-request-owns-the-fill)).
+- **More than quoted** — A new quote is generated for the larger amount, and the fill proceeds under a new `requestId`.
+- **Less than quoted** — If the smaller amount still covers fees and the minimum fill, a new quote is generated and the fill proceeds under a new `requestId`. If not, the deposit is refunded to the `refundTo` address (if set).
 
 **Different Token (Solver Currency)**
 
@@ -901,8 +901,10 @@ Strict addresses are bound to the original order. The handling is narrower:
 - **Overpayment (`EXACT_OUTPUT`)** — The fill proceeds for the originally quoted amount and the excess is returned to `refundTo` as a separate refund leg. The fill itself is never scaled up.
 - **Wrong token or wrong chain** — Not supported. Strict addresses do not have automatic wrong-token or wrong-chain recovery paths.
 
+Strict addresses are never requoted: every outcome above, fill or refund, stays under the original `requestId`.
+
 <Warning>
-Open-ended mismatches often create a new `requestId`. Always track transactions by deposit address, not by `requestId`. See [Tracking Transactions](#tracking-transactions).
+On open-ended addresses, mismatches create a new `requestId`, and the quote-time `requestId` does not reach `success` when that happens. Track deposit-address orders by deposit address, not by the quote-time `requestId`. See [Tracking Transactions](#tracking-transactions).
 </Warning>
 
 ## Refund Behavior
@@ -972,15 +974,18 @@ Constraints:
 
 ## Tracking Transactions
 
+The `requestId` in the quote response is not always the request that fills. Depending on what arrives at the address, the sweep and fill can move to a new `requestId` (see [Which Request Owns the Fill](#which-request-owns-the-fill)). Treat the deposit address as the stable identifier for the order.
+
 ### Querying by Deposit Address
 
-The most reliable way to track deposit address transactions is to poll the [Get Requests API](/references/api/get-requests) using the `depositAddress` query parameter:
+Poll the [Get Requests API](/references/api/get-requests) with the `depositAddress` query parameter. This is the canonical way to monitor a deposit-address order, because every request that fills from the address — original or regenerated — carries the same `depositAddress`:
 
 <CodeGroup>
 ```bash Request
-curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&sortBy=updatedAt&sortDirection=desc&limit=20"
+curl -X GET "https://api.relay.link/requests/v3?depositAddress=<DEPOSIT_ADDRESS>&sortBy=updatedAt&sortDirection=desc&limit=20" \
+  -H "x-api-key: YOUR_API_KEY"
 ```
-```json Response expandable
+```json Response (trimmed)
 {
   "requests": [
     {
@@ -990,258 +995,13 @@ curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>
       "recipient": "0xf3128499092b90f1a520f63c09946dca3dadf98f",
       "depositAddress": {
         "address": "0xb353e49aa47514fb579d6ba6594c768379a96515",
-        "depositAddressType": "open",
+        "type": "open",
         "depositor": "0xb353e49aa47514fb579d6ba6594c768379a96515",
         "depositTxHash": "0x41ce037184d661c35f102c961c88f587d137c611bf928389a562ff139ad51d4b",
+        "recoveryAddress": null
       },
-      "data": {
-        "slippageTolerance": "50",
-        "failReason": "N/A",
-        "refundFailReason": "N/A",
-        "subsidizedRequest": false,
-        "fees": {
-          "gas": "3807",
-          "fixed": "20002",
-          "price": "7990",
-          "gateway": "0"
-        },
-        "feesUsd": {
-          "gas": "0.003806",
-          "fixed": "0.020000",
-          "price": "0.007989",
-          "gateway": "0.000000"
-        },
-        "inTxs": [
-          {
-            "fee": "9823482523847773",
-            "data": {
-              "to": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-              "data": "0xa9059cbb0000000000000000000000004cd00e387622c35bddb9b4c962c136462338bc310000000000000000000000000000000000000000000000000000000004c3b43d1307b68c63c473186b7aebd374e9bffd16fd791ebcb37b3d005edeb88e7b7672",
-              "from": "0xb353e49aa47514fb579d6ba6594c768379a96515",
-              "value": "0"
-            },
-            "stateChanges": [
-              {
-                "change": {
-                  "data": {
-                    "tokenKind": "ft",
-                    "tokenAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
-                  },
-                  "kind": "token",
-                  "balanceDiff": "-79934525"
-                },
-                "address": "0xb353e49aa47514fb579d6ba6594c768379a96515"
-              },
-              {
-                "change": {
-                  "data": {
-                    "tokenKind": "ft",
-                    "tokenAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
-                  },
-                  "kind": "token",
-                  "balanceDiff": "79934525"
-                },
-                "address": "0x4cd00e387622c35bddb9b4c962c136462338bc31"
-              }
-            ],
-            "hash": "0x6334e6ce2558c2d4ebc187d99f3adf2605a97279a6733e612ee6cdc57f112ad3",
-            "block": 85115744,
-            "type": "onchain",
-            "chainId": 137,
-            "timestamp": 1775351525,
-            "status": "success"
-          }
-        ],
-        "currency": "usdc",
-        "currencyObject": {},
-        "feeCurrency": "usdc",
-        "feeCurrencyObject": {
-          "chainId": 137,
-          "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-          "symbol": "USDC",
-          "name": "USD Coin",
-          "decimals": 6,
-          "metadata": {
-            "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
-            "verified": true
-          }
-        },
-        "appFeeCurrencyObject": {
-          "chainId": 137,
-          "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-          "symbol": "USDC",
-          "name": "USD Coin",
-          "decimals": 6,
-          "metadata": {
-            "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
-            "verified": true
-          }
-        },
-        "appFees": [],
-        "paidAppFees": [],
-        "metadata": {
-          "sender": "0x43255777ad9bd6ff7684d04d6121cd8d96c7e32b",
-          "recipient": "0xf3128499092b90f1a520f63c09946dca3dadf98f",
-          "currencyIn": {
-            "currency": {
-              "chainId": 137,
-              "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-              "symbol": "USDC",
-              "name": "USD Coin",
-              "decimals": 6,
-              "metadata": {
-                "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
-                "verified": true
-              }
-            },
-            "amount": "79934525",
-            "amountFormatted": "79.934525",
-            "amountUsd": "79.926372",
-            "amountUsdCurrent": "79.923094",
-            "minimumAmount": "79934525"
-          },
-          "currencyOut": {
-            "currency": {
-              "chainId": 8453,
-              "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-              "symbol": "USDC",
-              "name": "USD Coin",
-              "decimals": 6,
-              "metadata": {
-                "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
-                "verified": true
-              }
-            },
-            "amount": "79902723",
-            "amountFormatted": "79.902723",
-            "amountUsd": "79.894573",
-            "amountUsdCurrent": "79.891297",
-            "minimumAmount": "79503210"
-          },
-          "rate": "0.9996021493841366",
-          "route": {
-            "origin": {
-              "inputCurrency": {
-                "currency": {
-                  "chainId": 137,
-                  "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-                  "symbol": "USDC",
-                  "name": "USD Coin",
-                  "decimals": 6,
-                  "metadata": {
-                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
-                    "verified": true
-                  }
-                },
-                "amount": "79934525",
-                "amountFormatted": "79.934525",
-                "amountUsd": "79.926372",
-                "minimumAmount": "79934525"
-              },
-              "outputCurrency": {
-                "currency": {
-                  "chainId": 137,
-                  "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-                  "symbol": "USDC",
-                  "name": "USD Coin",
-                  "decimals": 6,
-                  "metadata": {
-                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
-                    "verified": true
-                  }
-                },
-                "amount": "79934525",
-                "amountFormatted": "79.934525",
-                "amountUsd": "79.926372",
-                "minimumAmount": "79934525"
-              },
-              "router": "relay"
-            },
-            "destination": {
-              "inputCurrency": {
-                "currency": {
-                  "chainId": 8453,
-                  "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-                  "symbol": "USDC",
-                  "name": "USD Coin",
-                  "decimals": 6,
-                  "metadata": {
-                    "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
-                    "verified": true
-                  }
-                },
-                "amount": "79902723",
-                "amountFormatted": "79.902723",
-                "amountUsd": "79.894573",
-                "minimumAmount": "79503210"
-              },
-              "outputCurrency": {
-                "currency": {
-                  "chainId": 8453,
-                  "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-                  "symbol": "USDC",
-                  "name": "USD Coin",
-                  "decimals": 6,
-                  "metadata": {
-                    "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
-                    "verified": true
-                  }
-                },
-                "amount": "79902723",
-                "amountFormatted": "79.902723",
-                "amountUsd": "79.894573",
-                "minimumAmount": "79503210"
-              },
-              "router": "relay"
-            }
-          }
-        },
-        "price": "79902723",
-        "usesExternalLiquidity": false,
-        "timeEstimate": 4,
-        "outTxs": [
-          {
-            "fee": "426860744193",
-            "data": {
-              "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-              "data": "0x23b872dd000000000000000000000000f70da97812cb96acdf810712aa562db8dfa3dbef000000000000000000000000f3128499092b90f1a520f63c09946dca3dadf98f0000000000000000000000000000000000000000000000000000000004c338031307b68c63c473186b7aebd374e9bffd16fd791ebcb37b3d005edeb88e7b7672",
-              "from": "0xca7ded7e4f4ba8ab3b10009236ae6d1b95094589",
-              "value": "0"
-            },
-            "stateChanges": [
-              {
-                "change": {
-                  "data": {
-                    "tokenKind": "ft",
-                    "tokenAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
-                  },
-                  "kind": "token",
-                  "balanceDiff": "-79902723"
-                },
-                "address": "0xf70da97812cb96acdf810712aa562db8dfa3dbef"
-              },
-              {
-                "change": {
-                  "data": {
-                    "tokenKind": "ft",
-                    "tokenAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
-                  },
-                  "kind": "token",
-                  "balanceDiff": "79902723"
-                },
-                "address": "0xf3128499092b90f1a520f63c09946dca3dadf98f"
-              }
-            ],
-            "hash": "0x098d75e397350670f9c3fa4496036b0594ad3a06f00ea1784cf45b080f258651",
-            "block": 44281091,
-            "type": "onchain",
-            "chainId": 8453,
-            "timestamp": 1775351529,
-            "status": "success"
-          }
-        ]
-      },
-      "referrer": "meshpay_f5b533dc-841a-4820-a454-9912fca134c1",
+      "supersededByRequestId": null,
+      "data": { },
       "createdAt": "2026-04-05T01:12:06.153Z",
       "updatedAt": "2026-04-05T01:12:44.199Z"
     }
@@ -1250,15 +1010,38 @@ curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>
 ```
 </CodeGroup>
 
+See [Get Requests](/references/api/get-requests) for the full response schema. `GET /requests/v2` also accepts `depositAddress`, but it is deprecated and will be retired on November 24, 2026.
+
+### Which Request Owns the Fill
+
+Whether the fill runs under the quote-time `requestId` depends on the deposit:
+
+- **Strict addresses** — Always the original `requestId`. Strict addresses are never requoted.
+- **Open addresses, original `requestId`** — The first deposit matches the quote exactly (same currency and amount) and Relay does not requote it at sweep time.
+- **Open addresses, new `requestId`** — Any of the following can move the sweep and fill to a regenerated request:
+  - The deposit is a different amount or a different supported token.
+  - The deposit lands on a different EVM chain than the one quoted.
+  - The address already received an earlier deposit. Every later deposit gets its own `requestId`.
+  - Relay requotes at sweep time, even for an exact match. This happens on quotes with sponsored fees, and on EVM when the deposit is the native token or the quote has no explicit `refundTo`.
+
+You can't always tell in advance which case applies, so poll by `depositAddress` rather than by the quote-time `requestId`. An open address can return several requests, one per deposit. Use `depositAddress.depositTxHash` to match each one to the transfer that funded it.
+
+`includeChildRequests=true` does not return regenerated requests. It only adds duplicate-deposit requests to an `id` lookup. The `depositAddress` query already includes regenerated requests.
+
 ### Handling Quote Regeneration
 
-When a quote is regenerated (different amount, token, or chain), a new `requestId` may be generated. Use `includeChildRequests=true` to find all related requests, including regenerated ones:
+After a regeneration, what the quote-time `requestId` returns depends on the origin chain:
 
-```bash
-curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&includeChildRequests=true"
-```
+| Origin chain | Quote-time `requestId` after regeneration |
+|---|---|
+| Bitcoin | Stays `pending` in `GET /requests/v3`, with `supersededByRequestId` pointing to the regenerated request |
+| All other chains, including EVM and Solana | Not returned by `GET /requests/v3`. `GET /intents/status/v3` keeps returning `waiting`, even after the regenerated request succeeds |
 
-When a regeneration happens, the original request stays under its original `requestId` and public status while the actual sweep and fill move under the regenerated request. To follow the handoff directly, read the top-level `supersededByRequestId` on the original request in `GET /requests/v3` (or `data.supersededByRequestId` on the legacy `GET /requests/v2`) — it returns the regenerated `requestId` that now owns the fill lifecycle.
+<Warning>
+Outside Bitcoin, a quote-time `requestId` can stay `waiting` indefinitely after its funds are filled under a new `requestId`. Do not treat a long-running `waiting` status as a stuck deposit until you have checked the deposit address.
+</Warning>
+
+**`supersededByRequestId` (Bitcoin only)** — On Bitcoin-origin requests, the top-level `supersededByRequestId` in `GET /requests/v3` (or `data.supersededByRequestId` on the legacy `GET /requests/v2`) points from the original request to the regenerated one. It holds only the most recent regenerated `requestId`: a later deposit to the same address or a retried sweep replaces it. Until broader chain support ships, the field is `null` on every other chain.
 
 ```bash
 curl -X GET "https://api.relay.link/requests/v3?id=<ORIGINAL_REQUEST_ID>" -H "x-api-key: YOUR_API_KEY"
@@ -1277,12 +1060,12 @@ curl -X GET "https://api.relay.link/requests/v3?id=<ORIGINAL_REQUEST_ID>" -H "x-
 ```
 
 <Tip>
-Use `supersededByRequestId` when you have the original `requestId` and want a direct pointer to the request that owns the fill. Use `includeChildRequests=true` when you want every related request in one response.
+Use `supersededByRequestId` as a shortcut when you only have a Bitcoin `requestId`. The target can change with later deposits, so the `depositAddress` query remains the source of truth.
 </Tip>
 
 ### Request-Level Status
 
-Once you have a `requestId`, you can use [Get Status](/references/api/get-intents-status-v3) for detailed status polling. To avoid polling, you can also configure a [webhook](/references/api/api_guides/webhooks) — webhook payloads include a `depositAddress` object for deposit address requests.
+Once the `depositAddress` query returns the request that owns the fill, you can poll its `requestId` with [Get Status](/references/api/get-intents-status-v3). To avoid polling, configure a [webhook](/references/api/api_guides/webhooks) instead. Webhook events are sent under the request that owns the fill, so a regenerated request's events carry the new `requestId` — match them to your order with `depositAddress.address` in the payload.
 
 <CodeGroup>
 ```bash Request
@@ -1331,7 +1114,7 @@ curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
 ```
 
 <Note>
-The deposit transaction hash cannot be used to look up the status of a deposit address bridge. Always use the deposit address itself or the `requestId` to track status.
+The deposit transaction hash cannot be used to look up the status of a deposit address bridge. Track status by the deposit address, and use a `requestId` only once the `depositAddress` query has returned it.
 </Note>
 
 ## Caveats

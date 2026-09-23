@@ -334,6 +334,10 @@ Follow this 5-step flow to integrate Relay into your application:
       ```
     </CodeGroup>
 
+    <Note>
+    Deposit-address quotes (`useDepositAddress: true`) are the exception. The fill can run under a new `requestId`, for example when the deposit differs from the quote or the address is reused. When that happens, the quoted `requestId` never reaches `success`, and outside Bitcoin it stays `waiting`. Track those orders by `depositAddress` with [Get Requests](/references/api/get-requests). See [Tracking Transactions](/features/deposit-addresses#tracking-transactions).
+    </Note>
+
     <StatusWebsockets />
 
     ## Status Lifecycle
