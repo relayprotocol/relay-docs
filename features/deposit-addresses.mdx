@@ -871,9 +871,9 @@ When funds arrive at a deposit address, Relay evaluates what was sent versus wha
 
 **Same Token, Different Amount**
 
-- **Exact match** — The original quote is reused and the fill proceeds directly.
-- **More than quoted** — A new quote is generated for the larger amount, and the fill proceeds.
-- **Less than quoted** — If the smaller amount still covers fees and the minimum fill, a new quote is generated and the fill proceeds. If not, the deposit is refunded to the `refundTo` address (if set).
+- **Exact match** — The original quote can be reused, in which case the fill proceeds under the original `requestId`. Relay can still requote an exact match at sweep time (see [Which Request Owns the Fill](#which-request-owns-the-fill)).
+- **More than quoted** — A new quote is generated for the larger amount, and the fill proceeds under a new `requestId`.
+- **Less than quoted** — If the smaller amount still covers fees and the minimum fill, a new quote is generated and the fill proceeds under a new `requestId`. If not, the deposit is refunded to the `refundTo` address (if set).
 
 **Different Token (Solver Currency)**
 
@@ -901,8 +901,10 @@ Strict addresses are bound to the original order. The handling is narrower:
 - **Overpayment (`EXACT_OUTPUT`)** — The fill proceeds for the originally quoted amount and the excess is returned to `refundTo` as a separate refund leg. The fill itself is never scaled up.
 - **Wrong token or wrong chain** — Not supported. Strict addresses do not have automatic wrong-token or wrong-chain recovery paths.
 
+Strict addresses are never requoted: every outcome above, fill or refund, stays under the original `requestId`.
+
 <Warning>
-Open-ended mismatches often create a new `requestId`. Always track transactions by deposit address, not by `requestId`. See [Tracking Transactions](#tracking-transactions).
+On open-ended addresses, mismatches create a new `requestId`, and the quote-time `requestId` does not reach `success` when that happens. Track deposit-address orders by deposit address, not by the quote-time `requestId`. See [Tracking Transactions](#tracking-transactions).
 </Warning>
 
 ## Refund Behavior
@@ -972,194 +974,318 @@ Constraints:
 
 ## Tracking Transactions
 
+The `requestId` in the quote response is not always the request that fills. Depending on what arrives at the address, the sweep and fill can move to a new `requestId` (see [Which Request Owns the Fill](#which-request-owns-the-fill)). Treat the deposit address as the stable identifier for the order.
+
 ### Querying by Deposit Address
 
-The most reliable way to track deposit address transactions is to poll the [Get Requests API](/references/api/get-requests) using the `depositAddress` query parameter:
+Poll the [Get Requests API](/references/api/get-requests) with the `depositAddress` query parameter. This is the canonical way to monitor a deposit-address order, because every request that fills from the address — original or regenerated — carries the same `depositAddress`:
 
 <CodeGroup>
 ```bash Request
-curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&sortBy=updatedAt&sortDirection=desc&limit=20"
+curl -X GET "https://api.relay.link/requests/v3?depositAddress=0xe42445f3a8f05e3311beba77c260b51527b1c141&sortBy=updatedAt&sortDirection=desc&limit=20" \
+  -H "x-api-key: YOUR_API_KEY"
 ```
 ```json Response expandable
 {
   "requests": [
     {
-      "id": "0x6acbc4acb0cb61d2b42962ddaf0973b536933670ede1df3ab39f9003e9c3e04e",
+      "id": "0x1790166098388727d09f98e1cf17b1e1fc41cf4bd3286866c22ef5a41c5701b9",
       "status": "success",
-      "user": "0x43255777ad9bd6ff7684d04d6121cd8d96c7e32b",
-      "recipient": "0xf3128499092b90f1a520f63c09946dca3dadf98f",
+      "user": "0xe42445f3a8f05e3311beba77c260b51527b1c141",
+      "recipient": "0xc1D5041826d883895E1787543336f7d7BC8CCe93",
+      "sender": "0xe42445f3a8f05e3311beba77c260b51527b1c141",
+      "refundTo": "0xc1d5041826d883895e1787543336f7d7bc8cce93",
+      "supersededByRequestId": null,
+      "duplicateDeposits": null,
       "depositAddress": {
-        "address": "0xb353e49aa47514fb579d6ba6594c768379a96515",
-        "depositAddressType": "open",
-        "depositor": "0xb353e49aa47514fb579d6ba6594c768379a96515",
-        "depositTxHash": "0x41ce037184d661c35f102c961c88f587d137c611bf928389a562ff139ad51d4b",
+        "address": "0xe42445f3a8f05e3311beba77c260b51527b1c141",
+        "type": "open",
+        "depositor": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+        "depositTxHash": "0xf93e6174d36c103f31cdbb1e4006df949b9c0d86fa9ec74aaa6958898d91993f",
+        "recoveryAddress": null
       },
       "data": {
-        "slippageTolerance": "50",
-        "failReason": "N/A",
-        "refundFailReason": "N/A",
-        "subsidizedRequest": false,
-        "fees": {
-          "gas": "3807",
-          "fixed": "20002",
-          "price": "7990",
-          "gateway": "0"
-        },
-        "feesUsd": {
-          "gas": "0.003806",
-          "fixed": "0.020000",
-          "price": "0.007989",
-          "gateway": "0.000000"
-        },
+        "slippageTolerance": "300",
+        "failReason": null,
+        "refundFailReason": null,
+        "usesExternalLiquidity": false,
+        "timeEstimate": 1,
+        "triggeredByFastFill": null,
         "inTxs": [
           {
-            "fee": "9823482523847773",
+            "txHash": "0x8c283eea70d3d96e9d4443067184574c856cc9c9bab80b30b92383a6ac45270f",
+            "fee": "15347069541639",
+            "feeUsd": "0.041819",
+            "block": 51688383,
+            "type": "onchain",
+            "chainId": 8453,
+            "timestamp": 1790166113,
+            "status": "success",
             "data": {
-              "to": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-              "data": "0xa9059cbb0000000000000000000000004cd00e387622c35bddb9b4c962c136462338bc310000000000000000000000000000000000000000000000000000000004c3b43d1307b68c63c473186b7aebd374e9bffd16fd791ebcb37b3d005edeb88e7b7672",
-              "from": "0xb353e49aa47514fb579d6ba6594c768379a96515",
+              "data": "0xe8017952000000000000000000000000c1d5041826d883895e1787543336f7d7bc8cce93000000000000000000000000833589fcd6edb6e08f4c7c32d4f71b54bda029130000000000000000000000000000000000000000000000000000000006f5a005c82b69b55cd27f11c9ac2bdf046f03fabfdd0dfd388504dcaa35dd615f20354d",
+              "from": "0xe42445f3a8f05e3311beba77c260b51527b1c141",
+              "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
               "value": "0"
             },
             "stateChanges": [
               {
+                "address": "0xe42445f3a8f05e3311beba77c260b51527b1c141",
                 "change": {
                   "data": {
-                    "tokenKind": "ft",
-                    "tokenAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
+                    "tokenAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+                    "tokenKind": "ft"
                   },
                   "kind": "token",
-                  "balanceDiff": "-79934525"
-                },
-                "address": "0xb353e49aa47514fb579d6ba6594c768379a96515"
+                  "balanceDiff": "-116760581"
+                }
               },
               {
+                "address": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
                 "change": {
                   "data": {
-                    "tokenKind": "ft",
-                    "tokenAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
+                    "tokenAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+                    "tokenKind": "ft"
                   },
                   "kind": "token",
-                  "balanceDiff": "79934525"
-                },
-                "address": "0x4cd00e387622c35bddb9b4c962c136462338bc31"
+                  "balanceDiff": "116760581"
+                }
               }
-            ],
-            "hash": "0x6334e6ce2558c2d4ebc187d99f3adf2605a97279a6733e612ee6cdc57f112ad3",
-            "block": 85115744,
-            "type": "onchain",
-            "chainId": 137,
-            "timestamp": 1775351525,
-            "status": "success"
+            ]
           }
         ],
-        "currency": "usdc",
-        "currencyObject": {},
-        "feeCurrency": "usdc",
-        "feeCurrencyObject": {
-          "chainId": 137,
-          "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-          "symbol": "USDC",
-          "name": "USD Coin",
-          "decimals": 6,
-          "metadata": {
-            "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
-            "verified": true
+        "outTxs": [
+          {
+            "txHash": "0x6ed9468c7581e2db705304450829d60203420072108501ad12a1f1df3485bcc6",
+            "fee": "0",
+            "block": 1158162902,
+            "type": "onchain",
+            "chainId": 1337,
+            "timestamp": 1790166114,
+            "status": "success",
+            "data": {
+              "action": {
+                "hyperliquidChain": "Mainnet",
+                "amount": "116.293228",
+                "destinationDex": "",
+                "fromSubAccount": "",
+                "signatureChainId": "0x1",
+                "destination": "0xc1d5041826d883895e1787543336f7d7bc8cce93",
+                "type": "sendAsset",
+                "nonce": 1790166113562,
+                "token": "USDC:0x6d1e7cde53ba9467b783cb7c530ce054",
+                "sourceDex": ""
+              },
+              "block": 1158162902,
+              "time": 1790166114217,
+              "error": null,
+              "user": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+              "hash": "0x6ed9468c7581e2db705304450829d60203420072108501ad12a1f1df3485bcc6"
+            },
+            "stateChanges": [
+              {
+                "address": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+                "change": {
+                  "data": {
+                    "tokenAddress": "0x00000000000000000000000000000000",
+                    "tokenKind": "ft"
+                  },
+                  "kind": "token",
+                  "balanceDiff": "-11629322800"
+                }
+              },
+              {
+                "address": "0xc1d5041826d883895e1787543336f7d7bc8cce93",
+                "change": {
+                  "data": {
+                    "tokenAddress": "0x00000000000000000000000000000000",
+                    "tokenKind": "ft"
+                  },
+                  "kind": "token",
+                  "balanceDiff": "11629322800"
+                }
+              }
+            ]
+          }
+        ],
+        "appFees": {
+          "quoted": [
+            {
+              "recipient": "0xa6309Ad2C4524b991Bb795227edf6482EBE927e6",
+              "bps": "20",
+              "amount": "233521",
+              "amountFormatted": "0.233521"
+            }
+          ],
+          "actual": [
+            {
+              "recipient": "0xa6309Ad2C4524b991Bb795227edf6482EBE927e6",
+              "bps": "20",
+              "amount": "233521",
+              "amountFormatted": "0.233521",
+              "amountUsd": "0.233491"
+            }
+          ],
+          "currency": {
+            "chainId": 8453,
+            "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "symbol": "USDC",
+            "name": "USD Coin",
+            "decimals": 6,
+            "metadata": {
+              "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+              "verified": true
+            }
           }
         },
-        "appFeeCurrencyObject": {
-          "chainId": 137,
-          "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-          "symbol": "USDC",
-          "name": "USD Coin",
-          "decimals": 6,
-          "metadata": {
-            "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
-            "verified": true
+        "feeSponsorship": null,
+        "fees": {
+          "quoted": {
+            "swap": {
+              "usd": "-0.011674",
+              "amount": "11676",
+              "amountFormatted": "0.011676"
+            },
+            "execution": {
+              "usd": "-0.222127",
+              "amount": "222156",
+              "amountFormatted": "0.222156"
+            },
+            "platform": {
+              "usd": "0.000000",
+              "amount": "0",
+              "amountFormatted": "0.0"
+            },
+            "app": {
+              "usd": "-0.233491",
+              "amount": "233521",
+              "amountFormatted": "0.233521"
+            },
+            "sponsored": {
+              "usd": "0",
+              "amount": "0",
+              "amountFormatted": "0.0"
+            }
+          },
+          "actual": {
+            "swap": {
+              "usd": "-0.011627",
+              "amount": "11629",
+              "amountFormatted": "0.011629"
+            },
+            "execution": {
+              "usd": "-0.222127",
+              "amount": "222156",
+              "amountFormatted": "0.222156"
+            },
+            "platform": {
+              "usd": "0.000000",
+              "amount": "0",
+              "amountFormatted": "0.0"
+            },
+            "app": {
+              "usd": "-0.233491",
+              "amount": "233521",
+              "amountFormatted": "0.233521"
+            },
+            "sponsored": {
+              "usd": "0",
+              "amount": "0",
+              "amountFormatted": "0.0"
+            }
+          },
+          "currency": {
+            "chainId": 8453,
+            "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "symbol": "USDC",
+            "name": "USD Coin",
+            "decimals": 6,
+            "metadata": {
+              "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
+              "verified": true
+            }
           }
         },
-        "appFees": [],
-        "paidAppFees": [],
-        "metadata": {
-          "sender": "0x43255777ad9bd6ff7684d04d6121cd8d96c7e32b",
-          "recipient": "0xf3128499092b90f1a520f63c09946dca3dadf98f",
-          "currencyIn": {
-            "currency": {
-              "chainId": 137,
-              "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
-              "symbol": "USDC",
-              "name": "USD Coin",
-              "decimals": 6,
-              "metadata": {
-                "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
-                "verified": true
-              }
-            },
-            "amount": "79934525",
-            "amountFormatted": "79.934525",
-            "amountUsd": "79.926372",
-            "amountUsdCurrent": "79.923094",
-            "minimumAmount": "79934525"
-          },
-          "currencyOut": {
-            "currency": {
-              "chainId": 8453,
-              "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-              "symbol": "USDC",
-              "name": "USD Coin",
-              "decimals": 6,
-              "metadata": {
-                "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
-                "verified": true
-              }
-            },
-            "amount": "79902723",
-            "amountFormatted": "79.902723",
-            "amountUsd": "79.894573",
-            "amountUsdCurrent": "79.891297",
-            "minimumAmount": "79503210"
-          },
-          "rate": "0.9996021493841366",
-          "route": {
+        "route": {
+          "quoted": {
             "origin": {
               "inputCurrency": {
                 "currency": {
-                  "chainId": 137,
-                  "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+                  "chainId": 8453,
+                  "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
                   "symbol": "USDC",
                   "name": "USD Coin",
                   "decimals": 6,
                   "metadata": {
-                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
                     "verified": true
                   }
                 },
-                "amount": "79934525",
-                "amountFormatted": "79.934525",
-                "amountUsd": "79.926372",
-                "minimumAmount": "79934525"
+                "amount": "116760581",
+                "amountFormatted": "116.760581",
+                "amountUsd": "116.745519",
+                "minimumAmount": "116760581"
               },
               "outputCurrency": {
                 "currency": {
-                  "chainId": 137,
-                  "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+                  "chainId": 8453,
+                  "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
                   "symbol": "USDC",
                   "name": "USD Coin",
                   "decimals": 6,
                   "metadata": {
-                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png?1696506694",
                     "verified": true
                   }
                 },
-                "amount": "79934525",
-                "amountFormatted": "79.934525",
-                "amountUsd": "79.926372",
-                "minimumAmount": "79934525"
+                "amount": "116760581",
+                "amountFormatted": "116.760581",
+                "amountUsd": "116.745519",
+                "minimumAmount": "116760581"
               },
               "router": "relay"
             },
             "destination": {
               "inputCurrency": {
                 "currency": {
+                  "chainId": 1337,
+                  "address": "0x00000000000000000000000000000000",
+                  "symbol": "USDC",
+                  "name": "USDC (Perps)",
+                  "decimals": 8,
+                  "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                  }
+                },
+                "amount": "11629322800",
+                "amountFormatted": "116.293228",
+                "amountUsd": "116.278226",
+                "minimumAmount": "11280443100"
+              },
+              "outputCurrency": {
+                "currency": {
+                  "chainId": 1337,
+                  "address": "0x00000000000000000000000000000000",
+                  "symbol": "USDC",
+                  "name": "USDC (Perps)",
+                  "decimals": 8,
+                  "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                  }
+                },
+                "amount": "11629322800",
+                "amountFormatted": "116.293228",
+                "amountUsd": "116.278226",
+                "minimumAmount": "11280443100"
+              },
+              "router": "relay"
+            }
+          },
+          "actual": {
+            "origin": {
+              "inputCurrency": {
+                "currency": {
                   "chainId": 8453,
                   "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
                   "symbol": "USDC",
@@ -1170,10 +1296,10 @@ curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>
                     "verified": true
                   }
                 },
-                "amount": "79902723",
-                "amountFormatted": "79.902723",
-                "amountUsd": "79.894573",
-                "minimumAmount": "79503210"
+                "amount": "116760581",
+                "amountFormatted": "116.760581",
+                "amountUsd": "116.745519",
+                "minimumAmount": "116760581"
               },
               "outputCurrency": {
                 "currency": {
@@ -1187,78 +1313,180 @@ curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>
                     "verified": true
                   }
                 },
-                "amount": "79902723",
-                "amountFormatted": "79.902723",
-                "amountUsd": "79.894573",
-                "minimumAmount": "79503210"
+                "amount": "116760581",
+                "amountFormatted": "116.760581",
+                "amountUsd": "116.745519",
+                "minimumAmount": "116760581"
               },
               "router": "relay"
-            }
+            },
+            "destination": {
+              "inputCurrency": {
+                "currency": {
+                  "chainId": 1337,
+                  "address": "0x00000000000000000000000000000000",
+                  "symbol": "USDC",
+                  "name": "USDC (Perps)",
+                  "decimals": 8,
+                  "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                  }
+                },
+                "amount": "11629322800",
+                "amountFormatted": "116.293228",
+                "amountUsd": "116.278226",
+                "minimumAmount": "11629322800"
+              },
+              "outputCurrency": {
+                "currency": {
+                  "chainId": 1337,
+                  "address": "0x00000000000000000000000000000000",
+                  "symbol": "USDC",
+                  "name": "USDC (Perps)",
+                  "decimals": 8,
+                  "metadata": {
+                    "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+                    "verified": true
+                  }
+                },
+                "amount": "11629322800",
+                "amountFormatted": "116.293228",
+                "amountUsd": "116.278226",
+                "minimumAmount": "11280443100"
+              },
+              "router": "relay"
+            },
+            "rate": "0.9959973392047441"
           }
         },
-        "price": "79902723",
-        "usesExternalLiquidity": false,
-        "timeEstimate": 4,
-        "outTxs": [
-          {
-            "fee": "426860744193",
-            "data": {
-              "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-              "data": "0x23b872dd000000000000000000000000f70da97812cb96acdf810712aa562db8dfa3dbef000000000000000000000000f3128499092b90f1a520f63c09946dca3dadf98f0000000000000000000000000000000000000000000000000000000004c338031307b68c63c473186b7aebd374e9bffd16fd791ebcb37b3d005edeb88e7b7672",
-              "from": "0xca7ded7e4f4ba8ab3b10009236ae6d1b95094589",
-              "value": "0"
+        "quoteOraclePrice": null,
+        "refundCurrencyData": null,
+        "externalMetadata": {
+          "moonpayId": null
+        }
+      },
+      "protocol": {
+        "orderId": "0xc82b69b55cd27f11c9ac2bdf046f03fabfdd0dfd388504dcaa35dd615f20354d",
+        "hubType": "onchain",
+        "isWithdrawable": false,
+        "solver": {
+          "address": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+          "protocolChainId": "base",
+          "chainId": 8453
+        },
+        "deposit": {
+          "origin": {
+            "amount": "116760581",
+            "chainId": 8453,
+            "currency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "depositor": "0xc1d5041826d883895e1787543336f7d7bc8cce93",
+            "depository": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+            "onchainId": "0xc69162545403ebb1dab64c8e189773298029d16fc9685763a9d4c4ad2cad955d",
+            "transactionId": "0x8c283eea70d3d96e9d4443067184574c856cc9c9bab80b30b92383a6ac45270f"
+          },
+          "attestation": {
+            "execution": {
+              "actions": [
+                "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000910d4e2d5fc21d3a87e6b4ec4bebd74125dbed81bf442206ca81b4b0b8b1b3f0a290c277e9b2d7269209615d306c15a8cd8d39380000000000000000000000000000000000000000000000000000000006f5a005"
+              ],
+              "idempotencyKey": "0x4dad103afee0424f7aff6e9a52c98b20221619eff58349a974b47557a2dfd0bf"
             },
-            "stateChanges": [
+            "attestations": [
               {
-                "change": {
-                  "data": {
-                    "tokenKind": "ft",
-                    "tokenAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
-                  },
-                  "kind": "token",
-                  "balanceDiff": "-79902723"
-                },
-                "address": "0xf70da97812cb96acdf810712aa562db8dfa3dbef"
+                "oracleChainId": "537713",
+                "oracleContract": "0xd180dc3b8cb71b185c563b6e4857592ca93dacaf",
+                "signerAddress": "0x2c598f73a5ab65c0510fd8efb740826d291cab0e",
+                "signature": "0x0fa4d7de9912ee2abb0146359e5262924a0d1af291fcc8da2f0dea799d980fb7162aa9c31d89b01918b651c9bbda71ae81c3b703e206059f9eabcccc230686a71b"
               },
               {
-                "change": {
-                  "data": {
-                    "tokenKind": "ft",
-                    "tokenAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
-                  },
-                  "kind": "token",
-                  "balanceDiff": "79902723"
-                },
-                "address": "0xf3128499092b90f1a520f63c09946dca3dadf98f"
+                "oracleChainId": "537713",
+                "oracleContract": "0xd180dc3b8cb71b185c563b6e4857592ca93dacaf",
+                "signerAddress": "0x5be2dd28f7810582ed6dc910fd8693878a1d90f2",
+                "signature": "0x968cd778f15fd99d8a59854c4a67d01331f65600a92f44d9b4838bc3861ac4d3228712b9f55652c1e7c34d16afc1fb489ec81b88b4e35676357d1e44c4ac9be01b"
+              }
+            ]
+          }
+        },
+        "settlement": {
+          "destination": {
+            "fills": [
+              {
+                "chainId": 1337,
+                "transactionId": "0x6ed9468c7581e2db705304450829d60203420072108501ad12a1f1df3485bcc6"
               }
             ],
-            "hash": "0x098d75e397350670f9c3fa4496036b0594ad3a06f00ea1784cf45b080f258651",
-            "block": 44281091,
-            "type": "onchain",
-            "chainId": 8453,
-            "timestamp": 1775351529,
-            "status": "success"
+            "refunds": []
+          },
+          "attestation": {
+            "execution": {
+              "actions": [
+                "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000910d4e2d5fc21d3a87e6b4ec4bebd74125dbed81000000000000000000000000d5fa4f5834722d85d95f45387ed60ce09ba4e36fbf442206ca81b4b0b8b1b3f0a290c277e9b2d7269209615d306c15a8cd8d39380000000000000000000000000000000000000000000000000000000006f5a005"
+              ],
+              "idempotencyKey": "0xae0828dedaefef317505a18d03aeedaeaf1abc07217b4d5d0fcd6a3f00b0a23a"
+            },
+            "attestations": [
+              {
+                "oracleChainId": "537713",
+                "oracleContract": "0xd180dc3b8cb71b185c563b6e4857592ca93dacaf",
+                "signerAddress": "0x5be2dd28f7810582ed6dc910fd8693878a1d90f2",
+                "signature": "0x0655f100928e26698f6e2a3109415fc7c4687c42acb6ddd4587b6d6611bf91b52b171c1bd40f8989e209c58b519f0b6e9bc69680122241b86e0084dc56b81da51c"
+              },
+              {
+                "oracleChainId": "537713",
+                "oracleContract": "0xd180dc3b8cb71b185c563b6e4857592ca93dacaf",
+                "signerAddress": "0xa41716ff5a7d4ad22f83b7cb74d9af9767a96a52",
+                "signature": "0x125ce59dffd08fb8ef9a386ac339b56d9892e6f44c22bf6588bde55cf33ec1b348191daa9d1c8e948ff9563ca8713217109659457862b2321992a28e38f7eab51c"
+              }
+            ]
           }
-        ]
+        }
       },
-      "referrer": "meshpay_f5b533dc-841a-4820-a454-9912fca134c1",
-      "createdAt": "2026-04-05T01:12:06.153Z",
-      "updatedAt": "2026-04-05T01:12:44.199Z"
+      "requestType": "Crosschain Swap",
+      "features": [
+        "app_fees",
+        "deposit_address"
+      ],
+      "createdAt": "2026-09-23T12:21:52.744Z",
+      "updatedAt": "2026-09-23T12:21:55.515Z"
     }
   ]
 }
 ```
 </CodeGroup>
 
+See [Get Requests](/references/api/get-requests) for the full response schema. `GET /requests/v2` also accepts `depositAddress`, but it is deprecated and will be retired on November 24, 2026.
+
+### Which Request Owns the Fill
+
+Whether the fill runs under the quote-time `requestId` depends on the deposit:
+
+- **Strict addresses** — Always the original `requestId`. Strict addresses are never requoted.
+- **Open addresses, original `requestId`** — The first deposit matches the quote exactly (same currency and amount) and Relay does not requote it at sweep time.
+- **Open addresses, new `requestId`** — Any of the following can move the sweep and fill to a regenerated request:
+  - The deposit is a different amount or a different supported token.
+  - The deposit lands on a different EVM chain than the one quoted.
+  - The address already received an earlier deposit. Every later deposit gets its own `requestId`.
+  - Relay requotes at sweep time, even for an exact match. This happens on quotes with sponsored fees, and on EVM when the deposit is the native token or the quote has no explicit `refundTo`.
+
+You can't always tell in advance which case applies, so poll by `depositAddress` rather than by the quote-time `requestId`. An open address can return several requests, one per deposit. When `depositAddress.depositTxHash` is populated, use it to match each request to the transfer that funded it.
+
+`includeChildRequests=true` does not return regenerated requests. It only adds duplicate-deposit requests to an `id` lookup. The `depositAddress` query already includes regenerated requests.
+
 ### Handling Quote Regeneration
 
-When a quote is regenerated (different amount, token, or chain), a new `requestId` may be generated. Use `includeChildRequests=true` to find all related requests, including regenerated ones:
+After a regeneration, what the quote-time `requestId` returns depends on the origin chain:
 
-```bash
-curl -X GET "https://api.relay.link/requests/v2?depositAddress=<DEPOSIT_ADDRESS>&includeChildRequests=true"
-```
+| Origin chain | Quote-time `requestId` after regeneration |
+|---|---|
+| Bitcoin | Stays `pending` in `GET /requests/v3`, with `supersededByRequestId` pointing to the regenerated request |
+| All other chains, including EVM and Solana | Not returned by `GET /requests/v3`. `GET /intents/status/v3` keeps returning `waiting`, even after the regenerated request succeeds |
 
-When a regeneration happens, the original request stays under its original `requestId` and public status while the actual sweep and fill move under the regenerated request. To follow the handoff directly, read the top-level `supersededByRequestId` on the original request in `GET /requests/v3` (or `data.supersededByRequestId` on the legacy `GET /requests/v2`) — it returns the regenerated `requestId` that now owns the fill lifecycle.
+<Warning>
+Outside Bitcoin, a quote-time `requestId` can stay `waiting` indefinitely after its funds are filled under a new `requestId`. Do not treat a long-running `waiting` status as a stuck deposit until you have checked the deposit address.
+</Warning>
+
+**`supersededByRequestId` (Bitcoin only)** — On Bitcoin-origin requests, the top-level `supersededByRequestId` in `GET /requests/v3` (or `data.supersededByRequestId` on the legacy `GET /requests/v2`) points from the original request to the regenerated one. It holds only the most recent regenerated `requestId`: a later deposit to the same address or a retried sweep replaces it. Until broader chain support ships, the field is `null` on every other chain.
 
 ```bash
 curl -X GET "https://api.relay.link/requests/v3?id=<ORIGINAL_REQUEST_ID>" -H "x-api-key: YOUR_API_KEY"
@@ -1277,12 +1505,12 @@ curl -X GET "https://api.relay.link/requests/v3?id=<ORIGINAL_REQUEST_ID>" -H "x-
 ```
 
 <Tip>
-Use `supersededByRequestId` when you have the original `requestId` and want a direct pointer to the request that owns the fill. Use `includeChildRequests=true` when you want every related request in one response.
+Use `supersededByRequestId` as a shortcut when you only have a Bitcoin `requestId`. The target can change with later deposits, so the `depositAddress` query remains the source of truth.
 </Tip>
 
 ### Request-Level Status
 
-Once you have a `requestId`, you can use [Get Status](/references/api/get-intents-status-v3) for detailed status polling. To avoid polling, you can also configure a [webhook](/references/api/api_guides/webhooks) — webhook payloads include a `depositAddress` object for deposit address requests.
+Once the `depositAddress` query returns the request that owns the fill, you can poll its `requestId` with [Get Status](/references/api/get-intents-status-v3). To avoid polling, configure a [webhook](/references/api/api_guides/webhooks) instead. Webhook events are sent under the request that owns the fill, so a regenerated request's events carry the new `requestId` — match them to your order with `depositAddress.address` in the payload.
 
 <CodeGroup>
 ```bash Request
@@ -1331,7 +1559,7 @@ curl -X POST 'https://api.relay.link/transactions/deposit-address/reindex' \
 ```
 
 <Note>
-The deposit transaction hash cannot be used to look up the status of a deposit address bridge. Always use the deposit address itself or the `requestId` to track status.
+The deposit transaction hash cannot be used to look up the status of a deposit address bridge. Track status by the deposit address, and use a `requestId` only once the `depositAddress` query has returned it.
 </Note>
 
 ## Caveats
