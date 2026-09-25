@@ -1,66 +1,54 @@
 ---
-title: "Unified Balance"
+title: "Build a trading app with a Unified Balance"
 hidden: true
-description: "Build a trading app where your users buy and sell any token from one balance"
+description: "Set up wallets, funding, and one-tap trades across supported chains"
 ---
 
 import QuickstartCallout from "/snippets/QuickstartCallout.mdx";
 
-With Relay, you can build a trading app where your users hold one Unified Balance and buy or sell any token in one tap, without choosing a chain or route.
+With Relay, you can build a trading app where your users hold one Unified Balance and buy or sell any token in one tap, without choosing a chain or route. A Unified Balance is the single stablecoin balance your app shows your users, such as USDC on Solana: buys swap out of it into any token on any supported chain, and sells swap back into it.
 
 In this guide, you learn how to:
 
-- Set up a Unified Balance and fund it from any chain
+- Set up wallets and fund the Unified Balance from any chain
 - Quote, execute, and track each trade
 - Configure price protection and fees
 - Use advanced features like Route Racing, Fast Quoting, Route Pregeneration, and Queuing
 - Handle unfilled deposits
 
+## Before you start
+
+- **A Relay [API key](/references/api/api-keys)**: Your backend uses it for quotes, Fee Sponsorship, and Fast Fill.
+- **An embedded wallet provider**: Your app creates a wallet for each user, such as with [Privy](https://docs.privy.io).
+- **A funded [App Balance](/features/fee-sponsorship#funding-your-app-balance)**: The balance your app funds on Relay to pay for sponsored fees and [Fast Fill](/features/fast-fill).
+
 <QuickstartCallout/>
 
-## Set up a Unified Balance
-
-A Unified Balance lets your users participate in cross-chain trading while holding funds in a single stablecoin. Your app can always show balances in USDC on Solana, for example, while buys swap into any token and sells swap back.
-
-### Use an embedded wallet
-
-An embedded wallet lets your app sign trades without a wallet prompt, so each trade takes one tap instead of an approval in a separate wallet app. [Privy](https://docs.privy.io), for example, lets you [turn off confirmation modals](https://docs.privy.io/recipes/react/manage-wallet-UIs) for trades and set spending limits with [transaction policies](https://docs.privy.io/controls/overview).
-
-### Remove gas tokens
-
-Sponsor the gas on every deposit so your users never need to hold gas tokens. On EVM chains, batch the approval and deposit into one transaction and pay its gas with a paymaster, a contract that pays gas on your users' behalf, for example through ERC-4337. See [Gasless Swaps](/features/gasless-swaps) to choose a gasless flow.
-
-On Solana, set **`depositFeePayer`** on the quote to a wallet your app controls, and that wallet pays the deposit's transaction fees and rent. Your app signs the transaction before your users do. Avoid it on same-chain Solana swaps, for the reason explained in [Solana Fee Sponsorship](/features/fee-sponsorship#solana-fee-sponsorship).
-
-### Fund the balance
-
-Let your users deposit from any chain, and move each deposit into their Unified Balance as soon as it arrives:
-
-- **From another chain**: Quote the transfer with `EXACT_INPUT`, so the input is exactly the amount deposited, and execute it right away with its fees sponsored, as described in [Sponsor funding transfers](#sponsor-funding-transfers).
-- **From an exchange**: Give your users a [deposit address](/features/deposit-addresses), since an exchange withdrawal can't sign a Relay transaction. Relay delivers funds sent to the deposit address to their Unified Balance.
-- **With fiat**: Use an [onramp](https://docs.privy.io/wallets/funding/headless-fiat-onramp) so your users buy the stablecoin directly into their Unified Balance.
-
-### Sponsor funding transfers
-
-Pay the fees on funding transfers from your [App Balance](/features/fee-sponsorship#funding-your-app-balance), the balance your app funds on Relay to pay for sponsored fees and [Fast Fill](/features/fast-fill), so your users' deposits arrive in full. Leave trades unsponsored, so their fees stay in the price your users see on each quote.
-
-On each funding transfer quote:
-
-- Set **`subsidizeFees`** to `true`.
-- Set **`sponsoredFeeComponents`** to `execution`, `swap`, and `relay`. Leaving it out also sponsors your own [app fee](/features/app-fees).
-- Set **`maxSubsidizationAmount`** to cap what each request can draw from your App Balance.
-
-[Fee Sponsorship](/features/fee-sponsorship) doesn't cover gas on EVM deposits, which [Remove gas tokens](#remove-gas-tokens) handles. When the destination is Solana, Fee Sponsorship covers account rent only if you add `rent` to **`sponsoredFeeComponents`**; otherwise, your users pay rent the first time they receive each token.
-
-### Withdraw from the balance
-
-When your users withdraw, quote a transfer from their Unified Balance to the chain, token, and address they choose, then execute and track it the same way as a trade. Relay rejects an address in the wrong format for the destination chain, such as an EVM address for a Solana withdrawal, so validate the address in your app before quoting. To cash out to a bank account, hand off to an [offramp](https://docs.privy.io/recipes/off-ramp-guide).
-
----
-
-## Integrate the trade flow
+## Build your trading app
 
 <Steps>
+  <Step title="Set up wallets">
+    An embedded wallet lets your app sign trades without a wallet prompt, so each trade takes one tap instead of an approval in a separate wallet app. Privy, for example, lets you [turn off confirmation modals](https://docs.privy.io/recipes/react/manage-wallet-UIs) for trades and set spending limits with [transaction policies](https://docs.privy.io/controls/overview).
+
+    **Remove gas tokens.** Sponsor the gas on every deposit so your users never need to hold gas tokens. On EVM chains, batch the approval and deposit into one transaction and pay its gas with a paymaster, a contract that pays gas on your users' behalf, for example through ERC-4337. See [Gasless Swaps](/features/gasless-swaps) to choose a gasless flow.
+
+    On Solana, set **`depositFeePayer`** on the quote to a wallet your app controls, and that wallet pays the deposit's transaction fees and rent. Your app signs the transaction before your users do. Avoid it on same-chain Solana swaps, for the reason explained in [Solana Fee Sponsorship](/features/fee-sponsorship#solana-fee-sponsorship).
+  </Step>
+  <Step title="Fund the Unified Balance">
+    Let your users deposit from any chain, and move each deposit into their Unified Balance as soon as it arrives:
+
+    - **From another chain**: Quote the transfer with `EXACT_INPUT`, so the input is exactly the amount deposited, and execute it right away with its fees sponsored, as described below.
+    - **From an exchange**: Give your users a [deposit address](/features/deposit-addresses), since an exchange withdrawal can't sign a Relay transaction. Relay delivers funds sent to the deposit address to their Unified Balance.
+    - **With fiat**: Use an [onramp](https://docs.privy.io/wallets/funding/headless-fiat-onramp) so your users buy the stablecoin directly into their Unified Balance.
+
+    **Sponsor funding transfers.** Pay the fees on funding transfers from your App Balance, so your users' deposits arrive in full. Leave trades unsponsored, so their fees stay in the price your users see on each quote. On each funding transfer quote:
+
+    - Set **`subsidizeFees`** to `true`.
+    - Set **`sponsoredFeeComponents`** to `execution`, `swap`, and `relay`. Leaving it out also sponsors your own [app fee](/features/app-fees).
+    - Set **`maxSubsidizationAmount`** to cap what each request can draw from your App Balance.
+
+    [Fee Sponsorship](/features/fee-sponsorship) doesn't cover gas on EVM deposits, which step 1 covers. When the destination is Solana, Fee Sponsorship covers account rent only if you add `rent` to **`sponsoredFeeComponents`**; otherwise, your users pay rent the first time they receive each token.
+  </Step>
   <Step title="Get a quote (server-side)">
     Call [`POST /quote/v2`](/references/api/get-quote-v2) from your backend with your [API key](/references/api/api-keys), and never expose the key in client code. Use `EXACT_INPUT` so your users spend exactly the amount they entered.
 
@@ -159,6 +147,9 @@ When your users withdraw, quote a transfer from their Unified Balance to the cha
     ```
 
     Relay releases the hold once the deposit lands. If the deposit never lands, the hold becomes a permanent debit, so call Fast Fill only from your backend and set **`maxFillAmountUsd`** to cap your exposure.
+  </Step>
+  <Step title="Let your users withdraw">
+    When your users withdraw, quote a transfer from their Unified Balance to the chain, token, and address they choose, then execute and track it the same way as a trade. Relay rejects an address in the wrong format for the destination chain, such as an EVM address for a Solana withdrawal, so validate the address in your app before quoting. To cash out to a bank account, hand off to an [offramp](https://docs.privy.io/recipes/off-ramp-guide).
   </Step>
 </Steps>
 
