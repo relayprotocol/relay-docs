@@ -1,0 +1,273 @@
+---
+title: "Build a trading app with a Unified Balance"
+hidden: true
+description: "Set up wallets, funding, and one-tap trades across supported chains"
+---
+
+import QuickstartCallout from "/snippets/QuickstartCallout.mdx";
+
+With Relay, you can build a trading app where your users hold one Unified Balance and buy or sell any token in one tap, without choosing a chain or route. A Unified Balance is the single stablecoin balance your app shows your users, such as USDC on Solana: buys swap out of it into any token on any supported chain, and sells swap back into it.
+
+In this guide, you learn how to:
+
+- Set up wallets and fund the Unified Balance from any chain
+- Quote, execute, and track each trade
+- Configure price protection and fees
+- Use advanced features like Route Racing, Fast Quoting, Route Pregeneration, and Queuing
+- Handle unfilled deposits
+
+## Before you start
+
+- **A Relay [API key](/references/api/api-keys)**: Your backend uses it for quotes, Fee Sponsorship, and Fast Fill.
+- **An embedded wallet provider**: Your app creates a wallet for each user, such as with [Privy](https://docs.privy.io).
+- **A funded [App Balance](/features/fee-sponsorship#funding-your-app-balance)**: The balance your app funds on Relay to pay for sponsored fees and [Fast Fill](/features/fast-fill).
+
+<QuickstartCallout/>
+
+## Build your trading app
+
+<Steps>
+  <Step title="Set up wallets">
+    An embedded wallet lets your app sign trades without a wallet prompt, so each trade takes one tap instead of an approval in a separate wallet app. Privy, for example, lets you [turn off confirmation modals](https://docs.privy.io/recipes/react/manage-wallet-UIs) for trades and set spending limits with [transaction policies](https://docs.privy.io/controls/overview).
+
+    **Remove gas tokens.** Sponsor the gas on every deposit so your users never need to hold gas tokens. On EVM chains, batch the approval and deposit into one transaction and pay its gas with a paymaster, a contract that pays gas on your users' behalf, for example through ERC-4337. See [Gasless Swaps](/features/gasless-swaps) to choose a gasless flow.
+
+    On Solana, set **`depositFeePayer`** on the quote to a wallet your app controls, and that wallet pays the deposit's transaction fees and rent. Your app signs the transaction before your users do. Avoid it on same-chain Solana swaps, for the reason explained in [Solana Fee Sponsorship](/features/fee-sponsorship#solana-fee-sponsorship).
+  </Step>
+  <Step title="Fund the Unified Balance">
+    Let your users deposit from any chain, and move each deposit into their Unified Balance as soon as it arrives:
+
+    - **From another chain**: Quote the transfer with `EXACT_INPUT`, so the input is exactly the amount deposited, and execute it right away with its fees sponsored, as described below.
+    - **From an exchange**: Give your users a [deposit address](/features/deposit-addresses), since an exchange withdrawal can't sign a Relay transaction. Relay delivers funds sent to the deposit address to their Unified Balance.
+    - **With fiat**: Use an [onramp](https://docs.privy.io/wallets/funding/headless-fiat-onramp) so your users buy the stablecoin directly into their Unified Balance.
+
+    **Sponsor funding transfers.** Pay the fees on funding transfers from your App Balance, so your users' deposits arrive in full. Leave trades unsponsored, so their fees stay in the price your users see on each quote. On each funding transfer quote:
+
+    - Set **`subsidizeFees`** to `true`.
+    - Set **`sponsoredFeeComponents`** to `execution`, `swap`, and `relay`. Leaving it out also sponsors your own [app fee](/features/app-fees).
+    - Set **`maxSubsidizationAmount`** to cap what each request can draw from your App Balance.
+
+    [Fee Sponsorship](/features/fee-sponsorship) doesn't cover gas on EVM deposits, which step 1 covers. When the destination is Solana, Fee Sponsorship covers account rent only if you add `rent` to **`sponsoredFeeComponents`**; otherwise, your users pay rent the first time they receive each token.
+  </Step>
+  <Step title="Get a quote (server-side)">
+    Call [`POST /quote/v2`](/references/api/get-quote-v2) from your backend with your [API key](/references/api/api-keys), and never expose the key in client code. Use `EXACT_INPUT` so your users spend exactly the amount they entered.
+
+    <CodeGroup>
+    ```typescript SDK
+    import { createClient, getClient } from "@relayprotocol/relay-sdk";
+
+    // 1. Initialize the client on your backend. `source` is sent as the referrer.
+    createClient({
+      baseApiUrl: "https://api.relay.link",
+      source: "YOUR_APP_NAME",
+      apiKey: "YOUR_API_KEY",
+    });
+
+    // 2. Buy ETH on Base with your user's USDC balance on Solana
+    const quote = await getClient().actions.getQuote({
+      chainId: 792703809, // Solana
+      toChainId: 8453, // Base
+      currency: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+      toCurrency: "0x0000000000000000000000000000000000000000", // ETH
+      amount: "100000000", // 100 USDC
+      tradeType: "EXACT_INPUT",
+      user: "WALLET_ADDRESS", // your user's Solana wallet
+      recipient: "RECIPIENT_ADDRESS", // your user's EVM wallet
+      options: {
+        slippageTolerance: "100", // 1%, set per token
+        ttl: 30, // refund instead of filling after 30 seconds
+        useRouteRacing: true, // see Advanced trading features
+        appFees: [{ recipient: "YOUR_FEE_RECIPIENT", fee: "25" }], // 0.25%
+      },
+    });
+
+    // 3. Return the requestId and steps to your client
+    const requestId = quote.steps[0]?.requestId;
+    ```
+    ```typescript API
+    // 1. Buy ETH on Base with your user's USDC balance on Solana
+    const response = await fetch("https://api.relay.link/quote/v2", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": "YOUR_API_KEY",
+      },
+      body: JSON.stringify({
+        user: "WALLET_ADDRESS", // your user's Solana wallet
+        recipient: "RECIPIENT_ADDRESS", // your user's EVM wallet
+        originChainId: 792703809, // Solana
+        destinationChainId: 8453, // Base
+        originCurrency: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+        destinationCurrency: "0x0000000000000000000000000000000000000000", // ETH
+        amount: "100000000", // 100 USDC
+        tradeType: "EXACT_INPUT",
+        referrer: "YOUR_APP_NAME",
+        slippageTolerance: "100", // 1%, set per token
+        ttl: 30, // refund instead of filling after 30 seconds
+        useRouteRacing: true, // see Advanced trading features
+        appFees: [{ recipient: "YOUR_FEE_RECIPIENT", fee: "25" }], // 0.25%
+      }),
+    });
+
+    // 2. Return the requestId and steps to your client
+    const { requestId, steps } = await response.json();
+    ```
+    </CodeGroup>
+
+    Debounce amount and token inputs so a burst of edits produces one quote call, not one per keystroke.
+  </Step>
+  <Step title="Sign and submit the deposit (client-side)">
+    Pass the steps to your client, where the embedded wallet signs and submits the deposit to the [Relay Depository Contract](/references/protocol/overview). See [Step Execution](/references/api/api_core_concepts/step-execution) for each step type.
+
+    **`ttl`** sets how many seconds a request has to fill before Relay refunds it. Keep it short, and keep the time between quote and signature short, so Relay refunds a quote left on screen too long instead of filling it at an outdated price.
+  </Step>
+  <Step title="Track the request">
+    Subscribe to [websockets](/references/api/api_guides/websockets) for the **`requestId`** from your client to show live status, and configure a [webhook](/references/api/api_guides/webhooks) to update your backend. Both deliver status updates faster than polling. As a fallback, poll [`GET /requests/v3`](/references/api/get-requests) with the request **`id`**, and stop once the request reaches `success`, `failure`, or `refund`.
+
+    Show refunded trades as refunded rather than failed, so your users know their funds are back in their Unified Balance. See the [status lifecycle](/references/api/quickstart#status-lifecycle) for every status.
+  </Step>
+  <Step title="Call Fast Fill for slow deposits (server-side)">
+    When a deposit takes longer than your app's usual time to index, call [Fast Fill](/features/fast-fill) from your backend as insurance: a solver, the participant that fills orders on the destination chain, fills the order before Relay indexes the deposit, backed by a hold on your App Balance. Set the threshold from your own deposit times, so trades still complete quickly when an RPC provider fails or indexing slows down.
+
+    ```typescript
+    // Call once per request, from your backend, when the deposit passes your threshold
+    const response = await fetch("https://api.relay.link/fast-fill", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": "YOUR_API_KEY",
+      },
+      body: JSON.stringify({
+        requestId: "REQUEST_ID", // from the quote
+        maxFillAmountUsd: 500, // per-request cap
+      }),
+    });
+
+    // A 409 means the request is already being processed. Don't retry it.
+    ```
+
+    Relay releases the hold once the deposit lands. If the deposit never lands, the hold becomes a permanent debit, so call Fast Fill only from your backend and set **`maxFillAmountUsd`** to cap your exposure.
+  </Step>
+  <Step title="Let your users withdraw">
+    When your users withdraw, quote a transfer from their Unified Balance to the chain, token, and address they choose, then execute and track it the same way as a trade. Relay rejects an address in the wrong format for the destination chain, such as an EVM address for a Solana withdrawal, so validate the address in your app before quoting. To cash out to a bank account, hand off to an [offramp](https://docs.privy.io/recipes/off-ramp-guide).
+  </Step>
+</Steps>
+
+---
+
+## Configure price protection and fees
+
+Beyond the trade flow, these [quote](/references/api/get-quote-v2) parameters have the most effect on a trading app:
+
+| Property | Description | Recommendation |
+| --- | --- | --- |
+| **slippageTolerance** | Maximum slippage in basis points, from `0` to `10000`. If omitted, Relay calculates it automatically. | Set it per token. |
+| **ttl** | Seconds from quote generation before Relay refunds an unfilled request instead of filling it. | Keep it short so Relay refunds outdated quotes. |
+| **overridePriceImpact** | Returns the quote even when price impact would otherwise reject it. | Enable only if your app shows price impact before your users sign. |
+| **appFees** | One or more `{ recipient, fee }` objects, with **`fee`** in basis points of the input amount. | Add one object per recipient to split fees. Recipients must be EVM addresses. See [App Fees](/features/app-fees) to claim what you earn. |
+
+Set slippage per token rather than as one global value: keep it tight for major tokens and stablecoins, and allow more for newly launched or thinly traded tokens, where prices move fastest.
+
+<Warning>
+Combining **`overridePriceImpact`** with a wide **`slippageTolerance`** can leave your users with much less than the quoted amount. Show price impact and the minimum amount received before your users sign.
+</Warning>
+
+Leave **`includedSwapSources`** and **`excludedSwapSources`** unset, and exclude a source only if it consistently returns poor routes for your tokens.
+
+---
+
+## Advanced trading features
+
+Route Racing, Fast Quoting, Route Pregeneration, and Queuing are built specifically to help you deliver the best possible trading experience. Relay enables the first three on your API key on request through our [support channels](/resources/support), and you can turn on Queuing yourself.
+
+### Route Racing
+
+Relay collects multiple executable routes from swap providers and races them onchain. The route that delivers the most output wins, and the others act as fallbacks if it fails.
+
+**Why it matters**
+
+- Improves realized price quality, not just the displayed quote.
+- Protects execution against route changes between quote and fill.
+
+**How to enable**
+
+Once Relay enables Route Racing on your key, set these parameters on each quote:
+
+| Property | Description |
+| --- | --- |
+| **useRouteRacing** | Races candidate routes for the destination swap. |
+| **useRouteRacingOnOrigin** | Races candidate routes for the origin swap, on origin chains configured for Route Racing. |
+| **routeRacingMinUsdSize** | Minimum fill size in USD eligible for Route Racing. Defaults to `100`. |
+
+Route Racing applies only to `EXACT_INPUT` quotes, because the winning route is the one with the most output for a fixed input. It also requires an EVM destination chain configured for Route Racing, a fill above **`routeRacingMinUsdSize`**, and at least two viable routes. Otherwise, the fill uses a single route with no error, so you can opt in on every request.
+
+Because any candidate can win, the quote's minimum amount out is the higher of your guaranteed minimum and the lowest minimum across candidates. Any price improvement appears after the fill settles.
+
+### Fast Quoting
+
+Relay returns the first swap provider quote that is no more than 20% below a reference price, rather than waiting for all selected providers to return quotes.
+
+**Why it matters**
+
+- Improves quote latency.
+- Skips fast quotes that fall too far below the reference price, so speed doesn't cost your users on price.
+
+**How to enable**
+
+Relay enables Fast Quoting on your key on request. To provide your own price, set **`referencePrice`** in output units per input unit, such as `"0.000131"`. Relay ignores a malformed **`referencePrice`**, or one sent from a key without Fast Quoting enabled, instead of rejecting the quote.
+
+### Route Pregeneration
+
+Relay starts building an executable route while your users review the initial quote. When they confirm, much of the solving work is already complete.
+
+**Why it matters**
+
+- Reduces the time from confirmation to fill.
+- Gives Relay more time to find strong routes without increasing the latency your users see.
+
+Combined with Route Racing, Route Pregeneration can prepare several high-quality routes during the review window, and Route Racing races them at execution time.
+
+**How to enable**
+
+Relay enables Route Pregeneration on your key on request.
+
+### Queuing
+
+When destination liquidity is temporarily unavailable, Queuing lets your users complete the sell while Relay holds cross-chain delivery until liquidity returns. Show the sale as complete and the proceeds as pending in your users' Unified Balance.
+
+**Why it matters**
+
+- Lets your users exit market exposure immediately instead of waiting for the full cross-chain route.
+- Replaces a refunded sell with a pending balance, so your users don't have to sell again.
+
+**How to enable**
+
+Enable Queuing on each sell quote with [`POST /quote/v2`](/references/api/get-quote-v2):
+
+```json
+{
+  "useQueueing": true,
+  "queueingTtl": 3600
+}
+```
+
+**`queueingTtl`** counts seconds from quote generation and applies only once a request is waiting on liquidity. While the request waits, Relay retries every 30 seconds, and when the window expires, Relay refunds the output currency from the origin swap.
+
+The normal **`ttl`** still applies to every request, so on queued sells, raise it to at least **`queueingTtl`**. The short **`ttl`** from the trade flow would refund the sell before it can wait for liquidity.
+
+---
+
+## Handle unfilled deposits
+
+Occasionally Relay can't fill a deposit or refund it automatically. The depositing wallet can reclaim the funds at [relay.link/withdraw](https://relay.link/withdraw), but only by signing, which embedded-wallet users usually can't do without exporting their key. Build the reclaim flow into your app with the [withdrawal endpoints](/references/protocol/guides/withdrawals) instead.
+
+For quote errors and fill failures, see [Handling Errors](/references/api/api_core_concepts/handling-errors) and [Execution Errors](/references/api/api_core_concepts/execution-errors). If you reach rate limits, see [Handling Rate Limits](/references/api/api_core_concepts/handling-rate-limits).
+
+## See Also
+
+- [**Gasless Swaps**](/features/gasless-swaps): Let your users trade without holding gas tokens.
+- [**Deposit Addresses**](/features/deposit-addresses): Let your users fund their Unified Balance from an exchange.
+- [**Fee Sponsorship**](/features/fee-sponsorship): Cover your users' fees from your App Balance.
+- [**Fast Fill**](/features/fast-fill): Fill the destination before the deposit is indexed.
+- [**App Fees**](/features/app-fees): Earn a fee on every trade.
+- [**Websockets**](/references/api/api_guides/websockets): Stream request status updates instead of polling.
