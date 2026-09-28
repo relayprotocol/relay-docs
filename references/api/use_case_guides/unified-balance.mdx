@@ -13,7 +13,7 @@ In this guide, you learn how to:
 - Set up wallets and fund the Unified Balance from any chain
 - Quote, execute, and track each trade
 - Configure price protection and fees
-- Use advanced features like Route Racing, Fast Quoting, Route Pregeneration, and Queuing
+- Use advanced features like Route Racing, Fast Quoting, Route Pregeneration, and Queueing
 - Handle unfilled deposits
 
 ## Before you start
@@ -33,11 +33,13 @@ In this guide, you learn how to:
     **Remove gas tokens.** Sponsor the gas on every deposit so your users never need to hold gas tokens. On EVM chains, batch the approval and deposit into one transaction and pay its gas with a paymaster, a contract that pays gas on your users' behalf, for example through ERC-4337. See [Gasless Swaps](/features/gasless-swaps) to choose a gasless flow.
 
     On Solana, set **`depositFeePayer`** on the quote to a wallet your app controls, and that wallet pays the deposit's transaction fees and rent. Your app signs the transaction before your users do. Avoid it on same-chain Solana swaps, for the reason explained in [Solana Fee Sponsorship](/features/fee-sponsorship#solana-fee-sponsorship).
+
+    These options only cover EVM chains and Solana. On other chains, such as Bitcoin, your users pay the gas on their deposits, so keep the Unified Balance on an EVM chain or Solana.
   </Step>
   <Step title="Fund the Unified Balance">
     Let your users deposit from any chain, and move each deposit into their Unified Balance as soon as it arrives:
 
-    - **From another chain**: Quote the transfer with `EXACT_INPUT`, so the input is exactly the amount deposited, and execute it right away with its fees sponsored, as described below.
+    - **From another chain**: Quote the transfer with `EXACT_INPUT`, so it moves everything that arrived instead of a fixed output amount, and execute it right away with its fees sponsored, as described below.
     - **From an exchange**: Give your users a [deposit address](/features/deposit-addresses), since an exchange withdrawal can't sign a Relay transaction. Relay delivers funds sent to the deposit address to their Unified Balance.
     - **With fiat**: Use an [onramp](https://docs.privy.io/wallets/funding/headless-fiat-onramp) so your users buy the stablecoin directly into their Unified Balance.
 
@@ -47,7 +49,7 @@ In this guide, you learn how to:
     - Set **`sponsoredFeeComponents`** to `execution`, `swap`, and `relay`. Leaving it out also sponsors your own [app fee](/features/app-fees).
     - Set **`maxSubsidizationAmount`** to cap what each request can draw from your App Balance.
 
-    [Fee Sponsorship](/features/fee-sponsorship) doesn't cover gas on EVM deposits, which step 1 covers. When the destination is Solana, Fee Sponsorship covers account rent only if you add `rent` to **`sponsoredFeeComponents`**; otherwise, your users pay rent the first time they receive each token.
+    [Fee Sponsorship](/features/fee-sponsorship) doesn't cover the gas on your users' deposit transactions on any chain; step 1 covers that on EVM chains and Solana. When the destination is Solana, Fee Sponsorship covers account rent only if you add `rent` to **`sponsoredFeeComponents`**; otherwise, your users pay rent the first time they receive each token.
   </Step>
   <Step title="Get a quote (server-side)">
     Call [`POST /quote/v2`](/references/api/get-quote-v2) from your backend with your [API key](/references/api/api-keys), and never expose the key in client code. Use `EXACT_INPUT` so your users spend exactly the amount they entered.
@@ -178,7 +180,7 @@ Leave **`includedSwapSources`** and **`excludedSwapSources`** unset, and exclude
 
 ## Advanced trading features
 
-Route Racing, Fast Quoting, Route Pregeneration, and Queuing are built specifically to help you deliver the best possible trading experience. Relay enables the first three on your API key on request through our [support channels](/resources/support), and you can turn on Queuing yourself.
+Route Racing, Fast Quoting, Route Pregeneration, and Queueing are built specifically to help you deliver the best possible trading experience. Relay enables the first three on your API key on request through our [support channels](/resources/support), and you can turn on Queueing yourself.
 
 ### Route Racing
 
@@ -231,9 +233,9 @@ Combined with Route Racing, Route Pregeneration can prepare several high-quality
 
 Relay enables Route Pregeneration on your key on request.
 
-### Queuing
+### Queueing
 
-When destination liquidity is temporarily unavailable, Queuing lets your users complete the sell while Relay holds cross-chain delivery until liquidity returns. Show the sale as complete and the proceeds as pending in your users' Unified Balance.
+When destination liquidity is temporarily unavailable, Queueing lets your users complete the sell while Relay holds cross-chain delivery until liquidity returns. Show the sale as complete and the proceeds as pending in your users' Unified Balance.
 
 **Why it matters**
 
@@ -242,7 +244,7 @@ When destination liquidity is temporarily unavailable, Queuing lets your users c
 
 **How to enable**
 
-Enable Queuing on each sell quote with [`POST /quote/v2`](/references/api/get-quote-v2):
+Enable Queueing on each sell quote with [`POST /quote/v2`](/references/api/get-quote-v2):
 
 ```json
 {
