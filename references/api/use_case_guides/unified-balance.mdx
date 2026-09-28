@@ -10,11 +10,11 @@ With Relay, you can build a trading app where your users hold one Unified Balanc
 
 In this guide, you learn how to:
 
-- Set up wallets and fund the Unified Balance from any chain
-- Quote, execute, and track each trade
-- Configure price protection and fees
-- Use advanced features like Route Racing, Fast Quoting, Route Pregeneration, and Queueing
-- Handle unfilled deposits
+- [Set up wallets](#set-up-wallets) and [fund the Unified Balance](#fund-the-unified-balance) from any chain
+- [Quote](#get-a-quote), [execute](#sign-and-submit-the-deposit), and [track](#track-the-request) each trade
+- [Configure price protection and fees](#configure-price-protection-and-fees)
+- Use advanced features like [Route Racing](#route-racing), [Fast Quoting](#fast-quoting), [Route Pregeneration](#route-pregeneration), and [Queueing](#queueing)
+- [Handle unfilled deposits](#handle-unfilled-deposits)
 
 ## Before you start
 
@@ -27,7 +27,7 @@ In this guide, you learn how to:
 ## Build your trading app
 
 <Steps>
-  <Step title="Set up wallets">
+  <Step title="Set up wallets" id="set-up-wallets">
     An embedded wallet lets your app sign trades without a wallet prompt, so each trade takes one tap instead of an approval in a separate wallet app. Privy, for example, lets you [turn off confirmation modals](https://docs.privy.io/recipes/react/manage-wallet-UIs) for trades and set spending limits with [transaction policies](https://docs.privy.io/controls/overview).
 
     **Remove gas tokens.** Sponsor the gas on every deposit so your users never need to hold gas tokens. On EVM chains, batch the approval and deposit into one transaction and pay its gas with a paymaster, a contract that pays gas on your users' behalf, for example through ERC-4337. See [Gasless Swaps](/features/gasless-swaps) to choose a gasless flow.
@@ -36,7 +36,7 @@ In this guide, you learn how to:
 
     These options only cover EVM chains and Solana. On other chains, such as Bitcoin, your users pay the gas on their deposits, so keep the Unified Balance on an EVM chain or Solana.
   </Step>
-  <Step title="Fund the Unified Balance">
+  <Step title="Fund the Unified Balance" id="fund-the-unified-balance">
     Let your users deposit from any chain, and move each deposit into their Unified Balance as soon as it arrives:
 
     - **From another chain**: Quote the transfer with `EXACT_INPUT`, so it moves everything that arrived instead of a fixed output amount, and execute it right away with its fees sponsored, as described below.
@@ -49,9 +49,9 @@ In this guide, you learn how to:
     - Set **`sponsoredFeeComponents`** to `execution`, `swap`, and `relay`. Leaving it out also sponsors your own [app fee](/features/app-fees).
     - Set **`maxSubsidizationAmount`** to cap what each request can draw from your App Balance.
 
-    [Fee Sponsorship](/features/fee-sponsorship) doesn't cover the gas on your users' deposit transactions on any chain; step 1 covers that on EVM chains and Solana. When the destination is Solana, Fee Sponsorship covers account rent only if you add `rent` to **`sponsoredFeeComponents`**; otherwise, your users pay rent the first time they receive each token.
+    [Fee Sponsorship](/features/fee-sponsorship) doesn't cover the gas on your users' deposit transactions on any chain; [step 1](#set-up-wallets) covers that on EVM chains and Solana. When the destination is Solana, Fee Sponsorship covers account rent only if you add `rent` to **`sponsoredFeeComponents`**; otherwise, your users pay rent the first time they receive each token.
   </Step>
-  <Step title="Get a quote (server-side)">
+  <Step title="Get a quote (server-side)" id="get-a-quote">
     Call [`POST /quote/v2`](/references/api/get-quote-v2) from your backend with your [API key](/references/api/api-keys), and never expose the key in client code. Use `EXACT_INPUT` so your users spend exactly the amount they entered.
 
     <CodeGroup>
@@ -118,17 +118,17 @@ In this guide, you learn how to:
 
     Debounce amount and token inputs so a burst of edits produces one quote call, not one per keystroke.
   </Step>
-  <Step title="Sign and submit the deposit (client-side)">
+  <Step title="Sign and submit the deposit (client-side)" id="sign-and-submit-the-deposit">
     Pass the steps to your client, where the embedded wallet signs and submits the deposit to the [Relay Depository Contract](/references/protocol/overview). See [Step Execution](/references/api/api_core_concepts/step-execution) for each step type.
 
     **`ttl`** sets how many seconds a request has to fill before Relay refunds it. Keep it short, and keep the time between quote and signature short, so Relay refunds a quote left on screen too long instead of filling it at an outdated price.
   </Step>
-  <Step title="Track the request">
+  <Step title="Track the request" id="track-the-request">
     Subscribe to [websockets](/references/api/api_guides/websockets) for the **`requestId`** from your client to show live status, and configure a [webhook](/references/api/api_guides/webhooks) to update your backend. Both deliver status updates faster than polling. As a fallback, poll [`GET /requests/v3`](/references/api/get-requests) with the request **`id`**, and stop once the request reaches `success`, `failure`, or `refund`.
 
     Show refunded trades as refunded rather than failed, so your users know their funds are back in their Unified Balance. See the [status lifecycle](/references/api/quickstart#status-lifecycle) for every status.
   </Step>
-  <Step title="Call Fast Fill for slow deposits (server-side)">
+  <Step title="Call Fast Fill for slow deposits (server-side)" id="call-fast-fill">
     When a deposit takes longer than your app's usual time to index, call [Fast Fill](/features/fast-fill) from your backend as insurance: a solver, the participant that fills orders on the destination chain, fills the order before Relay indexes the deposit, backed by a hold on your App Balance. Set the threshold from your own deposit times, so trades still complete quickly when an RPC provider fails or indexing slows down.
 
     ```typescript
@@ -150,7 +150,7 @@ In this guide, you learn how to:
 
     Relay releases the hold once the deposit lands. If the deposit never lands, the hold becomes a permanent debit, so call Fast Fill only from your backend and set **`maxFillAmountUsd`** to cap your exposure.
   </Step>
-  <Step title="Let your users withdraw">
+  <Step title="Let your users withdraw" id="let-your-users-withdraw">
     When your users withdraw, quote a transfer from their Unified Balance to the chain, token, and address they choose, then execute and track it the same way as a trade. Relay rejects an address in the wrong format for the destination chain, such as an EVM address for a Solana withdrawal, so validate the address in your app before quoting. To cash out to a bank account, hand off to an [offramp](https://docs.privy.io/recipes/off-ramp-guide).
   </Step>
 </Steps>
