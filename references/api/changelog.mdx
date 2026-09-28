@@ -3,10 +3,6 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
-## 2026-09-28 — `GET /requests/v3` results scoped to your integrator
-
-**Behavior change** — `GET /requests/v3`: results are limited to requests owned by the integrator of the authenticating API key. Any API key can read requests created by its sibling keys, the other keys that belong to the same integrator, so integrations with multiple keys need no change. The scope covers search and filter results, lookups by `id` or `term`, and fields returned with `includeAuthenticatedData=true`. Requests owned by another integrator are not returned, and the optional `apiKey` filter narrows results within your integrator without widening them. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#authentication).
-
 ## 2026-09-21 — `forJitoBundle` on `POST /quote`
 
 **Added** — `POST /quote` and `POST /quote/v2`: the new optional `forJitoBundle` boolean request field restricts Solana swap routing to routes that are compatible with [Jito](https://www.jito.wtf/) bundles. When set to `true`, aggregator quotes drop DEXes and instructions (such as those that touch vote accounts) that would cause a Jito bundle containing the transaction to be rejected. Only takes effect on Solana-origin routing and only when the caller sets it — the default (omitted / `false`) preserves existing route selection. Set it only when the returned transaction will actually be executed inside a Jito bundle, since it narrows the route search. See [Solana Support](/references/api/api_guides/solana).

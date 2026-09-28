@@ -8,7 +8,7 @@ description: "What changed in GET /requests/v3 and how to upgrade from v2."
 This migration changes the platform API response and query surface. The `v3` endpoint suffix does not mean a request uses a particular version of [Relay Protocol](/references/protocol/overview).
 
 <Warning>
-  `x-api-key` is now required. Every v3 request authenticates against an active API key, and results are limited to requests owned by that key's integrator. Any of your API keys can read requests created by your other keys. See [API Keys](/references/api/api-keys) for details.
+  `x-api-key` is now required. Every v3 request authenticates against an active API key. See [API Keys](/references/api/api-keys) for details.
 </Warning>
 
 ## Sunset timeline
@@ -317,21 +317,7 @@ Every individual change, grouped by request side and response side.
 
     The `x-api-key` request header is now required. Every request authenticates against an active API key. See [API Keys](/references/api/api-keys) for details.
 
-    **Access scope.** The key you authenticate with determines which requests you can read. v3 returns only requests owned by that key's integrator. That includes requests created by its sibling keys, which are the other API keys that belong to the same integrator.
-
-    The scope applies to all Requests v3 data: search and filter results, lookups by `id` or `term`, and the fields returned with `includeAuthenticatedData=true`. v3 never returns a request owned by another integrator, and cross-integrator access is not supported.
-
-    **Using multiple API keys.** No change is required. You do not need to query once per key or send a particular key to read its requests, because any active key returns requests from all of your keys. To narrow results to specific keys, use the [`apiKey` filter](#filtering-search-and-sorting).
-
-    ```bash
-    # any of your keys returns requests created by all of your keys
-    curl "https://api.relay.link/requests/v3?limit=20" \
-      -H "x-api-key: YOUR_API_KEY"
-
-    # narrow to requests created by one of your other keys
-    curl "https://api.relay.link/requests/v3?apiKey=YOUR_OTHER_API_KEY" \
-      -H "x-api-key: YOUR_API_KEY"
-    ```
+    **Access scope.** v3 returns only requests that your integrator owns. Any of your API keys can access all v3 data for your other keys. If you use more than one key, you do not have to change your integration.
   </Accordion>
 
   <Accordion title="Filtering, search & sorting" icon="magnifying-glass">
@@ -369,17 +355,17 @@ Every individual change, grouped by request side and response side.
 
     <Note>OR groups support identity, address, chain, currency, and status-style fields. Range filters and `features` are top-level only. Null-checks work on any recognised `filters` key, including the composite `user` field and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. `null` cannot be combined with real values in an array for the same key — that returns `400`.</Note>
 
-    **Filtering by API key.** The `apiKey` parameter is optional, and it does not change which requests you can read. Your authenticating key sets the [access scope](#authentication), and `apiKey` narrows results within it to requests created by the keys you list. It accepts one key or a comma-separated list, and it cannot widen results to requests owned by another integrator.
+    **API key filtering.** The `apiKey` filter does not give access to more requests. It only limits the results to the keys that you specify.
 
     **Referrer filtering (owner-scoped).** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Because referrer values are supplied by the caller and are guessable, a referrer filter **must be paired with the top-level `apiKey` parameter**, and every API key you list must belong to the authenticating integrator. Empty `referrer` values are rejected. Requests without the `apiKey` pairing return `400`; requests whose supplied keys are not owned by the caller integrator (or which cannot resolve to an integrator identity) return `403`.
 
     ```bash
     # exact referrer match; apiKey pairing scopes the result to your own requests
-    GET /requests/v3?referrer=my-app|user-123&apiKey=YOUR_API_KEY
+    GET /requests/v3?referrer=my-app|user-123&apiKey=YOUR_KEY
 
     # same requirement when the key appears inside filters (including not:)
-    GET /requests/v3?filters=[{"referrer":"my-app|user-123"}]&apiKey=YOUR_API_KEY
-    GET /requests/v3?filters=[{"not:referrer":"other-app"}]&apiKey=YOUR_API_KEY,YOUR_OTHER_API_KEY
+    GET /requests/v3?filters=[{"referrer":"my-app|user-123"}]&apiKey=YOUR_KEY
+    GET /requests/v3?filters=[{"not:referrer":"other-app"}]&apiKey=YOUR_KEY,YOUR_OTHER_KEY
     ```
 
     **Removed & changed parameters.**
@@ -537,7 +523,6 @@ Every individual change, grouped by request side and response side.
     | `data.metadata` (catch-all) | `data.route.{quoted,actual}` (`sender` promoted to root) |
     | `data.price` | read `data.route.actual.destination.inputCurrency` |
     | `referrer` (query parameter, cross-integrator) | supported as an owner-scoped filter; must pair with the `apiKey` parameter using keys owned by the authenticating integrator. Still returned in the response body only when `includeAuthenticatedData=true` |
-    | results for requests owned by other integrators | none; v3 returns only requests owned by the authenticating key's integrator, including those created by its sibling keys |
     | `?hash` | `term` / `depositTxHash` / `fillTxHash` / `refundTxHash` |
     | status `delayed` | `depositing` / `submitted` |
   </Accordion>
@@ -564,7 +549,7 @@ Every individual change, grouped by request side and response side.
 
 <Steps>
   <Step title="Switch the endpoint and headers">
-    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Results are limited to requests owned by your integrator, and any of your keys can read requests created by your other keys, so integrations with multiple keys need no change. Cross-integrator access is not supported. `referrer` filtering is still supported, but you must now pair it with the `apiKey` parameter using keys owned by your integrator — cross-integrator referrer lookups are no longer possible. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
+    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Results include only requests that your integrator owns, from all of your API keys. `referrer` filtering is still supported, but you must now pair it with the `apiKey` parameter using keys owned by your integrator — cross-integrator referrer lookups are no longer possible. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
   </Step>
   <Step title="Update fee reads">
     Stop reading `data.fees.gas` / `feesUsd`. Read the per-component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
@@ -584,6 +569,6 @@ Every individual change, grouped by request side and response side.
 </Steps>
 
 <Tip>
-  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key that belongs to the integrator that owns those requests. Any of your keys qualifies.
+  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key tied to those requests.
 </Tip>
 
