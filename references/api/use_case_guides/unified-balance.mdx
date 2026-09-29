@@ -14,13 +14,13 @@ In this guide, you learn how to:
 - [Quote](#get-a-quote), [execute](#sign-and-submit-the-deposit), and [track](#track-the-request) each trade
 - [Configure price protection and fees](#configure-price-protection-and-fees)
 - Use advanced features like [Route Racing](#route-racing), [Fast Quoting](#fast-quoting), [Route Pregeneration](#route-pregeneration), and [Queueing](#queueing)
-- [Handle unfilled deposits](#handle-unfilled-deposits)
+- [Handle slow and unfilled deposits](#troubleshooting)
 
 ## Before you start
 
-- **A Relay [API key](/references/api/api-keys)**: Your backend uses it for quotes, Fee Sponsorship, and Fast Fill.
+- **A Relay [API key](/references/api/api-keys)**: Your backend uses it for quotes and Fee Sponsorship.
 - **An embedded wallet provider**: Your app creates a wallet for each user, such as with [Privy](https://docs.privy.io).
-- **A funded [App Balance](/features/fee-sponsorship#funding-your-app-balance)**: The balance your app funds on Relay to pay for sponsored fees and [Fast Fill](/features/fast-fill).
+- **A funded [App Balance](/features/fee-sponsorship#funding-your-app-balance)**: The balance your app funds on Relay to pay for sponsored fees.
 
 <QuickstartCallout/>
 
@@ -127,28 +127,6 @@ In this guide, you learn how to:
     Subscribe to [websockets](/references/api/api_guides/websockets) for the **`requestId`** from your client to show live status, and configure a [webhook](/references/api/api_guides/webhooks) to update your backend. Both deliver status updates faster than polling. As a fallback, poll [`GET /requests/v3`](/references/api/get-requests) with the request **`id`**, and stop once the request reaches `success`, `failure`, or `refund`.
 
     Show refunded trades as refunded rather than failed, so your users know their funds are back in their Unified Balance. See the [status lifecycle](/references/api/quickstart#status-lifecycle) for every status.
-  </Step>
-  <Step title="Call Fast Fill for slow deposits (server-side)" id="call-fast-fill">
-    When a deposit takes longer than your app's usual time to index, call [Fast Fill](/features/fast-fill) from your backend as insurance: a solver, the participant that fills orders on the destination chain, fills the order before Relay indexes the deposit, backed by a hold on your App Balance. Set the threshold from your own deposit times, so trades still complete quickly when an RPC provider fails or indexing slows down.
-
-    ```typescript
-    // Call once per request, from your backend, when the deposit passes your threshold
-    const response = await fetch("https://api.relay.link/fast-fill", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": "YOUR_API_KEY",
-      },
-      body: JSON.stringify({
-        requestId: "REQUEST_ID", // from the quote
-        maxFillAmountUsd: 500, // per-request cap
-      }),
-    });
-
-    // A 409 means the request is already being processed. Don't retry it.
-    ```
-
-    Relay releases the hold once the deposit lands. If the deposit never lands, the hold becomes a permanent debit, so call Fast Fill only from your backend and set **`maxFillAmountUsd`** to cap your exposure.
   </Step>
   <Step title="Let your users withdraw" id="let-your-users-withdraw">
     When your users withdraw, quote a transfer from their Unified Balance to the chain, token, and address they choose, then execute and track it the same way as a trade. Relay rejects an address in the wrong format for the destination chain, such as an EVM address for a Solana withdrawal, so validate the address in your app before quoting. To cash out to a bank account, hand off to an [offramp](https://docs.privy.io/recipes/off-ramp-guide).
@@ -259,11 +237,36 @@ The normal **`ttl`** still applies to every request, so on queued sells, raise i
 
 ---
 
-## Handle unfilled deposits
-
-Occasionally Relay can't fill a deposit or refund it automatically. The depositing wallet can reclaim the funds at [relay.link/withdraw](https://relay.link/withdraw), but only by signing, which embedded-wallet users usually can't do without exporting their key. Build the reclaim flow into your app with the [withdrawal endpoints](/references/protocol/guides/withdrawals) instead.
+## Troubleshooting
 
 For quote errors and fill failures, see [Handling Errors](/references/api/api_core_concepts/handling-errors) and [Execution Errors](/references/api/api_core_concepts/execution-errors). If you reach rate limits, see [Handling Rate Limits](/references/api/api_core_concepts/handling-rate-limits).
+
+### Slow deposits
+
+When an RPC provider or another downstream provider is degraded, Relay can take longer than usual to index deposits. As a fallback, call [Fast Fill](/features/fast-fill) from your backend for any deposit that takes longer than your app's usual time: a solver, the participant that fills orders on the destination chain, fills the order before Relay indexes the deposit, backed by a hold on your App Balance.
+
+```typescript
+// Call once per request, from your backend, when a deposit takes longer than usual
+const response = await fetch("https://api.relay.link/fast-fill", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    requestId: "REQUEST_ID", // from the quote
+    maxFillAmountUsd: 500, // per-request cap
+  }),
+});
+
+// A 409 means the request is already being processed. Don't retry it.
+```
+
+Relay releases the hold once the deposit lands. If the deposit never lands, the hold becomes a permanent debit, so call Fast Fill only from your backend and set **`maxFillAmountUsd`** to cap your exposure.
+
+### Unfilled deposits
+
+Occasionally Relay can't fill a deposit or refund it automatically. The depositing wallet can reclaim the funds at [relay.link/withdraw](https://relay.link/withdraw), but only by signing, which embedded-wallet users usually can't do without exporting their key. Build the reclaim flow into your app with the [withdrawal endpoints](/references/protocol/guides/withdrawals) instead.
 
 ## See Also
 
