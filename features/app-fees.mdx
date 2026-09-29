@@ -65,11 +65,13 @@ You can verify that app fees are being collected correctly using the following e
 
 ## Withdrawing App Balance
 
-App fees accrue to your App Balance as USDC on Base. You can claim your balance at any time, and no approval from Relay is needed.
+App fees accrue off-chain to your App Balance in USDC. You don't need approval from Relay to claim your balance.
+
+Each balance returned by the [balances API](#get-app-balance) includes the chain and currency it is claimed in. Pass that `chainId` and `currency` when you claim, as the Relay App does.
 
 When you claim, the estimated network gas for the claim transaction is converted to USDC and deducted from the amount you claim, so the amount that arrives in your wallet is slightly lower. The deduction tracks gas prices rather than a fixed amount or percentage, and there is no separate service fee.
 
-To receive your balance on another chain or in another currency, claim it as USDC on Base, then bridge or swap it with Relay. The [quote](/references/api/get-quote-v2) for that transaction shows its fees and the amount you'll receive.
+To hold the funds on another chain or in another currency, bridge or swap them with Relay after you claim. The [quote](/references/api/get-quote-v2) shows Relay's fees and the amount you'll receive. Unless the transaction is gasless, your wallet also pays origin-chain gas, and an ERC-20 may need a separate approval transaction.
 
 The easiest way to claim your App Balance is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App Balance page also supports withdrawing via a multisig. Here's how you can withdraw via the API:
 
@@ -85,20 +87,20 @@ curl --location 'https://api.relay.link/app-fees/0x03508bb71268bba25ecacc8f620e0
  {
   "currency": {
     "chainId": 8453,
-    "address": "0x0000000000000000000000000000000000000000",
+    "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
     "symbol": "USDC",
-    "name": "USDC",
+    "name": "USD Coin",
     "decimals": 6,
     "metadata": {
-      "logoURI": "https://assets.relay.link/icons/1/light.png",
-      "verified": false,
+      "logoURI": "https://coin-images.coingecko.com/coins/images/6319/large/usdc.png",
+      "verified": true,
       "isNative": false
     }
   },
-  "amount": "75021651210714015",
-  "amountFormatted": "0.075021651210714015",
+  "amount": "116235557",
+  "amountFormatted": "116.235557",
   "amountUsd": "116.235557",
-  "minimumAmount": "75021651210714015"
+  "minimumAmount": "116235557"
 }
 ```
 </CodeGroup>
@@ -116,7 +118,7 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --data '{
     "chainId": 8453,
-    "currency": "0x0000000000000000000000000000000000000000",
+    "currency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
     "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c"
 }'
 ```
@@ -129,7 +131,7 @@ const { data: wallet } = useWalletClient();
 const { data } = await getClient().actions.claimAppFees({
   wallet,
   chainId: 8453, // Base
-  currency: "0x0000000000000000000000000000000000000000", // ETH
+  currency: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", // currency.address from the balances API
   recipient: "0x...", // Optional
   onProgress: ({steps, fees, breakdown, currentStep, currentStepItem, txHashes, details}) => {
     // custom handling
