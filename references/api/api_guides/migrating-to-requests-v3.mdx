@@ -316,6 +316,8 @@ Every individual change, grouped by request side and response side.
     ```
 
     The `x-api-key` request header is now required. Every request authenticates against an active API key. See [API Keys](/references/api/api-keys) for details.
+
+    **Access scope.** v3 returns only requests that your integrator owns. Any of your API keys can access all v3 data for your other keys. If you use more than one key, you do not have to change your integration.
   </Accordion>
 
   <Accordion title="Filtering, search & sorting" icon="magnifying-glass">
@@ -326,7 +328,7 @@ Every individual change, grouped by request side and response side.
     | **Search** | `term` (request id, wallet, deposit address, every tx hash), `id`, `orderId`, `depositTxHash`, `fillTxHash`, `refundTxHash` |
     | **Chain** | `originChainId`, `destinationChainId`, `chainId` (either direction), `privateChainsToInclude` |
     | **Address** | `user`, `depositAddress`, `recipient` |
-    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKey`, `apiKeyId`, `requestType`, `referrer` |
+    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKeyId`, `requestType`, `referrer` |
     | **Currency** | `currencyInChainId`, `currencyOutChainId`, `currencyInAddress`, `currencyOutAddress`, `currencyInSymbol`, `currencyOutSymbol` |
     | **Ranges** | `startTimestamp`, `endTimestamp`, `startBlock`, `endBlock`, `amountUsdMin`/`Max`, `appFeesAmountUsdMin`/`Max`, `fillTimeMin`/`Max` |
     | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData`, `includeTotal` |
@@ -353,27 +355,17 @@ Every individual change, grouped by request side and response side.
 
     <Note>OR groups support identity, address, chain, currency, and status-style fields. Range filters and `features` are top-level only. Null-checks work on any recognised `filters` key, including the composite `user` field and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. `null` cannot be combined with real values in an array for the same key — that returns `400`.</Note>
 
-    **Referrer filtering (owner-scoped).** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Because referrer values are supplied by the caller and are guessable, a referrer filter **must be paired with the top-level `apiKey` or `apiKeyId` parameter**, and every API key you list must belong to the authenticating integrator. Empty `referrer` values are rejected. Requests without the `apiKey` / `apiKeyId` pairing return `400`; requests whose supplied keys are not owned by the caller integrator (or which cannot resolve to an integrator identity) return `403`.
+    **API key filtering.** To limit results to specific API keys, use the top-level `apiKeyId` parameter with a maximum of 50 comma-separated IDs that your integrator owns. It does not give access to more requests. We no longer recommend the `apiKey` filter, because it puts your API key in the URL.
+
+    **Referrer filtering (owner-scoped).** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Because referrer values are supplied by the caller and are guessable, a referrer filter **must be paired with a top-level API key filter (`apiKeyId`)**, and every ID you list must belong to the authenticating integrator. Empty `referrer` values are rejected. Requests without this pairing return `400`; requests whose supplied IDs are not owned by the caller integrator (or which cannot resolve to an integrator identity) return `403`.
 
     ```bash
-    # exact referrer match; apiKey / apiKeyId pairing scopes the result to your own requests
-    GET /requests/v3?referrer=my-app|user-123&apiKey=YOUR_KEY
-    GET /requests/v3?referrer=my-app|user-123&apiKeyId=00000000-0000-0000-0000-000000000000
+    # exact referrer match, paired with apiKeyId
+    GET /requests/v3?referrer=my-app|user-123&apiKeyId=YOUR_API_KEY_ID
 
     # same requirement when the key appears inside filters (including not:)
-    GET /requests/v3?filters=[{"referrer":"my-app|user-123"}]&apiKey=YOUR_KEY
-    GET /requests/v3?filters=[{"not:referrer":"other-app"}]&apiKeyId=00000000-0000-0000-0000-000000000000,11111111-1111-1111-1111-111111111111
-    ```
-
-    **Filtering by API key ID.** `apiKeyId` is a top-level query parameter — not a key inside `filters` — that accepts one API key UUID or a comma-separated list. It OR-matches with `apiKey` and can be combined with it; deduplicated values across both parameters are capped at **50**, and larger lists return `400` before any lookup. Every supplied ID must resolve to a key owned by the authenticating integrator; malformed UUIDs and empty list entries return `400`, unknown or foreign IDs return `403`, and transient resolution failures return `503` rather than silently dropping the filter. Inactive keys are still resolvable so historical requests remain searchable. Prefer `apiKeyId` over `apiKey` in query strings so key secrets stay out of URLs, logs, and browser history; retrieve the ID from the [Relay Dashboard](https://dashboard.relay.link) or from the API key management endpoints.
-
-    ```bash
-    # filter by a single API key UUID
-    GET /requests/v3?apiKeyId=00000000-0000-0000-0000-000000000000
-
-    # multiple IDs (OR); may be combined with apiKey — max 50 values across both
-    GET /requests/v3?apiKeyId=00000000-0000-0000-0000-000000000000,11111111-1111-1111-1111-111111111111
-    GET /requests/v3?apiKeyId=00000000-0000-0000-0000-000000000000&apiKey=YOUR_KEY
+    GET /requests/v3?filters=[{"referrer":"my-app|user-123"}]&apiKeyId=YOUR_API_KEY_ID
+    GET /requests/v3?filters=[{"not:referrer":"other-app"}]&apiKeyId=YOUR_API_KEY_ID,YOUR_OTHER_API_KEY_ID
     ```
 
     **Removed & changed parameters.**
@@ -487,7 +479,7 @@ Every individual change, grouped by request side and response side.
   <Accordion title="Moved, added & nulled fields" icon="arrows-up-down-left-right">
     - `moonpayId` moves from the root to **`data.externalMetadata.moonpayId`**.
     - `sender` is **promoted to the root** (next to `recipient`); it previously lived in `data.metadata.sender`.
-    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It remains a supported query filter (see [Filtering, search & sorting](#what-changed)) but referrer-filtered queries must pair with the `apiKey` parameter using keys owned by the authenticating integrator.
+    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It remains a supported query filter (see [Filtering, search & sorting](#what-changed)) but referrer-filtered queries must pair with an API key filter (`apiKeyId`) using IDs owned by the authenticating integrator.
     - **`refundTo`** (refund target for deposit-address transactions) is **added** at the root.
     - **`requestType`** (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
     - **`features`** (e.g. `gasless_execution`, `fast_fill`, `gas_top_up`, `app_fees`, `deposit_address`) is **added** at the root.
@@ -530,7 +522,7 @@ Every individual change, grouped by request side and response side.
     | `data.subsidizedRequest` / `data.subsidizedFee` | `data.feeSponsorship` |
     | `data.metadata` (catch-all) | `data.route.{quoted,actual}` (`sender` promoted to root) |
     | `data.price` | read `data.route.actual.destination.inputCurrency` |
-    | `referrer` (query parameter, cross-integrator) | supported as an owner-scoped filter; must pair with the `apiKey` parameter using keys owned by the authenticating integrator. Still returned in the response body only when `includeAuthenticatedData=true` |
+    | `referrer` (query parameter, cross-integrator) | supported as an owner-scoped filter; must pair with an API key filter (`apiKeyId`) using IDs owned by the authenticating integrator. Still returned in the response body only when `includeAuthenticatedData=true` |
     | `?hash` | `term` / `depositTxHash` / `fillTxHash` / `refundTxHash` |
     | status `delayed` | `depositing` / `submitted` |
   </Accordion>
@@ -557,7 +549,7 @@ Every individual change, grouped by request side and response side.
 
 <Steps>
   <Step title="Switch the endpoint and headers">
-    Point requests at `GET /requests/v3` and send `x-api-key` (now required). `referrer` filtering is still supported, but you must now pair it with the `apiKey` parameter using keys owned by your integrator — cross-integrator referrer lookups are no longer possible. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
+    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Results include only requests that your integrator owns, from all of your API keys. `referrer` filtering is still supported, but you must now pair it with an API key filter (`apiKeyId`) using IDs owned by your integrator — cross-integrator referrer lookups are no longer possible. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
   </Step>
   <Step title="Update fee reads">
     Stop reading `data.fees.gas` / `feesUsd`. Read the per-component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
@@ -572,11 +564,11 @@ Every individual change, grouped by request side and response side.
     Rename `inTxs[].hash` / `outTxs[].hash` to `txHash`. Handle the new `depositing` / `submitted` statuses (and remove `delayed`). Treat `failReason` / `refundFailReason` as `null` rather than `"N/A"`.
   </Step>
   <Step title="Adopt the new querying surface">
-    Replace separate `user`/`hash`/`id` lookups with a single `term` search where it fits, and take advantage of the new filter/sort parameters. Pagination is unchanged — keep passing `continuation` back for the next page (`limit` max 50).
+    Replace separate `user`/`hash`/`id` lookups with a single `term` search where it fits, and take advantage of the new filter/sort parameters. If you filter by `apiKey`, replace it with `apiKeyId`. Pagination is unchanged — keep passing `continuation` back for the next page (`limit` max 50).
   </Step>
 </Steps>
 
 <Tip>
-  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key tied to those requests.
+  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key from the integrator that owns those requests.
 </Tip>
 
