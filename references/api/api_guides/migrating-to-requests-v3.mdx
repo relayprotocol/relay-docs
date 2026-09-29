@@ -357,10 +357,10 @@ Every individual change, grouped by request side and response side.
 
     **API key filtering.** To limit results to specific API keys, use the top-level `apiKeyId` parameter with a maximum of 50 comma-separated IDs that your integrator owns. It does not give access to more requests. We no longer recommend the `apiKey` filter, because it puts your API key in the URL.
 
-    **Referrer filtering (owner-scoped).** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Because referrer values are supplied by the caller and are guessable, a referrer filter **must be paired with the top-level `apiKeyId` parameter**, and every ID you list must belong to the authenticating integrator. Empty `referrer` values are rejected. Requests without this pairing return `400`; requests whose supplied IDs are not owned by the caller integrator (or which cannot resolve to an integrator identity) return `403`.
+    **Referrer filtering (owner-scoped).** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Because referrer values are supplied by the caller and are guessable, a referrer filter **must be paired with a top-level API key filter (`apiKeyId`)**, and every ID you list must belong to the authenticating integrator. Empty `referrer` values are rejected. Requests without this pairing return `400`; requests whose supplied IDs are not owned by the caller integrator (or which cannot resolve to an integrator identity) return `403`.
 
     ```bash
-    # exact referrer match; apiKeyId pairing scopes the result to your own requests
+    # exact referrer match, paired with apiKeyId
     GET /requests/v3?referrer=my-app|user-123&apiKeyId=YOUR_API_KEY_ID
 
     # same requirement when the key appears inside filters (including not:)
@@ -479,7 +479,7 @@ Every individual change, grouped by request side and response side.
   <Accordion title="Moved, added & nulled fields" icon="arrows-up-down-left-right">
     - `moonpayId` moves from the root to **`data.externalMetadata.moonpayId`**.
     - `sender` is **promoted to the root** (next to `recipient`); it previously lived in `data.metadata.sender`.
-    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It remains a supported query filter (see [Filtering, search & sorting](#what-changed)) but referrer-filtered queries must pair with the `apiKeyId` parameter using IDs owned by the authenticating integrator.
+    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It remains a supported query filter (see [Filtering, search & sorting](#what-changed)) but referrer-filtered queries must pair with an API key filter (`apiKeyId`) using IDs owned by the authenticating integrator.
     - **`refundTo`** (refund target for deposit-address transactions) is **added** at the root.
     - **`requestType`** (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
     - **`features`** (e.g. `gasless_execution`, `fast_fill`, `gas_top_up`, `app_fees`, `deposit_address`) is **added** at the root.
@@ -522,7 +522,7 @@ Every individual change, grouped by request side and response side.
     | `data.subsidizedRequest` / `data.subsidizedFee` | `data.feeSponsorship` |
     | `data.metadata` (catch-all) | `data.route.{quoted,actual}` (`sender` promoted to root) |
     | `data.price` | read `data.route.actual.destination.inputCurrency` |
-    | `referrer` (query parameter, cross-integrator) | supported as an owner-scoped filter; must pair with the `apiKeyId` parameter using IDs owned by the authenticating integrator. Still returned in the response body only when `includeAuthenticatedData=true` |
+    | `referrer` (query parameter, cross-integrator) | supported as an owner-scoped filter; must pair with an API key filter (`apiKeyId`) using IDs owned by the authenticating integrator. Still returned in the response body only when `includeAuthenticatedData=true` |
     | `?hash` | `term` / `depositTxHash` / `fillTxHash` / `refundTxHash` |
     | status `delayed` | `depositing` / `submitted` |
   </Accordion>
@@ -549,7 +549,7 @@ Every individual change, grouped by request side and response side.
 
 <Steps>
   <Step title="Switch the endpoint and headers">
-    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Results include only requests that your integrator owns, from all of your API keys. `referrer` filtering is still supported, but you must now pair it with the `apiKeyId` parameter using IDs owned by your integrator — cross-integrator referrer lookups are no longer possible. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
+    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Results include only requests that your integrator owns, from all of your API keys. `referrer` filtering is still supported, but you must now pair it with an API key filter (`apiKeyId`) using IDs owned by your integrator — cross-integrator referrer lookups are no longer possible. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
   </Step>
   <Step title="Update fee reads">
     Stop reading `data.fees.gas` / `feesUsd`. Read the per-component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
@@ -569,6 +569,6 @@ Every individual change, grouped by request side and response side.
 </Steps>
 
 <Tip>
-  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key tied to those requests.
+  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key from the integrator that owns those requests.
 </Tip>
 
