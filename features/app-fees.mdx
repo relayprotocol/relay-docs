@@ -65,7 +65,11 @@ You can verify that app fees are being collected correctly using the following e
 
 ## Withdrawing App Balance
 
-App balance accrue in USDC from app fees, and can be claimed on any chain. The balance is free to claim on Base, and Relay app balance apply to claim on any other chain or in any other currency.
+App fees accrue to your App Balance as USDC on Base. You can claim your balance at any time, and no approval from Relay is needed.
+
+When you claim, the estimated network gas for the claim transaction is converted to USDC and deducted from the amount you claim, so the amount that arrives in your wallet is slightly lower. The deduction tracks gas prices rather than a fixed amount or percentage, and there is no separate service fee.
+
+To receive your balance on another chain or in another currency, claim it as USDC on Base, then bridge or swap it with Relay. The [quote](/references/api/get-quote-v2) for that transaction shows its fees and the amount you'll receive.
 
 The easiest way to claim your App Balance is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App Balance page also supports withdrawing via a multisig. Here's how you can withdraw via the API:
 
