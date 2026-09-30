@@ -47,7 +47,8 @@
               "features/gasless-execution",
               "features/fast-fill",
               "features/gasless-swaps",
-              "features/price-stabilization"
+              "features/price-stabilization",
+              "features/slas"
             ]
           },
           {
