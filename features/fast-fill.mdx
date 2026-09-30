@@ -15,6 +15,10 @@ Before you can start fast filling requests, you need:
 2. **A Fee Sponsorship Wallet** — A wallet linked to your API key that funds your app balance. Link one from the [App Balance page](https://dashboard.relay.link/balance) in the Relay Dashboard by signing a message to prove ownership — no gas required.
 3. **Sufficient App Balance** — Your app balance must have enough funds to cover fast fills and fee sponsorship. When a fast fill is triggered, a hold is placed against your app balance for the fill amount. This hold is released once the user's deposit lands onchain. While holds are active, they reduce the balance available for new fast fills and claims, but do not block [fee sponsorship](/features/fee-sponsorship) deductions.
 
+### One app balance for every route
+
+Fast Fill uses a single app balance, held in USDC on Base, as collateral for all supported routes. You don't need to fund a separate balance on each origin or destination chain: a solver fills the destination with its own capital, and each hold is the USD value of the request's origin input, placed against your one app balance regardless of the chains involved. The balance belongs to your Fee Sponsorship Wallet, so API keys linked to the same wallet share it. See [Funding Your App Balance](#funding-your-app-balance) to top it up.
+
 Once you're set up, you can begin fast filling requests.
 
 ---
