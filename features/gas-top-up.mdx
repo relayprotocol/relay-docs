@@ -3,14 +3,61 @@ title: "Gas Top-Up"
 description: "Include destination-chain native gas in bridged fills so recipients can transact immediately."
 ---
 
-Gas top-up automatically includes a small amount of the destination chain's native gas token (e.g., ETH) with the bridged tokens. This ensures recipients have gas to interact with their received tokens immediately.
+**Gas Top-Up: payouts that land usable.**
+
+**Include destination gas with any fill. One parameter.**
+
+A payout that arrives unusable isn't finished. You send a worker, a creator, or a customer their funds; the tokens land, but the wallet has no gas, so the first thing they can do with their money is nothing.
+
+They hold value they can't move until they go and acquire a native token they've never heard of. The failure happens after the payment succeeded, and it lands on your support queue.
+
+Gas top-up closes that gap. Set one flag on the quote and the fill includes a small amount of the destination chain's native gas token alongside the funds. Recipients land with their money and the gas to use it: payouts end usable, and onboarding ends with a user who can transact.
+
+It's the destination-side half of the gas story: [gasless execution](/features/gasless-execution) removes the gas requirement where a transaction starts, gas top-up equips the recipient where funds land.
+
+## How it works
+
+1. **Set:** Set **`topupGas`** to `true` on the quote, and optionally set the amount with **`topupGasAmount`**.
+2. **Send:** The payout or transfer completes as normal; nothing changes for sender or recipient.
+3. **Arrive:** The fill delivers the funds plus a small amount of destination-chain native gas.
+4. **Act:** The recipient can transact immediately. No detour to acquire gas, no stranded balance.
+
+## Why it matters
+
+**For integrators**
+
+- **Payouts that are actually finished.** The recipient can use what they received, immediately.
+- **Kill the "now go buy ETH" moment,** and the support tickets that come with it.
+- **Onboarding ends in activation, not arrival.** The user's first action on the new chain works.
+- **One parameter.** No gas infrastructure to build, no native token inventory to manage per chain.
+
+**For recipients**
+
+- **Land ready to act.** Funds and the gas to use them, in one arrival.
+- **No stranded balances** and no chains to understand.
+- **Nothing extra to do.** The flow that paid them is the whole flow.
+
+## Who it's for
+
+- **Payment Service Providers:** Pay-ins settle to your treasury, but payouts land in someone's wallet. What you send to workers, creators, and customers should arrive usable, not stranded.
+- **Wallets & Wallet Infrastructure:** Onboarding a user to a new chain should end with a usable wallet. Top-up makes every arrival immediately functional.
+- **Onchain Apps:** Users funding an app wallet should be able to act the moment funds land. No gas detour between deposit and first trade.
+- **Chains & RaaS Providers:** Users arriving in your ecosystem can transact from their first block. Onboarding flows end in active users.
+
+## Limitations
+
+EVM chains only. Not available when bridging the destination chain's native token itself (there's nothing to top up that the fill doesn't already deliver). The route's currency must support bridging; check [Supported Tokens & Routes](/references/api/api_resources/supported-routes) for per-chain coverage.
+
+For payouts that land exact as well as usable, pair gas top-up with [price stabilization's fixed rates](/features/price-stabilization#fixed-rates).
+
+---
 
 ## Enabling Gas Top-Up
 
 To enable gas top-up in your quote request:
 
-- Set `topupGas` to `true`
-- Optionally specify the gas amount using `topupGasAmount`
+- Set **`topupGas`** to `true`
+- Optionally specify the gas amount using **`topupGasAmount`**
 
 ## Checking Gas Top-Up Support
 
