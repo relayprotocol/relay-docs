@@ -1,0 +1,14 @@
+# Code owners for relay-docs.
+#
+# The `main` ruleset has `require_code_owner_review` enabled, so any PR touching
+# a path below is blocked from merging until one of its owners approves. This
+# applies to every PR regardless of author, including the draft PRs opened by
+# the Docs Drift Draft automation (`reusable-docs-draft-pr.yml`).
+#
+# Owners must have write access to this repo or GitHub silently ignores the rule.
+
+# Fee Structure documentation. Fee terminology here is mirrored in BD proposals
+# and legal agreement templates, so renaming a fee breaks signed agreements.
+# Legal approves before merge.
+# Keep in sync with FEE_DOC_PATHS in .github/workflows/legal-review-gate.yml.
+/references/api/api_core_concepts/fees.mdx @PeterPython

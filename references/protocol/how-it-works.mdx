@@ -4,7 +4,9 @@ description: "End-to-end walkthrough of the settlement protocol flows"
 sidebarTitle: How It Works
 ---
 
-Relay is a crosschain intents protocol. Users express what they want (e.g., bridge 1 ETH from Optimism to Base), and third-party solvers fill those orders using their own capital. The protocol then settles solvers — verifying fills and reimbursing them from the user's escrowed deposit.
+Relay Protocol settles cross-chain intents. Users express what they want (e.g., bridge 1 ETH from Optimism to Base), and solvers fill those orders using their own capital. The protocol then settles solvers — verifying fills and reimbursing them from the user's escrowed deposit.
+
+This page describes the settlement protocol, not every route available through the [Relay platform](/how-relay-works). Each diagram follows one order and its solver; solvers are participants, not a single protocol-wide operator.
 
 What makes Relay different is how settlement works. It's designed from the ground up for maximum efficiency & compatibility:
 - A dedicated low-cost settlement chain ([Relay Chain](/references/protocol/components/relay-chain))
@@ -72,7 +74,7 @@ sequenceDiagram
 
 **Step by step:**
 
-1. **User requests a quote** — The user specifies what they want (e.g., bridge 1 ETH from Optimism to Base). The Relay API returns quotes from available solvers.
+1. **User agrees to an order** — The user specifies what they want (e.g., bridge 1 ETH from Optimism to Base). An application obtains a solver's commitment; quoting and order distribution sit outside the settlement protocol.
 
 2. **User deposits into Depository** — The user sends funds to the [Depository](/references/protocol/components/depository) contract on the origin chain. The deposit is tagged with an **orderId** that links it to the solver's commitment. This costs approximately 21,000 gas — close to a simple transfer.
 
@@ -113,7 +115,7 @@ sequenceDiagram
 
 3. **Oracle reads destination chain** — The Oracle reads the destination chain to verify that the solver's fill matches the user's intent (correct destination, amount, and action).
 
-4. **Oracle returns attestation** — Oracle validators each verify the data and sign an EIP-712 attestation. Once a threshold of signatures is collected, the signed attestation is returned to the solver.
+4. **Oracle returns attestation** — The Oracle returns a signed EIP-712 attestation. The Oracle contract verifies an authorized signer; when a signer contract is used, that contract enforces its configured threshold. See the [Oracle trust model](/references/protocol/security#oracle).
 
 5. **Solver submits to Oracle contract** — The solver submits the signed attestation to the Oracle contract on the [Relay Chain](/references/protocol/components/relay-chain), which verifies the authorized signer and executes on the [Hub](/references/protocol/components/hub). This triggers two actions:
    - **MINT** — The user's deposit is represented as a token balance on the Hub

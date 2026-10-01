@@ -29,6 +29,24 @@ Pages in `solutions/`, `resources/`, `security/`, `references/protocol/`, `refer
 
 **Nav-organization stubs (ignore):** `references/api/advanced.mdx`, `references/api/core.mdx`, and `references/api/utilities.mdx` are empty files that exist only to create group headers in the API Reference sidebar. They render no content, so frontmatter requirements and other §2 / §3 rules do not apply. Automation should skip them.
 
+### 1.2 Platform, protocol, and solver positioning
+
+These rules apply to all public surfaces, including pages outside the profile table, examples, snippets, diagrams, and generated content:
+
+- **Approved headline:** “Swap, pay, and transact across every chain, instantly.”
+- **Approved introduction:** “Relay is a developer platform that gives you instant global access to the onchain economy. Swap, pay, and transact across every blockchain from a single onchain balance using a simple set of enterprise-grade APIs.” Use this on `what-is-relay.mdx`; adapt supporting pages to their audience rather than repeating it everywhere.
+- **Relay platform** provides quotes, routing, transaction steps, tracking, and application tooling (API, RelayKit, Relay App). **Relay Protocol** provides settlement infrastructure. **Solvers** supply liquidity and fill cross-chain orders using their own capital. Keep these roles distinct.
+- **What is Relay?** describes the platform only. Keep protocol positioning in the separate Relay Protocol section. Explain solvers as part of transaction mechanics (“a solver fills the order”), not as a public integration audience; do not add solver onboarding guides or position the protocol as an open solver market.
+- Lead supporting platform overviews, solutions, and use cases with what the reader can do: swap, pay, and transact from their existing balance. Use “developer platform” when defining Relay; do not substitute “payments network” or “onchain transaction platform.” Keep explanations of internal layers in the relevant walkthroughs and references.
+- Keep route support, gas requirements, timing, refund conditions, and security assumptions explicit in technical docs. The headline does not replace those constraints or imply pooled custody, zero-latency guarantees, or availability on unsupported routes.
+- Use “solvers” for the participant class and “a solver” for one order. Do not frame Relay as a single solver or use “our solver,” “Relay's solver,” or “the Relay Solver” as a product identity. Do not imply an auction, open participation, or a live multi-solver platform unless verified.
+- Describe actual fund flows: deposits, solver-funded fills, settlement, and withdrawals. Do not describe protocol deposits as payments directly to a solver. If an integration actually uses a direct transfer (for example app-balance funding), state that exception accurately; never relabel an EOA as a Depository or change a transaction target for positioning.
+- Distinguish deployed platform routes from protocol capabilities and future rollouts. API suffixes (`/requests/v3`), response namespaces (`protocol.v2`), and contract versions are not interchangeable release labels.
+- Ground “decentralized,” “trustless,” and “non-custodial” in verified mechanics and scope. Preserve signer, permission, upgrade, halt, and recovery assumptions. Do not replace security explanations with absolute guarantees.
+- Keep regulatory, licensing, and fundraising arguments out of public positioning. Document screening behavior and restrictions without making legal conclusions or removing safety information.
+- Preserve API field names, signed payloads, addresses, and historical changelog facts. Response excerpts may omit display-only descriptions; do not invent replacement strings and present them as live API output. Fix generated wording at its source, and flag upstream changes for review.
+- Entry-point changes must keep platform integration and protocol settlement paths distinct. Update inbound links, check reachable legacy pages, and inspect rendered diagrams and navigation. Flag quickstart walkthrough changes for human review before publication.
+
 ---
 
 ## 2. Global rules (apply to every in-scope page)
@@ -228,7 +246,9 @@ Treat structurally like a **feature guide** (§3.1). Usually end-to-end walkthro
 
 ### 3.7 Quickstart (exception)
 
-`references/api/quickstart.mdx` is intentionally one-of-a-kind. Do not impose a profile on it. It gets its own treatment because its job is different from reference and different from feature guides — it is the single "you are here" entry point. When editing quickstart, pattern-match against the existing page; when changes originate from upstream (new onboarding step, new default parameter), flag for human review rather than letting automation rewrite it.
+`references/api/quickstart.mdx` is intentionally one-of-a-kind. Do not impose a profile on it. It gets its own treatment because its job is different from reference and different from feature guides — it is the "you are here" entry point for API integration. When editing quickstart, pattern-match against the existing page; when changes originate from upstream (new onboarding step, new default parameter), flag for human review rather than letting automation rewrite it.
+
+**Entry path.** The homepage cards point at `what-is-relay`, `references/api/overview`, and `references/protocol/overview` — quickstart is not one of them. It is reached through the API Reference tab in `docs.json` and through the lead paragraph of `references/api/overview.mdx`, which is now its only inbound link from the top of the platform path. Treat that link as load-bearing: a change to the homepage cards, the API Reference tab, or that lead must keep a path to quickstart, and any such change is a human review step.
 
 ---
 
@@ -256,6 +276,7 @@ Breaking changes are renames, removals, signature changes, return-shape changes,
   - `references/api/changelog.mdx` — API endpoint changes, hand-authored in this repo.
   - `relay-kit` package `CHANGELOG.md` files — written as changesets in that repo, and published as written. `.changelog/relay-kit-overrides.md` here rewrites individual entries after the fact (§4.6).
   - `.changelog/app.md` — the relay.link line, hand-authored here in the same shape as the API file. Curated copy rather than a log of merged PRs, so it is empty by default and the App section is omitted until an entry exists.
+  - `.changelog/dashboard.md` — the dashboard.relay.link line, same shape and same curated-copy rule. Its backfill starts at the 2026-07-16 public launch; pilot-era work is described by that entry rather than dated to when it merged.
 - **Update inbound links.** Any page that referenced the old name / path / signature must be updated in the same PR.
 - **No inline `<Warning>` callout on the updated page.** The changelog is the record. Exception: when the rename has a migration subtlety that every reader must see (e.g. param reordering with silent behavior change), add a one-liner `<Info>` with the date and a pointer to the changelog entry.
 
@@ -304,17 +325,17 @@ The `## YYYY-MM-DD — <summary>` heading shape is parsed by `scripts/build-chan
 
 ### 4.6 Unified changelog (`changelog.mdx`)
 
-`changelog.mdx` is generated — **never edit it by hand.** `scripts/build-changelog.mjs` merges the three sources listed in §4.2 into one date-ordered page of Mintlify `<Update>` blocks, and an hourly GitHub Action opens or updates a pull request with the result. It is its own tab in `docs.json` (`navigation.tabs`), alongside Overview, API Reference, RelayKit, and Relay Protocol. Because the tab holds this page alone, the page sets `mode: "center"` so no single-item sidebar renders.
+`changelog.mdx` is generated — **never edit it by hand.** `scripts/build-changelog.mjs` merges the four sources listed in §4.2 into one date-ordered page of Mintlify `<Update>` blocks, and an hourly GitHub Action opens or updates a pull request with the result. It is its own tab in `docs.json` (`navigation.tabs`), alongside Relay Platform, API Reference, RelayKit, and Relay Protocol. Because the tab holds this page alone, the page sets `mode: "center"` so no single-item sidebar renders.
 
-- Each day renders as one `<Update>` with `### API` / `### RelayKit` / `### App` sections.
-- **API and App entry text is reproduced verbatim from its source.** Fix wording in that source, not here.
+- Each day renders as one `<Update>` with `### API` / `### RelayKit` / `### App` / `### Dashboard` sections.
+- **API, App, and Dashboard entry text is reproduced verbatim from its source.** Fix wording in that source, not here.
 - **RelayKit changesets publish as written, and `.changelog/relay-kit-overrides.md` rewrites the ones worth rewriting.** An override names the changeset commits it replaces in `Covers:`, plus `Type:` and optional `Tags:`/`Date:`; see that file's header for the format. Package versions and commit links are **derived from `Covers`**, never hand-written, so they cannot drift. A changeset with no override renders raw — which is why relay-kit carries changeset guidance and a `lint:changesets` floor.
 - **Every build prints the changesets publishing raw, newest first, keyed by commit.** That list is the work queue for overrides, so nothing tracks a last-synced cursor. Scout's `write-changelog-entry` skill reads it, appends to the override file, and opens a review PR. Never edit `changelog.mdx` — it is generated.
 - **Filtering is custom.** Mintlify's own changelog filters render in the table of contents, which `mode: "center"` hides. Instead, `enhanceChangelogPage()` in `script.js` binds the tags Mintlify renders under each date (`[data-component-part="update-tag"]`, from the `tags={[…]}` prop): click one to narrow to that product line, click it again to clear, several tags OR together. **The `?tags=` query string is the source of truth**, re-read on every navigation event, so a shared link, a back/forward step, and a click on the Changelog tab each land on the filter the URL names.
 - **A sticky filter bar sits above the timeline.** `script.js` injects it from the tags actually present on the page, in `TAG_ORDER`, with an `All` chip that clears the filter. Both chip sets drive the same state, so clicking either updates both.
 - **The bar's offset is measured, not declared.** It clears the navbar using a height read at runtime, and publishes its own height as `--cl-bar-height`, which `style.css` adds to Mintlify's `--scroll-mt` in a `calc()` on the day's sticky date column — that column parks at the same offset and would otherwise sit behind the bar. Adding rather than replacing keeps their value and its unit; reading the variable in JS and re-emitting it in pixels mis-converts a `rem`.
 - **The bar is injected, not generated into the MDX**, and borrows `bg-background-light dark:bg-background-dark` from Mintlify's own sticky elements. Filtering needs the script either way, so no script means no bar rather than an inert control.
-- **The filter reaches inside a day.** A date that survives it still hides the sections and entries belonging to other product lines, down to individual bullets inside a change-type group. Sections map to tags by heading (`API`, `App`); inside `### RelayKit` the tags come from the package attribution the generator appends (`SDK 7.0.0`), matched only when a version follows the name so prose mentioning "the SDK" is not read as one.
+- **The filter reaches inside a day.** A date that survives it still hides the sections and entries belonging to other product lines, down to individual bullets inside a change-type group. Sections map to tags by heading (`API`, `App`, `Dashboard`); inside `### RelayKit` the tags come from the package attribution the generator appends (`SDK 7.0.0`), matched only when a version follows the name so prose mentioning "the SDK" is not read as one.
 - **Anything the parser cannot judge stays visible** — an item-less group, a section with no groups, an entry with no attribution — and with no filter active every element the script hides is restored outright rather than re-derived. Hiding content over a markup mismatch is a worse failure than the filter quietly not working.
 - The filter hangs off Mintlify's `data-component-part` attributes (`update-tag`, `update-tag-list`, `update-content`), verified against a deployed build. If an upgrade renames them the filter stops working, so re-check it after a Mintlify bump.
 - **Releases are dated by the commit that added their CHANGELOG section**, read from a full clone of relay-kit. No npm registry: that dates every release in the file (989 versions) rather than only tagged or currently-published ones, and keeps the build offline apart from the clones.
@@ -326,13 +347,15 @@ The `## YYYY-MM-DD — <summary>` heading shape is parsed by `scripts/build-chan
 
 ## 5. Terminology
 
-- **Relay** — the product, always capitalized, no italics.
-- **Relay Network** — capitalized when referring to the cross-chain infrastructure as a named thing.
+- **Relay** — the umbrella name, always capitalized, no italics. Name the platform or protocol when describing a specific responsibility.
+- **Relay platform** — quotes, routing, tracking, and application tooling. Capitalize Platform in titles and navigation labels.
+- **Relay Protocol** — the protocol integration surface; **Relay Settlement** names its intent-settlement system. Keep Relay Vaults' separate liquidity role explicit.
+- **Relay Network** — avoid as a substitute for the platform, protocol, or solver participants; name the responsible layer.
 - **Relay Depository Contract** — capitalized, link to `/references/protocol/overview` on first mention.
 - **RelayKit** — one word, both caps, when referring to the suite of SDK + Hooks + UI packages. Package names on disk / in imports are lowercase-hyphenated (`relay-kit`, `relay-sdk`, `relay-kit-hooks`, `relay-kit-ui`).
 - **SDK** — all caps in prose. The full name is "Relay SDK" on first mention, "the SDK" thereafter.
-- **solver** — lowercase in prose (role, not proper noun). Capitalize only at the start of a sentence.
-- **relayer** — lowercase in prose.
+- **solver** — lowercase in prose (participant role, not a product identity). Use the plural for general descriptions; singular is appropriate for the solver filling an individual order.
+- **relayer** — lowercase; use for the transaction-broadcasting role, or when explaining existing API fields. Do not rename wire fields such as `relayerGas` or `RelayerWitness`.
 - **quote** / **Quote** — lowercase in prose ("get a quote"); capitalized only when referring to the API/SDK type (e.g. "the `Quote` object").
 - **API key** — capital `API`, lowercase `key`. Normalize `API Key` and `api key` variants to `API key` in prose (do not touch code, URLs, or HTTP header names).
 - **cross-chain** — hyphenated, lowercase.

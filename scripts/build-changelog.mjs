@@ -4,6 +4,7 @@
 //   RelayKit  packages/*/CHANGELOG.md in relayprotocol/relay-kit, dated by the commit that
 //             added each version's section, and rewritten by .changelog/relay-kit-overrides.md
 //   App       .changelog/app.md in this repo (hand-authored, same shape as the API file)
+//   Dashboard .changelog/dashboard.md in this repo (hand-authored, same shape as the API file)
 //
 // The only external source is relay-kit, which is public and clones without a credential.
 // Set RELAY_KIT_DIR to read an existing checkout's working tree instead.
@@ -23,6 +24,9 @@ const API_CHANGELOG = join(ROOT, 'references', 'api', 'changelog.mdx')
 // nothing derives it from that repo's code, so reading a private repo bought only a token
 // requirement and a cross-repo clone.
 const APP_CHANGELOG = join(ROOT, '.changelog', 'app.md')
+// The Dashboard line covers dashboard.relay.link. Same reasoning as the App line: curated
+// copy, written here rather than in the private developer-dashboard repo.
+const DASHBOARD_CHANGELOG = join(ROOT, '.changelog', 'dashboard.md')
 // Editorial layer for the RelayKit line: customer-facing entries that supersede the
 // changeset text they name in `covers`. Written by hand or by Scout's write-changelog-entry
 // skill, reviewed in a PR. Anything not covered still renders verbatim from upstream.
@@ -39,10 +43,10 @@ const CHECK = process.argv.includes('--check')
 // here. The commit page names the PR it came from, so one link covers both.
 const RELAY_KIT_COMMIT_URL = 'https://github.com/relayprotocol/relay-kit/commit'
 
-const SECTION_ORDER = ['API', 'RelayKit', 'App']
-const TAG_ORDER = ['API', 'RelayKit', 'SDK', 'UI Kit', 'Hooks', 'Adapters', 'App']
+const SECTION_ORDER = ['API', 'RelayKit', 'App', 'Dashboard']
+const TAG_ORDER = ['API', 'RelayKit', 'SDK', 'UI Kit', 'Hooks', 'Adapters', 'App', 'Dashboard']
 
-// Change-type groups within a day's API and App sections, most consequential first.
+// Change-type groups within a day's API, App, and Dashboard sections, most consequential first.
 // Types not listed here still render, after these, in the order they first appear.
 const CHANGE_TYPE_ORDER = ['Breaking', 'Deprecated', 'Behavior change', 'Added', 'Changed', 'Fixed', 'Removed']
 
@@ -671,7 +675,12 @@ const overrides = collectOverrides()
 const entries = [
   ...readSectioned(API_CHANGELOG, { section: 'API', tag: 'API', label: 'API changelog' }),
   ...collectRelayKitEntries(relayKitDir, overrides),
-  ...readSectioned(APP_CHANGELOG, { section: 'App', tag: 'App', label: 'App changelog' })
+  ...readSectioned(APP_CHANGELOG, { section: 'App', tag: 'App', label: 'App changelog' }),
+  ...readSectioned(DASHBOARD_CHANGELOG, {
+    section: 'Dashboard',
+    tag: 'Dashboard',
+    label: 'Dashboard changelog'
+  })
 ]
 
 const page = renderPage(entries)

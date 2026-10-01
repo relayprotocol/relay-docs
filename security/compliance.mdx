@@ -1,19 +1,19 @@
 ---
-title: "Compliance"
+title: "Transaction Screening"
+description: "Understand address screening and blocked transactions on the Relay platform"
 ---
 
-Relay prioritizes the security and integrity of every transaction. To meet international regulatory standards, we enforce strict sanctions screening and blocklists to ensure compliance with OFAC and other global laws.
+The [Relay platform](/what-is-relay) screens transaction addresses using third-party risk data and an internal blocklist. Screening can prevent a quote or fill from proceeding.
 
-### How it works
+## How It Works
 
-All transactions are screened in real time against:
+Screening uses:
 
-- **Third-Party Integrations**: Professional-grade sanctions and risk databases, including HackBounty and Chainalysis, used to identify addresses linked to malicious activity and ensure regulatory compliance.
-- **Relay’s Internal Blocklist**: Continuously maintained and updated by our compliance team based on emerging threats and intelligence.
+- **Third-party data** — Risk and sanctions databases, including HackBounty and Chainalysis, identify flagged addresses.
+- **Internal blocklist** — The platform maintains additional address restrictions based on threat reports and investigations.
 
-### For Users
+## Blocked Transactions
 
-If a transaction is flagged for involving a sanctioned address, it will be automatically blocked, and you’ll receive a “Detected sanctioned address” notification. This protects you and helps ensure full compliance with international financial regulations.
+A flagged address can produce a “Detected sanctioned address” notification or a blocked-wallet error. See [Unsupported Exchanges](/security/unsupported-exchanges) before sending from an exchange.
 
-Through robust third-party integrations and internal safeguards, Relay maintains a secure and compliant environment for all users.
-
+A fill-time screening failure does not trigger an automatic refund. See [Execution Errors](/references/api/api_core_concepts/execution-errors) and contact [Support](/resources/support) for review.

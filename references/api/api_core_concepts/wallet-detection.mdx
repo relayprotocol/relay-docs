@@ -5,8 +5,6 @@ description:
         optimal user experience"
 ---
 
-# Wallet Detection
-
 When using Protocol v2 on EVM chains, you need to detect whether your user's
 wallet is an **EOA (Externally Owned Account)** or a **Smart Wallet** to
 properly set the `explicitDeposit` parameter in your quote requests.
@@ -25,8 +23,8 @@ atomically, making multi-step flows more user-friendly.
 
 ## The Problem
 
-Protocol v2 uses the Relay Depository contracts to enable trustless cross-chain
-payments. For ERC20 token deposits, there are two possible transaction flows:
+The EVM protocol deposit flow sends funds to Relay Depository contracts.
+For ERC20 token deposits, there are two possible transaction flows:
 
 **Explicit Deposits (2 transactions):**
 
@@ -35,7 +33,7 @@ payments. For ERC20 token deposits, there are two possible transaction flows:
 
 **Implicit Deposits (1 transaction):**
 
-1. User transfers tokens directly to the solver with order ID encoded in
+1. User transfers tokens to the Depository with the order ID encoded in
    transaction calldata
 
 The challenge is that **implicit deposits only work reliably for EOAs**, while
@@ -243,7 +241,7 @@ const quoteRequest = {
 ### For EOA Users (`explicitDeposit: false`)
 
 ```
-✅ Step 1: Transfer USDC directly to solver with order ID encoded in calldata
+✅ Step 1: Transfer USDC to the Depository with the order ID encoded in calldata
 ✅ One wallet confirmation
 ✅ Faster execution and lower cost
 ✅ Simpler, more intuitive user experience

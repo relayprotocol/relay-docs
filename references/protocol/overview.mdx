@@ -1,10 +1,16 @@
 ---
-title: Relay Settlement
+title: Relay Protocol
 description: "A crosschain settlement protocol optimized for speed, cost, and reliability"
 sidebarTitle: Overview
 ---
 
-Relay Settlement is a hyper-optimized intents protocol, designed for high-performance solvers that want to offer non-custodial crosschain relaying with the minimum possible overhead. It's optimized on 5 key dimensions:
+Relay Protocol coordinates settlement for cross-chain transactions. Its settlement system, Relay Settlement, connects user deposits, fill verification, balance accounting, and withdrawals. A solver fills an order using its own capital; the protocol verifies the fill and accounts for settlement.
+
+The [Relay platform](/what-is-relay) provides quotes, routing, and application tooling. This section explains the protocol's settlement mechanics and security model.
+
+## Design Goals
+
+Relay Settlement is optimized on five dimensions:
 
 - **Speed** — Sub-second fills with optimistic execution
 - **Cost** — Minimal overhead on top of raw transfers
@@ -12,7 +18,13 @@ Relay Settlement is a hyper-optimized intents protocol, designed for high-perfor
 - **Coverage** — Works on any chain, with minimal effort to deploy to new chains and VMs
 - **UX** — Simple transfer flows + fast refunds
 
-Unlike other intent protocols, Relay Settlement does not attempt to be a solver marketplace, or offer any sort of orderflow auction. It's a pure utility, designed to be used by solvers that already have their own orderflow and just need efficient settlement.
+Relay Settlement handles settlement, not quoting or order distribution. It does not run an orderflow auction.
+
+## Verification and Security
+
+A solver fills an order, the [Oracle](/references/protocol/components/oracle) attests the deposit and fill, and the [Allocator](/references/protocol/components/allocator) authorizes withdrawals.
+
+The protocol's [security model](/references/protocol/security) describes its deployed signers, withdrawal permissions, and [Security Council](/references/protocol/components/security-council). Review these verification and recovery mechanisms before integrating.
 
 ## How It Works
 
@@ -54,7 +66,7 @@ A core concern for solvers is getting paid as quickly as possible, in order to r
 
 Claiming payment for every intent on the origin can be expensive, so most high-volume solvers want some form of batching. But not all batching is the same — some protocols globally batch all intents on an hourly interval, resulting in significant capital lockup.
 
-Relay Settlement allows solvers to withdraw whenever they want, choosing their optimal point on the trade-off spectrum between cost and capital efficiency. Settle thousands of orders in real-time on the Hub, and batch withdrawals on your own schedule.
+Relay Settlement records fills in real time on the Hub. A solver can batch authorized withdrawals to balance transaction costs against capital needs.
 
 ## Coverage
 

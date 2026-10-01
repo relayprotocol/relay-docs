@@ -1,9 +1,9 @@
 ---
 title: "Smart Accounts in Relay"
-description: "How Relay uses ERC-4337 and EIP-7702 to enable smart wallet features like gas sponsorship, batching, and cross-chain execution"
+description: "Sponsor gas, batch actions, and execute across chains with ERC-4337 and EIP-7702"
 ---
 
-Smart accounts unlock new design space in **Relay’s cross-chain infrastructure**. With them, we can:
+Let users transact across chains from the assets they already hold. Combine smart accounts with Relay to:
 
 - **Batch multiple actions** into one atomic call (e.g. deposit → call user wallet → mint NFT)
 - **Delegate tx execution to the user**, preserving `msg.sender` on the destination chain
@@ -35,14 +35,14 @@ We support 7702 to:
 - **Execute logic on destination chains where the user is `msg.sender`**  
   Useful for apps where the final contract cares about the actual sender (e.g. NFT mints, purchases)
 - **Preserve intent and gas delegation across chains**  
-  Our solver can bridge ETH or tokens to the user's EOA, and the EOA can act as a smart wallet
+  Solvers can deliver ETH or tokens to the user's EOA, and the EOA can act as a smart wallet
 - **Avoid smart account setup** on destination: the user's EOA behaves like a contract temporarily, powered by an `authorizationList` signature
 
 ---
 
 ### Why Smart Accounts Matter for Relay
 
-Smart accounts let us overcome key limitations in a cross-chain solver system:
+Smart accounts help your app preserve user identity, batch calls, and manage gas across chains:
 
 | Problem | Solved By |
 |--------|-----------|
@@ -53,9 +53,9 @@ Smart accounts let us overcome key limitations in a cross-chain solver system:
 
 For example, when someone uses ETH on Chain A to buy an NFT on Chain B:
 
-- Relay bridges the ETH to their EOA
+- A solver delivers ETH to their EOA on Chain B
 - That EOA uses a signed 7702 tx to **batch logic** on Chain B: approve → mint
-- `msg.sender` = the user, not Relay
+- `msg.sender` = the user, not the solver
 
 This wasn’t previously possible because we couldn’t inject logic into EOAs **without deploying a contract**. Now we can.
 
@@ -68,6 +68,6 @@ This wasn’t previously possible because we couldn’t inject logic into EOAs *
 
 ---
 
-Relay supports both 4337 and 7702. Whether you're building gasless dApps, trustless UX, or bridging into smart behavior — smart accounts are the foundation.
+The Relay platform supports both ERC-4337 and EIP-7702 for gas sponsorship, batching, and user-authorized execution.
 
 Let us know what you’re building.

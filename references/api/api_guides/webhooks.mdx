@@ -70,6 +70,8 @@ The `details`, `failReason`, and `refundFailReason` fields mirror the same field
 | `failReason` | Reason a fill failed. Returns `"N/A"` on non-failure statuses. On `failure`, `fallback`, and `refund` statuses, returns the recorded reason or `"UNKNOWN"` when no specific reason is available. See [`/intents/status/v3`](/references/api/get-intents-status-v3) for the enum. |
 | `refundFailReason` | Reason a refund leg failed. Defaults to `"N/A"` when no refund-leg failure is recorded. See [`/intents/status/v3`](/references/api/get-intents-status-v3) for the enum. |
 
+For deposit-address requests, events are sent under the `requestId` that owns the fill. If Relay regenerates the quote, events carry the new `requestId` and nothing is sent for the quote-time one. Match these events to your order with `depositAddress.address`, and to the funding transfer with `depositAddress.depositTxHash`. See [Tracking Transactions](/features/deposit-addresses#tracking-transactions).
+
 By default we post all status updates. If you're only interested in certain statuses you can filter on the `status` property in your endpoint.
 
 ## Verification

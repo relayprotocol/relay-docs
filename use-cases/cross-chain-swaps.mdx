@@ -5,7 +5,7 @@ description: "Instant Same-chain and Cross-chain Swaps at the Best Possible Pric
 
 ![title](/images/Swaps.png)
 
-Relay enables both same and cross-chain swaps on supported chains. We couple robust meta-aggregation of the best onchain swap providers with the low-cost and instant speed of the Relay Network to deliver best-in-class any-to-any swaps on all our supported networks.
+Let users swap assets without leaving your app, whether they're on the same chain or different chains. One [Relay](/what-is-relay) integration gives you quotes, execution, and tracking across supported assets and networks.
 
 **Swap Meta-Aggregation** - We aggregate the best swap providers across crypto to deliver the best routes for onchain swaps
 
@@ -19,6 +19,6 @@ Relay enables both same and cross-chain swaps on supported chains. We couple rob
 
 ## How it Works
 
-When a user wishes to swap, they receive a quote from Relay that describes the time and cost of swapping. When they accept the quote, the order is validated and they either execute their same-chain swap (same-chain) or submit a deposit to the [Relay Depository Contract](/references/protocol/overview) (cross-chain), where a relayer then instantly fills the transaction on the destination chain before unlocking the funds on the origin.
+Your application requests a quote from the platform, and the user executes the returned steps. Same-chain swaps execute on the source chain; cross-chain orders use a solver's capital to fill on the destination chain. The platform tracks completion; [Relay Protocol](/references/protocol/overview) describes the separate settlement flow for orders that use its Depository contracts.
 
 To learn how to integrate Relay into your application, check out our [Quickstart Guide](/references/api/quickstart).

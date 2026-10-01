@@ -22,7 +22,7 @@ Once a request is submitted, execution can still fail during the fill or, if a f
 | `DEPOSIT_CONFIRMATION_TIMEOUT` | The deposit transaction wasn't confirmed within the expected window, so the request timed out and was routed to a refund. |
 | `DEPOSIT_REORGED` | The deposit transaction was removed from the canonical chain by a block reorganization, so the request was failed. |
 | `ORPHANED_DEPOSIT_REFUND` | A deposit at a deposit address couldn't be matched to a fillable request, so the funds were refunded to the depositor. |
-| `BLOCKED_WALLET` | An address associated with the request was flagged by wallet screening at fill time, so the fill was blocked. Funds are not automatically refunded and are subject to compliance review. |
+| `BLOCKED_WALLET` | An address associated with the request was flagged by wallet screening at fill time, so the fill was blocked. Funds are not automatically refunded; contact [Support](/resources/support) for review. |
 
 ### Solver Capacity & Balance Errors
 

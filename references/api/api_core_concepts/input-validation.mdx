@@ -267,7 +267,9 @@ At this point the transaction is bound to the order you inspected in step 2. If 
 
 ## Validating onchain
 
-If you need the check to happen inside a contract rather than in your backend, use `protocol.v2.orderSignature`. It is the solver's ECDSA signature over the 32 raw bytes of the order ID, following EIP-191, and it is produced by the Relay EVM solver wallet `0xf70da97812cb96acdf810712aa562db8dfa3dbef` — the same address on every chain Relay supports.
+If you need the check to happen inside a contract rather than in your backend, use `protocol.v2.orderSignature`. It is a solver's ECDSA signature over the 32 raw bytes of the order ID, following EIP-191. The signing address in the example below is `0xf70da97812cb96acdf810712aa562db8dfa3dbef`; the signer does not determine the quote's deposit destination.
+
+Pin the expected signer in your integration using independently verified configuration. Do not accept an arbitrary signer just because it appears in the same quote you are validating.
 
 ```ts
 import { recoverMessageAddress, hexToBytes } from "viem";
@@ -285,7 +287,7 @@ The equivalent Solidity check:
 bytes32 digest = keccak256(
     abi.encodePacked("\x19Ethereum Signed Message:\n32", orderId)
 );
-require(ECDSA.recover(digest, orderSignature) == RELAY_SOLVER, "bad signature");
+require(ECDSA.recover(digest, orderSignature) == EXPECTED_SOLVER_SIGNER, "bad signature");
 ```
 
 <Note>

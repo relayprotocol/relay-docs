@@ -1,11 +1,11 @@
 ---
 title: "Contract Addresses"
-description: " "
+description: "Find platform execution contracts and distinguish them from solver addresses"
 ---
 
 import { Contracts } from "/snippets/Contracts.mdx";
 
-Relay's solver and contract addresses can be found below along with each chain
+This page lists platform execution contracts and solver addresses used by existing integrations. For settlement contracts, see [Relay Protocol Addresses](/references/protocol/addresses). Always use the transaction targets returned by your quote rather than sending funds to an address from this reference.
 
 <Info>
   Please note that not all deployed contracts have the same address across all
@@ -14,6 +14,8 @@ Relay's solver and contract addresses can be found below along with each chain
 </Info>
 
 ### Solver Addresses
+
+These addresses identify solvers in existing integrations, not a protocol-wide operator or a universal deposit destination. Retrieve current chain data from [Get Chains](/references/api/get-chains); use the [signature validation guide](/references/api/api_core_concepts/input-validation#validating-onchain) when checking an order commitment.
 
 | Chain Type | Solver Address                               |
 | ---------- | -------------------------------------------- |

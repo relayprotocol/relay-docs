@@ -5,7 +5,7 @@ description: "Instant Bridging and Onboarding via Relay"
 
 ![title](/images/Onboarding.png)
 
-Relay enables instant bridging (deposits & withdrawals) on supported chains. By coupling the instant cross-chain liquidity of the Relay Network with deep same-chain swap meta-aggregation, Relay enables instant onboarding and bridging of any token on any supported chain. There are several important features that make Relay onboarding great:
+Let users fund your app with assets they already hold on another chain. With [Relay](/what-is-relay), you can offer deposits, withdrawals, and bridging across supported chains through one integration.
 
 **Instant Cross-chain Onboarding** - Relay's median bridge time is 2.7 seconds across chains.
 
@@ -17,7 +17,7 @@ Relay enables instant bridging (deposits & withdrawals) on supported chains. By 
 
 ## How it Works
 
-Relay's instant bridging is powered by cross-chain intents. This model results in low-cost, low-latency (next block) cross-chain transactions. When a user wishes to bridge, they receive a quote from Relay that describes the time and cost of bridging. When they accept the quote, the order is validated and they submit a transfer to the [Relay Depository Contract](/references/protocol/overview). A relayer then instantly fills the transaction on the destination chain before unlocking the funds on the origin.
+Your application requests a quote from the platform, and the user executes the returned deposit steps. A solver fills the order on the destination chain using its own capital. The platform tracks completion; [Relay Protocol](/references/protocol/overview) describes the separate settlement flow for orders that use its Depository contracts.
 
 Both Bridging and Onboarding can be integrated using Relay's Quote API:
 

@@ -5,14 +5,12 @@ description: "Execute transactions across any chain, pay with any token"
 
 ![title](/images/Call-execution.png)
 
-Relay supports cross-chain transaction execution for arbitrary cross-chain transactions. This means a user can execute any call on any chain and pay with any token on any other chain. This feature is perfect for cross-chain checkout experiences as well as full chain abstraction.
+Let users take an action in your app and pay with assets on another supported chain. [Relay](/what-is-relay) combines bridging and the destination call into one flow, so users don't need to bridge separately before checking out or interacting with a contract.
 
-<Note>
-  **Gas requirement**: With standard EOA wallets, the user still needs a small amount of native gas token (e.g., ETH) on the **origin chain** to broadcast the initial deposit transaction. Relay handles all destination chain gas and deducts fees from the user's tokens, but the origin chain submission requires native gas. For a fully gasless experience where users hold **zero native tokens**, see [Gasless Swaps](/features/gasless-swaps) to find the right approach for your app, or explore [Smart Accounts](/references/api/api_guides/smart_accounts/smart-accounts) (EIP-7702 or ERC-4337) directly.
-</Note>
+**Gas requirement** — With standard EOA wallets, the user needs native gas on the origin chain to broadcast the deposit. Solvers pay destination-chain gas, with costs included in the quote. For users without native gas, see [Gasless Swaps](/features/gasless-swaps) or [Smart Accounts](/references/api/api_guides/smart-accounts).
 
 ## How it Works
 
-Relay's cross-chain execution is powered by cross-chain intents. This model results in low-cost, low-latency (1-10 seconds) cross-chain transactions. When a user wishes to perform a cross-chain action, they submit the call data to get a quote from relayers for execution. When they accept the quote, the order is validated and they submit a transfer to the [Relay Depository Contract](/references/protocol/overview). A relayer then instantly fills the transaction on the destination chain before unlocking the funds on the origin.
+Your application includes destination calldata in its quote request. The user executes the returned deposit steps, and a solver uses its own capital to execute the destination call. The platform tracks completion; [Relay Protocol](/references/protocol/overview) describes the separate settlement flow for orders that use its Depository contracts.
 
 Learn how to integrate cross-chain call execution with our [Call Execution Integration Guide](/references/api/api_guides/calling-integration-guide).
