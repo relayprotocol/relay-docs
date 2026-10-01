@@ -33,8 +33,8 @@ This flow is verified in production with both 1-of-1 and multi-owner Safes on EV
 
 ## Submit the on-chain transaction
 
-8. **Submit from Relay.** Once the signature is collected, the Relay progress bar moves to **Submit**. Click **Submit Transaction**. The prepared withdrawal expires about one hour after preparation; if it expires, the funds return to your hub balance and you can start again.
-9. **Review the transaction in the Safe app.** A **Confirm transaction** modal appears. Before signing, check three things: the call is **execute** on **RelayDepository**, the first address inside the request is your Safe address, and the amount matches what you entered in Relay. Then sign and approve in your signer wallet.
+8. **Submit from Relay.** Once the signature is collected, the Relay progress bar moves to **Submit**. Click **Submit Transaction**. The prepared withdrawal backing this step expires about one hour after it is prepared — this applies to submitting the transaction, not to collecting signatures in the previous steps. If it expires, the funds return to your hub balance and you can start again from step 4.
+9. **Review the transaction in the Safe app.** A **Confirm transaction** modal appears. Before signing, check three things: the call is **execute** on **RelayDepository**, your Safe address appears in the decoded request as the recipient of the funds, and the amount matches what you entered in Relay — for token withdrawals the decoded amount is shown in raw base units (for example, a 6-decimal USDC amount has six extra digits). Then sign and approve in your signer wallet.
 10. **Execute from the queue if needed.** If the transaction lands in the Safe **Queue** instead of executing immediately, open the Queue tab and click **Execute** on the RelayDepository entry. For thresholds above 1, the other owners confirm here first; any owner can then execute.
 
 ## Confirm the funds arrived
