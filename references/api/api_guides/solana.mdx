@@ -258,10 +258,10 @@ curl -X POST "https://api.relay.link/quote/v2" \
 
 Pass **`maxRouteLength`** in your quote request to cap the number of hops in the Solana swap routing. It caps hops, not bytes — fewer hops usually means a smaller transaction, but it is not a size guarantee, and support varies by swap source:
 
-- dflow-routed quotes already default to `maxRouteLength: 2` (`4` for legacy v1 transactions), so passing a higher value loosens the default and can make the transaction larger, not smaller. Only pass a value when you need to go below the default.
+- `dflow`-routed quotes already default to `maxRouteLength: 2` (`4` for legacy v1 transactions), so passing a higher value loosens the default and can make the transaction larger, not smaller. Only pass a value when you need to go below the default.
 - Jupiter-routed quotes ignore `maxRouteLength` entirely; Jupiter constrains size internally through account limits and direct-route restrictions.
 
-For sponsorship flows hitting the 1232-byte limit, **`depositFeePayer`** is the right tool instead: pass the sponsoring fee payer in the quote request so the transaction is built and sized with the real fee payer from the start, rather than a signer being appended after sizing. The account must hold enough for fees and rent.
+For [sponsorship flows](/features/fee-sponsorship#sponsoring-origin-deposits-with-depositfeepayer), pass **`depositFeePayer`** in the quote request so the transaction is built and sized with the real fee payer from the start. It does not make an oversized route smaller — if the route itself exceeds the limit, restrict routing as above. Mind its [restrictions](/features/fee-sponsorship#sponsoring-origin-deposits-with-depositfeepayer): the fee payer must differ from `user`, the sponsoring wallet must sign the returned transaction first, and it should not be used for same-chain swaps with untrusted users. The account must hold enough for fees and rent.
 
 For the full list of quote parameters, see the [Get Quote](/references/api/get-quote-v2) API reference.
 
