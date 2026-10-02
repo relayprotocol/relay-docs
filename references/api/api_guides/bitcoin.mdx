@@ -3,6 +3,9 @@ title: Bitcoin Support
 description: How to deposit and withdraw on Bitcoin from any Relay chain
 ---
 
+import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+
+
 Relay supports deposits to and withdrawals from Bitcoin across any supported
 chain. This guide covers the Bitcoin-specific parameters, PSBT signing, balance
 calculation, and API/SDK usage required for integration.
@@ -106,6 +109,8 @@ documentation, then use the [Get Quote](/references/api/get-quote-v2) endpoint.
 </Info>
 
 ### Example: Withdraw from Bitcoin to Base
+
+<QuoteV2AuthCallout />
 
 <CodeGroup>
 ```bash Request
