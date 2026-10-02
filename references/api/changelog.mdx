@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-10-02 — `apiKeyId` accepts `key_id_<uuid>` on `GET /requests/v3`
+
+**Added** — `GET /requests/v3`: the `apiKeyId` query parameter now accepts the prefixed form `key_id_<uuid>` in addition to a bare UUID, in any comma-separated combination. Both forms resolve to the same key, deduplicate against each other and against `apiKey`, and count once toward the 50-value cap. Malformed entries still return `400`. Response IDs are unchanged — the stable key identifier is still returned as a bare UUID. Prefer `apiKeyId` over `apiKey` in query parameters. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+
 ## 2026-09-28 — `apiKeyId` filter on `GET /requests/v3`
 
 **Added** — `GET /requests/v3`: the new optional `apiKeyId` query parameter filters by API key UUID instead of by API key secret, keeping key material out of query strings, logs, and browser history. Accepts one UUID or a comma-separated list, OR-matches with `apiKey`, and can be combined with it. Every supplied ID must resolve to a key owned by the authenticating integrator; malformed UUIDs and empty entries return `400`, unknown or foreign IDs return `403`, and transient resolution failures return `503` rather than silently dropping the filter. Deduplicated values across `apiKey` and `apiKeyId` are capped at **50** — larger lists return `400` before any lookup. `referrer` filtering (top-level parameter or a `referrer` / `not:referrer` key inside `filters`) may now be paired with `apiKeyId` in place of `apiKey`. Retrieve the ID from the [Relay Dashboard](https://dashboard.relay.link) or the API key management endpoints — prefer `apiKeyId` over `apiKey` in query parameters. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
