@@ -24,6 +24,7 @@ App Fees are measured in basis points (bps) based on the input value of an order
 
 - On same-chain operations where the solver holds neither the input or output currency, an extra swap is added within the transaction to swap from the input currency into a currency accepted by the solver for App Fees
   - For this to occur, the fee to be taken needs to be greater than $0.025. This is to prevent the situation where the action of taking the app fee will consume more in gas than the fee itself.
+  - The quote response signals this before execution: check `details.expandedPriceImpact.app.usd` — when the app component is `"0"`, no app fee will be collected for that swap. The deprecated `fees.app.amount` carries the same signal for legacy integrations. Check it at quote time rather than discovering the skipped fee in the [monitoring endpoints](#verifying-fee-collection) afterwards.
 - App Fee Recipients _must_ be an EVM compatible wallet address, even for non-EVM chains.
 - App fees _can_ be an array, for setting multiple fees at once
 - App fees work the same way with deposit address flows as with regular quote requests.
