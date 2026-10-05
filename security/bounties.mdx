@@ -5,7 +5,7 @@ description: "How Relay classifies and rewards vulnerability reports."
 
 Relay runs a bug bounty program to make responsible disclosure financially rational for security researchers. Rewards scale with how much damage a bug can cause and how feasible it is to exploit in practice. We run monitoring and circuit breakers across the stack, so the likelihood tiers and modifiers reflect real response capacity — not a hypothetical one.
 
-This framework applies across Relay's protocol and services.
+This framework applies across Relay's protocol and services. Relay Vaults is a separate protocol and is not covered by this program (see [Out of scope](#out-of-scope)).
 
 ## How payouts are calculated
 
@@ -163,6 +163,7 @@ The following are not eligible for a reward:
 - Findings in third-party protocols we compose with, unless the root cause is in Relay's code.
 - DoS with no fund loss and no path to fund loss.
 - Theoretical issues with no viable PoC against in-scope assets.
+- Relay Vaults. The Vaults contracts (RelayPool, RelayBridge, RelayPoolFactory, RelayBridgeFactory, RelayPoolNativeGateway), the vaults API and the vaults user interface are not in-scope assets. Reports against Relay Vaults are not eligible for a reward.
 
 ## Reward process and requirements
 
