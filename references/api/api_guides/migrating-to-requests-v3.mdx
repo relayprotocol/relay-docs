@@ -328,7 +328,7 @@ Every individual change, grouped by request side and response side.
     | **Search** | `term` (request id, wallet, deposit address, every tx hash), `id`, `orderId`, `depositTxHash`, `fillTxHash`, `refundTxHash` |
     | **Chain** | `originChainId`, `destinationChainId`, `chainId` (either direction), `privateChainsToInclude` |
     | **Address** | `user`, `depositAddress`, `recipient` |
-    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKeyId`, `requestType`, `referrer` |
+    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKeyId`, `appId`, `requestType`, `referrer` |
     | **Currency** | `currencyInChainId`, `currencyOutChainId`, `currencyInAddress`, `currencyOutAddress`, `currencyInSymbol`, `currencyOutSymbol` |
     | **Ranges** | `startTimestamp`, `endTimestamp`, `startBlock`, `endBlock`, `amountUsdMin`/`Max`, `appFeesAmountUsdMin`/`Max`, `fillTimeMin`/`Max` |
     | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData`, `includeTotal` |
@@ -356,6 +356,18 @@ Every individual change, grouped by request side and response side.
     <Note>OR groups support identity, address, chain, currency, and status-style fields. Range filters and `features` are top-level only. Null-checks work on any recognised `filters` key, including the composite `user` field and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. `null` cannot be combined with real values in an array for the same key — that returns `400`.</Note>
 
     **API key filtering.** To limit results to specific API keys, use the top-level `apiKeyId` parameter with a maximum of 50 comma-separated IDs that your integrator owns. Each entry may be a bare UUID or the prefixed form `key_id_<uuid>` — both forms resolve to the same key, deduplicate against each other, and count once toward the 50-value cap. Responses continue to return the bare UUID form. It does not give access to more requests. We no longer recommend the `apiKey` filter, because it puts your API key in the URL.
+
+    **App filtering (owner-scoped).** An **App** is the durable identity for an integration — one App can own many API keys over its lifetime, and rotating or revoking a key does not change the App that owns the historical requests created under it. Use the top-level `appId` query parameter to narrow results to one or more Apps you own, with up to **50** comma-separated `app_id_<uuid>` values (whitespace trimmed, canonicalized to lowercase, deduplicated). Multiple values OR-match. Every supplied ID must belong to the authenticating integrator — unknown, foreign, or partially owned lists return `403`; malformed IDs, empty entries, or more than 50 values return `400`; transient resolution failures return `500` rather than silently dropping the filter. `appId` cannot appear inside a `filters` group — it is top-level only. It is ANDed with any `apiKeyId` / `apiKey` filter, so it narrows the result set rather than expanding access. Matching uses the indexed App attribution written at request time, so an `appId` filter includes requests created under keys that have since been revoked.
+
+    ```bash
+    # requests for one App you own
+    GET /requests/v3?appId=app_id_aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+
+    # multiple Apps, OR-matched
+    GET /requests/v3?appId=app_id_aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa,app_id_bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+    ```
+
+    <Note>Requests indexed before App attribution was recorded do not match any `appId` filter and are omitted from `appId`-filtered results until the attribution is populated for them. They remain visible under the existing visibility rules when queried without an `appId` filter.</Note>
 
     **Referrer filtering (owner-scoped).** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Because referrer values are supplied by the caller and are guessable, a referrer filter **must be paired with a top-level API key filter (`apiKeyId`)**, and every ID you list must belong to the authenticating integrator. Empty `referrer` values are rejected. Requests without this pairing return `400`; requests whose supplied IDs are not owned by the caller integrator (or which cannot resolve to an integrator identity) return `403`.
 
@@ -487,6 +499,7 @@ Every individual change, grouped by request side and response side.
     - **`supersededByRequestId`** is **promoted to the root**; it previously lived at `data.supersededByRequestId` in v2. When a deposit-address request is regenerated (currently Bitcoin/BVM only), the original request's `supersededByRequestId` points to the most recent regenerated `requestId` that owns the sweep and fill. `null` otherwise, including on regenerations from every other chain — track those by `depositAddress` (see [Handling Quote Regeneration](/features/deposit-addresses#handling-quote-regeneration)).
     - **`data.quoteOraclePrice`** is **added** — the oracle price snapshot at quote time (`{ rate, observedAt, inputCurrency, outputCurrency }`), returned only for fixed-BPS oracle integrators; `null` otherwise.
     - **`data.apiKeyName`** is **added** — the display name of the API key that created the request. Returned **only when `includeAuthenticatedData=true`** and the caller authenticates as the request's owning integrator (same gate as `data.referrer` and `data.platformFee`); `null` when the API key has no name set.
+    - **`data.appId`** is **added** — the durable App identifier (`app_id_<uuid>`) for the App that owned the API key the request was created with. Returned **only when `includeAuthenticatedData=true`** and the caller authenticates as the request's owning integrator (same gate as `data.referrer`, `data.platformFee`, `data.apiKeyName`, and `data.blockedAddresses`). `null` for owned records that have no indexed App attribution. The field is never populated by guessing from the request's name, referrer, caller, or organization.
     - **`data.blockedAddresses`** is **added** — an array of the wallet address(es) that failed screening and caused a `BLOCKED_WALLET` failure. Returned **only when `includeAuthenticatedData=true`** and the caller authenticates as the request's owning integrator (same gate as `data.referrer`, `data.platformFee`, and `data.apiKeyName`); `null` on non-`BLOCKED_WALLET` failures and when no addresses were recorded. Screening-provider scores and reasons are never returned.
     - `data.price` is **removed** — read the quoted output amount from `data.route.actual.destination.inputCurrency` (distinct from the actual received amount in `data.route.actual.destination.outputCurrency`).
     - `failReason` / `refundFailReason` use **`null`** instead of the string `"N/A"`.
@@ -536,6 +549,7 @@ Every individual change, grouped by request side and response side.
     | `depositAddress.recoveryAddress` | origin-chain address that can recover deposit-address funds if the recipient is later blocked |
     | `data.quoteOraclePrice` | oracle price snapshot at quote time (`rate`, `observedAt`, `inputCurrency`, `outputCurrency`); fixed-BPS oracle integrators only |
     | `data.apiKeyName` | display name of the API key that created the request; returned only with `includeAuthenticatedData=true` for the owning integrator |
+    | `data.appId` | durable App identifier (`app_id_<uuid>`) that owned the request's API key, including after that key is revoked; returned only with `includeAuthenticatedData=true` for the owning integrator |
     | `data.blockedAddresses` | address(es) that failed screening on `BLOCKED_WALLET` failures; returned only with `includeAuthenticatedData=true` for the owning integrator |
     | `data.route.actual` | executed route (with `rate`); falls back to `quoted` |
     | `data.externalMetadata` | partner correlation IDs (e.g. `moonpayId`) |
