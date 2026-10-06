@@ -1,0 +1,11 @@
+---
+title: "Get Balance Events"
+description: "This API returns the history of balance movements for a wallet, including fee credits, fee sponsorship, fixed-rate settlement, deposits and withdrawals."
+openapi: get /balance-events/{wallet}
+---
+
+[What are app fees?](/features/app-fees)
+
+<Note>
+An API key is required. A wallet linked to your integrator returns its whole ledger, including `balanceAfter`; any other wallet returns the events your integrator caused on it, plus deposits and settled withdrawals — a narrower result, not an error. For current balances rather than history, use [Get App Fee Balances](/references/api/get-app-fee-balances).
+</Note>
