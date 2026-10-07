@@ -84,7 +84,79 @@ function startPageObserver(onDomChange) {
 
 // ---- PAGE LOGIC ---------------------------
 
+// Keep the schema-generated fields (including nested schemas and anchor IDs) intact.
+// Unrecognized optional fields stay discoverable under Advanced options.
+const QUOTE_PARAM_GROUPS = [
+  ["Basic quote", "Start here: the required fields for a quote.", []],
+  ["App fees and sponsorship", "Collect app fees, sponsor costs, or top up destination gas.", [
+    "appFees", "subsidizeFees", "sponsoredFeeComponents", "maxSubsidizationAmount",
+    "subsidizationBps", "subsidizeRent", "topupGas", "topupGasAmount",
+  ]],
+  ["Recipient and refunds", "Choose who receives the output or a refund.", [
+    "recipient", "refundTo", "recoveryAddress", "refundOnOrigin",
+  ]],
+  ["Slippage and pricing", "Set price tolerances and quote pricing preferences.", [
+    "slippageTolerance", "latePaymentSlippageTolerance", "enableTrueExactOutput",
+    "overridePriceImpact", "indicativeQuote", "fixedRate", "referencePrice",
+  ]],
+  ["Routing", "Choose liquidity sources and swap routing preferences.", [
+    "useExternalLiquidity", "useFallbacks",
+    "includedSwapSources", "excludedSwapSources", "includedOriginSwapSources",
+    "includedDestinationSwapSources", "disableSwapProviderPreference",
+    "disableOriginSwaps", "useRouteRacing", "routeRacingMinUsdSize",
+    "useRouteRacingOnOrigin", "forceSolverExecution",
+  ]],
+  ["Execution timing", "Set quote expiry and retry windows for queued fills.", [
+    "ttl", "useQueueing", "queueingTtl",
+  ]],
+  ["Contract calls", "Attach destination calls and their gas or authorization settings.", [
+    "txs", "txsGasLimit", "authorizationList", "gasLimitForDepositSpecifiedTxs",
+  ]],
+  ["Advanced options", "Configure deposits, permits, attribution, and chain-specific options.", []],
+];
+
+function groupQuoteParams() {
+  const first = document.getElementById("body-user")?.closest(".primitive-param-field");
+  const container = first?.parentElement;
+  if (!container || first.closest(".quote-param-group")) return;
+
+  const fields = [...container.children];
+  // Fail open if Mintlify changes its markup, rather than hiding any documentation.
+  if (!fields.length || fields.some((field) =>
+    !field.matches(".primitive-param-field, .array-param-field, .object-param-field") ||
+    !field.querySelector('[data-component-part="field-name"]')
+  )) return;
+
+  const grouped = QUOTE_PARAM_GROUPS.map(() => []);
+  for (const field of fields) {
+    const name = field.querySelector('[data-component-part="field-name"]').textContent.trim();
+    const head = field.querySelector(".param-head");
+    const required = head?.querySelector('[data-component-part="field-required-pill"]');
+    const index = required ? 0 : QUOTE_PARAM_GROUPS.findIndex(([, , names]) => names.includes(name));
+    grouped[index < 0 ? grouped.length - 1 : index].push(field);
+  }
+
+  QUOTE_PARAM_GROUPS.forEach(([title, description, names], index) => {
+    if (!grouped[index].length) return;
+    grouped[index].sort((a, b) =>
+      names.indexOf(a.querySelector('[data-component-part="field-name"]').textContent.trim()) -
+      names.indexOf(b.querySelector('[data-component-part="field-name"]').textContent.trim())
+    );
+    const group = document.createElement("section");
+    group.className = "quote-param-group";
+    const heading = document.createElement("h3");
+    heading.id = `quote-params-${title.toLowerCase().replaceAll(" ", "-")}`;
+    heading.textContent = title;
+    group.setAttribute("aria-labelledby", heading.id);
+    const intro = document.createElement("p");
+    intro.textContent = description;
+    group.append(heading, intro, ...grouped[index]);
+    container.append(group);
+  });
+}
+
 function enhanceGetQuotePage() {
+  groupQuoteParams();
   waitForElementId("#body-trade-type", undefined, () => {
     addLearnMore(
       "body-trade-type",

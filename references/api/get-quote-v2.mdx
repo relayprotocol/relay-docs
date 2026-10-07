@@ -3,3 +3,25 @@ title: "Get Quote"
 description: "This API returns an executable quote for swapping, bridging and calling"
 openapi: post /quote/v2
 ---
+
+## Start with a basic quote
+
+Send these seven fields for a basic quote. This example requests a bridge of 0.01 ETH from Base to Optimism, with the same wallet receiving the output. Replace `WALLET_ADDRESS` with your origin-chain wallet address.
+
+```bash
+curl --request POST 'https://api.relay.link/quote/v2' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "user": "WALLET_ADDRESS",
+    "originChainId": 8453,
+    "destinationChainId": 10,
+    "originCurrency": "0x0000000000000000000000000000000000000000",
+    "destinationCurrency": "0x0000000000000000000000000000000000000000",
+    "amount": "10000000000000000",
+    "tradeType": "EXACT_INPUT"
+  }'
+```
+
+**`amount`** uses the currency's smallest unit: 0.01 ETH is `10000000000000000` wei. With `EXACT_INPUT`, it is the amount you send; see [trade types](/references/api/api_core_concepts/trade-types) for output-based quotes.
+
+Optional parameters below are grouped by task. Set **`recipient`** when the destination receiver differs from **`user`**, including when the destination chain uses a different address format. All parameters remain top-level JSON fields—the groups do not change the request format.

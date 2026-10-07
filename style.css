@@ -4,6 +4,21 @@
   padding-right: 18px;
 }
 
+.quote-param-group {
+  margin: 32px 0;
+}
+
+.quote-param-group > h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.quote-param-group > p {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
 .card-link {
   color: var(--tw-prose-links);
   text-decoration: none;
@@ -165,6 +180,12 @@
     background: var(--Violet-Light-9, #4615C8);
     pointer-events: none;
   }
+
+  .homepage-bg-text {
+    max-width: min(760px, calc(100vw - 48px));
+    text-wrap: balance;
+  }
+
   .homepage-cards {
     display: flex;
     gap: 24px;
