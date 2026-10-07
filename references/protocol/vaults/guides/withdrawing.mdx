@@ -8,7 +8,7 @@ sidebarTitle: Withdrawing
 Relay Vaults are being wound down. New deposits are no longer supported: do not deposit into the vaults. The contracts themselves still accept deposits, so anything sent to them must be withdrawn the same way as any other position.
 </Warning>
 
-Relay Vaults are standard [ERC4626](https://ethereum.org/en/developers/docs/standards/tokens/erc-4626/) contracts, so you can always withdraw by calling the vault contract directly. You do not need the Relay UI, the Relay API, or any other Relay service, only a wallet and an RPC endpoint or block explorer.
+Relay Vaults are [ERC4626](https://ethereum.org/en/developers/docs/standards/tokens/erc-4626/) contracts, so you can withdraw by calling the vault contract directly, up to the liquidity currently available (see [Limits](#limits)). You do not need the Relay UI, the Relay API, or any other Relay service, only a wallet and an RPC endpoint or block explorer.
 
 The [withdrawal UI](https://relay.link/vaults) stays available until **December 31, 2026**. After that date, use the steps on this page.
 
@@ -52,7 +52,7 @@ To withdraw an exact WETH amount instead, call `withdraw(assets, receiver, owner
 
 The `RelayPoolNativeGateway` redeems your shares, unwraps the WETH, and sends ETH to the receiver. It takes two transactions because the gateway redeems on your behalf and needs a share allowance.
 
-1. On the **vault**, call `approve(gateway, shares)`.
+1. Pick the shares to redeem: your `balanceOf(you)`, or at most `convertToShares(maxWithdraw(vault))` from the yield pool if liquidity is short. On the **vault**, call `approve(gateway, shares)`.
 2. On the **gateway**, call `redeem(vault, shares, receiver, minAssetsOut)`. Set `minAssetsOut` slightly below `previewRedeem(shares)` to protect against rounding.
 
 The gateway also exposes `withdraw(vault, assets, receiver, maxSharesIn)` for an exact ETH amount. Approve at least `maxSharesIn` shares first.
