@@ -50,12 +50,14 @@ The oracle service exposes HTTP endpoints for:
 
 - Health checks.
 - Chain discovery.
+- Status and introspection.
 - Attestation requests.
 - Swagger-based API documentation.
 
 The main utility routes are:
 
 - `GET /lives/v1`
+- `GET /status/v1`
 - `GET /chains/v1`
 - `GET /documentation`
 
@@ -157,6 +159,44 @@ Without the allowlist, the oracle service waits for the local operation and ever
 With an allowlist, a failed local attestation is logged but does not by itself fail the request. The oracle service can return a full or partial response using only allowlisted peer signatures. If the local attestation fails, the request fails only when no valid allowlisted group is available.
 
 Peer calls are best-effort attempts. If a peer times out, errors, fails response validation, or returns a payload that does not match any signable group, it is skipped and a warning is emitted.
+
+## Status and introspection
+
+The oracle service exposes a dedicated status surface for operators and peer discovery, separate from the simple liveness probe.
+
+### Local status
+
+`GET /status/v1` returns a snapshot of the running instance. The response includes:
+
+- A top-level `status` of `ok` or `partial`. `partial` is returned when a non-fatal component is unavailable — currently the signer check, surfaced under `errors` as `{"component":"signer","code":"UNAVAILABLE"}`.
+- Build identifiers: `version`, `image`, and `gitCommit`. These resolve from runtime environment, the container's build manifest, and the package version in that order, and any field that cannot be resolved is returned as `null`.
+- `checkedAt` (Unix seconds) and `uptimeSeconds` for the current process.
+- The local `oracleSigner` address (lowercase), or `null` if the signer is unavailable.
+- `peerCount`, the number of configured peers, including unreachable ones.
+- A `quorum` object with the configured `signers` allowlist and `threshold`, or `null` when no allowlist is configured.
+- `endpoints`, the list of registered HTTP routes as `{ method, path }` pairs.
+
+Responses set `cache-control: no-store`.
+
+### Peer visibility
+
+Both `/status/v1` and `/chains/v1` accept a `withPeers=true` query parameter. When set, the oracle fans out to every configured peer in `PEERS` and includes a `peers` array in the response.
+
+For `/status/v1?withPeers=true`, each peer entry carries the same status fields the peer reported (nulled where the peer did not report them), plus a `checkResult` describing the local oracle's view of that peer: `success`, `timeout`, `network-error`, `authentication-error`, `http-error`, `unsupported-endpoint`, `invalid-response`, `invalid-url`, `response-too-large`, or `cancelled`. The entry also records `url` (with credentials stripped), `checkedAt`, `latencyMs` for successful requests, `retryCount`, and `httpStatus` when the peer returned one.
+
+For peers that do not expose `/status/v1`, the oracle falls back first to `/lives/v1?withReport=true` and then to `/lives/v1`, so a legacy liveness-only peer still contributes a minimal observation.
+
+For `/chains/v1?withPeers=true`, each peer entry carries `url`, `checkResult`, and a `chainDifferences` array relative to the local chain set. Each difference is one of:
+
+- `{ "id", "status": "local-only" }` — the chain is configured locally but not on the peer.
+- `{ "id", "status": "conflict", "fields": [...], "vmType"?, "depository"? }` — the chain exists on both sides but one or more of `vmType` or `depository` differ. Only the peer values for the differing fields are included.
+- `{ "id", "vmType", "depository"?, "status": "peer-only" }` — the peer has a chain the local oracle does not.
+
+An absent `chainDifferences` means the comparison itself failed; an empty array means the chain sets match. The response sets `cache-control: no-store` whenever `withPeers=true` is used.
+
+<Info>
+The incoming `x-api-key` is forwarded to peers configured with the `pass-through` credential; peers with a dedicated key use that key. Peer calls run concurrently, honor `PEER_REQUEST_TIMEOUT_MS` and `PEER_RESPONSE_MAX_BYTES`, retry transient failures a bounded number of times, and are cancelled when the caller disconnects.
+</Info>
 
 ## Security and trust model
 
@@ -385,10 +425,16 @@ If your platform builds from source automatically, the important requirement is 
 After deployment, verify:
 
 - `GET /lives/v1` returns `{"status":"ok"}`.
+- `GET /status/v1` returns `status: "ok"`, the expected `version`, `image`, and `gitCommit` for the running build, and your local `oracleSigner` address.
 - `GET /chains/v1` returns the chains expected for your selected `ENVIRONMENT`. A valid `x-api-key` bypasses the unauthenticated rate limit.
 - `GET /documentation` loads the Swagger UI.
 - Your logs show the oracle service started successfully.
 - Your logs show the signer address you expect, and that address matches one of the entries in `ORACLE_SIGNERS` if the allowlist is configured.
+
+If peering is configured, also verify:
+
+- `GET /status/v1?withPeers=true` returns a `peers` array with `checkResult: "success"` for each reachable peer and the signer and quorum you expect each peer to report.
+- `GET /chains/v1?withPeers=true` returns an empty `chainDifferences` array for each peer that is expected to carry the same chain set.
 
 Then test at least one real attestation flow. Use a valid `x-api-key` to bypass the unauthenticated rate limit.
 
@@ -397,10 +443,12 @@ Then test at least one real attestation flow. Use a valid `x-api-key` to bypass 
 At minimum, monitor:
 
 - Container restarts.
+- `GET /status/v1` reporting `status: "partial"` or a non-empty `errors` array.
 - Request latency.
 - Error rate by endpoint.
 - Unauthenticated `429` responses.
-- Peer timeout and peer mismatch warnings.
+- Peer timeout, peer mismatch, and quorum-shortfall warnings.
+- Peer `checkResult` drift over time via `GET /status/v1?withPeers=true` and `GET /chains/v1?withPeers=true`.
 - RPC provider failures and rate limits.
 - Memory and CPU consumption.
 - Signer address correctness after deploys.
