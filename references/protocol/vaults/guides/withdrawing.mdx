@@ -29,32 +29,37 @@ Read these view functions on the vault contract, from a block explorer's **Read 
 
 - **`balanceOf(you)`** — your share balance.
 - **`convertToAssets(shares)`** — the WETH value of those shares.
-- **`maxRedeem(you)`** — the most shares you can redeem right now.
-- **`maxWithdraw(you)`** — the most WETH you can withdraw right now.
+- **`yieldPool()`** — the yield pool that holds the vault's liquid WETH.
 
-If `maxRedeem` equals `balanceOf`, your whole position can be withdrawn in one transaction.
+Then call **`maxWithdraw(vault)`** on the yield pool address. This is the WETH the vault can pay out right now, across all LPs.
+
+<Warning>
+On the deployed vaults, `maxRedeem` and `maxWithdraw` on the vault return your full position and do not account for available liquidity. A `redeem` or `withdraw` above the yield pool's `maxWithdraw(vault)` reverts with `ERC4626: withdraw more than max`.
+</Warning>
+
+If `convertToAssets(balanceOf(you))` is at or below the yield pool's `maxWithdraw(vault)`, you can withdraw your whole position in one transaction. Otherwise, see [Limits](#limits).
 
 ## Withdraw as WETH
 
 Withdrawing as WETH takes one transaction on the vault and needs no approval.
 
-1. Read `maxRedeem(you)` on the vault.
-2. Call `redeem(shares, receiver, owner)` with `shares` at or below that value, `receiver` set to the address that should receive WETH, and `owner` set to your address.
+1. Pick the shares to redeem: your `balanceOf(you)`, or fewer if liquidity is short.
+2. Call `redeem(shares, receiver, owner)` with `receiver` set to the address that should receive WETH, and `owner` set to your address.
 
-To withdraw an exact WETH amount instead, call `withdraw(assets, receiver, owner)` with `assets` at or below `maxWithdraw(you)`.
+To withdraw an exact WETH amount instead, call `withdraw(assets, receiver, owner)` with `assets` at or below both your position's value and the yield pool's `maxWithdraw(vault)`.
 
 ## Withdraw as native ETH
 
 The `RelayPoolNativeGateway` redeems your shares, unwraps the WETH, and sends ETH to the receiver. It takes two transactions because the gateway redeems on your behalf and needs a share allowance.
 
 1. On the **vault**, call `approve(gateway, shares)`.
-2. On the **gateway**, call `redeem(vault, shares, receiver, minAssetsOut)`. Set `minAssetsOut` slightly below `convertToAssets(shares)` to protect against rounding.
+2. On the **gateway**, call `redeem(vault, shares, receiver, minAssetsOut)`. Set `minAssetsOut` slightly below `previewRedeem(shares)` to protect against rounding.
 
 The gateway also exposes `withdraw(vault, assets, receiver, maxSharesIn)` for an exact ETH amount. Approve at least `maxSharesIn` shares first.
 
 ## Example
 
-The script below redeems your full redeemable balance as WETH using [viem](https://viem.sh). Change the chain and vault address to withdraw on Arbitrum.
+The script below redeems as many of your shares as current liquidity allows, as WETH, using [viem](https://viem.sh). To withdraw on Arbitrum, import `arbitrum` from `viem/chains`, use it in place of `mainnet`, and set `VAULT` to the Arbitrum vault address.
 
 ```typescript
 import { createPublicClient, createWalletClient, http, parseAbi, formatEther } from 'viem'
@@ -64,7 +69,9 @@ import { mainnet } from 'viem/chains'
 const VAULT = '0x57b68c4ea221ee8da6eb14ebdfccee5177567771'
 const abi = parseAbi([
   'function balanceOf(address) view returns (uint256)',
-  'function maxRedeem(address) view returns (uint256)',
+  'function yieldPool() view returns (address)',
+  'function maxWithdraw(address) view returns (uint256)',
+  'function convertToShares(uint256) view returns (uint256)',
   'function previewRedeem(uint256) view returns (uint256)',
   'function redeem(uint256 shares, address receiver, address owner) returns (uint256)',
 ])
@@ -73,12 +80,21 @@ const account = privateKeyToAccount('0xYOUR_PRIVATE_KEY')
 const publicClient = createPublicClient({ chain: mainnet, transport: http() })
 const walletClient = createWalletClient({ account, chain: mainnet, transport: http() })
 
-// 1. Read your redeemable shares
-const shares = await publicClient.readContract({ address: VAULT, abi, functionName: 'maxRedeem', args: [account.address] })
+// 1. Read your shares and the vault's available liquidity
+const balance = await publicClient.readContract({ address: VAULT, abi, functionName: 'balanceOf', args: [account.address] })
+const yieldPool = await publicClient.readContract({ address: VAULT, abi, functionName: 'yieldPool' })
+const liquid = await publicClient.readContract({ address: yieldPool, abi, functionName: 'maxWithdraw', args: [VAULT] })
+
+// 2. Redeem your full balance, or only the shares current liquidity covers
+const liquidShares = await publicClient.readContract({ address: VAULT, abi, functionName: 'convertToShares', args: [liquid] })
+const shares = balance < liquidShares ? balance : liquidShares
+if (shares === 0n) {
+  throw new Error('Nothing to redeem right now. If you still hold shares, retry when liquidity returns.')
+}
 const assets = await publicClient.readContract({ address: VAULT, abi, functionName: 'previewRedeem', args: [shares] })
 console.log(`Redeeming ${formatEther(shares)} shares for ~${formatEther(assets)} WETH`)
 
-// 2. Redeem to your own address
+// 3. Redeem to your own address
 const hash = await walletClient.writeContract({
   address: VAULT,
   abi,
@@ -88,12 +104,12 @@ const hash = await walletClient.writeContract({
 await publicClient.waitForTransactionReceipt({ hash })
 ```
 
-You can also use the `pool:withdraw` Hardhat task from the [relay-vaults repository](https://github.com/relayprotocol/relay-vaults/tree/main/smart-contracts). Pass the vault address explicitly, for example `yarn run hardhat pool:withdraw --network ethereum --pool 0x57b68c4ea221ee8da6eb14ebdfccee5177567771`.
+You can also use the `pool:withdraw` Hardhat task from the [relay-vaults repository](https://github.com/relayprotocol/relay-vaults/tree/main/smart-contracts). Set `DEPLOYER_PRIVATE_KEY` to the LP wallet's key and pass the vault address explicitly, for example `yarn run hardhat pool:withdraw --network ethereum --pool 0x57b68c4ea221ee8da6eb14ebdfccee5177567771`. When prompted, enter an amount at or below the yield pool's `maxWithdraw(vault)`: `all` redeems your entire balance and reverts while liquidity is short.
 
 ## Limits
 
-- **Liquidity cap** — `maxRedeem` and `maxWithdraw` are capped at the liquid balance the vault holds in its yield pool. Funds still outstanding in bridges cannot be withdrawn until they return to the vault. If your `maxRedeem` is below your `balanceOf`, withdraw what is available and keep the remaining shares: they stay redeemable once liquidity returns.
+- **Liquidity cap** — withdrawals are limited to the yield pool's `maxWithdraw(vault)`. Funds still outstanding in bridges cannot be withdrawn until they return to the vault, and high utilization in the underlying lending market (Aave) can also lower the limit temporarily. If liquidity is short, withdraw what is available and keep the remaining shares: they stay redeemable once liquidity returns.
 - **No cooldown** — withdrawals take effect in the same transaction. There is no lock-up or withdrawal queue.
-- **No pause** — the vault contracts have no pause function and no withdrawal allowlist.
+- **No pause** — the vault contracts have no pause function and no withdrawal allowlist. The vault owner can still move the vault's assets to a different yield pool with `updateYieldPool`; see [RelayPool](/references/protocol/vaults/contracts/RelayPool).
 - **Gas** — you pay gas in ETH on the vault's chain (Ethereum or Arbitrum). The native ETH path costs two transactions.
 - **Yield** — yield streams into the vault over a streaming period (currently 7 days), so `convertToAssets` can increase slightly between reads.
