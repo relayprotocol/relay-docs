@@ -76,7 +76,8 @@ const abi = parseAbi([
   'function redeem(uint256 shares, address receiver, address owner) returns (uint256)',
 ])
 
-const account = privateKeyToAccount('0xYOUR_PRIVATE_KEY')
+// Never paste a funded private key into a file you might commit
+const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`)
 const publicClient = createPublicClient({ chain: mainnet, transport: http() })
 const walletClient = createWalletClient({ account, chain: mainnet, transport: http() })
 
@@ -85,8 +86,9 @@ const balance = await publicClient.readContract({ address: VAULT, abi, functionN
 const yieldPool = await publicClient.readContract({ address: VAULT, abi, functionName: 'yieldPool' })
 const liquid = await publicClient.readContract({ address: yieldPool, abi, functionName: 'maxWithdraw', args: [VAULT] })
 
-// 2. Redeem your full balance, or only the shares current liquidity covers
-const liquidShares = await publicClient.readContract({ address: VAULT, abi, functionName: 'convertToShares', args: [liquid] })
+// 2. Redeem your full balance, or only the shares current liquidity covers.
+//    Keep a 0.1% margin: other LPs share the same liquidity and it can move before inclusion.
+const liquidShares = await publicClient.readContract({ address: VAULT, abi, functionName: 'convertToShares', args: [liquid * 999n / 1000n] })
 const shares = balance < liquidShares ? balance : liquidShares
 if (shares === 0n) {
   throw new Error('Nothing to redeem right now. If you still hold shares, retry when liquidity returns.')
@@ -108,7 +110,7 @@ You can also use the `pool:withdraw` Hardhat task from the [relay-vaults reposit
 
 ## Limits
 
-- **Liquidity cap** — withdrawals are limited to the yield pool's `maxWithdraw(vault)`. Funds still outstanding in bridges cannot be withdrawn until they return to the vault, and high utilization in the underlying lending market (Aave) can also lower the limit temporarily. If liquidity is short, withdraw what is available and keep the remaining shares: they stay redeemable once liquidity returns.
+- **Liquidity cap** — withdrawals are limited to the yield pool's `maxWithdraw(vault)`. Funds still outstanding in bridges cannot be withdrawn until they return to the vault, and high utilization in the underlying lending market (Aave) can also lower the limit temporarily. If liquidity is short, withdraw what is available and keep the remaining shares: they stay redeemable once liquidity returns. The limit is shared by all LPs, so if a withdrawal at the limit reverts with `ERC4626: withdraw more than max`, retry with a slightly smaller amount.
 - **No cooldown** — withdrawals take effect in the same transaction. There is no lock-up or withdrawal queue.
 - **No pause** — the vault contracts have no pause function and no withdrawal allowlist. The vault owner can still move the vault's assets to a different yield pool with `updateYieldPool`; see [RelayPool](/references/protocol/vaults/contracts/RelayPool).
 - **Gas** — you pay gas in ETH on the vault's chain (Ethereum or Arbitrum). The native ETH path costs two transactions.
