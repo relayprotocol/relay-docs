@@ -37,13 +37,13 @@ Then call **`maxWithdraw(vault)`** on the yield pool address. This is the WETH t
 On the deployed vaults, `maxRedeem` and `maxWithdraw` on the vault return your full position and do not account for available liquidity. A `redeem` or `withdraw` above the yield pool's `maxWithdraw(vault)` reverts with `ERC4626: withdraw more than max`.
 </Warning>
 
-If `convertToAssets(balanceOf(you))` is at or below the yield pool's `maxWithdraw(vault)`, you can withdraw your whole position in one transaction. Otherwise, see [Limits](#limits).
+If `convertToAssets(balanceOf(you))` is at or below the yield pool's `maxWithdraw(vault)`, you can withdraw your whole position in one transaction. Otherwise, convert that WETH amount to shares by calling `convertToShares(amount)` on the **vault**, not the yield pool, and redeem slightly fewer shares than the result: the limit is shared by all LPs and can move before your transaction lands. The example below keeps a 0.1% margin. See [Limits](#limits).
 
 ## Withdraw as WETH
 
 Withdrawing as WETH takes one transaction on the vault and needs no approval.
 
-1. Pick the shares to redeem: your `balanceOf(you)`, or fewer if liquidity is short.
+1. Pick the shares to redeem: your `balanceOf(you)`, or the liquidity cap in shares from [Check your balance](#check-your-balance) if that is lower.
 2. Call `redeem(shares, receiver, owner)` with `receiver` set to the address that should receive WETH, and `owner` set to your address.
 
 To withdraw an exact WETH amount instead, call `withdraw(assets, receiver, owner)` with `assets` at or below both your position's value and the yield pool's `maxWithdraw(vault)`.
@@ -52,7 +52,7 @@ To withdraw an exact WETH amount instead, call `withdraw(assets, receiver, owner
 
 The `RelayPoolNativeGateway` redeems your shares, unwraps the WETH, and sends ETH to the receiver. It takes two transactions because the gateway redeems on your behalf and needs a share allowance.
 
-1. Pick the shares to redeem: your `balanceOf(you)`, or at most `convertToShares(maxWithdraw(vault))` from the yield pool if liquidity is short. On the **vault**, call `approve(gateway, shares)`.
+1. Pick the shares to redeem: your `balanceOf(you)`, or the liquidity cap in shares from [Check your balance](#check-your-balance) if that is lower. On the **vault**, call `approve(gateway, shares)`.
 2. On the **gateway**, call `redeem(vault, shares, receiver, minAssetsOut)`. Set `minAssetsOut` slightly below `previewRedeem(shares)` to protect against rounding.
 
 The gateway also exposes `withdraw(vault, assets, receiver, maxSharesIn)` for an exact ETH amount. Approve at least `maxSharesIn` shares first.
