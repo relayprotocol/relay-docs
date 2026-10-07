@@ -33,11 +33,9 @@ Read these view functions on the vault contract, from a block explorer's **Read 
 
 Then call **`maxWithdraw(vault)`** on the yield pool address. This is the WETH the vault can pay out right now, across all LPs.
 
-<Warning>
-On the deployed vaults, `maxRedeem` and `maxWithdraw` on the vault return your full position and do not account for available liquidity. A `redeem` or `withdraw` above the yield pool's `maxWithdraw(vault)` reverts with `ERC4626: withdraw more than max`.
-</Warning>
-
 If `convertToAssets(balanceOf(you))` is at or below the yield pool's `maxWithdraw(vault)`, you can withdraw your whole position in one transaction. Otherwise, convert that WETH amount to shares by calling `convertToShares(amount)` on the **vault**, not the yield pool, and redeem slightly fewer shares than the result: the limit is shared by all LPs and can move before your transaction lands. The example below keeps a 0.1% margin. See [Limits](#limits).
+
+If you have trouble withdrawing, reach out to [Relay support](/resources/support).
 
 ## Withdraw as WETH
 
@@ -110,7 +108,7 @@ You can also use the `pool:withdraw` Hardhat task from the [relay-vaults reposit
 
 ## Limits
 
-- **Liquidity cap** — withdrawals are limited to the yield pool's `maxWithdraw(vault)`. Funds still outstanding in bridges cannot be withdrawn until they return to the vault, and high utilization in the underlying lending market (Aave) can also lower the limit temporarily. If liquidity is short, withdraw what is available and keep the remaining shares: they stay redeemable once liquidity returns. The limit is shared by all LPs, so if a withdrawal at the limit reverts with `ERC4626: withdraw more than max`, retry with a slightly smaller amount.
+- **Liquidity cap** — withdrawals are limited to the yield pool's `maxWithdraw(vault)`. Funds still outstanding in bridges cannot be withdrawn until they return to the vault, and high utilization in the underlying lending market (Aave) can also lower the limit temporarily. If liquidity is short, withdraw what is available and keep the remaining shares: they stay redeemable once liquidity returns. The limit is shared by all LPs, so if a withdrawal at the limit reverts with `ERC4626: withdraw more than max`, retry with a slightly smaller amount. If you cannot withdraw your full position, reach out to [Relay support](/resources/support).
 - **No cooldown** — withdrawals take effect in the same transaction. There is no lock-up or withdrawal queue.
 - **No pause** — the vault contracts have no pause function and no withdrawal allowlist. The vault owner can still move the vault's assets to a different yield pool with `updateYieldPool`; see [RelayPool](/references/protocol/vaults/contracts/RelayPool).
 - **Gas** — you pay gas in ETH on the vault's chain (Ethereum or Arbitrum). The native ETH path costs two transactions.
