@@ -1,0 +1,99 @@
+---
+title: Withdrawing from Relay Vaults
+description: Withdraw your liquidity from Relay Vaults directly onchain, without the Relay UI
+sidebarTitle: Withdrawing
+---
+
+<Warning>
+Relay Vaults are being wound down. New deposits are no longer supported: do not deposit into the vaults. The contracts themselves still accept deposits, so anything sent to them must be withdrawn the same way as any other position.
+</Warning>
+
+Relay Vaults are standard [ERC4626](https://ethereum.org/en/developers/docs/standards/tokens/erc-4626/) contracts, so you can always withdraw by calling the vault contract directly. You do not need the Relay UI, the Relay API, or any other Relay service, only a wallet and an RPC endpoint or block explorer.
+
+The [withdrawal UI](https://relay.link/vaults) stays available until **December 31, 2026**. After that date, use the steps on this page.
+
+## Vault addresses
+
+Both vaults hold WETH and issue `WETH-REL` shares with 18 decimals.
+
+| Chain | Chain ID | Vault | Asset (WETH) | Native gateway |
+| --- | --- | --- | --- | --- |
+| Ethereum | `1` | `0x57b68c4ea221ee8da6eb14ebdfccee5177567771` | `0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2` | `0xed8a2a23bf9d6818651527daaf3bf4ffeb53945f` |
+| Arbitrum | `42161` | `0xc7273772b87860097373d91b3880fd4cc61fba2d` | `0x82af49447d8a07e3bd95bd0d56f35241523fbab1` | `0x67defe8d90c8cd013fd527669e76e0be420f1208` |
+
+ABIs are published in the [`@relay-vaults/abis`](https://www.npmjs.com/package/@relay-vaults/abis) package (`RelayPool`, `RelayPoolNativeGateway`). See the [RelayPool](/references/protocol/vaults/contracts/RelayPool) and [RelayPoolNativeGateway](/references/protocol/vaults/contracts/RelayPoolNativeGateway) references for the full interfaces.
+
+## Check your balance
+
+Read these view functions on the vault contract, from a block explorer's **Read Contract** tab or any RPC client:
+
+- **`balanceOf(you)`** — your share balance.
+- **`convertToAssets(shares)`** — the WETH value of those shares.
+- **`maxRedeem(you)`** — the most shares you can redeem right now.
+- **`maxWithdraw(you)`** — the most WETH you can withdraw right now.
+
+If `maxRedeem` equals `balanceOf`, your whole position can be withdrawn in one transaction.
+
+## Withdraw as WETH
+
+Withdrawing as WETH takes one transaction on the vault and needs no approval.
+
+1. Read `maxRedeem(you)` on the vault.
+2. Call `redeem(shares, receiver, owner)` with `shares` at or below that value, `receiver` set to the address that should receive WETH, and `owner` set to your address.
+
+To withdraw an exact WETH amount instead, call `withdraw(assets, receiver, owner)` with `assets` at or below `maxWithdraw(you)`.
+
+## Withdraw as native ETH
+
+The `RelayPoolNativeGateway` redeems your shares, unwraps the WETH, and sends ETH to the receiver. It takes two transactions because the gateway redeems on your behalf and needs a share allowance.
+
+1. On the **vault**, call `approve(gateway, shares)`.
+2. On the **gateway**, call `redeem(vault, shares, receiver, minAssetsOut)`. Set `minAssetsOut` slightly below `convertToAssets(shares)` to protect against rounding.
+
+The gateway also exposes `withdraw(vault, assets, receiver, maxSharesIn)` for an exact ETH amount. Approve at least `maxSharesIn` shares first.
+
+## Example
+
+The script below redeems your full redeemable balance as WETH using [viem](https://viem.sh). Change the chain and vault address to withdraw on Arbitrum.
+
+```typescript
+import { createPublicClient, createWalletClient, http, parseAbi, formatEther } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import { mainnet } from 'viem/chains'
+
+const VAULT = '0x57b68c4ea221ee8da6eb14ebdfccee5177567771'
+const abi = parseAbi([
+  'function balanceOf(address) view returns (uint256)',
+  'function maxRedeem(address) view returns (uint256)',
+  'function previewRedeem(uint256) view returns (uint256)',
+  'function redeem(uint256 shares, address receiver, address owner) returns (uint256)',
+])
+
+const account = privateKeyToAccount('0xYOUR_PRIVATE_KEY')
+const publicClient = createPublicClient({ chain: mainnet, transport: http() })
+const walletClient = createWalletClient({ account, chain: mainnet, transport: http() })
+
+// 1. Read your redeemable shares
+const shares = await publicClient.readContract({ address: VAULT, abi, functionName: 'maxRedeem', args: [account.address] })
+const assets = await publicClient.readContract({ address: VAULT, abi, functionName: 'previewRedeem', args: [shares] })
+console.log(`Redeeming ${formatEther(shares)} shares for ~${formatEther(assets)} WETH`)
+
+// 2. Redeem to your own address
+const hash = await walletClient.writeContract({
+  address: VAULT,
+  abi,
+  functionName: 'redeem',
+  args: [shares, account.address, account.address],
+})
+await publicClient.waitForTransactionReceipt({ hash })
+```
+
+You can also use the `pool:withdraw` Hardhat task from the [relay-vaults repository](https://github.com/relayprotocol/relay-vaults/tree/main/smart-contracts). Pass the vault address explicitly, for example `yarn run hardhat pool:withdraw --network ethereum --pool 0x57b68c4ea221ee8da6eb14ebdfccee5177567771`.
+
+## Limits
+
+- **Liquidity cap** — `maxRedeem` and `maxWithdraw` are capped at the liquid balance the vault holds in its yield pool. Funds still outstanding in bridges cannot be withdrawn until they return to the vault. If your `maxRedeem` is below your `balanceOf`, withdraw what is available and keep the remaining shares: they stay redeemable once liquidity returns.
+- **No cooldown** — withdrawals take effect in the same transaction. There is no lock-up or withdrawal queue.
+- **No pause** — the vault contracts have no pause function and no withdrawal allowlist.
+- **Gas** — you pay gas in ETH on the vault's chain (Ethereum or Arbitrum). The native ETH path costs two transactions.
+- **Yield** — yield streams into the vault over a streaming period (currently 7 days), so `convertToAssets` can increase slightly between reads.

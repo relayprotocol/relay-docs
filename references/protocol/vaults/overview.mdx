@@ -4,6 +4,10 @@ description: Introducing Relay Vaults
 sidebarTitle: Overview
 ---
 
+<Warning>
+Relay Vaults are being wound down and new deposits are no longer supported. To exit an existing position, see [Withdrawing from Relay Vaults](/references/protocol/vaults/guides/withdrawing).
+</Warning>
+
 Relay Vaults is a separate protocol from [Relay Settlement](/references/protocol/overview), focused on liquidity provisioning rather than intent settlement. While Settlement handles the core flow of deposits, fills, and solver payments, Vaults provide the infrastructure solvers use to rebalance their capital across chains.
 
 Vaults are permissionless, [ERC4626](https://ethereum.org/en/developers/docs/standards/tokens/erc-4626/) compliant, yield-bearing pools designed to provide liquidity that solvers use to facilitate faster, cheaper, and more efficient crosschain transactions. By leveraging idle capital from lending markets (e.g., Aave, Morpho), Relay Vaults enable solvers to instantly rebalance liquidity across chains. This improves crosschain withdrawals and rebalancing speed, reduces transaction fees, and ensures stable yield for depositors.
