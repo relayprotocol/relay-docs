@@ -1,0 +1,48 @@
+---
+title: "Routing Integration Models"
+description: "Choose between Relay routing, adding your router as a quote source, and supplying your own calldata"
+---
+
+Every Relay integration gets the same cross-chain execution layer: deposits, solver-funded fills, tracking, and refunds for unfilled deposits. The choice you make is who routes the swap legs. There are three models, and they are not mutually exclusive — you can start with Relay routing and layer in the others later.
+
+- **Relay routing**: Relay quotes multiple swap providers and selects the best route. The default, and zero routing work for you.
+- **Your router as a Relay quote source**: your router competes as a candidate inside Relay's routing. A bespoke integration.
+- **Your own calldata**: you route, Relay executes. Full control, full ownership.
+
+## The three models at a glance
+
+| | Relay routing | Your router as a quote source | Your own calldata |
+| --- | --- | --- | --- |
+| Who constructs routes | Relay's swap providers | Your router, alongside Relay's providers | You |
+| Who selects the winning route | Relay | Relay | You |
+| Availability | Default, self-serve | Bespoke — [contact us](/resources/support) | Self-serve |
+| Integration effort | Lowest: quote and execute | Your router API plus onboarding with Relay | Highest: routing, encoding, and testing per chain |
+| Chain coverage | Every supported chain | Chains your router is onboarded on; Relay routes the rest | Only chains you build and maintain |
+| Execution protections | Price impact protection, slippage limits, automatic refunds | The same | Cross-chain execution protections apply; route quality is yours |
+| Operational ownership | Relay | Shared | You |
+
+## Relay routing
+
+For each swap leg, Relay runs a meta-aggregation: it quotes multiple swap providers on that chain and selects the best executable route for the trade. You request a quote and execute the returned steps; routing, provider selection, and provider maintenance are Relay's job.
+
+This is where routing improvements accrue to you automatically — new providers, better route selection, and chain expansions apply to your integration without any work on your side. You can see the providers available per chain with the [swap sources endpoint](/references/api/get-swap-sources), and narrow them per request with **`includedSwapSources`** when you have a specific requirement.
+
+## Your router as a Relay quote source
+
+If you run your own router or have preferred liquidity, Relay can onboard it as a quote source: your router constructs its candidate route, and Relay compares it against the other providers and selects the winner for each trade. Your routing participates without replacing Relay's — when your router has the best route it wins, and when it doesn't, your users still get the best available one.
+
+You keep the execution protections and chain coverage of Relay routing, and your router only needs to cover the chains you care about. This is how Fomo integrated Mobula: it participates as a restricted quote source in Fomo's trades while Relay retains route selection.
+
+<Info>
+This is a bespoke integration, not a self-serve option: onboarding, scope, and requirements are agreed per partner. [Contact us](/resources/support) if you want to explore it.
+</Info>
+
+## Your own calldata
+
+If you want full route-selection control, construct the swap yourself and pass the encoded transactions in the quote's **`txs`** array. Relay provides the cross-chain execution layer — deposit handling, the solver-funded fill, tracking, and refunds for unfilled deposits — and your calldata defines what executes. See the [call execution guide](/references/api/api_guides/calling-integration-guide) for the mechanics, including approval ordering and `EXACT_INPUT` considerations.
+
+The tradeoff is ownership: route quality, failed routes, provider relationships, and per-chain maintenance are yours, and routing improvements on Relay's side don't reach your users.
+
+## Choosing a model
+
+Start with Relay routing — it is the default for a reason, and the other two models layer on top rather than replace it. Move to a quote-source integration when you have routing or liquidity you want represented without giving up aggregation. Reserve full calldata control for cases where route selection itself is your product.
