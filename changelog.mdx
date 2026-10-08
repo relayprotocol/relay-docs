@@ -40,6 +40,16 @@ mode: "center"
 
 </Update>
 
+<Update label="2026-10-05" tags={["API"]}>
+
+### API
+
+**Behavior change**
+
+- `POST /quote/v2` with `useDepositAddress: true`, `strict: true`, and `tradeType: EXACT_INPUT`: the returned deposit address is now one-time use. The first deposit fills at market for any amount; additional deposits to the same address are refunded to `refundTo` instead of filling. Previously, `strict` was ignored for `EXACT_INPUT` on `/quote/v2` and the returned address could be reused across multiple deposits. `EXACT_OUTPUT` strict deposit addresses continue to be one-time use, as before. `refundTo` remains required for strict deposit addresses. See [Strict Deposit Addresses](/features/deposit-addresses#strict-deposit-addresses).
+
+</Update>
+
 <Update label="2026-10-02" tags={["API"]}>
 
 ### API
