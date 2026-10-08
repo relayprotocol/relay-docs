@@ -129,7 +129,7 @@ To enable quorum aggregation, define an allowlist of trusted signer addresses an
 - `ORACLE_SIGNERS` is a semicolon-separated allowlist of authorized signer addresses.
 - `ORACLE_SIGNERS_THRESHOLD` is the target number of unique allowlisted signatures for early return (defaults to `1`). It does not prevent the oracle service from returning fewer signatures.
 
-Each instance applies its own `ORACLE_SIGNERS` list and never sends it to peers, so operators are not required to configure identical lists. A signature counts only at instances that list its signer, and the signer authorized onchain decides which signatures settlement accepts.
+Each instance applies its own `ORACLE_SIGNERS` list, so operators are not required to configure identical lists. A signature counts only at instances that list its signer, and the signer authorized onchain decides which signatures settlement accepts.
 
 `ORACLE_SIGNERS_THRESHOLD` counts the local oracle's signature along with peer signatures. A threshold of `1` can be met by the local oracle alone, so a 2-of-3 configuration uses `2`.
 
@@ -160,43 +160,37 @@ With an allowlist, a failed local attestation is logged but does not by itself f
 
 Peer calls are best-effort attempts. If a peer times out, errors, fails response validation, or returns a payload that does not match any signable group, it is skipped and a warning is emitted.
 
-## Status and introspection
+## Status and observability
 
-The oracle service exposes a dedicated status surface for operators and peer discovery, separate from the simple liveness probe.
+`GET /status/v1` returns the instance's `status`, build identifiers (`version`, `image`, `gitCommit`), `uptimeSeconds`, lowercase `oracleSigner` address, `peerCount`, and `quorum` configuration. Unavailable information is `null`. `peerCount` includes all configured peers, including unreachable ones.
 
-### Local status
+`status` is `ok` when the signer lookup succeeds, or `partial` when it fails or exceeds five seconds. It describes the local signer check, not a test signature or overall peer health. Without a configured signer allowlist, `quorum` is `{ "signers": [], "threshold": null }`.
 
-`GET /status/v1` returns a snapshot of the running instance. The response includes:
+Build identifiers use the first available value in these sequences:
 
-- A top-level `status` of `ok` or `partial`. `partial` is returned when a non-fatal component is unavailable — currently the signer check, surfaced under `errors` as `{"component":"signer","code":"UNAVAILABLE"}`.
-- Build identifiers: `version`, `image`, and `gitCommit`. These resolve from runtime environment, the container's build manifest, and the package version in that order, and any field that cannot be resolved is returned as `null`.
-- `checkedAt` (Unix seconds) and `uptimeSeconds` for the current process.
-- The local `oracleSigner` address (lowercase), or `null` if the signer is unavailable.
-- `peerCount`, the number of configured peers, including unreachable ones.
-- A `quorum` object with the configured `signers` allowlist and `threshold`, or `null` when no allowlist is configured.
-- `endpoints`, the list of registered HTTP routes as `{ method, path }` pairs.
+- `version`: `VERSION`, build manifest version, package version, `IMAGE_TAG`, then the resolved `gitCommit`.
+- `image`: `IMAGE_DIGEST`, `IMAGE_TAG`, then the build manifest image.
+- `gitCommit`: `GIT_COMMIT`, then the build manifest commit.
 
-Responses set `cache-control: no-store`.
+`GET /lives/v1?withReport=true` uses the same version resolution.
 
-### Peer visibility
+Add `withPeers=true` to `/status/v1` or `/chains/v1` to check every configured peer. The response includes one `peers` entry per peer, including failed checks. Without this option, the `peers` field is omitted.
 
-Both `/status/v1` and `/chains/v1` accept a `withPeers=true` query parameter. When set, the oracle fans out to every configured peer in `PEERS` and includes a `peers` array in the response.
+In `/status/v1?withPeers=true`, each peer entry contains the same status fields plus `url`, `checkResult`, `latencyMs`, `retryCount`, and `httpStatus`. Unavailable fields are `null`, including `quorum` when the peer's configuration is unknown. Peer URLs omit credentials, query parameters, and fragments, and invalid URLs are omitted entirely.
 
-For `/status/v1?withPeers=true`, each peer entry carries the same status fields the peer reported (nulled where the peer did not report them), plus a `checkResult` describing the local oracle's view of that peer: `success`, `timeout`, `network-error`, `authentication-error`, `http-error`, `unsupported-endpoint`, `invalid-response`, `invalid-url`, `response-too-large`, or `cancelled`. The entry also records `url` (with credentials stripped), `checkedAt`, `latencyMs` for successful requests, `retryCount`, and `httpStatus` when the peer returned one.
+`checkResult` is `success` when a valid report is collected, or a failure reason such as `timeout`, `authentication-error`, or `invalid-response`. `latencyMs` measures the successful request, and `httpStatus` records the final request's HTTP status when available. `retryCount` counts retries after transient failures, excluding fallback requests.
 
-For peers that do not expose `/status/v1`, the oracle falls back first to `/lives/v1?withReport=true` and then to `/lives/v1`, so a legacy liveness-only peer still contributes a minimal observation.
+For older peers, status checks fall back to `/lives/v1?withReport=true`, then `/lives/v1`. Legacy reports supply limited information, with their old `version` value treated as `image` metadata.
 
-For `/chains/v1?withPeers=true`, each peer entry carries `url`, `checkResult`, and a `chainDifferences` array relative to the local chain set. Each difference is one of:
+In `/chains/v1?withPeers=true`, peer entries contain only `url`, `checkResult`, and `chainDifferences`, relative to the top-level local `chains` list:
 
-- `{ "id", "status": "local-only" }` — the chain is configured locally but not on the peer.
-- `{ "id", "status": "conflict", "fields": [...], "vmType"?, "depository"? }` — the chain exists on both sides but one or more of `vmType` or `depository` differ. Only the peer values for the differing fields are included.
-- `{ "id", "vmType", "depository"?, "status": "peer-only" }` — the peer has a chain the local oracle does not.
+- `local-only`: the chain exists locally but not on the peer. Includes only `id` and `status`.
+- `peer-mismatch`: the chain exists on both sides. Includes `id`, `status`, and only changed peer values for `vmType` or `depository`. `depository: null` means the peer has no depository configured.
+- `peer-only`: the chain exists only on the peer. Includes `id`, `status`, `vmType`, and `depository` when present.
 
-An absent `chainDifferences` means the comparison itself failed; an empty array means the chain sets match. The response sets `cache-control: no-store` whenever `withPeers=true` is used.
+`chainDifferences: []` means the chain sets match, while `null` means the comparison failed. A successful comparison can still report differences.
 
-<Info>
-The incoming `x-api-key` is forwarded to peers configured with the `pass-through` credential; peers with a dedicated key use that key. Peer calls run concurrently, honor `PEER_REQUEST_TIMEOUT_MS` and `PEER_RESPONSE_MAX_BYTES`, retry transient failures a bounded number of times, and are cancelled when the caller disconnects.
-</Info>
+Peer checks run concurrently, honor `PEER_REQUEST_TIMEOUT_MS` and `PEER_RESPONSE_MAX_BYTES`, retry transient failures, and stop when the caller disconnects. Status responses and chain responses with `withPeers=true` set `cache-control: no-store`.
 
 ## Security and trust model
 
@@ -208,7 +202,7 @@ Minimum security expectations:
 - Prefer a hardened key-management approach. `aws-kms` is supported; if you use raw keys, store them in a real secret manager.
 - Enforce access control at an API gateway or reverse proxy when public access is not intended.
 - Use HTTPS for any publicly reachable deployment.
-- Use dedicated peer API keys so peer traffic bypasses the unauthenticated rate limit.
+- Use dedicated peer API keys to authenticate requests between oracle instances.
 - Restrict management access to the host platform and secret storage.
 
 The oracle is stateless, but its signer is security-critical. If the signing key is compromised, the instance should be treated as compromised immediately.
@@ -256,8 +250,6 @@ You can also set:
 
 ```sh
 HTTP_PORT=3000
-UNAUTHENTICATED_RATE_LIMIT_MAX=2
-UNAUTHENTICATED_RATE_LIMIT_WINDOW_MS=1000
 PEERS=https://peer-one.example.com|peer-api-key;https://peer-two.example.com|peer-api-key
 PEER_REQUEST_TIMEOUT_MS=10000
 ORACLE_SIGNERS=0x1111111111111111111111111111111111111111;0x2222222222222222222222222222222222222222;0x3333333333333333333333333333333333333333
@@ -267,8 +259,7 @@ ORACLE_SIGNERS_THRESHOLD=2
 Notes:
 
 - `HTTP_PORT` is optional if your platform injects `PORT`. The server resolves ports in this order: `HTTP_PORT`, then `PORT`, then `3000`.
-- `API_KEYS` defines keys that bypass the unauthenticated rate limit and authorize the `force` option on solver fill and refund attestations.
-- `UNAUTHENTICATED_RATE_LIMIT_MAX` and `UNAUTHENTICATED_RATE_LIMIT_WINDOW_MS` default to `2` requests per `1000` ms.
+- `API_KEYS` defines the keys accepted on status, chains, and attestation routes. At least one key must be configured for the oracle to start.
 - `PEER_REQUEST_TIMEOUT_MS` defaults to `10000`.
 - `ORACLE_SIGNERS` is the semicolon-separated allowlist used to count unique oracle signatures during quorum aggregation.
 - `ORACLE_SIGNERS_THRESHOLD` sets the target number of unique allowlisted signatures for early return. It defaults to `1`, must be an integer of at least `1`, and is validated against the size of `ORACLE_SIGNERS` when that allowlist is configured. It does not prevent a successful response with fewer signatures.
@@ -342,23 +333,17 @@ You do not need to expose internal provider choices publicly. You only need to e
 - Hyperliquid and Bitcoin commonly need supplemental services, not just a single RPC URL.
 - When adding or removing supported chains, recheck the required environment variables before deploying.
 
-## Authentication and rate limiting
+## Authentication
 
-Requests without a valid `x-api-key` remain publicly accessible but are rate limited. Valid API keys bypass this limit.
+Status, chains, and attestation routes require a valid `x-api-key`. Requests to these routes without a valid key return `401 Unauthorized`.
 
-The oracle service applies one fixed-window limit per client IP across all routes except:
+The health and documentation routes do not require an API key:
 
 - `/`
 - `/documentation` and its subpaths
-- `/lives/*`
+- `/lives/v1`, including `withReport=true`
 
-The default limit is `2` requests per `1000` ms for each oracle process. Requests over the limit receive a `429` response with rate-limit and `retry-after` headers.
-
-<Warning>
-`API_KEYS` does not enforce access control for `/chains/v1` or the attestation endpoints. If these routes must not be public, enforce authentication at an API gateway, reverse proxy, or firewall.
-</Warning>
-
-The `force` option on solver fill and refund attestations is an exception and requires a valid API key.
+Registered peers have no automatic exemption. Each peer request must carry a key accepted by the receiving oracle.
 
 `API_KEYS` uses this format:
 
@@ -388,7 +373,7 @@ Each entry is:
 If Relay-managed oracles need to call your instance, the usual pattern is:
 
 1. You expose a stable public HTTPS URL.
-2. You create a dedicated incoming API key so peer traffic bypasses the unauthenticated rate limit.
+2. You create a dedicated incoming API key to authenticate peer requests.
 3. Relay adds your URL and that key to the `PEERS` list used by its oracle instances.
 
 ## Recommended deployment sequence
@@ -399,7 +384,7 @@ The safest way to bring up a new third-party oracle is:
 2. Provision RPC and chain-service endpoints.
 3. Deploy the container on Railway first unless you already have an established alternative platform.
 4. Verify health and chain loading.
-5. Configure API keys for trusted callers, and add edge access controls if unauthenticated public access is not intended.
+5. Configure API keys for trusted callers and any additional edge access controls.
 6. Expose the oracle service over HTTPS.
 7. Configure peering and receive live requests in shadow mode.
 8. Run long enough to observe stability, latency, and RPC usage.
@@ -422,31 +407,26 @@ If your platform builds from source automatically, the important requirement is 
 
 ## First-run verification checklist
 
-After deployment, verify:
+After deployment, verify the following. Include a valid `x-api-key` for status, chains, and attestation requests:
 
 - `GET /lives/v1` returns `{"status":"ok"}`.
 - `GET /status/v1` returns `status: "ok"`, the expected `version`, `image`, and `gitCommit` for the running build, and your local `oracleSigner` address.
-- `GET /chains/v1` returns the chains expected for your selected `ENVIRONMENT`. A valid `x-api-key` bypasses the unauthenticated rate limit.
+- `GET /chains/v1` returns the chains expected for your selected `ENVIRONMENT`.
 - `GET /documentation` loads the Swagger UI.
 - Your logs show the oracle service started successfully.
 - Your logs show the signer address you expect, and that address matches one of the entries in `ORACLE_SIGNERS` if the allowlist is configured.
 
-If peering is configured, also verify:
-
-- `GET /status/v1?withPeers=true` returns a `peers` array with `checkResult: "success"` for each reachable peer and the signer and quorum you expect each peer to report.
-- `GET /chains/v1?withPeers=true` returns an empty `chainDifferences` array for each peer that is expected to carry the same chain set.
-
-Then test at least one real attestation flow. Use a valid `x-api-key` to bypass the unauthenticated rate limit.
+Then test at least one real attestation flow with a valid `x-api-key`.
 
 ## Operational monitoring
 
 At minimum, monitor:
 
 - Container restarts.
-- `GET /status/v1` reporting `status: "partial"` or a non-empty `errors` array.
+- `GET /status/v1` reporting `status: "partial"` and `oracleSigner: null`.
 - Request latency.
 - Error rate by endpoint.
-- Unauthenticated `429` responses.
+- Unexpected `401 Unauthorized` responses.
 - Peer timeout, peer mismatch, and quorum-shortfall warnings.
 - Peer `checkResult` drift over time via `GET /status/v1?withPeers=true` and `GET /chains/v1?withPeers=true`.
 - RPC provider failures and rate limits.
