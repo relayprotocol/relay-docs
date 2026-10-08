@@ -1,0 +1,9 @@
+---
+title: "Get Currency Classifications"
+description: "Get the token symbols Relay classifies as stable or major for fee categories"
+openapi: get /currencies/classifications
+---
+
+<Note>
+The response lists the token symbols (lowercase) currently classified as **stable** and **major** — the live source of the fee-category lists in [Fees](/references/api/api_core_concepts/fees). There is no `minor` list: any token in neither array is treated as minor for fees. Classification is by symbol, not by contract address, and the lists can change as Relay adds tokens.
+</Note>
