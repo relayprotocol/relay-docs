@@ -31,7 +31,7 @@ This is where routing improvements accrue to you automatically — new providers
 
 If you run your own router or have preferred liquidity, Relay can onboard it as a quote source: your router constructs its candidate route, and Relay compares it against the other providers and selects the winner for each trade. Your routing participates without replacing Relay's — when your router has the best route it wins, and when it doesn't, your users still get the best available one.
 
-You keep the execution protections and chain coverage of Relay routing, and your router only needs to cover the chains you care about. This is how Fomo integrated Mobula: it participates as a restricted quote source in Fomo's trades while Relay retains route selection.
+You keep the execution protections and chain coverage of Relay routing, and your router only needs to cover the chains you care about. Partners run this in production today: their router participates as a restricted quote source in their own trades while Relay retains route selection.
 
 <Info>
 This is a bespoke integration, not a self-serve option: onboarding, scope, and requirements are agreed per partner. [Contact us](/resources/support) if you want to explore it.
