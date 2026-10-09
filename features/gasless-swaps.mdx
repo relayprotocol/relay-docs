@@ -22,10 +22,10 @@ flowchart TD
     Has4337 -->|Yes| Smart4337
     Has4337 -->|No| BatchExecutor
 
-    Permit[/"**Permit-based Gasless**<br/><br/>_Limitation: not all ERC-20s support permit_"/]
-    Smart4337[/"**ERC-4337 Gasless**"/]
-    BatchExecutor[/"**7702 BatchExecutor**"/]
-    FeePayer[/"**Sponsored Fee Payer**<br/><br/>_Your sponsor wallet pays fees and rent_"/]
+    Permit[/"Permit-based Gasless<br/><br/>Limitation: not all ERC-20s support permit"/]
+    Smart4337[/"ERC-4337 Gasless"/]
+    BatchExecutor[/"7702 BatchExecutor"/]
+    FeePayer[/"Sponsored Fee Payer<br/><br/>Your sponsor wallet pays fees and rent"/]
 
     click Permit "#permit-based-gasless" _blank
     click Smart4337 "#erc-4337-gasless" _blank
@@ -169,19 +169,21 @@ _See the full working example: [<Icon icon="github" size={16} /> 7702-batch-exec
 
 ## Gasless Swaps on Solana
 
-Permits do not exist on Solana, so gasless works differently there: a sponsor wallet your app controls pays the transaction fees and rent, and your users need zero SOL. You request this with one quote parameter, **`depositFeePayer`**, and your app co-signs each transaction as the fee payer.
+Use this approach for Solana-origin trades, where permits do not exist. A sponsor wallet your app controls pays the transaction fees and rent, so your users need zero SOL: pass **`depositFeePayer`** in the quote, and your app co-signs each transaction as the fee payer.
 
-Before you start, you need a **sponsor wallet funded with SOL** (it pays the fees and any rent for account creation, so keep it topped up; your backend holds its key and it never touches the client), a Relay [API key](/references/api/api-keys), and **`@solana/web3.js`** on your backend for transaction assembly and signing.
+You need a sponsor wallet funded with SOL (your backend holds its key; it never touches the client), a Relay [API key](/references/api/api-keys), and `@solana/web3.js` on your backend.
 
-<Warning>
-Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solana-fee-sponsorship) apply to every step below. The **`depositFeePayer`** must be a different address from **`user`**, and the quote API does not reject a request where they match, so your app must enforce this. The sponsor must sign the transaction **before** the user, or the user could modify it to drain the sponsor. And do not use **`depositFeePayer`** for same-chain Solana swaps with untrusted users, as that combination is exploitable.
-</Warning>
+Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solana-fee-sponsorship) apply to every step below:
+
+1. **`depositFeePayer`** must be a different address from **`user`**. The quote API does not enforce this, so your app must.
+2. The sponsor signs the transaction before the user. Signing in the other order lets the user modify the transaction and drain the sponsor.
+3. Do not use **`depositFeePayer`** for same-chain Solana swaps with untrusted users. That combination is exploitable.
 
 ### How it works
 
 <Steps>
   <Step title="Get a quote with a sponsor" id="get-a-quote-with-a-sponsor">
-    Request a quote as usual, and set **`depositFeePayer`** to your sponsor wallet. Relay then builds and sizes the transaction with the sponsor as the paying account, which matters because a user with no SOL would fail simulation otherwise.
+    Call `/quote/v2` with **`depositFeePayer`** set to your sponsor wallet.
 
     ```bash
     curl -X POST "https://api.relay.link/quote/v2" \
@@ -200,10 +202,10 @@ Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solan
       }'
     ```
 
-    The response contains a `deposit` step whose item carries raw `instructions`, `addressLookupTableAddresses`, and a `check` endpoint for tracking. The user is the only signer inside the instructions; the sponsor becomes a signer in the next step, as the transaction's fee payer.
+    The response's `deposit` step carries raw `instructions`, `addressLookupTableAddresses`, and a `check` endpoint for tracking.
   </Step>
   <Step title="Assemble the transaction" id="assemble-the-transaction">
-    On your backend, build a versioned transaction from the returned instructions, with the sponsor as **`payerKey`**. Instruction `data` is hex-encoded.
+    On your backend, build a versioned transaction from the returned instructions with the sponsor as **`payerKey`** (instruction `data` is hex-encoded).
 
     ```typescript expandable
     import {
@@ -254,7 +256,7 @@ Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solan
     ```
   </Step>
   <Step title="Sign: sponsor first, then user" id="sign-sponsor-first-then-user">
-    Sign with the sponsor key on your backend, then hand the partially signed transaction to the client for the user's signature. The sponsor key never leaves your backend, and the user key never leaves their wallet.
+    Sign with the sponsor key on your backend, then hand the partially signed transaction to the client for the user's signature.
 
     ```typescript
     // Backend: the sponsor signs first
@@ -265,7 +267,7 @@ Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solan
     ```
   </Step>
   <Step title="Submit and track" id="submit-and-track">
-    Broadcast the fully signed transaction, then poll the quote's `check` endpoint until the request reaches a terminal status.
+    Broadcast the signed transaction, then poll the quote's `check` endpoint until the request reaches a terminal status.
 
     ```typescript
     const signature = await connection.sendRawTransaction(signed.serialize());
