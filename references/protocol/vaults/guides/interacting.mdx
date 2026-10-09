@@ -4,26 +4,18 @@ description: How to interact with Relay Vaults
 sidebarTitle: Interacting
 ---
 
-In this guide, we will cover how to interact with Relay Vaults, whether you are
-a user, a liquidity provider (LP), a developer, or a curator.
+<Warning>
+Relay Vaults are being wound down and new deposits are no longer supported. To exit an existing position, see [Withdrawing from Relay Vaults](/references/protocol/vaults/guides/withdrawing).
+</Warning>
+
+In this guide, we cover how liquidity providers (LPs) interact with Relay Vaults.
 
 ## As a Liquidity Provider (LP)
 
-As an LP, you're most likely going to interact with Relay Vaults through the
-[Relay UI](https://relay.link/vaults). You can deposit and withdraw funds from
-the vaults, and you can also track your yields and balances.
+As an LP, you can withdraw your funds and track your balances through the
+[Relay UI](https://relay.link/vaults) until December 31, 2026. After that date,
+follow [Withdrawing from Relay Vaults](/references/protocol/vaults/guides/withdrawing)
+to withdraw directly onchain.
 
 You can also interact directly with the smart contracts or using block explorers
 like Etherscan and Blockscout.
-
-## As a developer
-
-As a developer, you should consider interacting with the vaults using the
-smart-contracts. We publish npm packages such as `@relay-vaults/abis` that
-includes all the ABI definitions for the vaults. We also publish
-`@relay-vaults/client` that includes a graphQL client to interact with the
-[backend API](../backend).
-
-Finally, you can also use our hardhat tasks to perform deposits and withdrawals
-from the vaults. These tasks are available in the
-[Relay Vaults GitHub repository](https://github.com/relayprotocol/relay-vaults/tree/main/smart-contracts).

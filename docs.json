@@ -293,7 +293,8 @@
                 "group": "Guides",
                 "pages": [
                   "references/protocol/vaults/guides/bridging",
-                  "references/protocol/vaults/guides/interacting"
+                  "references/protocol/vaults/guides/interacting",
+                  "references/protocol/vaults/guides/withdrawing"
                 ]
               },
               {
