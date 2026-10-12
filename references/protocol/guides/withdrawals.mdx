@@ -29,9 +29,9 @@ For deposit-address flows, a configured **`recoveryAddress`** is recorded as the
 
 ## Supported Chains and Signers
 
-User-triggered withdrawals are supported on EVM chains, Hyperliquid, Solana, Tron, and TON. Bitcoin and Lighter withdrawals are rejected with a `400`. Recovering those funds currently goes through [support](/resources/support).
+User-triggered withdrawals are supported on EVM chains, Hyperliquid, Solana, Tron, TON, and Bitcoin. Lighter withdrawals are rejected with a `400`. Recovering Lighter funds currently goes through [support](/resources/support).
 
-The **`owner`** must be the recovery owner recorded by the protocol. An EOA signs the digest directly with its own key. A smart contract wallet authorizes through a contract signature instead: the oracle validates ERC-1271 signatures, so any contract that produces a valid `isValidSignature` result can withdraw. The step-by-step flow below covers direct EOA signatures. For a Safe, use the withdrawal UI, which drives the contract-signature flow end to end — see [Withdrawing with a Safe](/references/protocol/guides/safe-withdrawals). Other ERC-1271 wallets don't have a documented flow yet; contact [support](/resources/support) if you need to withdraw with one. Exchange-custodied addresses and other signers that can't produce either kind of signature can't complete this flow; if the owner's key is inaccessible, contact [support](/resources/support).
+The **`owner`** must be the recovery owner recorded by the protocol, and it must be able to sign an arbitrary message with its own key. Smart contract wallets, exchange-custodied addresses, and other signers that can't produce a raw message signature can't complete this flow, since there is no contract-signature (ERC-1271) path today. If the owner's key is inaccessible, contact [support](/resources/support).
 
 ## Withdrawal Flow
 
@@ -101,14 +101,18 @@ curl -X POST "https://api.relay.link/withdrawals/request" \
   }'
 ```
 
-- **`chainId`** / **`ownerChainId`** — protocol chain slugs (`base`, `bnb`, `solana`), not numeric ids. Read them from `chains[].protocol.v2.chainId` in the [chains API](/references/api/get-chains).
-- **`currency`** — the token address on the withdrawal chain, or the zero address for the native token
+- **`chainId`** / **`ownerChainId`** — protocol chain slugs (`base`, `bnb`, `solana`, `bitcoin`), not numeric ids. Read them from `chains[].protocol.v2.chainId` in the [chains API](/references/api/get-chains).
+- **`currency`** — the token address on the withdrawal chain, or the zero address for the native token. For Bitcoin use the native BTC identifier (see [Bitcoin Support](/references/api/api_guides/bitcoin)).
 - **`amount`** — raw base units as an integer string
 - **`recipient`** — where the funds go. May differ from `owner`.
 
 The response looks like `{ "nonce": "0x…", "amount": "211891421", "additionalData": { … } }`. Use the returned `amount` in every following step — it's validated against the available hub balance, and requesting more than is available returns a `400`. `additionalData` may be absent; when present, pass it through untouched.
 
 The `nonce` is deterministic per one-minute window for a given (chain, owner, currency, recipient) tuple and expires quickly, so prepare, sign, and execute in one sitting. If the job later reports `expired`, restart from this step.
+
+<Info>
+On Bitcoin, prepare additionally returns `additionalData["bitcoin-vm"]` describing the fee side (`allocatorUtxos`, `feeUtxos`, `feeChangeAddress`, `feeRate`) plus a `feeAuthorization` object (`validUntil` and a `signature`). Pass the entire `additionalData` back verbatim on execute — a tampered, missing, or expired authorization is rejected with `400 BITCOIN_FEE_AUTHORIZATION_INVALID`. The authorization is valid for one hour; if it expires before the withdrawal is submitted, re-prepare. Same-minute retries return the cached prepare response; a change to `recipient` or `amount` within the same minute returns `429`.
+</Info>
 
 ### Step 4: Sign the Digest
 
@@ -145,6 +149,7 @@ Sign the digest with the owner key and submit the signature as 0x-prefixed hex:
 | Solana | `signMessage(digest)` (the digest as a UTF-8 string), then hex-encode the ed25519 signature |
 | Tron | `tronWeb.trx.signMessageV2(digest)` |
 | TON | TonConnect `signData({ type: "text", text: digest })`, then hex-encode the signature |
+| Bitcoin | Sign the digest with the owner's BTC key as a Bitcoin message signature and submit it as 0x-prefixed hex |
 
 On TON, the wallet's `signData` response also includes a `timestamp` and `domain`. Submit them in the execute call as `additionalData["ton-vm"] = { timestamp, domain }`. They are needed for verification but are not part of the signed digest above.
 
