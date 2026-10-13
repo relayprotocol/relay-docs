@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-10-13 — Referrer queries on `GET /requests/v3` include public keyless requests
+
+**Behavior change** — `GET /requests/v3`: queries that filter by `referrer` — as a top-level query parameter or as a `referrer` / `not:referrer` key inside a `filters` group — now also return matching **public requests with no recorded API key and no legacy fill API key**, regardless of age. Previously these keyless requests were excluded from referrer-filtered results. The existing requirement to pair referrer filtering with the top-level `apiKeyId` or `apiKey` parameter is unchanged, every supplied key must still belong to the authenticating integrator, and existing visibility restrictions still apply — public keyless requests are not assigned to your integrator. When `referrer` only appears inside `filters` groups (no top-level `referrer`), the broader keyless scope widens only the groups that contain `referrer` or `not:referrer`; other OR branches remain scoped to the selected keys. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+
 ## 2026-10-13 — `appId` filter and `appId` field on `GET /metrics/usage`
 
 **Added** — `GET /metrics/usage`: the new optional `appId` query parameter filters usage by App — the durable identity for an integration, which persists across API key rotation. Accepts one or more `app_id_<uuid>` values as a comma-separated list (OR-matched, trimmed, canonicalized to lowercase, deduplicated). Requires `x-dev-portal-key`; a plain `x-api-key` cannot use this filter and attempts return `403`. OR-matches with `apiKey` and `apiKeyId`, and the three filters share a combined cap of **50** values before Apps expand to their keys. Every supplied ID must belong to the authenticating integrator; malformed IDs return `400` and unknown or foreign IDs return `403` for the entire request. The filter resolves every current credential under an App — including inactive keys — and an owned App without credentials returns an empty `metrics` array.
