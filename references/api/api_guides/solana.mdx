@@ -236,12 +236,14 @@ When the compiled deposit transaction would exceed 1232 bytes, `POST /quote`, `P
 ```
 
 <Warning>
-  Re-quoting the same route with the same input typically returns another oversized route. To recover, restrict routing (see the mitigations below) or retry with a different input amount.
+  Re-quoting the same route with the same input typically returns another oversized route. To recover, request a v1 transaction, restrict routing (see the mitigations below), or retry with a different input amount.
 </Warning>
 
 <Info>
   Wallets and SDKs that prepend compute-budget instructions at send time (roughly 60 bytes) are responsible for checking that their additions still fit under 1232 bytes. A quote that fits the wire limit exactly leaves no room for client-added instructions — clients that add them should measure the returned steps and skip the injection if there is not enough room.
 </Info>
+
+Pass **`useV1Transaction: true`** in your [quote request](/references/api/get-quote-v2) to receive the deposit transaction in Solana's [v1 transaction format](https://solana.com/news/transaction-v1-and-the-alt-trade-off) (SIMD-0385), which raises the size limit from 1,232 bytes to 4,096 bytes. v1 transactions don't use address lookup tables, and the compute unit limit is set in the step's `transactionConfig` instead of through ComputeBudget instructions. The parameter is best effort: when it is honored, the returned step data sets `transactionVersion` to `1`; otherwise the quote returns a standard transaction under the 1,232-byte limit. Only set it if your wallet or signing stack can sign and send v1 transactions.
 
 Pass **`includedOriginSwapSources`** in your quote request to restrict routing to a single, size-conservative source:
 
