@@ -129,7 +129,13 @@ mode: "center"
 
 </Update>
 
-<Update label="2026-09-17" tags={["UI Kit"]}>
+<Update label="2026-09-17" tags={["API", "UI Kit"]}>
+
+### API
+
+**Added**
+
+- `POST /withdrawals/request`: user-triggered withdrawals to Bitcoin are supported again. The prepare response now returns `additionalData["bitcoin-vm"]` (`allocatorUtxos`, `feeUtxos`, `feeChangeAddress`, `feeRate`) alongside a `feeAuthorization` object (`validUntil` in unix seconds and a `signature`). Execute must pass the entire `additionalData` back verbatim within one hour of prepare. Tampered, missing, or expired authorizations are rejected with `400` and `errorCode: "BITCOIN_FEE_AUTHORIZATION_INVALID"`. A prepare retried in the same one-minute window with a changed `recipient` or `amount` returns `429`; a prepare that cannot be fulfilled by any relayer returns `503`. See [Programmatic Withdrawals](/references/protocol/guides/withdrawals#step-3-prepare).
 
 ### RelayKit
 
