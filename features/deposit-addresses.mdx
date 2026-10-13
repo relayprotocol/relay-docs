@@ -873,7 +873,7 @@ When funds arrive at a deposit address, Relay evaluates what was sent versus wha
 
 - **Exact match** — The original quote can be reused, in which case the fill proceeds under the original `requestId`. Relay can still requote an exact match at sweep time (see [Which Request Owns the Fill](#which-request-owns-the-fill)).
 - **More than quoted** — A new quote is generated for the larger amount, and the fill proceeds under a new `requestId`.
-- **Less than quoted** — If the smaller amount still covers fees and the minimum fill, a new quote is generated and the fill proceeds under a new `requestId`. If not, the deposit is refunded to the `refundTo` address (if set).
+- **Less than quoted** — If the smaller amount still covers fees and the minimum fill, a new quote is generated and the fill proceeds under a new `requestId`. If not, the deposit is refunded to the `refundTo` address (if set). Deposits worth \$0.05 or less are not swept at all — see [Minimum Deposit](#minimum-deposit).
 
 **Different Token (Solver Currency)**
 
@@ -1574,6 +1574,12 @@ Deposit addresses add gas overhead compared to direct calldata execution because
 | Protocol | ERC-20 tokens | ~70,000 gas |
 
 For very small amounts, the gas overhead may make deposit addresses less cost-effective than direct calldata execution.
+
+### Minimum Deposit
+
+Relay doesn't sweep deposits worth **\$0.05 USD or less** — the request stays in `waiting` and funds remain on the address. The threshold is USD-based and converted to the deposited token at its current value; there's no fixed per-token minimum.
+
+Quotes at or below the threshold return [`AMOUNT_TOO_LOW`](/references/api/api_core_concepts/handling-errors), but open-ended addresses accept any amount, so enforce a minimum above \$0.05 in your own limits.
 
 ### Supported Currencies
 

@@ -1,0 +1,51 @@
+---
+title: "Withdrawing with a Safe"
+description: "Claim and withdraw Relay Hub funds when the recovery owner is a Safe multisig"
+sidebarTitle: "Safe Withdrawals"
+---
+
+When funds held on the Relay Hub belong to a Safe (multisig) rather than a regular wallet, you can still withdraw them through [relay.link/withdraw](https://relay.link/withdraw) — the Safe signs the withdrawal authorization through the Safe app's message flow instead of a direct wallet signature. This guide walks through the full flow.
+
+<Info>
+This flow is verified in production with both 1-of-1 and multi-owner Safes on EVM chains. The oracle validates the Safe's authorization as a contract signature (ERC-1271), so any contract wallet producing a valid ERC-1271 signature can withdraw — this walkthrough covers the Safe flow specifically. For the API-driven flow with a regular wallet, see [Programmatic Withdrawals](/references/protocol/guides/withdrawals).
+</Info>
+
+## Before you start
+
+- Open your Safe at [app.safe.global](https://app.safe.global) on the chain where you want to receive funds.
+- Have a signer wallet (for example MetaMask) that is an owner of the Safe, unlocked and set to that same chain.
+- Keep two browser tabs open side by side: the Safe app and [relay.link/withdraw](https://relay.link/withdraw). You will switch between them several times.
+- Enable **blind signing** in the Safe settings. The withdrawal authorization is a raw hash, and the Safe cannot display its contents.
+- The Safe itself needs no ETH. Gas for the final transaction is paid by the signer wallet.
+
+## Connect the Safe to Relay
+
+1. **Connect your signer wallet to the Safe app.** In the Safe app, click **Connect Wallet** and pick your signer wallet. The account shown in the top right must be one of the Safe owners.
+2. **Choose Safe as your wallet on relay.link/withdraw.** Open [relay.link/withdraw](https://relay.link/withdraw), click **Connect**, and pick **Safe** in the wallet list. Do not pick your signer wallet here — Relay would look up the signer's balance instead of the Safe's.
+3. **Pair through WalletConnect.** Relay shows a QR code. Click **Copy QR URI**, switch to the Safe app, open the WalletConnect icon in the top bar, and paste the URI. Relay should now show the Safe address in its top right corner.
+
+## Sign the withdrawal authorization
+
+4. **Fill in the withdrawal.** In Relay, open the **Withdraw** tab and select the chain and token. The **Withdraw to Address** field defaults to the connected Safe, which is what you want. Check the available balance, then click **Withdraw**.
+5. **Confirm the message in the Safe app.** A **Confirm message** modal appears containing a 32-byte hash — the withdrawal authorization Relay asked your Safe to sign. The blind-signing warning is Safe's standard notice for any raw hash and is expected here. Keep this modal open until every required owner has confirmed; closing it aborts the request and you must restart from step 4.
+6. **Switch network if prompted, then sign.** If a **Change your wallet network** banner appears, switch and approve in your signer wallet — the **Sign** button only activates once the signer is on the right network.
+7. **Reach the signature threshold.** The Safe **Messages** tab lists the message as **Confirmed** once enough owners have signed. For thresholds above 1, each additional owner opens their own Safe app session, goes to **Transactions → Messages**, opens the message, and clicks **Sign**. The Relay tab keeps waiting until the threshold is reached.
+
+## Submit the on-chain transaction
+
+8. **Submit from Relay.** Once the signature is collected, the Relay progress bar moves to **Submit**. Click **Submit Transaction**. The prepared withdrawal backing this step expires about one hour after it is prepared — this applies to submitting the transaction, not to collecting signatures in the previous steps. If it expires, the funds return to your hub balance and you can start again from step 4.
+9. **Review the transaction in the Safe app.** A **Confirm transaction** modal appears. Before signing, check three things: the call is **execute** on **RelayDepository**, your Safe address appears in the decoded request as the recipient of the funds, and the amount matches what you entered in Relay — for token withdrawals the decoded amount is shown in raw base units (for example, a 6-decimal USDC amount has six extra digits). Then sign and approve in your signer wallet.
+10. **Execute from the queue if needed.** If the transaction lands in the Safe **Queue** instead of executing immediately, open the Queue tab and click **Execute** on the RelayDepository entry. For thresholds above 1, the other owners confirm here first; any owner can then execute.
+
+## Confirm the funds arrived
+
+The Safe shows **Transaction was successful** with the transaction hash, and the block explorer's internal transactions show the transfer from the Relay Depository to your Safe address.
+
+## If the signing prompt never appears
+
+- **Wrong network on the signer wallet.** The Safe **Sign** button stays disabled until the wallet is on the Safe's chain.
+- **Connected wallet is not an owner.** Check the connected account against the Safe's owner list under Settings.
+- **Threshold above 1.** The first owner signs in the modal; the others sign from **Transactions → Messages** in their own Safe app session while the Relay tab stays open.
+- **Modal was closed.** Closing the Confirm message modal aborts the request. Start again from step 4.
+- **Relay connected to the signer wallet instead of the Safe.** Disconnect in Relay and reconnect choosing Safe. The **Withdraw to Address** field must show the Safe address.
+- **Browser blocking pop-ups.** Allow pop-ups for app.safe.global so the signer wallet can open.

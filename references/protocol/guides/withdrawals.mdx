@@ -31,7 +31,7 @@ For deposit-address flows, a configured **`recoveryAddress`** is recorded as the
 
 User-triggered withdrawals are supported on EVM chains, Hyperliquid, Solana, Tron, and TON. Bitcoin and Lighter withdrawals are rejected with a `400`. Recovering those funds currently goes through [support](/resources/support).
 
-The **`owner`** must be the recovery owner recorded by the protocol, and it must be able to sign an arbitrary message with its own key. Smart contract wallets, exchange-custodied addresses, and other signers that can't produce a raw message signature can't complete this flow, since there is no contract-signature (ERC-1271) path today. If the owner's key is inaccessible, contact [support](/resources/support).
+The **`owner`** must be the recovery owner recorded by the protocol. An EOA signs the digest directly with its own key. A smart contract wallet authorizes through a contract signature instead: the oracle validates ERC-1271 signatures, so any contract that produces a valid `isValidSignature` result can withdraw. The step-by-step flow below covers direct EOA signatures. For a Safe, use the withdrawal UI, which drives the contract-signature flow end to end — see [Withdrawing with a Safe](/references/protocol/guides/safe-withdrawals). Other ERC-1271 wallets don't have a documented flow yet; contact [support](/resources/support) if you need to withdraw with one. Exchange-custodied addresses and other signers that can't produce either kind of signature can't complete this flow; if the owner's key is inaccessible, contact [support](/resources/support).
 
 ## Withdrawal Flow
 

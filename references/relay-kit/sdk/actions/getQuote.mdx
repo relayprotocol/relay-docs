@@ -3,6 +3,9 @@ title: getQuote
 description: Get a quote for a cross-chain relay (bridge, swap, call, etc)
 ---
 
+import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+
+
 ## Arguments
 
 | Property       | Description                                                                                                                                                                                                  | Required |
@@ -14,6 +17,9 @@ description: Get a quote for a cross-chain relay (bridge, swap, call, etc)
 <Warning>
 **Warning**: Never pass `x-api-key` in headers from client-side code. Only use the `headers` parameter with API keys when calling `getQuote` entirely on the server.
 </Warning>
+
+<QuoteV2AuthCallout />
+
 
 ## Quote Parameters
 

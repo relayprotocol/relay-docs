@@ -3,6 +3,9 @@ title: "Call Execution Integration Guide"
 description: "How to execute cross-chain calls using Relay"
 ---
 
+import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+
+
 import GetAnApiKey from "/snippets/GetAnApiKey.mdx";
 import QuickstartCallout from "/snippets/QuickstartCallout.mdx";
 
@@ -50,6 +53,8 @@ While not mandatory for integration, doing the following will improve the UX for
     Your proxy contract then reads its live balance at execution time and builds the final Aave interaction from that balance.
 
     The request below is schematic. In practice, `txs[].data` must contain ABI-encoded calldata.
+
+<QuoteV2AuthCallout />
 
     ```bash
     curl -X POST "https://api.relay.link/quote/v2" \
