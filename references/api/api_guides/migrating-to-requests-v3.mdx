@@ -317,7 +317,7 @@ Every individual change, grouped by request side and response side.
 
     The `x-api-key` request header is now required. Every request authenticates against an active API key. See [API Keys](/references/api/api-keys) for details.
 
-    **Access scope.** v3 returns only requests that your integrator owns. Any of your API keys can access all v3 data for your other keys. If you use more than one key, you do not have to change your integration.
+    **Access scope.** v3 returns requests owned by your integrator, plus requests that were created without an API key. Any of your API keys can access all v3 data for your other keys — if you use more than one key, you do not have to change your integration.
   </Accordion>
 
   <Accordion title="Filtering, search & sorting" icon="magnifying-glass">
