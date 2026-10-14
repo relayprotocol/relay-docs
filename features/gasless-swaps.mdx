@@ -68,6 +68,95 @@ Use this approach when your app does **not** control the user's wallet (e.g. Met
   </Step>
 </Steps>
 
+### ERC-3009 permits with MulticallAuthorization
+
+From October 26, 2026, Relay routes permits through the v3.2 ApprovalProxy (see [Router 3.2 migration](/references/api/api_resources/contract-addresses#router-3-2-migration)). On that proxy, an ERC-3009 permit (the USDC style `TransferWithAuthorization`) needs a second signature: a `MulticallAuthorization` that binds the calls run with the user's tokens.
+
+Opt in by passing **`useMulticallAuthorization: true`** in the quote request. The permit signature step (`authorize1`, or `authorize2` when the origin and destination chain are the same) then holds two items. Sign and post them in this order:
+
+1. **`MulticallAuthorization`**: EIP-712 typed data with the domain name `RelayApprovalProxy`, version `3.1`, the chain id, and the v3.2 ApprovalProxy as the verifying contract. Post it to `/execute/permits` with kind `multicall-authorization`. This item has no `check`, since nothing executes yet.
+2. **ERC-3009 authorization**: the usual `TransferWithAuthorization`, posted with kind `eip3009`. Relay submits the permit once both signatures are posted.
+
+Posting the ERC-3009 signature first returns a 400. Sign both items as the quote returns them: the ERC-3009 nonce is derived from the `MulticallAuthorization`, so changing either one invalidates the pair.
+
+```json expandable
+{
+  "status": "incomplete",
+  "data": {
+    "sign": {
+      "signatureKind": "eip712",
+      "domain": {
+        "name": "RelayApprovalProxy",
+        "version": "3.1",
+        "chainId": 8453,
+        "verifyingContract": "0x5567954cd026cebfe486062cb75848e0f1c12e58"
+      },
+      "types": {
+        "MulticallAuthorization": [
+          { "name": "from", "type": "address" },
+          { "name": "relayer", "type": "address" },
+          { "name": "msgValue", "type": "uint256" },
+          { "name": "refundTo", "type": "address" },
+          { "name": "nftRecipient", "type": "address" },
+          { "name": "metadata", "type": "bytes" },
+          { "name": "fundingIndex", "type": "uint256" },
+          { "name": "calls", "type": "Call3Value[]" },
+          { "name": "funding", "type": "FundingAuthorization[]" }
+        ],
+        "Call3Value": [
+          { "name": "target", "type": "address" },
+          { "name": "allowFailure", "type": "bool" },
+          { "name": "value", "type": "uint256" },
+          { "name": "callData", "type": "bytes" }
+        ],
+        "FundingAuthorization": [
+          { "name": "token", "type": "address" },
+          { "name": "from", "type": "address" },
+          { "name": "value", "type": "uint256" },
+          { "name": "validAfter", "type": "uint256" },
+          { "name": "validBefore", "type": "uint256" }
+        ]
+      },
+      "primaryType": "MulticallAuthorization",
+      "value": {
+        "from": "WALLET_ADDRESS",
+        "relayer": "0x...",
+        "msgValue": "0",
+        "refundTo": "WALLET_ADDRESS",
+        "nftRecipient": "WALLET_ADDRESS",
+        "metadata": "0x...",
+        "fundingIndex": 0,
+        "calls": [
+          { "target": "0x...", "allowFailure": false, "value": "0", "callData": "0x..." }
+        ],
+        "funding": [
+          {
+            "token": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "from": "WALLET_ADDRESS",
+            "value": "1000000",
+            "validAfter": 0,
+            "validBefore": 1764948419
+          }
+        ]
+      }
+    },
+    "post": {
+      "endpoint": "/execute/permits",
+      "method": "POST",
+      "body": {
+        "kind": "multicall-authorization",
+        "requestId": "0x...",
+        "api": "swap"
+      }
+    }
+  }
+}
+```
+
+Without the opt in, ERC-3009 permits keep using the v3 ApprovalProxy with a single signature during the transition. You can pass the flag before the switch: until then the step holds only the ERC-3009 item.
+
+Permit2 permits need no change. On the v3.2 ApprovalProxy the `RelayerWitness` in the quote's typed data includes `msgValue`; if you build Permit2 messages yourself, take the witness from the quote.
+
 ### Fees
 
 You can choose to subsidize all destination fees by passing `subsidizeFees: true` to the quote api (this effectively subsidizes the first time approval). The user still needs to pay for the origin gas fee. For subsidizing fees you'll need to make sure you have [fee sponsorship](/features/fee-sponsorship) set up.
