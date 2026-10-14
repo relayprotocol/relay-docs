@@ -45,6 +45,7 @@ Relay switches to the v3.2 Router and ApprovalProxy on Monday, October 26, 2026 
 - [Get Chains](/references/api/get-chains) already returns the new pair under `contracts["v3.2"]`. At the switch, `contracts.erc20Router` and `contracts.approvalProxy` change to the v3.2 addresses, and the Mainnet Contracts table below updates with them.
 - Token approvals do not carry over from the v3 ApprovalProxy, so a returning user approves the v3.2 ApprovalProxy once.
 - ERC-3009 permits on the v3.2 ApprovalProxy need a second signature, which clients opt into. See [Gasless Swaps](/features/gasless-swaps#erc-3009-permits-with-multicallauthorization).
+- If you call the v3.2 ApprovalProxy directly: `permitTransferAndMulticall` (ERC-2612) no longer has a nonce in its permit struct, and `permit3009TransferAndMulticall` takes an extra `multicallSignatures` argument. `transferAndMulticall`, `permit2TransferAndMulticall` and the Router's `multicall` keep their signatures, and the Permit2 witness now includes `msgValue`.
 - ABIs for the v3.2 contracts are available on request.
 
 ### Mainnet Contracts
