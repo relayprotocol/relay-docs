@@ -218,6 +218,10 @@ After the message is signed the second action is to submit the `post` body to th
 
 The design pattern of this API is completely generic, allowing for automatic support of new types of liquidity without needing to update the app. This data can be fed directly into an Ethereum library such as viem, making it easy to sign and submit the exact data that is needed.
 
+**Multiple items**
+
+A signature step can hold more than one item. Sign and post the items in the order they appear: a later item can be refused until the earlier one is posted. Not every item has a `check`; for example, the `MulticallAuthorization` item of an [ERC-3009 permit](/features/gasless-swaps#erc-3009-permits-with-multicallauthorization) has none.
+
 ### Transaction Step
 
 A transaction that needs to be submitted onchain. After the transaction is submitted onchain you can poll the step items `check` endpoint. The endpoint will return a status which when successful will return 'success'. The step item can then be successfully marked as complete. _`Note that the transaction step item contains a chainId for which the transaction should be submitted on.`_
