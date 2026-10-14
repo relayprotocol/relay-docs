@@ -36,6 +36,21 @@ mode: "center"
 
 </Update>
 
+<Update label="2026-10-12" tags={["API"]}>
+
+### API
+
+**Breaking**
+
+- `POST /quote` and `POST /quote/v2`: the `details.fallbackType` field is removed from the response. It was only populated when a canonical+ fallback route served the quote; with that path removed, the field no longer appears on any response.
+
+**Deprecated**
+
+- `POST /quote`, `POST /quote/v2`, and `POST /price`: the `useExternalLiquidity` and `useFallbacks` request fields are now accepted but ignored. The canonical+ bridging path and the fallback-route path they selected have been removed from the quote engine. Both fields are marked `deprecated` in the request schema and can be dropped from your integration. Callers that previously sent `useExternalLiquidity: true` now receive a standard quote instead of a `400`.
+- `GET /config` and `GET /config/v2`: the per-chain-combination `supportsExternalLiquidity` field is marked `deprecated` and now always returns `false`. The field remains in the response shape for backwards compatibility — treat it as a constant and remove any branching on its value.
+
+</Update>
+
 <Update label="2026-10-06" tags={["API", "SDK", "UI Kit", "Adapters"]}>
 
 ### API
