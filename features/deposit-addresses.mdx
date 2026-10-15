@@ -24,7 +24,7 @@ This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headle
 | `user` | address | The recipient wallet on the destination chain. Can be any valid address, including the zero address. |
 | `recipient` | address | The address that receives funds on the destination chain. |
 | `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Set to the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to opt into automatic refunds to the original depositor. Supported on EVM chains, Bitcoin, and Solana. If the depositor is a blocked wallet, Relay does not refund it. If `recoveryAddress` is set, the funds are credited on the Hub to that address instead. Omitting this on open addresses disables automatic refund. See [Refund Behavior](#refund-behavior). |
-| `recoveryAddress` | address | Optional origin-chain wallet that you control and can sign with. Relay records it as the protocol depositor. When Relay cannot fill or refund, the recovered funds are credited on the Hub to this address, and only its signature can withdraw them at [relay.link/withdraw](https://relay.link/withdraw). Do not use an exchange deposit address, a custodial address, or a deposit address issued by another protocol. This is additive to `refundTo`; existing `refundTo` behavior is preserved unless `recoveryAddress` is supplied. See [`recoveryAddress`](#recoveryaddress). |
+| `recoveryAddress` | address | Optional origin-chain wallet that you control and can sign with. Relay records it as the protocol depositor. When Relay cannot fill or refund, the recovered funds are credited on the Hub to this address, and only its signature can withdraw them at [relay.link/withdraw](https://relay.link/withdraw). Do not use an exchange deposit address, a deposit address issued by another protocol, or a custodial address whose custodian cannot sign for you. This is additive to `refundTo`; existing `refundTo` behavior is preserved unless `recoveryAddress` is supplied. See [`recoveryAddress`](#recoveryaddress). |
 | `tradeType` | string | `EXACT_INPUT` or `EXPECTED_OUTPUT` for open deposit addresses. `EXACT_OUTPUT` is supported only with a strict deposit address (`strict: true`); an open-ended `EXACT_OUTPUT` request is rejected. |
 | `amount` | string | The quoted amount in the origin token's smallest unit. Open-ended addresses support variable deposit amounts. Strict addresses should be treated as exact-payment instructions. |
 | `strict` | boolean | Set to `true` for a strict deposit address tied to a specific order. Omit or set to `false` for an open deposit address. |
@@ -964,19 +964,19 @@ Constraints:
 
 - Requires `useDepositAddress: true`. The request is rejected otherwise.
 - Must be a valid address on the origin chain and cannot be the origin chain's native-currency address.
-- Must be able to sign a message with its own key. See [The wallet must be able to sign](#the-wallet-must-be-able-to-sign).
+- Must be able to authorize a withdrawal with a supported signature: an EOA signature, or an ERC-1271 contract signature where the withdrawal flow supports it. See [The wallet must be able to sign](#the-wallet-must-be-able-to-sign).
 - Strict deposit addresses still require `refundTo` even when `recoveryAddress` is set.
 
 ### The wallet must be able to sign
 
-A withdrawal needs a message signature from `recoveryAddress`. Relay cannot send a Hub credit to a different address, and Relay support cannot sign for you. Before you set `recoveryAddress`, confirm that you can connect that wallet at [relay.link/withdraw](https://relay.link/withdraw) and sign a message with it, or that your server can sign with its key through the [withdrawals API](/references/protocol/guides/withdrawals).
+A withdrawal needs a signature from `recoveryAddress`: an EOA signature, or an ERC-1271 contract signature from a smart contract wallet such as a Safe. Relay cannot send a Hub credit to a different address, and Relay support cannot sign for you. Before you set `recoveryAddress`, confirm that you can connect that wallet at [relay.link/withdraw](https://relay.link/withdraw) and sign with it, or that your server can sign with its key through the [withdrawals API](/references/protocol/guides/withdrawals). See [Supported Chains and Signers](/references/protocol/guides/withdrawals#supported-chains-and-signers) for the signer types each chain accepts.
 
 These addresses do not qualify:
 
 - An exchange deposit address. The exchange holds the key.
-- A custodial address, unless the custodian can sign an arbitrary message for you.
+- A custodial address, unless the custodian can produce a supported signature for you.
 - A deposit address issued by another protocol, for example a NEAR Intents deposit address. There is no key you can sign with.
-- A smart-contract account that has no signature path. See [Supported Chains and Signers](/references/protocol/guides/withdrawals#supported-chains-and-signers).
+- A smart contract wallet that cannot produce a valid ERC-1271 signature. A Safe qualifies. See [Supported Chains and Signers](/references/protocol/guides/withdrawals#supported-chains-and-signers).
 
 <Warning>
 If `recoveryAddress` cannot sign, funds that Relay cannot fill or refund stay on the Hub. No support process can move them.
