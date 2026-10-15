@@ -133,8 +133,8 @@ A crafted cross-chain message bricks a specific pool's accounting, locking all f
 - **"The fix is already deployed."** Payouts are assessed as of report submission, not review. A valid report does not lose value because we moved fast.
 - **"The bug only exists under specific token configurations."** If the configuration is live in production, the report is treated as real. If only theoretical, likelihood drops to L1.
 - **"The reporter also proposed the fix."** Does not change the tier, but is strong grounds for a discretionary bonus.
-- **Duplicate reports.** The first submission gets the full payout. A duplicate submitted within 7 days receives 10% of the first report's payout as a courtesy payment. Duplicates submitted after 7 days are not eligible for payment.
-- **Previously known issues.** We treat a finding as already known only when, before your submission, the same root cause was recorded in a dated internal record showing we were already tracking it for remediation, such as an internal ticket or a triaged finding. Raw automated scanner output or an untriaged internal note does not count. When a qualifying record predates your report, the duplicate schedule above applies (10% within 7 days of that record, not eligible after). We will not reduce a payout based on internal discovery we cannot date to before your submission, and, as above, a report never loses value because we detected, triaged, or fixed the issue after you submitted it.
+- **Duplicate reports.** The first submission gets the full payout. Duplicate reports are not eligible for an automatic reward, regardless of when they are submitted. We may award a discretionary bonus when a duplicate adds material new evidence, such as another affected chain, a PoC that changes the assessment, or a useful fix proposal. This change applies to reports submitted on or after the publication of this update. Reports submitted earlier remain subject to the terms in effect when they were submitted.
+- **Previously known issues.** We treat a finding as already known only when, before your submission, the same root cause was recorded in a dated internal record showing we were already tracking it for remediation, such as an internal ticket or a triaged finding. Raw automated scanner output or an untriaged internal note does not count. When a qualifying record predates your report, the report is not eligible for an automatic reward. We may award a discretionary bonus when the report adds material new evidence. We will not reduce a payout based on internal discovery we cannot date to before your submission, and a report never loses value because we detected, triaged, or fixed the issue after you submitted it. This change applies to reports submitted on or after the publication of this update. Reports submitted earlier remain subject to the terms in effect when they were submitted.
 
 ## Discretionary bonuses
 
@@ -143,6 +143,7 @@ Separate from the matrix, we may award bonuses for:
 - Exceptional write-ups with clear root cause and a suggested fix.
 - Novel attack vectors that reveal a systemic pattern.
 - Proactive disclosure during an active incident.
+- Material new evidence in a duplicate or previously known report.
 
 Bonuses are recognition, not entitlement, and are not pre-committed.
 
@@ -167,10 +168,37 @@ The following are not eligible for a reward:
 
 ## Reward process and requirements
 
-- **KYC and background check.** Required before any reward can be issued.
+- **Identity and business verification.** Individuals must complete Relay's KYC and background check. Business entities must complete Relay's KYB. No reward is paid until verification is complete.
+- **Direct payment.** Relay pays rewards only to the verified individual or business that submitted the report. Third-party payment arrangements are not supported. This requirement also applies to unresolved third-party payment requests for reports submitted before the publication of this update. Payment for those reports must go directly to the verified reporting individual or business.
+- **Verification and tax documents.** We request verification and tax documents, such as a W-8BEN, W-9, or the equivalent for your jurisdiction, separately after reward approval. Do not include them with the initial report.
+- **Program participation.** Relay may suspend or exclude any participant from the bounty program at any time, for any reason, at Relay's discretion. Suspension or exclusion affects future participation only. Reports submitted before suspension or exclusion continue to be assessed under the applicable program terms. Suspension or exclusion alone does not disqualify those reports or cancel approved rewards.
 - **Payment.** Rewards are paid in cryptocurrency.
-- **Tax documentation.** W-8BEN, W-9, or the equivalent for your jurisdiction is handled as part of KYC.
 
 ## Reporting a vulnerability
 
-Email [support@relay.link](mailto:support@relay.link) with a description, reproduction steps, and a runnable PoC where applicable. Most responses are provided within 24 hours, and we will get back to you with next steps within 1 to 4 business days.
+Email [support@relay.link](<mailto:support@relay.link>). Send one email for each vulnerability. Do not combine several findings in one report.
+
+Use a clear subject line that names the affected component and the issue. Example: `Vulnerability report: Approval Proxy signature replay`.
+
+### What to include
+
+Put all relevant information in the first email. Include:
+
+- A description of the vulnerability and the affected contract, service, or endpoint.
+- The affected chain, deployment, or version.
+- Step-by-step reproduction instructions.
+- The demonstrated impact and exploit conditions, where applicable.
+- A runnable PoC where the severity requires one. See [PoC requirements](#poc-requirements).
+- Supporting material: transaction hashes, addresses, logs, or screenshots.
+
+A report without the required material is not complete. Review starts when we receive the complete report.
+
+### What happens next
+
+- We aim to acknowledge reports within 2 business days. An acknowledgment confirms receipt only. It does not confirm validity, severity, reward eligibility, or payment.
+- We aim to send an initial review update within 7 calendar days of receiving a complete report. Full assessment and remediation can take longer.
+- You may add new evidence at any time by replying in the original email thread.
+- Wait until the 7-day review window ends before asking for a status update.
+- Do not send a second report or open a new ticket for the same finding. Duplicate tickets slow the review.
+- A different vulnerability needs a new email.
+- We may explain the basis for our assessment, but we will not share other researchers' reports, private tracking records, or confidential security details.
