@@ -20,3 +20,7 @@ Relay statuses take one of the following options:
 | `delayed` | Destination fill delayed, still processing |
 | `refund` | Successfully refunded |
 | `failure` | Unsuccessful fill |
+
+<Note>
+For deposit-address requests, `waiting` on the quote-time `requestId` does not mean the deposit is missing. If Relay regenerated the quote, the fill runs under a new `requestId`, and the quote-time one can stay `waiting` after the fill succeeds. Check the order with [Get Requests](/references/api/get-requests) using `depositAddress`. See [Tracking Transactions](/features/deposit-addresses#tracking-transactions).
+</Note>

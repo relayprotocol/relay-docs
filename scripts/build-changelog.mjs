@@ -5,6 +5,7 @@
 //             added each version's section, and rewritten by .changelog/relay-kit-overrides.md
 //   App       .changelog/app.md in this repo (hand-authored, same shape as the API file)
 //   Dashboard .changelog/dashboard.md in this repo (hand-authored, same shape as the API file)
+//   Protocol  .changelog/protocol.md in this repo (hand-authored, same shape as the API file)
 //
 // The only external source is relay-kit, which is public and clones without a credential.
 // Set RELAY_KIT_DIR to read an existing checkout's working tree instead.
@@ -27,6 +28,10 @@ const APP_CHANGELOG = join(ROOT, '.changelog', 'app.md')
 // The Dashboard line covers dashboard.relay.link. Same reasoning as the App line: curated
 // copy, written here rather than in the private developer-dashboard repo.
 const DASHBOARD_CHANGELOG = join(ROOT, '.changelog', 'dashboard.md')
+// The Protocol line covers Relay's onchain contracts that integrators call or check: platform
+// execution contracts (router, approval proxy) and protocol settlement contracts. Curated copy
+// kept by hand, like the App and Dashboard lines.
+const PROTOCOL_CHANGELOG = join(ROOT, '.changelog', 'protocol.md')
 // Editorial layer for the RelayKit line: customer-facing entries that supersede the
 // changeset text they name in `covers`. Written by hand or by Scout's write-changelog-entry
 // skill, reviewed in a PR. Anything not covered still renders verbatim from upstream.
@@ -43,10 +48,10 @@ const CHECK = process.argv.includes('--check')
 // here. The commit page names the PR it came from, so one link covers both.
 const RELAY_KIT_COMMIT_URL = 'https://github.com/relayprotocol/relay-kit/commit'
 
-const SECTION_ORDER = ['API', 'RelayKit', 'App', 'Dashboard']
-const TAG_ORDER = ['API', 'RelayKit', 'SDK', 'UI Kit', 'Hooks', 'Adapters', 'App', 'Dashboard']
+const SECTION_ORDER = ['API', 'RelayKit', 'App', 'Dashboard', 'Protocol']
+const TAG_ORDER = ['API', 'RelayKit', 'SDK', 'UI Kit', 'Hooks', 'Adapters', 'App', 'Dashboard', 'Protocol']
 
-// Change-type groups within a day's API, App, and Dashboard sections, most consequential first.
+// Change-type groups within a day's API, App, Dashboard, and Protocol sections, most consequential first.
 // Types not listed here still render, after these, in the order they first appear.
 const CHANGE_TYPE_ORDER = ['Breaking', 'Deprecated', 'Behavior change', 'Added', 'Changed', 'Fixed', 'Removed']
 
@@ -680,6 +685,11 @@ const entries = [
     section: 'Dashboard',
     tag: 'Dashboard',
     label: 'Dashboard changelog'
+  }),
+  ...readSectioned(PROTOCOL_CHANGELOG, {
+    section: 'Protocol',
+    tag: 'Protocol',
+    label: 'Protocol changelog'
   })
 ]
 

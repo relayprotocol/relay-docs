@@ -3,6 +3,9 @@ title: "Base Builder Codes"
 description: "Attribute onchain activity by appending builder codes to your Relay transactions"
 ---
 
+import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+
+
 Base builder codes are a way to attribute onchain activity. Each code enhances onchain transactions with offchain metadata and makes your application more discoverable. To learn more about builder codes, see the [Base documentation](https://docs.base.org/base-chain/builder-codes/builder-codes).
 
 ---
@@ -16,6 +19,8 @@ Relay matches an onchain transaction to its quote by `requestId`. Appending byte
 Builder codes only work for quotes that route through the Relay Depository contract; same-chain swaps don't use the deposit flow and can't carry a builder code.
 
 ### Example
+
+<QuoteV2AuthCallout />
 
 ```typescript expandable
 import {

@@ -11,7 +11,10 @@ There are many different solutions when it comes to implementing a gasless swap 
 
 ```mermaid placement="top-right"
 flowchart TD
-    Start([Which gasless flow should I use?]) --> WalletControl
+    Start([Which gasless flow should I use?]) --> Origin
+    Origin{Is the origin<br/>chain Solana?}
+    Origin -->|Yes| FeePayer
+    Origin -->|No — EVM| WalletControl
     WalletControl{Does your app control<br/>the user's wallet?}
     WalletControl -->|No — BYO wallet| Permit
     WalletControl -->|Yes — embedded or custodial| Has4337
@@ -19,17 +22,20 @@ flowchart TD
     Has4337 -->|Yes| Smart4337
     Has4337 -->|No| BatchExecutor
 
-    Permit[/"**Permit-based Gasless**<br/><br/>_Limitation: not all ERC-20s support permit_"/]
-    Smart4337[/"**ERC-4337 Gasless**"/]
-    BatchExecutor[/"**7702 BatchExecutor**"/]
+    Permit[/"Permit-based Gasless<br/><br/>Limitation: not all ERC-20s support permit"/]
+    Smart4337[/"ERC-4337 Gasless"/]
+    BatchExecutor[/"7702 BatchExecutor"/]
+    FeePayer[/"Sponsored Fee Payer<br/><br/>Your sponsor wallet pays fees and rent"/]
 
     click Permit "#permit-based-gasless" _blank
     click Smart4337 "#erc-4337-gasless" _blank
     click BatchExecutor "#7702-batchexecutor" _blank
+    click FeePayer "#gasless-swaps-on-solana" _blank
 
     style Permit fill:#f9e3e3,stroke:#c44,color:#000
     style Smart4337 fill:#e3e9f9,stroke:#44c,color:#000
     style BatchExecutor fill:#e3f9e6,stroke:#4a4,color:#000
+    style FeePayer fill:#f9f0e3,stroke:#c84,color:#000
 
   ```
 
@@ -61,6 +67,95 @@ Use this approach when your app does **not** control the user's wallet (e.g. Met
     The signed permit authorizes the token transfer. A solver completes the destination transaction using its own capital.
   </Step>
 </Steps>
+
+### ERC-3009 permits with MulticallAuthorization
+
+From October 26, 2026, Relay routes permits through the v3.2 ApprovalProxy (see [Migrating to the new router](/references/api/api_resources/contract-addresses#migrating-to-the-new-router)). On that proxy, an ERC-3009 permit (the USDC style `TransferWithAuthorization`) needs a second signature: a `MulticallAuthorization` that ties the permit to the exact calls Relay runs with the user's tokens.
+
+Opt in by passing **`useMulticallAuthorization: true`** in the quote request. The permit signature step (`authorize1`, or `authorize2` for a same-chain swap) then holds two items. Sign and post them in this order:
+
+1. **`MulticallAuthorization`**: EIP-712 typed data with the domain name `RelayApprovalProxy`, version `3.1`, the chain id, and the v3.2 ApprovalProxy as the verifying contract. Post it to `/execute/permits` with kind `multicall-authorization`. This item has no `check`, since nothing executes yet.
+2. **ERC-3009 authorization**: the usual `TransferWithAuthorization`, posted with kind `eip3009`. Once both signatures are posted, Relay submits the permit. For a same-chain swap (`authorize2`), the response returns the swap transaction for the user to send instead.
+
+Posting the ERC-3009 signature first returns a 400. Sign both items as the quote returns them: the ERC-3009 nonce is derived from the `MulticallAuthorization`, so changing either one invalidates the pair.
+
+```json expandable
+{
+  "status": "incomplete",
+  "data": {
+    "sign": {
+      "signatureKind": "eip712",
+      "domain": {
+        "name": "RelayApprovalProxy",
+        "version": "3.1",
+        "chainId": 8453,
+        "verifyingContract": "0x5567954cd026cebfe486062cb75848e0f1c12e58"
+      },
+      "types": {
+        "MulticallAuthorization": [
+          { "name": "from", "type": "address" },
+          { "name": "relayer", "type": "address" },
+          { "name": "msgValue", "type": "uint256" },
+          { "name": "refundTo", "type": "address" },
+          { "name": "nftRecipient", "type": "address" },
+          { "name": "metadata", "type": "bytes" },
+          { "name": "fundingIndex", "type": "uint256" },
+          { "name": "calls", "type": "Call3Value[]" },
+          { "name": "funding", "type": "FundingAuthorization[]" }
+        ],
+        "Call3Value": [
+          { "name": "target", "type": "address" },
+          { "name": "allowFailure", "type": "bool" },
+          { "name": "value", "type": "uint256" },
+          { "name": "callData", "type": "bytes" }
+        ],
+        "FundingAuthorization": [
+          { "name": "token", "type": "address" },
+          { "name": "from", "type": "address" },
+          { "name": "value", "type": "uint256" },
+          { "name": "validAfter", "type": "uint256" },
+          { "name": "validBefore", "type": "uint256" }
+        ]
+      },
+      "primaryType": "MulticallAuthorization",
+      "value": {
+        "from": "WALLET_ADDRESS",
+        "relayer": "0x...",
+        "msgValue": "0",
+        "refundTo": "WALLET_ADDRESS",
+        "nftRecipient": "WALLET_ADDRESS",
+        "metadata": "0x...",
+        "fundingIndex": 0,
+        "calls": [
+          { "target": "0x...", "allowFailure": false, "value": "0", "callData": "0x..." }
+        ],
+        "funding": [
+          {
+            "token": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "from": "WALLET_ADDRESS",
+            "value": "1000000",
+            "validAfter": 0,
+            "validBefore": 1764948419
+          }
+        ]
+      }
+    },
+    "post": {
+      "endpoint": "/execute/permits",
+      "method": "POST",
+      "body": {
+        "kind": "multicall-authorization",
+        "requestId": "0x...",
+        "api": "swap"
+      }
+    }
+  }
+}
+```
+
+Without the opt in, ERC-3009 permits keep using the v3 ApprovalProxy with a single signature during the transition. You can pass the flag before the switch: until then the step holds only the ERC-3009 item.
+
+Permit2 permits need no change. On the v3.2 ApprovalProxy the `RelayerWitness` in the quote's typed data includes `msgValue`; if you build Permit2 messages yourself, take the witness from the quote.
 
 ### Fees
 
@@ -158,3 +253,128 @@ You can choose to subsidize both or none of these. If not subsidized the user pa
 For subsidizing fees you'll need to make sure you have [fee sponsorship](/features/fee-sponsorship) set up.
 
 _See the full working example: [<Icon icon="github" size={16} /> 7702-batch-executor](https://github.com/relayprotocol/relay-gasless-examples/tree/main/7702-batch-executor)_
+
+---
+
+## Gasless Swaps on Solana
+
+Use this approach for Solana-origin trades, where permits do not exist. A sponsor wallet your app controls pays the transaction fees and rent, so your users need zero SOL: pass **`depositFeePayer`** in the quote, and your app co-signs each transaction as the fee payer.
+
+You need a sponsor wallet funded with SOL (your backend holds its key; it never touches the client), a Relay [API key](/references/api/api-keys), and `@solana/web3.js` on your backend.
+
+Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solana-fee-sponsorship) apply to every step below:
+
+1. **`depositFeePayer`** must be a different address from **`user`**. The quote API does not enforce this, so your app must.
+2. The sponsor signs the transaction before the user. Signing in the other order lets the user modify the transaction and drain the sponsor.
+3. Do not use **`depositFeePayer`** for same-chain Solana swaps with untrusted users. That combination is exploitable.
+
+### How it works
+
+<Steps>
+  <Step title="Get a quote with a sponsor" id="get-a-quote-with-a-sponsor">
+    Call `/quote/v2` with **`depositFeePayer`** set to your sponsor wallet.
+
+    ```bash
+    curl -X POST "https://api.relay.link/quote/v2" \
+      -H "Content-Type: application/json" \
+      -H "x-api-key: YOUR_API_KEY" \
+      -d '{
+        "user": "USER_SOLANA_ADDRESS",
+        "recipient": "RECIPIENT_ADDRESS",
+        "originChainId": 792703809,
+        "originCurrency": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "destinationChainId": 8453,
+        "destinationCurrency": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "tradeType": "EXACT_INPUT",
+        "amount": "5000000",
+        "depositFeePayer": "SPONSOR_SOLANA_ADDRESS"
+      }'
+    ```
+
+    The response's `deposit` step carries raw `instructions`, `addressLookupTableAddresses`, and a `check` endpoint for tracking.
+  </Step>
+  <Step title="Assemble the transaction" id="assemble-the-transaction">
+    On your backend, build a versioned transaction from the returned instructions with the sponsor as **`payerKey`** (instruction `data` is hex-encoded).
+
+    ```typescript expandable
+    import {
+      AddressLookupTableAccount,
+      Connection,
+      PublicKey,
+      TransactionInstruction,
+      TransactionMessage,
+      VersionedTransaction,
+    } from "@solana/web3.js";
+
+    const connection = new Connection(SOLANA_RPC_URL);
+    const item = quote.steps[0].items[0];
+
+    // 1. Rebuild the instructions returned by the quote
+    const instructions = item.data.instructions.map(
+      (i) =>
+        new TransactionInstruction({
+          programId: new PublicKey(i.programId),
+          keys: i.keys.map((k) => ({
+            pubkey: new PublicKey(k.pubkey),
+            isSigner: k.isSigner,
+            isWritable: k.isWritable,
+          })),
+          data: Buffer.from(i.data, "hex"),
+        })
+    );
+
+    // 2. Resolve the address lookup tables
+    const lookupTables = (
+      await Promise.all(
+        (item.data.addressLookupTableAddresses ?? []).map((address: string) =>
+          connection
+            .getAddressLookupTable(new PublicKey(address))
+            .then((res) => res.value)
+        )
+      )
+    ).filter((t): t is AddressLookupTableAccount => t !== null);
+
+    // 3. Compile with the sponsor as the fee payer
+    const message = new TransactionMessage({
+      payerKey: new PublicKey(SPONSOR_SOLANA_ADDRESS),
+      instructions,
+      recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+    }).compileToV0Message(lookupTables);
+
+    const transaction = new VersionedTransaction(message);
+    ```
+  </Step>
+  <Step title="Sign: sponsor first, then user" id="sign-sponsor-first-then-user">
+    Sign with the sponsor key on your backend, then hand the partially signed transaction to the client for the user's signature.
+
+    ```typescript
+    // Backend: the sponsor signs first
+    transaction.sign([sponsorKeypair]);
+
+    // Client: the user signs the partially signed transaction
+    const signed = await userWallet.signTransaction(transaction);
+    ```
+  </Step>
+  <Step title="Submit and track" id="submit-and-track">
+    Broadcast the signed transaction, then poll the quote's `check` endpoint until the request reaches a terminal status.
+
+    ```typescript
+    const signature = await connection.sendRawTransaction(signed.serialize());
+
+    // Poll until "success" or "failure"
+    const status = await fetch(
+      `https://api.relay.link${item.check.endpoint}`
+    ).then((r) => r.json());
+    ```
+
+    A failed fill refunds automatically on the origin chain in the origin currency; see [Refunds](/references/api/api_core_concepts/refunds) for the conditions.
+  </Step>
+</Steps>
+
+### Fees
+
+**`depositFeePayer`** covers the origin transaction only: Solana transaction fees and rent for accounts the deposit creates. It is independent from the destination side and from your [App Balance](/features/fee-sponsorship#funding-your-app-balance). To also sponsor destination gas or rent, use [`subsidizeFees` and `subsidizeRent`](/features/fee-sponsorship#sponsorship-parameters), which draw from your App Balance instead of the sponsor wallet.
+
+Each trade is one Solana deposit transaction, so the sponsor pays one fee per trade. If you also want fills to start before the deposit confirms, see [Fast Fill](/features/fast-fill).
+
+See [Solana Support](/references/api/api_guides/solana) for chain-specific parameters and transaction-size guidance.

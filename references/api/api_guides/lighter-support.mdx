@@ -3,6 +3,9 @@ title: "Lighter Support"
 description: "How to deposit to and withdraw from Lighter using the Relay API"
 ---
 
+import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+
+
 Relay supports depositing and withdrawing to Lighter from any supported chain. You can try depositing today using the [Relay App](https://relay.link/bridge/lighter) (note: withdrawing is not yet supported in the app). This document details how to integrate Lighter into your application.
 
 ## Prerequisites
@@ -44,6 +47,8 @@ Replace `YOUR_WALLET_ADDRESS` with your Ethereum wallet address. The response wi
 For more details, see the [Lighter API documentation](https://apidocs.lighter.xyz/reference/accountsbyl1address).
 
 ## How to deposit
+
+<QuoteV2AuthCallout />
 
 <CodeGroup>
 ```bash Request

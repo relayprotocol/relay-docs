@@ -316,6 +316,8 @@ Every individual change, grouped by request side and response side.
     ```
 
     The `x-api-key` request header is now required. Every request authenticates against an active API key. See [API Keys](/references/api/api-keys) for details.
+
+    **Access scope.** v3 returns requests owned by your integrator, plus requests that were created without an API key. Any of your API keys can access all v3 data for your other keys — if you use more than one key, you do not have to change your integration.
   </Accordion>
 
   <Accordion title="Filtering, search & sorting" icon="magnifying-glass">
@@ -326,7 +328,7 @@ Every individual change, grouped by request side and response side.
     | **Search** | `term` (request id, wallet, deposit address, every tx hash), `id`, `orderId`, `depositTxHash`, `fillTxHash`, `refundTxHash` |
     | **Chain** | `originChainId`, `destinationChainId`, `chainId` (either direction), `privateChainsToInclude` |
     | **Address** | `user`, `depositAddress`, `recipient` |
-    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKey`, `requestType`, `referrer` |
+    | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKeyId`, `appId`, `requestType`, `referrer` |
     | **Currency** | `currencyInChainId`, `currencyOutChainId`, `currencyInAddress`, `currencyOutAddress`, `currencyInSymbol`, `currencyOutSymbol` |
     | **Ranges** | `startTimestamp`, `endTimestamp`, `startBlock`, `endBlock`, `amountUsdMin`/`Max`, `appFeesAmountUsdMin`/`Max`, `fillTimeMin`/`Max` |
     | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData`, `includeTotal` |
@@ -353,15 +355,45 @@ Every individual change, grouped by request side and response side.
 
     <Note>OR groups support identity, address, chain, currency, and status-style fields. Range filters and `features` are top-level only. Null-checks work on any recognised `filters` key, including the composite `user` field and the case-insensitive `currencyInSymbol` / `currencyOutSymbol` fields. `null` cannot be combined with real values in an array for the same key — that returns `400`.</Note>
 
-    **Referrer filtering (owner-scoped).** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Because referrer values are supplied by the caller and are guessable, a referrer filter **must be paired with the top-level `apiKey` parameter**, and every API key you list must belong to the authenticating integrator. Empty `referrer` values are rejected. Requests without the `apiKey` pairing return `400`; requests whose supplied keys are not owned by the caller integrator (or which cannot resolve to an integrator identity) return `403`.
+    **API key filtering.** To limit results to specific API keys, use the top-level `apiKeyId` parameter with a maximum of 50 comma-separated IDs that your integrator owns. Each entry may be a bare UUID or the prefixed form `key_id_<uuid>` — both forms resolve to the same key, deduplicate against each other, and count once toward the 50-value cap. Responses continue to return the bare UUID form. It does not give access to more requests. We no longer recommend the `apiKey` filter, because it puts your API key in the URL.
+
+    **App filtering (owner-scoped).** An **App** is the durable identity for an integration — one App can own many API keys over its lifetime, and rotating or revoking a key does not change the App that owns the historical requests created under it. Use the top-level `appId` query parameter to narrow results to one or more Apps you own, with up to **50** comma-separated `app_id_<uuid>` values (whitespace trimmed, canonicalized to lowercase, deduplicated). Multiple values OR-match. Every supplied ID must belong to the authenticating integrator — unknown, foreign, or partially owned lists return `403`; malformed IDs, empty entries, or more than 50 values return `400`; transient resolution failures return `500` rather than silently dropping the filter. `appId` cannot appear inside a `filters` group — it is top-level only. It is ANDed with any `apiKeyId` / `apiKey` filter, so it narrows the result set rather than expanding access. Matching uses the indexed App attribution written at request time, so an `appId` filter includes requests created under keys that have since been revoked.
 
     ```bash
-    # exact referrer match; apiKey pairing scopes the result to your own requests
-    GET /requests/v3?referrer=my-app|user-123&apiKey=YOUR_KEY
+    # requests for one App you own
+    GET /requests/v3?appId=app_id_aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
 
-    # same requirement when the key appears inside filters (including not:)
-    GET /requests/v3?filters=[{"referrer":"my-app|user-123"}]&apiKey=YOUR_KEY
-    GET /requests/v3?filters=[{"not:referrer":"other-app"}]&apiKey=YOUR_KEY,YOUR_OTHER_KEY
+    # multiple Apps, OR-matched
+    GET /requests/v3?appId=app_id_aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa,app_id_bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+    ```
+
+    <Note>Requests indexed before App attribution was recorded do not match any `appId` filter and are omitted from `appId`-filtered results until the attribution is populated for them. They remain visible under the existing visibility rules when queried without an `appId` filter.</Note>
+
+    **Referrer filtering.** The `referrer` filter — as a top-level query parameter or as a `referrer` / `not:referrer` key inside any `filters` group — matches the exact value supplied at quote time. Empty `referrer` values are rejected.
+
+    - **With `apiKeyId` (or `apiKey`)**: results include matching requests for the selected keys **plus** matching public keyless requests (requests created without an API key), regardless of their age. Every supplied ID must belong to the authenticating integrator — unowned IDs (or callers that cannot resolve to an integrator identity) return `403`.
+    - **Without `apiKeyId` / `apiKey`**: results include only matching public keyless requests, regardless of age. No pairing is required and no `400` is returned for an unpaired referrer filter.
+
+    Scope inside `filters` groups:
+
+    - A **top-level** `referrer` applies the referrer scope (selected keys + public keyless, or public keyless only) to every OR branch.
+    - Without a top-level `referrer`, a `referrer` / `not:referrer` key inside a group scopes **that group only** to the selected keys plus public keyless requests; other groups retain their existing scope.
+
+    Existing visibility restrictions still apply — public keyless requests are not reassigned to your integrator.
+
+    ```bash
+    # matches requests for the given key AND public keyless requests
+    GET /requests/v3?referrer=my-app|user-123&apiKeyId=YOUR_API_KEY_ID
+
+    # no apiKeyId: matches only public keyless requests
+    GET /requests/v3?referrer=my-app|user-123
+
+    # per-group scope: the referrer branch adds public keyless rows,
+    # the other branch keeps its existing scope
+    GET /requests/v3?filters=[{"referrer":"my-app|user-123"},{"originChainId":8453}]&apiKeyId=YOUR_API_KEY_ID
+
+    # negation also works inside filters, with or without apiKeyId
+    GET /requests/v3?filters=[{"not:referrer":"other-app"}]
     ```
 
     **Removed & changed parameters.**
@@ -475,14 +507,15 @@ Every individual change, grouped by request side and response side.
   <Accordion title="Moved, added & nulled fields" icon="arrows-up-down-left-right">
     - `moonpayId` moves from the root to **`data.externalMetadata.moonpayId`**.
     - `sender` is **promoted to the root** (next to `recipient`); it previously lived in `data.metadata.sender`.
-    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It remains a supported query filter (see [Filtering, search & sorting](#what-changed)) but referrer-filtered queries must pair with the `apiKey` parameter using keys owned by the authenticating integrator.
+    - `referrer` moves into **`data.referrer`** and is returned **only when `includeAuthenticatedData=true`**. It remains a supported query filter (see [Filtering, search & sorting](#what-changed)); when paired with `apiKeyId` (or `apiKey`), the IDs must belong to the authenticating integrator, and results include matching requests for those keys plus matching public keyless requests. Without `apiKeyId` / `apiKey`, referrer filters return only matching public keyless requests.
     - **`refundTo`** (refund target for deposit-address transactions) is **added** at the root.
     - **`requestType`** (`Bridge`, `Crosschain Swap`, `Same-chain Swap`, `Send`, `Wrap`, `Unwrap`, `Call`) is **added** at the root.
     - **`features`** (e.g. `gasless_execution`, `fast_fill`, `gas_top_up`, `app_fees`, `deposit_address`) is **added** at the root.
     - **`depositAddress`** is now a structured object: `{ address, type: "strict" | "open", depositor, depositTxHash, recoveryAddress }`. `recoveryAddress` is the origin-chain address that can recover deposit-address funds if the recipient wallet is later blocked (`null` when not set).
-    - **`supersededByRequestId`** is **promoted to the root**; it previously lived at `data.supersededByRequestId` in v2. When a deposit-address request is regenerated (currently Bitcoin/BVM only), the original request's `supersededByRequestId` points to the regenerated `requestId` that owns the sweep and fill. `null` otherwise.
+    - **`supersededByRequestId`** is **promoted to the root**; it previously lived at `data.supersededByRequestId` in v2. When a deposit-address request is regenerated (currently Bitcoin/BVM only), the original request's `supersededByRequestId` points to the most recent regenerated `requestId` that owns the sweep and fill. `null` otherwise, including on regenerations from every other chain — track those by `depositAddress` (see [Handling Quote Regeneration](/features/deposit-addresses#handling-quote-regeneration)).
     - **`data.quoteOraclePrice`** is **added** — the oracle price snapshot at quote time (`{ rate, observedAt, inputCurrency, outputCurrency }`), returned only for fixed-BPS oracle integrators; `null` otherwise.
     - **`data.apiKeyName`** is **added** — the display name of the API key that created the request. Returned **only when `includeAuthenticatedData=true`** and the caller authenticates as the request's owning integrator (same gate as `data.referrer` and `data.platformFee`); `null` when the API key has no name set.
+    - **`data.appId`** is **added** — the durable App identifier (`app_id_<uuid>`) for the App that owned the API key the request was created with. Returned **only when `includeAuthenticatedData=true`** and the caller authenticates as the request's owning integrator (same gate as `data.referrer`, `data.platformFee`, `data.apiKeyName`, and `data.blockedAddresses`). `null` for owned records that have no indexed App attribution. The field is never populated by guessing from the request's name, referrer, caller, or organization.
     - **`data.blockedAddresses`** is **added** — an array of the wallet address(es) that failed screening and caused a `BLOCKED_WALLET` failure. Returned **only when `includeAuthenticatedData=true`** and the caller authenticates as the request's owning integrator (same gate as `data.referrer`, `data.platformFee`, and `data.apiKeyName`); `null` on non-`BLOCKED_WALLET` failures and when no addresses were recorded. Screening-provider scores and reasons are never returned.
     - `data.price` is **removed** — read the quoted output amount from `data.route.actual.destination.inputCurrency` (distinct from the actual received amount in `data.route.actual.destination.outputCurrency`).
     - `failReason` / `refundFailReason` use **`null`** instead of the string `"N/A"`.
@@ -518,7 +551,7 @@ Every individual change, grouped by request side and response side.
     | `data.subsidizedRequest` / `data.subsidizedFee` | `data.feeSponsorship` |
     | `data.metadata` (catch-all) | `data.route.{quoted,actual}` (`sender` promoted to root) |
     | `data.price` | read `data.route.actual.destination.inputCurrency` |
-    | `referrer` (query parameter, cross-integrator) | supported as an owner-scoped filter; must pair with the `apiKey` parameter using keys owned by the authenticating integrator. Still returned in the response body only when `includeAuthenticatedData=true` |
+    | `referrer` (query parameter, cross-integrator) | supported as a filter. With `apiKeyId` (or `apiKey`) owned by the authenticating integrator, matches those keys plus public keyless requests; without a key filter, matches only public keyless requests. Still returned in the response body only when `includeAuthenticatedData=true` |
     | `?hash` | `term` / `depositTxHash` / `fillTxHash` / `refundTxHash` |
     | status `delayed` | `depositing` / `submitted` |
   </Accordion>
@@ -532,6 +565,7 @@ Every individual change, grouped by request side and response side.
     | `depositAddress.recoveryAddress` | origin-chain address that can recover deposit-address funds if the recipient is later blocked |
     | `data.quoteOraclePrice` | oracle price snapshot at quote time (`rate`, `observedAt`, `inputCurrency`, `outputCurrency`); fixed-BPS oracle integrators only |
     | `data.apiKeyName` | display name of the API key that created the request; returned only with `includeAuthenticatedData=true` for the owning integrator |
+    | `data.appId` | durable App identifier (`app_id_<uuid>`) that owned the request's API key, including after that key is revoked; returned only with `includeAuthenticatedData=true` for the owning integrator |
     | `data.blockedAddresses` | address(es) that failed screening on `BLOCKED_WALLET` failures; returned only with `includeAuthenticatedData=true` for the owning integrator |
     | `data.route.actual` | executed route (with `rate`); falls back to `quoted` |
     | `data.externalMetadata` | partner correlation IDs (e.g. `moonpayId`) |
@@ -545,7 +579,7 @@ Every individual change, grouped by request side and response side.
 
 <Steps>
   <Step title="Switch the endpoint and headers">
-    Point requests at `GET /requests/v3` and send `x-api-key` (now required). `referrer` filtering is still supported, but you must now pair it with the `apiKey` parameter using keys owned by your integrator — cross-integrator referrer lookups are no longer possible. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
+    Point requests at `GET /requests/v3` and send `x-api-key` (now required). Results include only requests that your integrator owns, from all of your API keys. `referrer` filtering is still supported — pair it with `apiKeyId` (owned by your integrator) to also match requests for those keys, or omit the key filter to match only public keyless requests. Set `includeAuthenticatedData=true` only from a trusted server context to receive authenticated fields (see the note at the end).
   </Step>
   <Step title="Update fee reads">
     Stop reading `data.fees.gas` / `feesUsd`. Read the per-component USD breakdown from `data.fees.quoted` / `data.fees.actual`, and rename the `relay` component to `platform`.
@@ -560,11 +594,11 @@ Every individual change, grouped by request side and response side.
     Rename `inTxs[].hash` / `outTxs[].hash` to `txHash`. Handle the new `depositing` / `submitted` statuses (and remove `delayed`). Treat `failReason` / `refundFailReason` as `null` rather than `"N/A"`.
   </Step>
   <Step title="Adopt the new querying surface">
-    Replace separate `user`/`hash`/`id` lookups with a single `term` search where it fits, and take advantage of the new filter/sort parameters. Pagination is unchanged — keep passing `continuation` back for the next page (`limit` max 50).
+    Replace separate `user`/`hash`/`id` lookups with a single `term` search where it fits, and take advantage of the new filter/sort parameters. If you filter by `apiKey`, replace it with `apiKeyId`. Pagination is unchanged — keep passing `continuation` back for the next page (`limit` max 50).
   </Step>
 </Steps>
 
 <Tip>
-  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key tied to those requests.
+  Authenticated data is only returned when you pass `includeAuthenticatedData=true` and authenticate with an API key from the integrator that owns those requests.
 </Tip>
 
