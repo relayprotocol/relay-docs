@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-10-15 — Elevated `/quote` rate limit raised to 50 rps
+
+**Behavior change** — `POST /quote` and `POST /quote/v2`: the per-key rate limit on elevated keys is raised from **10 requests per second** to **50 requests per second** across both endpoints. Default keys are unchanged at 50 requests per minute. See [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits).
+
 ## 2026-10-13 — `appId` filter and `appId` field on `GET /metrics/usage`
 
 **Added** — `GET /metrics/usage`: the new optional `appId` query parameter filters usage by App — the durable identity for an integration, which persists across API key rotation. Accepts one or more `app_id_<uuid>` values as a comma-separated list (OR-matched, trimmed, canonicalized to lowercase, deduplicated). Requires `x-dev-portal-key`; a plain `x-api-key` cannot use this filter and attempts return `403`. OR-matches with `apiKey` and `apiKeyId`, and the three filters share a combined cap of **50** values before Apps expand to their keys. Every supplied ID must belong to the authenticating integrator; malformed IDs return `400` and unknown or foreign IDs return `403` for the entire request. The filter resolves every current credential under an App — including inactive keys — and an owned App without credentials returns an empty `metrics` array.
