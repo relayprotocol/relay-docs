@@ -8,18 +8,25 @@ openapi: get /intents/status/v3
 Polling is not the only way to track status. Configure a [webhook](/references/api/api_guides/webhooks) in the Relay Dashboard to have status updates pushed to your backend, or subscribe to [websockets](/references/api/api_guides/websockets) for a real-time stream.
 </Note>
 
-Relay statuses take one of the following options:
+Relay returns one of the following statuses. Only `success` and `refund` are final.
 
-| Status | Description |
-|--------|-------------|
-| `waiting` | Waiting for deposit confirmation |
-| `depositing` | Origin deposit confirmed via /execute API, pending fill |
-| `pending` | Deposit confirmed, pending destination chain submission |
-| `submitted` | Destination transaction submitted |
-| `success` | Successful fill on destination |
-| `delayed` | Destination fill delayed, still processing |
-| `refund` | Successfully refunded |
-| `failure` | Unsuccessful fill |
+| Status | Description | Final |
+|--------|-------------|-------|
+| `waiting` | Waiting for the origin deposit | ❌ |
+| `depositing` | Origin deposit confirmed via the /execute API, waiting for the fill to start | ❌ |
+| `pending` | Request accepted and fill in progress | ❌ |
+| `submitted` | Fill transaction submitted on the destination chain | ❌ |
+| `success` | Fill succeeded on the destination chain | ✅ |
+| `failure` | The fill failed and no refund has completed | ❌ |
+| `refund` | The fill failed and the deposit was refunded on the origin chain | ✅ |
+
+## Polling until settlement
+
+Poll until the status is `success` or `refund`. Once a request reaches either, the status no longer changes; Relay only appends transaction details after that point.
+
+`failure` is not final. A failed fill can be retried, returning the request to `pending`, or refunded, moving it to `refund`. Keep polling through a `failure` until a final status appears, or you will miss the refund that typically follows.
+
+Request acceptance is not settlement. A successful quote or execute response means the request was accepted; treat the swap as settled only when the status is `success` and `txHashes` contains the destination fill transaction. In the rare case of a chain reorganization, a `success` can reopen to `pending` while the fill is re-executed.
 
 <Note>
 For deposit-address requests, `waiting` on the quote-time `requestId` does not mean the deposit is missing. If Relay regenerated the quote, the fill runs under a new `requestId`, and the quote-time one can stay `waiting` after the fill succeeds. Check the order with [Get Requests](/references/api/get-requests) using `depositAddress`. See [Tracking Transactions](/features/deposit-addresses#tracking-transactions).
