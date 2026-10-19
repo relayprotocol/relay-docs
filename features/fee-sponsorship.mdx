@@ -284,9 +284,9 @@ For more details on the fee structure, see [Cost & Fee Structure](/references/ap
 
 ## Accounting and Reconciliation
 
-Every movement on your app balance is recorded as a balance event, which you can export with [Get Balance Events](/references/api/get-balance-events) for reconciliation or monthly accounting. Sponsorship draws appear as `fee-sponsorship-payment` events, with `fee-sponsorship-refund` entries when a sponsored amount is returned, and gas sponsorship appears as `gas-sponsorship-payment`.
+Every movement on your app balance is recorded as a balance event, which you can export with [Get Balance Events](/references/api/get-balance-events) for reconciliation or monthly accounting. Sponsorship draws appear as `fee-sponsorship-payment` events, and returned amounts as `fee-sponsorship-refund`.
 
-Credits to your balance use a single event type: both app-fee payments and revenue-share payments appear as `fee-credit`, and the event does not say which one it is. To track them separately, use a separate wallet for each: direct app fees to one wallet and revenue share to another, then query each wallet's events on its own.
+App-fee payments and revenue-share payments both appear as a single event type, `fee-credit`. The event does not say which one it is. To tell them apart, direct app fees to one wallet and revenue share to another, then query each wallet's events separately.
 
 ## Related Resources
 
