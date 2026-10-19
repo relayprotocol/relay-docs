@@ -30,6 +30,8 @@ Relay Webhooks specifically stream transaction statuses for both cross and same-
 | failure    | fill failed                                             |
 | refund     | refunded                                                |
 
+Only `success` and `refund` are final. A `failure` can still move back to `pending` on a retry or on to `refund`, so do not treat it as the last event for a request. See [Get Status](/references/api/get-intents-status-v3) for the full lifecycle.
+
 ### Example Payload
 
 ```json
