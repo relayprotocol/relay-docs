@@ -111,7 +111,7 @@ const quote = await getClient()?.actions.getQuote(quoteParams, undefined, {
 
 ### Proxy API
 
-If you're calling the SDK from the browser, stand up a proxy that appends the key server-side and point `baseApiUrl` at it. This keeps the key out of client bundles while preserving your key's rate limits.
+If you're calling the SDK from the browser, stand up a proxy that appends the key server-side and point `baseApiUrl` at it. This keeps the key out of client bundles while preserving your key's rate limits. For direct browser HTTP requests to supported endpoints, you can instead use [access tokens](#browser-access-tokens).
 
 ```typescript
 import {
@@ -135,7 +135,7 @@ If your key is leaked, anyone holding it can consume your rate limits or make re
 
 **Best practices:**
 
-- **Keep it server-side only** — never expose it in client-side or frontend code. Use a [proxy API](#proxy-api) if calling Relay from the browser.
+- **Keep it server-side only** — never expose it in client-side or frontend code. Use a [proxy API](#proxy-api) or [short-lived access tokens](#browser-access-tokens) when calling Relay from the browser.
 - **Use environment variables** — store the key in environment variables, not hardcoded in source code.
 - **Don't commit it to version control** — add it to `.gitignore` or use a secrets manager.
 - **Restrict access** — only share the key with team members who need it.
@@ -148,7 +148,7 @@ A browser cannot safely carry a long-lived API key. Relay offers two patterns fo
 - **Proxy API** (above) — your backend forwards every request and appends `x-api-key`. The browser never sees the key.
 - **Access tokens** — your backend mints a short-lived JWT by calling [`POST /access-tokens`](/references/api/create-access-token). The browser then calls allowlisted public endpoints with that token in an `Authorization: Bearer <token>` header.
 
-Access tokens are available on **tier 2 and higher** API keys. Each token lasts **15 minutes** and carries scope `public-api`.
+Access tokens require an API key with access level **tier 2 or higher**. To confirm your key's eligibility or request access, contact support through the [Relay Dashboard](https://dashboard.relay.link). Each token lasts **15 minutes** and carries scope `public-api`.
 
 ### Minting a token
 
@@ -176,11 +176,19 @@ Mint tokens from your backend only — never ship the long-lived API key to the 
 
 Pass the JWT in the `Authorization` header on every request, over HTTPS:
 
-```
-Authorization: Bearer <token>
+```typescript
+// Use the short-lived token returned by your backend.
+const token = "ACCESS_TOKEN";
+const response = await fetch("https://api.relay.link/chains", {
+  headers: { Authorization: `Bearer ${token}` },
+});
+if (!response.ok) {
+  throw new Error(`Relay request failed: ${response.status}`);
+}
+const chains = await response.json();
 ```
 
-Tokens work from any origin or IP and are not restricted by the parent key's IP/origin allowlist. Responses to session-authenticated requests are returned with `Cache-Control: private, no-store`.
+Tokens work from any origin or IP and are not restricted by the parent key's IP/origin allowlist. Responses to requests made with an access token are returned with `Cache-Control: private, no-store`.
 
 ### Endpoints that accept access tokens
 
@@ -192,15 +200,15 @@ Access tokens are accepted on these public endpoints:
 - `POST /authorize`, `POST /execute`, `POST /execute/permits`
 - `POST /transactions/index`, `POST /transactions/single`
 - `GET /chains`, `GET /config`, `GET /config/v2`
-- `GET /currencies/v2`, `GET /currencies/token-price`, `GET /currencies/token-price/v2`
+- `POST /currencies/v2`, `GET /currencies/token/price`, `GET /currencies/token/price/v2`
 
-All other endpoints — admin, dashboard, usage metrics, deposit-address management, request-metadata updates, screening management — require your original API key. Access tokens cannot mint further tokens.
+All other endpoints — including admin, dashboard, usage metrics, deposit-address management, request-metadata updates, and screening management — do not accept access tokens. Use the authentication required by each endpoint. Access tokens cannot mint further tokens.
 
 ### Request parameter restrictions
 
-Session-authenticated requests only accept parameters that are explicitly allowed for session use. Unknown or unlisted parameters are rejected with `400` and `errorCode: "INVALID_REQUEST_PARAMS"`.
+Requests made with an access token only accept parameters explicitly allowed for access tokens. Unknown or unlisted parameters are rejected with `400` and `errorCode: "INVALID_REQUEST_PARAMS"`.
 
-Fee-sponsorship and fixed-rate parameters (such as `subsidizeFees`, `subsidizeGas`, `useGasSubsidy`, `subsidizationBps`, and the fixed-rate fields) are not available with an access token. Keep those requests on your backend using the original API key.
+Fee-sponsorship parameters (`subsidizeFees`, `subsidizeGas`, `useGasSubsidy`, and `subsidizationBps`) and the `fixedRate` parameter are not available with an access token. Keep those requests on your backend using the original API key.
 
 ### Browser rate limits
 
@@ -211,26 +219,24 @@ Browser requests share a per-minute allowance keyed by `(parent API key, client 
 | `POST /quote`, `POST /quote/v2`, `POST /price` | 60 requests per minute     |
 | `GET /intents/status*`, `GET /requests*`      | 240 requests per minute    |
 | Other allowlisted public endpoints            | 120 requests per minute    |
-| `POST /access-tokens` (minting)               | 600 requests per API key per minute |
 
-Different IPs under the same parent key have independent counters. Over-limit requests return `429` with `errorCode: "RATE_LIMITED"`.
+Backend minting through `POST /access-tokens` has a separate limit of **600 requests per API key per minute**.
+
+Different IPs under the same parent key have independent browser counters. Over-limit requests return `429` with `errorCode: "RATE_LIMITED"`.
 
 ### Errors
 
 | Status | `errorCode`                | When                                                                                   |
 | ------ | -------------------------- | -------------------------------------------------------------------------------------- |
+| `400`  | `INVALID_REQUEST_PARAMS`   | A request made with an access token includes a parameter that is not allowed.              |
 | `401`  | `INVALID_API_SESSION`      | Token is missing, malformed, expired, has an invalid signature, or the parent key is revoked. Also returned when both `Authorization: Bearer` and `x-api-key` (or `x-dev-portal-key`) are supplied on the same request. |
 | `403`  | `FORBIDDEN`                | Minting from a key below tier 2.                                                       |
-| `400`  | `INVALID_REQUEST_PARAMS`   | Session request includes a parameter that is not allowed for session use.              |
 | `429`  | `RATE_LIMITED`             | Browser or mint rate limit exceeded.                                                   |
-| `500`  | `API_SESSION_UNAVAILABLE`  | Session infrastructure is temporarily unavailable.                                     |
+| `500`  | `API_SESSION_UNAVAILABLE`  | Access-token authentication or issuance is temporarily unavailable.                                     |
 
 ### Revocation and rotation
 
-Access tokens are not individually revocable. The following events invalidate existing tokens as cached authorization refreshes:
-
-- The parent API key is disabled or deleted — all its outstanding tokens stop working.
-- The parent key is dropped below tier 2.
+Access tokens are not individually revocable. Disabling or deleting the parent key, or reducing its access level below tier 2, causes its tokens to be rejected once the change takes effect. Do not assume immediate revocation: a token can remain usable until its 15-minute expiry, with up to five additional seconds of clock tolerance.
 
 Rotating the parent key's secret or editing its metadata does **not** revoke outstanding tokens — rely on the 15-minute expiry for those cases.
 
