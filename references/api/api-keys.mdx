@@ -140,3 +140,100 @@ If your key is leaked, anyone holding it can consume your rate limits or make re
 - **Don't commit it to version control** — add it to `.gitignore` or use a secrets manager.
 - **Restrict access** — only share the key with team members who need it.
 - **Rotate regularly** — create a new key in the [Relay Dashboard](https://dashboard.relay.link) and revoke the old one whenever a team member with access leaves.
+
+## Browser access tokens
+
+A browser cannot safely carry a long-lived API key. Relay offers two patterns for integrations that call the API directly from a client:
+
+- **Proxy API** (above) — your backend forwards every request and appends `x-api-key`. The browser never sees the key.
+- **Access tokens** — your backend mints a short-lived JWT by calling [`POST /access-tokens`](/references/api/create-access-token). The browser then calls allowlisted public endpoints with that token in an `Authorization: Bearer <token>` header.
+
+Access tokens are available on **tier 2 and higher** API keys. Each token lasts **15 minutes** and carries scope `public-api`.
+
+### Minting a token
+
+Your backend sends its API key in `x-api-key` on `POST /access-tokens` with an empty JSON body. The response is `Cache-Control: no-store` and contains:
+
+| Property        | Description                                                                 |
+| --------------- | --------------------------------------------------------------------------- |
+| **token**       | The signed bearer credential. Pass this to the browser.                     |
+| **tokenType**   | Always `"Bearer"`.                                                          |
+| **expiresAt**   | ISO 8601 timestamp when the token expires. Renew by minting again.          |
+| **scope**       | Always `"public-api"`.                                                      |
+
+```bash
+curl -X POST https://api.relay.link/access-tokens \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "content-type: application/json" \
+  -d '{}'
+```
+
+<Warning>
+Mint tokens from your backend only — never ship the long-lived API key to the browser. Protect the backend endpoint that forwards mint calls against automated abuse (rate-limit it, require your own session).
+</Warning>
+
+### Using a token from the browser
+
+Pass the JWT in the `Authorization` header on every request, over HTTPS:
+
+```
+Authorization: Bearer <token>
+```
+
+Tokens work from any origin or IP and are not restricted by the parent key's IP/origin allowlist. Responses to session-authenticated requests are returned with `Cache-Control: private, no-store`.
+
+### Endpoints that accept access tokens
+
+Access tokens are accepted on these public endpoints:
+
+- `POST /quote`, `POST /quote/v2`, `POST /price`
+- `GET /intents/status`, `GET /intents/status/v2`, [`GET /intents/status/v3`](/references/api/get-intents-status-v3)
+- `GET /requests/v2`, [`GET /requests/v3`](/references/api/get-requests)
+- `POST /authorize`, `POST /execute`, `POST /execute/permits`
+- `POST /transactions/index`, `POST /transactions/single`
+- `GET /chains`, `GET /config`, `GET /config/v2`
+- `GET /currencies/v2`, `GET /currencies/token-price`, `GET /currencies/token-price/v2`
+
+All other endpoints — admin, dashboard, usage metrics, deposit-address management, request-metadata updates, screening management — require your original API key. Access tokens cannot mint further tokens.
+
+### Request parameter restrictions
+
+Session-authenticated requests only accept parameters that are explicitly allowed for session use. Unknown or unlisted parameters are rejected with `400` and `errorCode: "INVALID_REQUEST_PARAMS"`.
+
+Fee-sponsorship and fixed-rate parameters (such as `subsidizeFees`, `subsidizeGas`, `useGasSubsidy`, `subsidizationBps`, and the fixed-rate fields) are not available with an access token. Keep those requests on your backend using the original API key.
+
+### Browser rate limits
+
+Browser requests share a per-minute allowance keyed by `(parent API key, client IP)`, separate from the parent key's backend quota:
+
+| Endpoint family                               | Limit                      |
+| --------------------------------------------- | -------------------------- |
+| `POST /quote`, `POST /quote/v2`, `POST /price` | 60 requests per minute     |
+| `GET /intents/status*`, `GET /requests*`      | 240 requests per minute    |
+| Other allowlisted public endpoints            | 120 requests per minute    |
+| `POST /access-tokens` (minting)               | 600 requests per API key per minute |
+
+Different IPs under the same parent key have independent counters. Over-limit requests return `429` with `errorCode: "RATE_LIMITED"`.
+
+### Errors
+
+| Status | `errorCode`                | When                                                                                   |
+| ------ | -------------------------- | -------------------------------------------------------------------------------------- |
+| `401`  | `INVALID_API_SESSION`      | Token is missing, malformed, expired, has an invalid signature, or the parent key is revoked. Also returned when both `Authorization: Bearer` and `x-api-key` (or `x-dev-portal-key`) are supplied on the same request. |
+| `403`  | `FORBIDDEN`                | Minting from a key below tier 2.                                                       |
+| `400`  | `INVALID_REQUEST_PARAMS`   | Session request includes a parameter that is not allowed for session use.              |
+| `429`  | `RATE_LIMITED`             | Browser or mint rate limit exceeded.                                                   |
+| `500`  | `API_SESSION_UNAVAILABLE`  | Session infrastructure is temporarily unavailable.                                     |
+
+### Revocation and rotation
+
+Access tokens are not individually revocable. The following events invalidate existing tokens as cached authorization refreshes:
+
+- The parent API key is disabled or deleted — all its outstanding tokens stop working.
+- The parent key is dropped below tier 2.
+
+Rotating the parent key's secret or editing its metadata does **not** revoke outstanding tokens — rely on the 15-minute expiry for those cases.
+
+<Tip>
+Access tokens are a thin shortcut for client-side calls. If you need granular per-user quotas, auditability tied to end-user identity, or sponsorship / fixed-rate parameters in the browser flow, keep using a server-side [Proxy API](#proxy-api).
+</Tip>
