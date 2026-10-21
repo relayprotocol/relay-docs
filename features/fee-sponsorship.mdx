@@ -282,9 +282,16 @@ For more details on the fee structure, see [Cost & Fee Structure](/references/ap
 
 ---
 
+## Accounting and Reconciliation
+
+Every movement on your app balance is recorded as a balance event, which you can export with [Get Balance Events](/references/api/get-balance-events) for reconciliation or monthly accounting. Sponsorship draws appear as `fee-sponsorship-payment` events, and returned amounts as `fee-sponsorship-refund`.
+
+App-fee payments and revenue-share payments both appear as a single event type, `fee-credit`. The event does not say which one it is. To tell them apart, direct app fees to one wallet and revenue share to another, then query each wallet's events separately.
+
 ## Related Resources
 
 - [App Fees](/features/app-fees) — Learn how to collect fees from your users
+- [Get Balance Events](/references/api/get-balance-events) — API reference for the balance event history
 - [Get App Fee Balances](/references/api/get-app-fee-balances) — API reference for checking balances
 - [Get Quote](/references/api/get-quote-v2) — API reference for quote requests
 - [Cost & Fee Structure](/references/api/api_core_concepts/fees) — Understanding Relay's fee structure

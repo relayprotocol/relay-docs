@@ -155,6 +155,7 @@
               "references/api/transactions-single",
               "references/api/deposit-address-reindex",
               "references/api/get-app-fee-balances",
+              "references/api/get-balance-events",
               "references/api/claim-app-fees",
               "references/api/get-usage",
               "references/api/advanced",
@@ -294,7 +295,8 @@
                 "group": "Guides",
                 "pages": [
                   "references/protocol/vaults/guides/bridging",
-                  "references/protocol/vaults/guides/interacting"
+                  "references/protocol/vaults/guides/interacting",
+                  "references/protocol/vaults/guides/withdrawing"
                 ]
               },
               {
