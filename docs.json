@@ -47,7 +47,8 @@
               "features/gasless-execution",
               "features/fast-fill",
               "features/gasless-swaps",
-              "features/price-stabilization"
+              "features/price-stabilization",
+              "features/routing-integration-models"
             ]
           },
           {
@@ -102,8 +103,7 @@
                 "pages": [
                   "references/api/api_guides/bridging-integration-guide",
                   "references/api/api_guides/calling-integration-guide",
-                  "references/api/api_guides/routing-integration-models",
-                  "references/api/api_guides/transaction-indexing",
+                      "references/api/api_guides/transaction-indexing",
                   "references/api/api_guides/builder-codes",
                   "references/api/api_guides/smart-accounts",
                   {
