@@ -22,11 +22,11 @@ Relay returns one of the following statuses. Only `success` and `refund` are fin
 
 ## Polling until settlement
 
-Poll until the status is `success` or `refund`. Once a request reaches either, the status no longer changes; Relay only appends transaction details after that point.
+Poll until the status is `success` or `refund`. Once a request reaches either, its status only changes again in one rare case, a chain reorganization of the settling transaction; Relay otherwise only appends transaction details after that point.
 
-`failure` is not final. A failed fill can be retried, returning the request to `pending`, or refunded, moving it to `refund`. Keep polling through a `failure` until a final status appears, or you will miss the refund that typically follows.
+`failure` is usually not final. A failed fill can be retried, returning the request to `pending`, or refunded, moving it to `refund`, so keep polling through a `failure` rather than treating it as the end. The exception is a `failure` with `refundFailReason` set: no automatic refund will follow, so stop polling and handle it per [Refunds](/references/api/api_core_concepts/refunds).
 
-Request acceptance is not settlement. A successful quote or execute response means the request was accepted; treat the swap as settled only when the status is `success` and `txHashes` contains the destination fill transaction. In the rare case of a chain reorganization, a `success` can reopen to `pending` while the fill is re-executed.
+Request acceptance is not settlement. A successful quote or execute response means the request was accepted; treat the swap as settled only when the status is `success` and `txHashes` contains the destination fill transaction.
 
 <Note>
 For deposit-address requests, `waiting` on the quote-time `requestId` does not mean the deposit is missing. If Relay regenerated the quote, the fill runs under a new `requestId`, and the quote-time one can stay `waiting` after the fill succeeds. Check the order with [Get Requests](/references/api/get-requests) using `depositAddress`. See [Tracking Transactions](/features/deposit-addresses#tracking-transactions).
