@@ -3,6 +3,12 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-10-20 — Browser access tokens on `POST /access-tokens`
+
+**Added** — [`POST /access-tokens`](/references/api/create-access-token) exchanges an eligible backend API key (tier 2 or higher) for a **15-minute** browser access token. Mint tokens on your backend, then send them as `Authorization: Bearer` on supported public endpoints.
+
+Browser requests share limits per parent API key and client IP, independently of backend requests. Access tokens cannot use sponsorship or fixed-rate parameters. See [Browser access tokens](/references/api/api-keys#browser-access-tokens) for eligibility, endpoints, limits, and revocation behavior.
+
 ## 2026-10-15 — Elevated `/quote` rate limit raised to 50 rps
 
 **Behavior change** — `POST /quote` and `POST /quote/v2`: the per-key rate limit on elevated keys is raised from **10 requests per second** to **50 requests per second** across both endpoints. Default keys are unchanged at 50 requests per minute. See [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits).

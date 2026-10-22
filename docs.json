@@ -161,6 +161,7 @@
               "references/api/advanced",
               "references/api/fast-fill",
               "references/api/get-swap-sources",
+              "references/api/create-access-token",
               "references/api/execute",
               {
                 "group": "Withdrawals",
