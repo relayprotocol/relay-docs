@@ -7,11 +7,11 @@ Building applications at scale requires integrating with Relay's system at insta
 
 ## Configuring a Webhook
 
-Webhooks are self-serve in the [Relay Dashboard](https://dashboard.relay.link). Each [App](/references/api/api-keys#creating-an-api-key) can have a single webhook endpoint, and requests made with any of the App's API keys post events to it. To configure one:
+Webhooks are self-serve in the [Relay Dashboard](https://dashboard.relay.link). Each [App](/references/api/api-keys#apps-and-api-keys) can have one webhook endpoint. Relay posts events to this endpoint for requests made with any API key in the App. To configure one:
 
 1. Sign in to the [Relay Dashboard](https://dashboard.relay.link).
 2. Open **Apps** and select the App you want to configure.
-3. Open the **Advanced** tab and click **Configure** next to **Webhook**.
+3. Open the **Advanced** tab. In the **Webhooks** section, click **Configure**.
 4. Enable the webhook and enter your **Webhook URL** — an HTTPS endpoint to POST to when the status of a request changes (e.g. `https://my.server/receive-relay-event`).
 5. Optionally add **Custom Headers** to include on every webhook request (e.g. `Authorization: Bearer 0x123`), then save.
 
@@ -83,9 +83,9 @@ Each webhook request includes two headers for verification:
 | `X-Signature-Timestamp` | Unix timestamp of when the webhook was sent |
 | `X-Signature-SHA256` | HMAC-SHA256 signature of the request |
 
-Relay signs each event with the API key that made the request. To verify a webhook is authentic, compute the HMAC-SHA256 hash of `${timestamp}.${body}` using that API key as the secret, and compare it to the `X-Signature-SHA256` header value.
+Relay signs each event with the API key used for the request. To verify a webhook is authentic, compute the HMAC-SHA256 hash of `${timestamp}.${body}` using that API key as the secret, and compare it to the `X-Signature-SHA256` header value.
 
-An App's webhook receives events from all of the App's active keys, so check the signature against each one. During a [key rotation](/references/api/api-keys#rotate-a-key), that means both the old and the new key. Relay stops sending events for a key's requests once you deactivate it, including requests that are still in progress.
+The App's webhook receives events for requests made with any active key in the App. Check the signature against each of these keys. During a [key rotation](/references/api/api-keys#add-or-rotate-an-api-key), that means both the old and the new key. Relay stops sending events for a key's requests once you deactivate it, including requests that are still in progress.
 
 ```javascript Example Verification
 import crypto from 'crypto';
