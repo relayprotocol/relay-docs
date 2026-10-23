@@ -29,7 +29,7 @@ If you receive a `429` response, retry the request after an exponential backoff.
 
 Polling for status is a major source of avoidable request volume. Relay can push status updates to you instead, which removes those calls from your budget entirely and delivers updates faster than any polling interval.
 
-[Webhooks](/references/api/api_guides/webhooks) POST `request.status.updated` events to an HTTPS endpoint on your backend as each request changes status. Configure one endpoint per API key in the [Relay Dashboard](https://dashboard.relay.link). Use webhooks when you have a server that can receive traffic.
+[Webhooks](/references/api/api_guides/webhooks) POST `request.status.updated` events to an HTTPS endpoint on your backend as each request changes status. Configure one endpoint per App in the [Relay Dashboard](https://dashboard.relay.link). Use webhooks when you have a server that can receive traffic.
 
 [Websockets](/references/api/api_guides/websockets) deliver the same events over an open connection to `wss://ws.relay.link`, authenticated with your API key. Use websockets when the consumer is a client or a process that can hold a connection open.
 
