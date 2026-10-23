@@ -83,28 +83,30 @@ Each webhook request includes two headers for verification:
 | `X-Signature-Timestamp` | Unix timestamp of when the webhook was sent |
 | `X-Signature-SHA256` | HMAC-SHA256 signature of the request |
 
-To verify a webhook is authentic, compute the HMAC-SHA256 hash of `${timestamp}.${body}` using your API key as the secret, and compare it to the `X-Signature-SHA256` header value.
+Relay signs each event with the API key that made the request. To verify a webhook is authentic, compute the HMAC-SHA256 hash of `${timestamp}.${body}` using that API key as the secret, and compare it to the `X-Signature-SHA256` header value.
+
+An App's webhook receives events from all of the App's active keys, so check the signature against each one. During a [key rotation](/references/api/api-keys#rotate-a-key), that means both the old and the new key. Relay stops sending events for a key's requests once you deactivate it, including requests that are still in progress.
 
 ```javascript Example Verification
 import crypto from 'crypto';
 
-function verifyWebhook(req, apiKey) {
+function verifyWebhook(req, apiKeys) {
   const timestamp = req.headers['x-signature-timestamp'];
   const signature = req.headers['x-signature-sha256'];
   const body = JSON.stringify(req.body);
-
-  const expected = crypto
-    .createHmac('sha256', apiKey)
-    .update(`${timestamp}.${body}`)
-    .digest('hex');
-
   const signatureBuffer = Buffer.from(signature, 'hex');
-  const expectedBuffer = Buffer.from(expected, 'hex');
 
-  return (
-    signatureBuffer.length === expectedBuffer.length &&
-    crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
-  );
+  return apiKeys.some((apiKey) => {
+    const expectedBuffer = crypto
+      .createHmac('sha256', apiKey)
+      .update(`${timestamp}.${body}`)
+      .digest();
+
+    return (
+      signatureBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+    );
+  });
 }
 ```
 
