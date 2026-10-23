@@ -23,8 +23,8 @@ This makes deposit addresses ideal for CEX withdrawals, fiat onramps, and headle
 | `useDepositAddress` | boolean | Set to `true` to receive a deposit address instead of transaction calldata. |
 | `user` | address | The recipient wallet on the destination chain. Can be any valid address, including the zero address. |
 | `recipient` | address | The address that receives funds on the destination chain. |
-| `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Set to the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to opt into automatic refunds to the original depositor. Supported on EVM chains, Bitcoin, and Solana. If the depositor is a blocked wallet, Relay does not refund it. If `recoveryAddress` is set, the funds are credited on the Hub to that address instead. Omitting this on open addresses disables automatic refund. See [Refund Behavior](#refund-behavior). |
-| `recoveryAddress` | address | Optional origin-chain wallet that you control and can sign with. Relay records it as the protocol depositor. When Relay cannot fill or refund the depositor, the recovered funds are credited on the Hub to this address. You withdraw them with its signature at [relay.link/withdraw](https://relay.link/withdraw), or Relay pays them to this address after a manual review. Do not use an exchange deposit address, a deposit address issued by another protocol, or a custodial address whose custodian cannot sign for you. This is additive to `refundTo`; existing `refundTo` behavior is preserved unless `recoveryAddress` is supplied. See [`recoveryAddress`](#recoveryaddress). |
+| `refundTo` | address | Address to send refunds if the transfer fails. Required for strict deposit addresses and for routes that include a destination-side swap. Set to the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to opt into automatic refunds to the original depositor. Supported on EVM chains, Bitcoin, and Solana. If the depositor is a blocked wallet, Relay does not refund it. If `recoveryAddress` is set, the funds are credited on the Hub to that address instead. Omitting this on open addresses disables automatic refund. Relay can record `refundTo` as the protocol depositor, so it must be a wallet you can sign with. See [Refund Behavior](#refund-behavior) and [The wallet must be able to sign](#the-wallet-must-be-able-to-sign). |
+| `recoveryAddress` | address | Optional origin-chain wallet that you control and can sign with. Relay records it as the protocol depositor when `refundTo` is not set or is the native-currency address. When Relay cannot fill or refund the depositor, the recovered funds are credited on the Hub to this address. You withdraw them with its signature at [relay.link/withdraw](https://relay.link/withdraw), or Relay pays them to this address after a manual review. Do not use an exchange deposit address, a deposit address issued by another protocol, or a custodial address whose custodian cannot sign for you. This is additive to `refundTo`; existing `refundTo` behavior is preserved unless `recoveryAddress` is supplied. See [`recoveryAddress`](#recoveryaddress). |
 | `tradeType` | string | `EXACT_INPUT` or `EXPECTED_OUTPUT` for open deposit addresses. `EXACT_OUTPUT` is supported only with a strict deposit address (`strict: true`); an open-ended `EXACT_OUTPUT` request is rejected. |
 | `amount` | string | The quoted amount in the origin token's smallest unit. Open-ended addresses support variable deposit amounts. Strict addresses should be treated as exact-payment instructions. |
 | `strict` | boolean | Set to `true` for a strict deposit address tied to a specific order. Omit or set to `false` for an open deposit address. |
@@ -937,6 +937,10 @@ A same-VM wrong-chain deposit to an open or custodial address is recoverable but
 | Not set (strict) | Not allowed — `refundTo` is required for strict deposit addresses |
 
 <Note>
+Relay can also record `refundTo` as the protocol depositor. The depositor owns any funds that Relay cannot fill or refund, and a self-serve withdrawal at [relay.link/withdraw](https://relay.link/withdraw) needs the depositor's signature. Set `refundTo` to a wallet you can sign with. See [The wallet must be able to sign](#the-wallet-must-be-able-to-sign).
+</Note>
+
+<Note>
 If users may send from a centralized exchange, **do not set `refundTo` as the user's address** — neither an explicit user address you don't control nor the native-currency-address auto-refund opt-in — the sender address will be the exchange's hot wallet, not the user's. Use an app-controlled address instead so your support team can handle the last mile. If you still want depositor auto-detection for self-custodied senders, pair the auto-refund opt-in with a [`recoveryAddress`](#recoveryaddress) as the fallback.
 </Note>
 
@@ -946,7 +950,7 @@ When auto-refund to the original depositor is triggered, the request's `outTxs` 
 
 ### `recoveryAddress`
 
-`recoveryAddress` is for cases where Relay cannot auto-refund. It must be a wallet on the origin chain that you control and can sign with. Relay records it as the protocol depositor for the deposit address.
+`recoveryAddress` is for cases where Relay cannot auto-refund. It must be a wallet on the origin chain that you control and can sign with. When `refundTo` is not set or is the native-currency address, Relay records `recoveryAddress` as the protocol depositor for the deposit address.
 
 Use `recoveryAddress` when an integrator wants to use Relay's depositor detection, but also needs a fallback recovery path if the detected depositor cannot safely receive an automatic refund. This is most relevant for deposits from custodial sources like centralized exchanges, unsupported currency deposits, or blocked depositor addresses.
 
@@ -969,7 +973,7 @@ Constraints:
 
 ### The wallet must be able to sign
 
-A self-serve withdrawal needs a signature from `recoveryAddress`: an EOA signature, or an ERC-1271 contract signature from a smart contract wallet such as a Safe. Relay cannot send a Hub credit to a different address, and Relay support cannot sign for you. Before you set `recoveryAddress`, confirm that you can connect that wallet at [relay.link/withdraw](https://relay.link/withdraw) and sign with it, or that your server can sign with its key through the [withdrawals API](/references/protocol/guides/withdrawals). See [Supported Chains and Signers](/references/protocol/guides/withdrawals#supported-chains-and-signers) for the signer types each chain accepts.
+This applies to `refundTo` and to `recoveryAddress`. Relay records `refundTo` or `recoveryAddress` as the protocol depositor, and the depositor owns any funds that Relay cannot fill or refund. A self-serve withdrawal needs a signature from the depositor: an EOA signature, or an ERC-1271 contract signature from a smart contract wallet such as a Safe. Relay cannot send a Hub credit to a different address, and Relay support cannot sign for you. Before you set `refundTo` or `recoveryAddress`, confirm that you can connect that wallet at [relay.link/withdraw](https://relay.link/withdraw) and sign with it, or that your server can sign with its key through the [withdrawals API](/references/protocol/guides/withdrawals). See [Supported Chains and Signers](/references/protocol/guides/withdrawals#supported-chains-and-signers) for the signer types each chain accepts.
 
 These addresses do not qualify:
 
@@ -979,7 +983,7 @@ These addresses do not qualify:
 - A smart contract wallet that cannot produce a valid ERC-1271 signature. A Safe qualifies. See [Supported Chains and Signers](/references/protocol/guides/withdrawals#supported-chains-and-signers).
 
 <Warning>
-If `recoveryAddress` cannot sign, you cannot withdraw on your own. The funds stay on the Hub until Relay pays them to `recoveryAddress` after a manual review. Contact [support](/resources/support) with the request id. Relay pays only to `recoveryAddress`, so confirm that this address can receive the deposited currency on the origin chain.
+If the depositor cannot sign, you cannot withdraw on your own. The funds stay on the Hub until Relay pays them to the depositor after a manual review. Contact [support](/resources/support) with the request id. Relay pays only to the depositor, so confirm that `refundTo` and `recoveryAddress` can receive the deposited currency on the origin chain.
 </Warning>
 
 ### When the depositor cannot be refunded
@@ -1003,7 +1007,7 @@ The response lists each credited balance with the raw `amount` and its `currency
 
 - **Open deposit addresses**: Set `refundTo` to the user's address for automatic refunds.
 - **Strict deposit addresses**: Always set `refundTo`. If the sender is unknown (e.g., CEX withdrawal), use an app-controlled address so your support team can manage refunds.
-- **Auto-refund to depositor**: When users deposit from wallets they control, you can pass `refundTo` as the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to refund to the original depositor automatically. The first of the two resulting `outTxs` is the transfer to the depositor. Track that one for refund delivery. Avoid this when deposits may originate from a centralized exchange, or pair it with a [`recoveryAddress`](#recoveryaddress) so funds Relay cannot safely auto-refund remain recoverable. The `recoveryAddress` must be a wallet you can sign with.
+- **Auto-refund to depositor**: When users deposit from wallets they control, you can pass `refundTo` as the origin chain's native-currency address (EVM `0x0000000000000000000000000000000000000000`, Bitcoin `bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmql8k8`, Solana `11111111111111111111111111111111`) to refund to the original depositor automatically. The first of the two resulting `outTxs` is the transfer to the depositor. Track that one for refund delivery. Avoid this when deposits may originate from a centralized exchange, or pair it with a [`recoveryAddress`](#recoveryaddress) so funds Relay cannot safely auto-refund remain recoverable. Both `refundTo` and `recoveryAddress` must be wallets you can sign with. See [The wallet must be able to sign](#the-wallet-must-be-able-to-sign).
 
 ## Tracking Transactions
 
