@@ -7,11 +7,11 @@ Building applications at scale requires integrating with Relay's system at insta
 
 ## Configuring a Webhook
 
-Webhooks are self-serve in the [Relay Dashboard](https://dashboard.relay.link). Each API key can have a single webhook endpoint, and any requests tied to that key will post events to it. To configure one:
+Webhooks are self-serve in the [Relay Dashboard](https://dashboard.relay.link). Each [App](/references/api/api-keys#creating-an-api-key) can have a single webhook endpoint, and requests made with any of the App's API keys post events to it. To configure one:
 
 1. Sign in to the [Relay Dashboard](https://dashboard.relay.link).
-2. Open the **API keys** tab.
-3. Open the actions menu on the key you want to configure and select **Configure Webhook**.
+2. Open **Apps** and select the App you want to configure.
+3. Open the **Advanced** tab and click **Configure** next to **Webhook**.
 4. Enable the webhook and enter your **Webhook URL** — an HTTPS endpoint to POST to when the status of a request changes (e.g. `https://my.server/receive-relay-event`).
 5. Optionally add **Custom Headers** to include on every webhook request (e.g. `Authorization: Bearer 0x123`), then save.
 
