@@ -3,6 +3,14 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-10-21 — `atlasvm` on `GET /chains` and optional native `currency`
+
+**Added** — `GET /chains`: the response `vmType` enum gains **`atlasvm`**, identifying chains that settle without a native gas currency. Existing `vmType` values are unchanged.
+
+**Behavior change** — `GET /chains`: the per-chain `currency` object (the native-gas currency: `id`, `symbol`, `name`, `address`, `decimals`, `supportsBridging`) is now optional and may be omitted on entries where `vmType` is `"atlasvm"`. On other `vmType` values `currency` is still present. Treat `currency` as potentially absent and read any native-currency-derived fields defensively. Chain-level `depositFee` and `withdrawalFee` fall back to the chain default when no native currency is present, and `surgeEnabled` is `false` for these entries.
+
+**Behavior change** — deposit-address flows (`POST /quote/v2` with `useDepositAddress: true`): requests targeting a chain with `vmType: "atlasvm"` are rejected with `400` and `message: "Deposit addresses are not supported for Atlas"`. Use the standard quote-and-execute flow for Atlas destinations.
+
 ## 2026-10-15 — Elevated `/quote` rate limit raised to 50 rps
 
 **Behavior change** — `POST /quote` and `POST /quote/v2`: the per-key rate limit on elevated keys is raised from **10 requests per second** to **50 requests per second** across both endpoints. Default keys are unchanged at 50 requests per minute. See [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits).
