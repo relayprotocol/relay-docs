@@ -1,9 +1,9 @@
 ---
 title: "Handling Rate Limits"
-description: "Reduce your request volume and request an elevated limit when you reach Relay's per-key rate limits"
+description: "Reduce your request volume and request an elevated limit when you reach your App's rate limits"
 ---
 
-Relay enforces rate limits per API key to keep the platform reliable for every integrator. When a request exceeds a limit, Relay rejects it with a `429` response. Use this guide to optimize your request workflow or replace status polling with webhooks or websockets. If you have already tried both, contact support to request an elevated rate limit.
+Relay enforces rate limits per App to keep the platform reliable for every integrator. When a request exceeds a limit, Relay rejects it with a `429` response. Use this guide to optimize your request workflow or replace status polling with webhooks or websockets. If you have already tried both, contact support to request an elevated rate limit.
 
 <Tip>
 Per-endpoint limits are listed in [API keys and Rate Limits](/references/api/api-keys#default-rate-limits). To see which keys and endpoints are reaching their limits, open [Observability](https://dashboard.relay.link/observability) in the Relay Dashboard.
@@ -39,6 +39,6 @@ Either option eliminates polling for status. Keep a low-frequency reconciliation
 
 ## Request an elevated rate limit
 
-If your workflow is already optimized and you've moved off polling, reach out to our support team to request an elevated rate limit. Elevated limits are applied per key. The [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits) table lists what's available.
+If your workflow is already optimized and you've moved off polling, reach out to our support team to request an elevated rate limit. Elevated limits apply per App. The [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits) table lists what's available.
 
 Get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link). Tell us the label of the API key as it appears in the Dashboard rather than the key itself, the endpoints involved, your expected sustained and peak volume in requests per second, and what you've already optimized.
