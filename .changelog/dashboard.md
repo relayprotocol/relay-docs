@@ -32,7 +32,7 @@ of opening the first match directly.
 and one configuration that all of its keys use. The configuration includes rate limits,
 features, the webhook, IP restrictions, allowed origins, the fee sponsorship wallet, and app
 fees. Give each product or environment its own App, so that every key for it behaves the same
-way.
+way. For more information, see [API keys](/references/api/api-keys).
 
 **Added** — You can now rotate an API key without a change to its configuration. Create a
 replacement key in the same App. Change your integration to use the replacement key. Then
