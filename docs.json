@@ -153,7 +153,6 @@
               "references/api/get-chains-liquidity",
               "references/api/get-currencies-v2",
               "references/api/get-currency-classifications",
-              "references/api/get-token-price",
               "references/api/get-token-price-v2",
               "references/api/transactions-index",
               "references/api/transactions-single",
@@ -183,6 +182,7 @@
                   "references/api/get-config",
                   "references/api/get-intents-status",
                   "references/api/get-currencies",
+                  "references/api/get-token-price",
                   "references/api/get-quote"
                 ]
               }
