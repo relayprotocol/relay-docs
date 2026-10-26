@@ -124,7 +124,9 @@
               {
                 "group": "Migration Guides",
                 "pages": [
-                  "references/api/api_guides/migrating-to-requests-v3"
+                  "references/api/api_guides/migrating-to-requests-v3",
+                  "references/api/api_guides/migrating-to-currencies-v2",
+                  "references/api/api_guides/migrating-to-token-price-v2"
                 ]
               },
               {
@@ -152,6 +154,7 @@
               "references/api/get-currencies-v2",
               "references/api/get-currency-classifications",
               "references/api/get-token-price",
+              "references/api/get-token-price-v2",
               "references/api/transactions-index",
               "references/api/transactions-single",
               "references/api/deposit-address-reindex",
