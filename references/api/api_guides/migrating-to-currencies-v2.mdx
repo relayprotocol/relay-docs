@@ -196,7 +196,7 @@ The request body and the optional `x-api-key` header are the same as v1, with th
   </Accordion>
 
   <Accordion title="Default list" icon="star">
-    With **`defaultList: true`**, v2 returns the highest-volume currencies on the requested chains and substitutes native currencies for their wrapped forms (ETH for WETH, SOL for WSOL). v1 returned Relay's curated default list, topped up with trending tokens.
+    With **`defaultList: true`**, v2 returns the highest-volume currencies on the requested chains and substitutes native currencies for their wrapped forms (ETH for WETH, SOL for WSOL). Because the list follows volume, it can include unverified currencies; check `metadata.verified` if you only want verified ones. v1 returned Relay's curated default list, topped up with trending tokens.
   </Accordion>
 </AccordionGroup>
 

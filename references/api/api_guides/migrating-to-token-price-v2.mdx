@@ -130,7 +130,7 @@ Nothing. v2 accepts the same query parameters and the same optional header as v1
 
 ## RelayKit
 
-`useTokenPrice` and `queryTokenPrice` in `@relayprotocol/relay-kit-hooks` call v1 in every release before `{PLACEHOLDER: relay-kit-hooks version}` (5.1.2 and earlier at the time of writing). `@relayprotocol/relay-kit-ui` uses the hook inside the Swap and Onramp widgets, so it moves with `{PLACEHOLDER: relay-kit-ui version}`. From those versions `data.price` is a string. See [useTokenPrice](/references/relay-kit/hooks/useTokenPrice).
+`useTokenPrice` and `queryTokenPrice` in `@relayprotocol/relay-kit-hooks` call v1 in every release before 6.0.0 (5.1.2 and earlier). `@relayprotocol/relay-kit-ui` uses the hook inside the Swap and Onramp widgets and moved with 12.0.6. From those versions `data.price` is a string. See [useTokenPrice](/references/relay-kit/hooks/useTokenPrice).
 
 ## Migration checklist
 
@@ -142,7 +142,7 @@ Nothing. v2 accepts the same query parameters and the same optional header as v1
     Change your types from `number` to `string`. Parse with `Number()` or a decimal library where you do arithmetic, and keep the string for display and storage.
   </Step>
   <Step title="Upgrade RelayKit">
-    If you use `useTokenPrice`, `queryTokenPrice`, or the RelayKit UI widgets, upgrade to the versions above and update code that reads `data.price` as a number.
+    If you use `useTokenPrice`, `queryTokenPrice`, or the RelayKit UI widgets, upgrade `@relayprotocol/relay-kit-hooks` to 6.0.0 or later and `@relayprotocol/relay-kit-ui` to 12.0.6 or later, then update code that reads `data.price` as a number.
   </Step>
   <Step title="Confirm nothing still calls v1">
     Watch for the `Deprecation` header in your response logs. v2 responses never carry it, so once it stops appearing your traffic has moved.
