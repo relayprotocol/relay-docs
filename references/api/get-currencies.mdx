@@ -1,5 +1,9 @@
 ---
-title: "Get Currencies"
-description: "This api returns currency metadata from a curated list"
+title: "Get Currencies (v1)"
+description: "Deprecated. Returns currency metadata from a curated list. Use POST /currencies/v2 for new integrations."
 openapi: post /currencies/v1
 ---
+
+<Warning>
+  `POST /currencies/v1` is **deprecated as of October 30, 2026**: its rate limit is reduced in stages from December 14, 2026 until it is **retired on January 28, 2027**. Use [`POST /currencies/v2`](/references/api/get-currencies-v2), which returns a flat list of currencies instead of nested groups. See the [migration guide](/references/api/api_guides/migrating-to-currencies-v2#sunset-timeline) for the timeline and how to upgrade.
+</Warning>
