@@ -3,6 +3,18 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-10-21 — `/currencies` request validation and v1 default page size
+
+**Behavior change** — `POST /currencies/v1`: unfiltered requests that omit `limit` now return a default of **20** currency groups. Requests that include any filter (`defaultList`, `chainIds`, `term`, `address`, `symbol`, `groupID`, `tokens`, `verified`, or `depositAddressOnly`) or an explicit `limit` are unaffected. If your integration relied on receiving the full curated list in one call, send an explicit `limit` or a filter.
+
+**Breaking** — `POST /currencies/v1` and `POST /currencies/v2`: `limit` must now be an **integer ≥ 1**. Values of `0`, negative numbers, and non-integers return `400` instead of being silently accepted. `POST /currencies/v2` continues to enforce its existing `maximum: 100` and default of `20`.
+
+**Breaking** — `POST /currencies/v1` and `POST /currencies/v2`: `term` is capped at **256 characters**. Longer values return `400`.
+
+**Breaking** — `POST /currencies/v1` and `POST /currencies/v2`: requests with `useExternalSearch: true` now require a non-empty `chainIds` array. Requests that omit `chainIds` or send `[]` with external search enabled return `400`.
+
+**Added** — `POST /currencies/v1` and `POST /currencies/v2`: `symbol` and `groupID` are now documented request fields — optional string filters by currency symbol and currency group ID. Behavior is unchanged from how these filters were previously accepted.
+
 ## 2026-10-15 — Elevated `/quote` rate limit raised to 50 rps
 
 **Behavior change** — `POST /quote` and `POST /quote/v2`: the per-key rate limit on elevated keys is raised from **10 requests per second** to **50 requests per second** across both endpoints. Default keys are unchanged at 50 requests per minute. See [Elevated Rate Limits](/references/api/api-keys#elevated-rate-limits).
