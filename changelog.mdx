@@ -13,6 +13,7 @@ mode: "center"
 
 **Behavior change**
 
+- `POST /app-fees/{wallet}/claim` and `POST /execute/permits` (with `kind: "claim"`): the claim `recipient` is now validated as a payout target before any balance is debited. Recipients that are Relay deposit addresses, the zero address, well-known burn addresses, or otherwise unresolvable return `400` with `message: "Invalid destination chain and/or recipient"` — on `/app-fees/{wallet}/claim` before authorization is issued, and on `/execute/permits` before the balance is debited. Previously only address-format was checked, and invalid recipients were accepted at authorization and failed later in payout, leaving the balance unavailable. Properly addressed EVM wallet recipients continue to work unchanged. See [App Fees — withdrawing your off-chain balance](/features/app-fees#how-to-withdraw-your-off-chain-balance).
 - All authenticated endpoints: rate-limit and burst-allowance budgets are now scoped to the App rather than to the individual API key, so every active and rotated key in an App shares one budget per route. Previously, each key received its own counters, which allowed additional or rotated keys to multiply effective capacity. Elevated `/authorize` buckets now key on `(App, wallet)` with an aggregate per-App ceiling (previously `(API key, wallet)` with a per-API-key ceiling). Anonymous fallbacks, user/session rules, and pre-authentication `/access-tokens` limits are unchanged. See [Apps, API keys, and Rate Limits](/references/api/api-keys#default-rate-limits).
 
 </Update>
