@@ -39,7 +39,7 @@ How a block surfaces depends on when the address is flagged.
 | Quote | `BLOCKED_WALLET_ADDRESS` | The quote request fails with HTTP `400` before any transaction is created. No funds leave the wallet. |
 | Fill | `BLOCKED_WALLET` | The fill is aborted and the funds remain in the protocol. The depositor address can [withdraw](/references/protocol/guides/withdrawals) them. |
 
-`BLOCKED_WALLET_ADDRESS` is returned by `/quote/v2` (see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors#expected-errors)). `BLOCKED_WALLET` is the `failReason` on a submitted request (see [Handling Execution Errors](/references/api/api_core_concepts/execution-errors)). The owning integrator can see which addresses caused a `BLOCKED_WALLET` failure through `blockedAddresses` on [`GET /requests/v3`](/references/api/api_guides/migrating-to-requests-v3#what-changed).
+`BLOCKED_WALLET_ADDRESS` is returned by `/quote/v2` (see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors#expected-errors)). `BLOCKED_WALLET` is the `failReason` on a submitted request (see [Handling Execution Errors](/references/api/api_core_concepts/execution-errors)). The owning integrator can see which addresses caused a `BLOCKED_WALLET` failure through `data.blockedAddresses` on [`GET /requests/v3`](/references/api/api_guides/migrating-to-requests-v3#what-changed) by authenticating with its API key and passing `includeAuthenticatedData=true`.
 
 See [Unsupported Exchanges](/security/unsupported-exchanges) before sending to or from an exchange.
 
