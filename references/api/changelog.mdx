@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-10-28 — Rate limits shared across all API keys in an App
+
+**Behavior change** — All authenticated endpoints: rate-limit and burst-allowance budgets are now scoped to the App rather than to the individual API key, so every active and rotated key in an App shares one budget per route. Previously, each key received its own counters, which allowed additional or rotated keys to multiply effective capacity. Elevated `/authorize` buckets now key on `(App, wallet)` with an aggregate per-App ceiling (previously `(API key, wallet)` with a per-API-key ceiling). Anonymous fallbacks, user/session rules, and pre-authentication `/access-tokens` limits are unchanged. See [Apps, API keys, and Rate Limits](/references/api/api-keys#default-rate-limits).
+
 ## 2026-10-21 — `/currencies` request validation and v1 default page size
 
 **Behavior change** — `POST /currencies/v1`: unfiltered requests that omit `limit` now return a default of **20** currency groups. Requests that include any filter (`defaultList`, `chainIds`, `term`, `address`, `symbol`, `groupID`, `tokens`, `verified`, or `depositAddressOnly`) or an explicit `limit` are unaffected. If your integration relied on receiving the full curated list in one call, send an explicit `limit` or a filter.
