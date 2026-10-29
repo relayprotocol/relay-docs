@@ -1,0 +1,150 @@
+---
+title: "Migrating to Token Price v2"
+description: "What changed in GET /currencies/token/price/v2 and how to upgrade from GET /currencies/token/price."
+---
+
+`GET /currencies/token/price/v2` is the latest version of the Token Price API. It takes the same parameters as v1 and returns the same USD price, but as a decimal string instead of a JSON number, so the value arrives in plain notation at every magnitude. `GET /currencies/token/price` remains available during a deprecation window (see the [sunset timeline](#sunset-timeline) below) — migrate before it's retired.
+
+The `v2` endpoint suffix is a platform API version. It does not mean a request uses a particular version of [Relay Protocol](/references/protocol/overview).
+
+## Sunset timeline
+
+`GET /currencies/token/price` is **deprecated as of October 30, 2026**. It keeps working, but migrate to `GET /currencies/token/price/v2` before it's fully retired on **January 28, 2027**.
+
+| Date | What changes |
+| --- | --- |
+| **Oct 30, 2026** | v1 is deprecated; v2 is the recommended version. v1 keeps working. |
+| **Dec 14, 2026 onward** | Relay reduces the v1 rate limit in stages; requests over the limit receive `429`. v2 is not affected. |
+| **Jan 28, 2027** | v1 is fully retired — all traffic must be on v2. |
+
+## Detecting deprecation programmatically
+
+Every response from `GET /currencies/token/price` carries in-band deprecation signals, so clients can surface or log the sunset timeline without hard-coding dates.
+
+- **`Deprecation`** header — RFC 9745 date, e.g. `@1793318400`.
+- **`Sunset`** header — HTTP-date, e.g. `Thu, 28 Jan 2027 00:00:00 GMT`.
+- **`Link`** header — three lines with `rel="deprecation"`, `rel="sunset"`, and `rel="successor-version"` pointing to this guide and to `GET /currencies/token/price/v2`.
+
+```http
+Deprecation: @1793318400
+Sunset: Thu, 28 Jan 2027 00:00:00 GMT
+Link: <https://docs.relay.link/references/api/api_guides/migrating-to-token-price-v2>; rel="deprecation"; type="text/html"
+Link: <https://docs.relay.link/references/api/api_guides/migrating-to-token-price-v2>; rel="sunset"; type="text/html"
+Link: <https://api.relay.link/currencies/token/price/v2>; rel="successor-version"
+```
+
+These headers are attached to every v1 response (`2xx`, `4xx`, and `5xx`) and are listed in `Access-Control-Expose-Headers`, so browser clients using `fetch` or `XMLHttpRequest` can read them cross-origin:
+
+```javascript
+const res = await fetch(
+  "https://api.relay.link/currencies/token/price?address=0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48&chainId=1"
+);
+const sunset = res.headers.get("sunset");
+const deprecation = res.headers.get("deprecation");
+```
+
+Successful (`200`) responses additionally include a top-level `deprecation` object next to `price`:
+
+```json
+"deprecation": {
+  "message": "GET /currencies/token/price is deprecated. Migrate to GET /currencies/token/price/v2. Relay reduces the GET /currencies/token/price rate limit in stages from December 14, 2026. Relay retires GET /currencies/token/price on January 28, 2027.",
+  "deprecatedAt": "2026-10-30T00:00:00Z",
+  "throttledFrom": "2026-12-14T00:00:00Z",
+  "sunsetAt": "2027-01-28T00:00:00Z",
+  "successor": "https://api.relay.link/currencies/token/price/v2",
+  "migrationGuide": "https://docs.relay.link/references/api/api_guides/migrating-to-token-price-v2"
+}
+```
+
+When v1 rate-limits your traffic, `429` responses return a route-specific body that also points at v2:
+
+```json
+{
+  "message": "You reached the rate limit for GET /currencies/token/price. Relay reduces this limit in stages. Relay retires GET /currencies/token/price on January 28, 2027. Migrate to GET /currencies/token/price/v2.",
+  "successor": "https://api.relay.link/currencies/token/price/v2",
+  "migrationGuide": "https://docs.relay.link/references/api/api_guides/migrating-to-token-price-v2"
+}
+```
+
+For guidance on reducing your request volume, see [Handling Rate Limits](/references/api/api_core_concepts/handling-rate-limits).
+
+## Response shape
+
+The same request — USDC on Ethereum — shown for v1 and v2, plus the diff.
+
+<Tabs>
+  <Tab title="v1">
+    ```json
+    {
+      "price": 0.999738
+    }
+    ```
+  </Tab>
+  <Tab title="v2">
+    ```json
+    {
+      "price": "0.999738"
+    }
+    ```
+  </Tab>
+  <Tab title="Difference">
+    ```jsonc
+    {
+      "price": 0.999738,   // [!code --] JSON number
+      "price": "0.999738"  // [!code ++] decimal string
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+  The full OpenAPI schema lives at [api.relay.link/documentation/json](https://api.relay.link/documentation/json).
+</Info>
+
+<Warning>
+  **`price` is now a string.** Code that feeds the v1 value straight into arithmetic, or into a field typed as `number`, breaks on v2. Parse it where you need a number and keep the string where you display or store it.
+</Warning>
+
+## What changed
+
+### Request
+
+Nothing. v2 accepts the same query parameters and the same optional header as v1.
+
+| Property | Description | Required |
+| --- | --- | --- |
+| **address** | Token address to get the price for. For a chain's native currency, use the `currency.address` that [GET /chains](/references/api/get-chains) reports for that chain. | ✅ |
+| **chainId** | Chain ID of the token. | ✅ |
+| **x-api-key** | Optional API key, sent as a header, for authentication and higher rate limits. | ❌ |
+
+### Response
+
+**`price` is a decimal string.** v1 serializes the price as a JSON number, so prices below `0.000001` arrive in exponential notation. v2 returns the same value as a plain decimal string with no exponent, and your client decides when and how to parse it.
+
+```jsonc
+{ "price": 3.49076496006e-10 }          // [!code --] v1
+{ "price": "0.000000000349076496006" }  // [!code ++] v2
+```
+
+**Errors are unchanged.** Both versions return `400` with `{ "error": "Could not get price" }` when Relay has no price for the token, and `400` with `{ "error": "Bad Request" }` when a required parameter is missing.
+
+## RelayKit
+
+`useTokenPrice` and `queryTokenPrice` in `@relayprotocol/relay-kit-hooks` call v1 in every release before 6.0.0 (5.1.2 and earlier). `@relayprotocol/relay-kit-ui` uses the hook inside the Swap and Onramp widgets and moved with 12.0.6. From those versions `data.price` is a string. See [useTokenPrice](/references/relay-kit/hooks/useTokenPrice).
+
+## Migration checklist
+
+<Steps>
+  <Step title="Switch the path">
+    Point requests at `GET /currencies/token/price/v2`. Query parameters and headers are unchanged.
+  </Step>
+  <Step title="Treat price as a string">
+    Change your types from `number` to `string`. Parse with `Number()` or a decimal library where you do arithmetic, and keep the string for display and storage.
+  </Step>
+  <Step title="Upgrade RelayKit">
+    If you use `useTokenPrice`, `queryTokenPrice`, or the RelayKit UI widgets, upgrade `@relayprotocol/relay-kit-hooks` to 6.0.0 or later and `@relayprotocol/relay-kit-ui` to 12.0.6 or later, then update code that reads `data.price` as a number.
+  </Step>
+  <Step title="Confirm nothing still calls v1">
+    Watch for the `Deprecation` header in your response logs. v2 responses never carry it, so once it stops appearing your traffic has moved.
+  </Step>
+</Steps>

@@ -1,5 +1,9 @@
 ---
-title: "Get Token Price"
-description: "This API returns the price of a token on a specific chain."
+title: "Get Token Price (v1)"
+description: "Deprecated. Returns the price of a token on a specific chain. Use GET /currencies/token/price/v2 for new integrations."
 openapi: get /currencies/token/price
 ---
+
+<Warning>
+  `GET /currencies/token/price` is **deprecated as of October 30, 2026**: its rate limit is reduced in stages from December 14, 2026 until it is **retired on January 28, 2027**. Use [`GET /currencies/token/price/v2`](/references/api/get-token-price-v2), which returns `price` as a decimal string. See the [migration guide](/references/api/api_guides/migrating-to-token-price-v2#sunset-timeline) for the timeline and how to upgrade.
+</Warning>

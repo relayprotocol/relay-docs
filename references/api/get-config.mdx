@@ -1,9 +1,9 @@
 ---
 title: "Get Config"
-description: "This API returns solver capacity data & user data."
+description: "Deprecated. Returns solver capacity data and user data. Retires on January 28, 2027 with no successor."
 openapi: get /config/v2
 ---
 
-import { DeprecatedExecuteApi } from '/snippets/DeprecatedExecuteApi.mdx'
-
-<DeprecatedExecuteApi />
+<Warning>
+  `GET /config` and `GET /config/v2` are **deprecated as of October 30, 2026** and retire with no successor on **January 28, 2027**. From December 14, 2026 their rate limits are reduced in stages. Use [`GET /chains/liquidity`](/references/api/get-chains-liquidity) for solver liquidity per chain, and [`POST /quote/v2`](/references/api/get-quote-v2) for the executable amount of a request.
+</Warning>
