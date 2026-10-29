@@ -1,19 +1,48 @@
 ---
 title: "Transaction Screening"
-description: "Understand address screening and blocked transactions on the Relay platform"
+description: "Understand which addresses Relay screens, when screening runs, and what happens when an address is blocked"
 ---
 
-The [Relay platform](/what-is-relay) screens transaction addresses using third-party risk data and an internal blocklist. Screening can prevent a quote or fill from proceeding.
+The [Relay platform](/what-is-relay) screens the addresses involved in every transaction using third-party risk data and an internal blocklist. Screening runs when a quote is requested and again before a fill, so a flagged address can stop a transaction before or after funds are deposited.
 
-## How It Works
+## Screened Flows
 
-Screening uses:
+Screening applies to every Relay flow: bridges, swaps, and deposit-address transactions. It applies the same way whether the transaction starts from the API, the SDK, or the Relay App. There are no unscreened flows.
 
-- **Third-party data** — Risk and sanctions databases, including HackBounty and Chainalysis, identify flagged addresses.
-- **Internal blocklist** — The platform maintains additional address restrictions based on threat reports and investigations.
+## Screened Addresses
 
-## Blocked Transactions
+Relay screens every address involved in a transaction:
 
-A flagged address can produce a “Detected sanctioned address” notification or a blocked-wallet error. See [Unsupported Exchanges](/security/unsupported-exchanges) before sending from an exchange.
+- **Depositor** — the wallet sending funds, including the depositing wallet on deposit-address flows.
+- **Recipient** — the wallet receiving funds on the destination chain.
+- **Refund address** — `refundTo`, if specified.
+- **Recovery address** — `recoveryAddress`, if specified.
+- **Fee recipients** — every [app fee](/features/app-fees) recipient.
 
-A fill-time screening failure does not trigger an automatic refund. See [Execution Errors](/references/api/api_core_concepts/execution-errors) and contact [Support](/resources/support) for review.
+## Screening Sources
+
+Relay screens every address against four sources in parallel:
+
+- **TRM Labs**
+- **Chainalysis**
+- **ZeroShadow**
+- **Relay's internal blocklist**
+
+An address is blocked if any source flags it. Relay's compliance team can also apply a manual allow or block override to an address, with a documented reason.
+
+## Blocked Addresses
+
+How a block surfaces depends on when the address is flagged.
+
+| Stage | Error | What happens to funds |
+| ----- | ----- | --------------------- |
+| Quote | `BLOCKED_WALLET_ADDRESS` | The quote request fails with HTTP `400` before any transaction is created. No funds leave the wallet. |
+| Fill | `BLOCKED_WALLET` | The fill is aborted and the funds remain in the protocol. The depositor address can [withdraw](/references/protocol/guides/withdrawals) them. |
+
+`BLOCKED_WALLET_ADDRESS` is returned by `/quote/v2` (see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors#expected-errors)). `BLOCKED_WALLET` is the `failReason` on a submitted request (see [Handling Execution Errors](/references/api/api_core_concepts/execution-errors)). The owning integrator can see which addresses caused a `BLOCKED_WALLET` failure through `data.blockedAddresses` on [`GET /requests/v3`](/references/api/api_guides/migrating-to-requests-v3#what-changed) by authenticating with its API key and passing `includeAuthenticatedData=true`.
+
+See [Unsupported Exchanges](/security/unsupported-exchanges) before sending to or from an exchange.
+
+## Screening Records
+
+Relay stores screening results, and TRM results are retained for 6 months. Each result records the verdict from every source, so a record shows which source, if any, triggered a block for an address. If a partner needs evidence of a specific screen, contact [Support](/resources/support) with the address and request ID, and Relay can provide the screening record.
