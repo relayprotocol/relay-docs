@@ -1,0 +1,145 @@
+---
+title: "Access Tokens"
+description: "Mint short-lived tokens so browser clients can call the Relay API without exposing your API key."
+---
+
+An access token is a short-lived credential that your backend mints from your API key and passes to a browser or mobile client. The client sends the token to Relay, so the API key never leaves your server. Each token expires after 15 minutes.
+
+Use the table below to choose between an access token and the other ways to call Relay from a client.
+
+| Approach | API key location | Who calls Relay | Use it when |
+| --- | --- | --- | --- |
+| API key | Your server | Your server | Your integration runs server to server |
+| [Proxy API](/references/api/api-keys#proxy-api) | Your server | Your server, for each client request | You want every request to pass through your backend |
+| Access token | Your server | The client, with a token | You want the client to call Relay directly |
+
+## Requirements
+
+1. **An API key with elevated rate limits** — Only Apps with [elevated rate limits](/references/api/api-keys#elevated-rate-limits) can mint tokens. Request them through the support widget in the [Relay Dashboard](https://dashboard.relay.link).
+2. **A token endpoint on your backend** — This endpoint holds the API key, mints tokens, and returns them to your client.
+
+## How to use it?
+
+The flow has four steps:
+
+1. Your backend sends your API key to `POST /access-tokens`.
+2. Your backend returns the token to the client.
+3. The client sends the token in the `Authorization` header on supported Relay endpoints.
+4. When the token expires, the client requests a new token from your backend.
+
+### Mint a token on your backend
+
+Send your API key in the **`x-api-key`** header with an empty JSON body.
+
+```typescript
+// 1. Mint a token with your API key (server-side only)
+const response = await fetch("https://api.relay.link/access-tokens", {
+  method: "POST",
+  headers: {
+    "x-api-key": process.env.RELAY_API_KEY!,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({}),
+});
+const { token, expiresAt } = await response.json();
+
+// 2. Return only the token and its expiry to your client
+return { token, expiresAt };
+```
+
+The response has four fields:
+
+| Field | Description |
+| --- | --- |
+| **token** | The token to send from the client |
+| **tokenType** | Always `Bearer` |
+| **expiresAt** | When the token expires, as an ISO 8601 timestamp |
+| **scope** | Always `public-api` |
+
+The response has `Cache-Control: no-store`. Do not cache it.
+
+### Call Relay from the client
+
+Send the token in the `Authorization` header over HTTPS.
+
+```typescript
+// Client-side: use the token from your backend, never the API key
+const quote = await fetch("https://api.relay.link/quote/v2", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    user: "WALLET_ADDRESS",
+    originChainId: 8453,
+    destinationChainId: 10,
+    originCurrency: "0x0000000000000000000000000000000000000000",
+    destinationCurrency: "0x0000000000000000000000000000000000000000",
+    amount: "1000000000000000000",
+    tradeType: "EXACT_INPUT",
+  }),
+});
+```
+
+Send an API key or a token in a request, not both. Relay rejects a request that has both.
+
+## What a token can do
+
+| Endpoint group | Allowed with a token |
+| --- | --- |
+| Quotes and prices | Yes |
+| Request status | Yes |
+| Request history | Yes, public data only |
+| Signed execution | Yes |
+| Transaction submission and indexing | Yes |
+| Chain, configuration, and currency lookups | Yes |
+| Fee sponsorship and fixed-rate parameters | No |
+| Minting another token | No |
+| Dashboard, admin, deposit address management, and all other endpoints | No |
+
+Make requests that use fee sponsorship or fixed rates from your backend with your API key. Enforce your sponsorship rules there.
+
+With a token, request history returns public data only. It does not include the integrator-level read access that an API key can have.
+
+## Rate limits
+
+Relay counts token requests for each API key and client IP address. All tokens from the same API key and the same IP share one allowance. More tokens do not increase it.
+
+| Request type | Limit per minute |
+| --- | --- |
+| Quotes | 10 |
+| Request status | 100 |
+| Request history | 100 |
+| Other supported endpoints | 60 |
+
+Different IP addresses and different API keys have separate allowances. Minting is limited to 600 requests per minute for each API key. Failed mint attempts count toward that limit.
+
+When a limit is reached, Relay returns `429` with the error code `RATE_LIMITED`. See [Handling Rate Limits](/references/api/api_core_concepts/handling-rate-limits) for how to recover.
+
+## Token lifecycle
+
+| Event | What happens | What to do |
+| --- | --- | --- |
+| The token reaches 15 minutes | Requests return `401` | Mint a new token through your backend |
+| The client changes network | The token keeps working. Its rate limit counts under the new IP | Nothing |
+| You deactivate the API key | All its tokens stop working after Relay's key cache refreshes | Mint tokens from an active key |
+| You rotate the API key or change its settings | Existing tokens keep working until they expire | Nothing |
+| You need to revoke one token | Relay cannot revoke a single token | Deactivate the API key to revoke all its tokens |
+
+## Errors
+
+The API also calls a token an API session, for example in the error code `INVALID_API_SESSION`.
+
+| Status | Error code | Meaning | What to do |
+| --- | --- | --- | --- |
+| `401` | `INVALID_API_SESSION` | The token is invalid, expired, or revoked | Mint a new token through your backend |
+| `403` | | The API key cannot mint tokens because its App does not have elevated rate limits | Request [elevated rate limits](/references/api/api-keys#elevated-rate-limits) |
+| `429` | `RATE_LIMITED` | A rate limit was reached | Wait and retry |
+| `500` | | A Relay infrastructure error | Retry with backoff |
+
+## Caveats
+
+* A token works from any origin and IP address. The API key's IP and origin restrictions apply only when your backend mints the token.
+* Restrict your API key to your backend's IP addresses. Relay sees your clients' mint requests as coming from your backend.
+* Protect your token endpoint against automated abuse. Anyone who can call it can get a token, so authenticate or throttle it.
