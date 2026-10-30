@@ -101,11 +101,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          # The current run is still in progress, so the newest completed run is the previous one.
-          previous=$(gh api \
+          # Compare deploy steps, not run conclusions, which also count failures in these alert steps.
+          # A failed lookup reads as "no previous failure": a possible repeat alert, never a lost one.
+          previous=""
+          if previous_run=$(gh api \
             "repos/${{ github.repository }}/actions/workflows/sync-api-reference.yml/runs?status=completed&per_page=1" \
-            --jq '.workflow_runs[0].conclusion // ""')
-          echo "previous run: ${previous:-none}, this run: $OUTCOME"
+            --jq '.workflow_runs[0].id // empty') && [ -n "$previous_run" ]; then
+            previous=$(gh api "repos/${{ github.repository }}/actions/runs/$previous_run/jobs" \
+              --jq '[.jobs[].steps[] | select(.name == "Queue a deployment and wait for it") | .conclusion][0] // ""') \
+              || previous=""
+          fi
+          echo "previous deploy: ${previous:-unknown}, this deploy: $OUTCOME"
 
           if [ "$OUTCOME" = "failure" ] && [ "$previous" != "failure" ]; then
             title="Mintlify deployment failed"
