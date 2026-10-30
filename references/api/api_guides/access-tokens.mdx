@@ -7,7 +7,7 @@ An access token is a short-lived credential that your backend mints from your AP
 
 Use the table below to choose between an access token and the other ways to call Relay from a client.
 
-| Approach | Where the API key lives | Who calls Relay | Use it when |
+| Approach | API key location | Who calls Relay | Use it when |
 | --- | --- | --- | --- |
 | API key | Your server | Your server | Your integration runs server to server |
 | [Proxy API](/references/api/api-keys#proxy-api) | Your server | Your server, for each client request | You want every request to pass through your backend |
@@ -15,7 +15,7 @@ Use the table below to choose between an access token and the other ways to call
 
 ## Requirements
 
-1. **A tier 2 or higher API key** — Only keys with elevated rate limits can mint tokens. See [API Keys](/references/api/api-keys#elevated-rate-limits) to check your tier.
+1. **An API key with elevated rate limits** — Only Apps with [elevated rate limits](/references/api/api-keys#elevated-rate-limits) can mint tokens. Request them through the support widget in the [Relay Dashboard](https://dashboard.relay.link).
 2. **A token endpoint on your backend** — This endpoint holds the API key, mints tokens, and returns them to your client.
 
 ## How to use it?
@@ -134,7 +134,7 @@ The API also calls a token an API session, for example in the error code `INVALI
 | Status | Error code | Meaning | What to do |
 | --- | --- | --- | --- |
 | `401` | `INVALID_API_SESSION` | The token is invalid, expired, or revoked | Mint a new token through your backend |
-| `403` | | The API key cannot mint tokens, for example because it is below tier 2 | Check the key's tier |
+| `403` | | The API key cannot mint tokens because its App does not have elevated rate limits | Request [elevated rate limits](/references/api/api-keys#elevated-rate-limits) |
 | `429` | `RATE_LIMITED` | A rate limit was reached | Wait and retry |
 | `500` | | A Relay infrastructure error | Retry with backoff |
 
