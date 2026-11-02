@@ -317,7 +317,7 @@ Follow this 5-step flow to integrate Relay into your application:
   <Step title="Monitor">
     Once the deposit is indexed, a solver prepares and submits the destination-chain fill. The platform reports progress through the status API.
 
-    Use the [status endpoint](/references/api/get-intents-status-v3) with the  `requestId` located inside each step object in your [quote response](/references/api/quickstart#request) to track status and confirm success. You can also use the `check.endpoint` property inside the step item object as the endpoint for checking the status of the request. <br/>
+    Use the [status endpoint](/references/api/get-intents-status-v3) with the  `requestId` located inside each step object in your [quote response](/references/api/quickstart#request) to track status and confirm success. You can also use the `check.endpoint` property inside the step item object as the endpoint for checking the status of the request. Poll until the status is `success` or `refund` — the two final statuses. A `failure` is not final: the fill can retry or move to `refund`. <br/>
     _Note: Replace with the requestId returned in your quote_
     <CodeGroup>
       ```bash Request

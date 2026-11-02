@@ -7,11 +7,11 @@ Building applications at scale requires integrating with Relay's system at insta
 
 ## Configuring a Webhook
 
-Webhooks are self-serve in the [Relay Dashboard](https://dashboard.relay.link). Each API key can have a single webhook endpoint, and any requests tied to that key will post events to it. To configure one:
+Webhooks are self-serve in the [Relay Dashboard](https://dashboard.relay.link). Each [App](/references/api/api-keys#apps-and-api-keys) can have one webhook endpoint. Relay posts events to this endpoint for requests made with any API key in the App. To configure one:
 
 1. Sign in to the [Relay Dashboard](https://dashboard.relay.link).
-2. Open the **API keys** tab.
-3. Open the actions menu on the key you want to configure and select **Configure Webhook**.
+2. Open **Apps** and select the App you want to configure.
+3. Open the **Advanced** tab. In the **Webhooks** section, click **Configure**.
 4. Enable the webhook and enter your **Webhook URL** — an HTTPS endpoint to POST to when the status of a request changes (e.g. `https://my.server/receive-relay-event`).
 5. Optionally add **Custom Headers** to include on every webhook request (e.g. `Authorization: Bearer 0x123`), then save.
 
@@ -29,6 +29,8 @@ Relay Webhooks specifically stream transaction statuses for both cross and same-
 | success    | fill succeeded                                          |
 | failure    | fill failed                                             |
 | refund     | refunded                                                |
+
+Only `success` and `refund` are final. A `failure` can still move back to `pending` on a retry or on to `refund`, so do not treat it as the last event for a request. See [Get Status](/references/api/get-intents-status-v3) for the full lifecycle.
 
 ### Example Payload
 
@@ -83,28 +85,30 @@ Each webhook request includes two headers for verification:
 | `X-Signature-Timestamp` | Unix timestamp of when the webhook was sent |
 | `X-Signature-SHA256` | HMAC-SHA256 signature of the request |
 
-To verify a webhook is authentic, compute the HMAC-SHA256 hash of `${timestamp}.${body}` using your API key as the secret, and compare it to the `X-Signature-SHA256` header value.
+Relay signs each event with the API key used for the request. To verify a webhook is authentic, compute the HMAC-SHA256 hash of `${timestamp}.${body}` using that API key as the secret, and compare it to the `X-Signature-SHA256` header value.
+
+The App's webhook receives events for requests made with any active key in the App. Check the signature against each of these keys. During a [key rotation](/references/api/api-keys#add-or-rotate-an-api-key), that means both the old and the new key. Relay stops sending events for a key's requests once you deactivate it, including requests that are still in progress.
 
 ```javascript Example Verification
 import crypto from 'crypto';
 
-function verifyWebhook(req, apiKey) {
+function verifyWebhook(req, apiKeys) {
   const timestamp = req.headers['x-signature-timestamp'];
   const signature = req.headers['x-signature-sha256'];
   const body = JSON.stringify(req.body);
-
-  const expected = crypto
-    .createHmac('sha256', apiKey)
-    .update(`${timestamp}.${body}`)
-    .digest('hex');
-
   const signatureBuffer = Buffer.from(signature, 'hex');
-  const expectedBuffer = Buffer.from(expected, 'hex');
 
-  return (
-    signatureBuffer.length === expectedBuffer.length &&
-    crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
-  );
+  return apiKeys.some((apiKey) => {
+    const expectedBuffer = crypto
+      .createHmac('sha256', apiKey)
+      .update(`${timestamp}.${body}`)
+      .digest();
+
+    return (
+      signatureBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+    );
+  });
 }
 ```
 

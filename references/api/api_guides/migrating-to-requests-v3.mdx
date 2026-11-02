@@ -331,7 +331,7 @@ Every individual change, grouped by request side and response side.
     | **Status / routing** | `status`, `failReason`, `refundFailReason`, `apiKeyId`, `appId`, `requestType`, `referrer` |
     | **Currency** | `currencyInChainId`, `currencyOutChainId`, `currencyInAddress`, `currencyOutAddress`, `currencyInSymbol`, `currencyOutSymbol` |
     | **Ranges** | `startTimestamp`, `endTimestamp`, `startBlock`, `endBlock`, `amountUsdMin`/`Max`, `appFeesAmountUsdMin`/`Max`, `fillTimeMin`/`Max` |
-    | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData`, `includeTotal` |
+    | **Other** | `features`, `includeChildRequests`, `filters` (AND/OR), `sortBy`, `sortDirection`, `includeAuthenticatedData`, `includePendingRequests`, `includeTotal` |
 
     <Tip>
       `term` is a single unified search across request id, wallet, deposit address, and every transaction hash (deposit, fill, refund, failed, chain-entry). It replaces the v2 pattern of running separate `user` / `hash` / `id` lookups and merging the results.
@@ -400,6 +400,8 @@ Every individual change, grouped by request side and response side.
     - `hash` is removed; use `term`, or the targeted `depositTxHash` / `fillTxHash` / `refundTxHash`.
 
     **Total match count.** Pass `includeTotal=true` to receive the exact total count of matching requests as `total` on the response (independent of `limit` and `continuation`). Omit it — or set `includeTotal=false` — when you only need the current page; computing the total adds meaningful query latency, so it is opt-in.
+
+    **Pending request opt-in.** Pass `includePendingRequests=true` to include pending requests permitted by your access scope. When omitted — or set to `false` — the response is limited to terminal requests (`success`, `failure`, `refund`), and the opt-in `total` count is computed on that filtered set. For your own requests, the opt-in additionally returns pending outbound transaction entries (`data.outTxs`) that are otherwise redacted while pending. The flag is independent of `includeAuthenticatedData` — it does not enable authenticated fields and does not widen access permissions. Opt-in responses are returned with `cache-control: private, no-store`, so clients and shared caches do not retain pending-state snapshots.
   </Accordion>
 
 </AccordionGroup>

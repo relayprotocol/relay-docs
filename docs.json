@@ -47,7 +47,8 @@
               "features/gasless-execution",
               "features/fast-fill",
               "features/gasless-swaps",
-              "features/price-stabilization"
+              "features/price-stabilization",
+              "features/routing-integration-models"
             ]
           },
           {
@@ -102,7 +103,7 @@
                 "pages": [
                   "references/api/api_guides/bridging-integration-guide",
                   "references/api/api_guides/calling-integration-guide",
-                  "references/api/api_guides/transaction-indexing",
+                      "references/api/api_guides/transaction-indexing",
                   "references/api/api_guides/builder-codes",
                   "references/api/api_guides/smart-accounts",
                   {
@@ -123,7 +124,9 @@
               {
                 "group": "Migration Guides",
                 "pages": [
-                  "references/api/api_guides/migrating-to-requests-v3"
+                  "references/api/api_guides/migrating-to-requests-v3",
+                  "references/api/api_guides/migrating-to-currencies-v2",
+                  "references/api/api_guides/migrating-to-token-price-v2"
                 ]
               },
               {
@@ -145,11 +148,13 @@
               "references/api/execute-permits",
               "references/api/get-intents-status-v3",
               "references/api/get-requests",
+              "references/api/get-published-requests",
               "references/api/utilities",
               "references/api/get-chains",
               "references/api/get-chains-liquidity",
               "references/api/get-currencies-v2",
-              "references/api/get-token-price",
+              "references/api/get-currency-classifications",
+              "references/api/get-token-price-v2",
               "references/api/transactions-index",
               "references/api/transactions-single",
               "references/api/deposit-address-reindex",
@@ -178,6 +183,7 @@
                   "references/api/get-config",
                   "references/api/get-intents-status",
                   "references/api/get-currencies",
+                  "references/api/get-token-price",
                   "references/api/get-quote"
                 ]
               }
