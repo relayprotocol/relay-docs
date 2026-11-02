@@ -1,62 +1,84 @@
 ---
-title: "API keys and Rate Limits"
-description: "Create API keys in the Relay Dashboard to authenticate requests and manage your rate limits"
+title: "Apps, API keys, and Rate Limits"
+description: "Create Apps and API keys in the Relay Dashboard to authenticate requests and manage your rate limits"
 ---
 
 Relay enforces rate limits to keep the platform reliable for every integrator. You manage API keys in the [Relay Dashboard](https://dashboard.relay.link) — create new API keys, rotate existing ones, and inspect individual requests. Default limits listed below apply to self-serve API keys.
 
-## Creating an API key
+## Apps and API keys
 
-API keys are self-serve. To create one:
+An App represents one integration, for example a product or an environment. The App owns the configuration that Relay applies to that integration: the rate limit tier, features, the webhook, IP and origin restrictions, the fee sponsorship wallet, and [App Fees](/features/app-fees) settings. An API key is a credential that authenticates requests for one App. All keys in an App use the App's configuration.
+
+An App can have a maximum of two active API keys. You manage Apps and their keys in the [Relay Dashboard](https://dashboard.relay.link). You need the admin role in your Dashboard organization to create Apps and keys.
+
+### Create an App
 
 1. Sign in to the [Relay Dashboard](https://dashboard.relay.link).
-2. Open the **API keys** tab.
-3. Click **Create key**, give it a label (e.g. `production`, `staging`), and copy the key.
+2. Open **Apps** in the sidebar.
+3. Click **Create an App**, enter a name (e.g. `Production`, `Staging`), and click **Create**.
+
+Relay creates the App with its first API key, named after the App. The App page opens with the key listed under **API keys**, where you can copy it.
+
+### Add or rotate an API key
+
+Rotate a key to replace it without downtime and without reconfiguration. The replacement key is in the same App, so it uses the App's configuration immediately. The old key continues to work until you deactivate it.
+
+- If the App has no active key, click **Create an API key** under **API keys**.
+- If the App has one active key, rotate it:
+  1. Open **Apps** and select the App.
+  2. Under **API keys**, open the actions menu on the key and select **Rotate Key**.
+  3. Click **Rotate API key**, then optionally rename the new key and click **Save**.
+  4. Change your integration to use the new key. When the old key's in-progress requests are complete, deactivate the old key from the same menu.
+- If the App has two active keys, deactivate one key first.
+
+If your App uses a [webhook](/references/api/api_guides/webhooks#verification), accept signatures from both keys until you deactivate the old key.
 
 <Tip>
-Use a separate key per environment (production, staging, local). Per-key request history makes it easy to spot a misbehaving deploy without revoking the wrong credential.
+Create a separate App per environment (production, staging, local). Each environment then gets its own configuration and request history, so you can spot a misbehaving deploy without deactivating the wrong key.
 </Tip>
 
 ## Tracking requests
 
 The [Relay Dashboard](https://dashboard.relay.link) is also where you observe what your integration is doing in production:
 
-- **Requests** — full history of quotes and intents made with each key, with status, route, amounts, and timing.
+- **Requests** — full history of quotes and intents for each App, with status, route, amounts, and timing.
 - **Advanced filtering** — narrow the table by chain, currency, amount, status, time, and more, combining conditions with AND/OR logic to isolate exactly the requests you care about.
 - **Custom views** — save any combination of filters, sort order, and columns as a reusable view for your team, each with its own name, icon, and color.
-- **Keys** — create, rename, and revoke keys for your account.
-- **Webhooks** — configure a per-key [webhook endpoint](/references/api/api_guides/webhooks) so transaction status updates are pushed to your backend instead of polling.
+- **Apps** — create Apps, and rename, rotate, and deactivate their API keys.
+- **Webhooks** — configure a per-App [webhook endpoint](/references/api/api_guides/webhooks) so transaction status updates are pushed to your backend instead of polling.
 
 When debugging a specific transaction, paste the `requestId` from your application into the dashboard's search to jump straight to the matching record.
 
 ## Default Rate Limits
 
-The following limits apply per API key:
+The following limits apply per App. All API keys in the App share these limits:
 
 | Endpoint               | Limit                   |
 | ---------------------- | ----------------------- |
 | `/quote`               | 50 requests per minute  |
 | `/requests`            | 100 requests per minute |
 | `/requests/v3`         | 200 requests per minute |
+| `/published-requests`  | 200 requests per minute |
 | `/transactions/status` | 200 requests per minute |
 | Other endpoints        | 200 requests per minute |
 
 ## Elevated Rate Limits
 
-Higher limits are available on request, applied per key:
+Higher limits are available on request. They apply per App:
 
 | Endpoint               | Limit                                                                                                       |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `/quote`               | 10 requests per second                                                                                      |
+| `/quote`               | 50 requests per second                                                                                      |
 | `/requests/v3`         | 20 requests per second                                                                                      |
+| `/published-requests`  | 20 requests per second                                                                                      |
 | `/requests`            | 5 requests per second                                                                                       |
 | `/transactions/status` | 10 requests per second                                                                                      |
-| `/authorize`           | 5 requests per minute per `(API key, wallet)`, with a 30 requests per minute aggregate ceiling per API key  |
+| `/authorize`           | 5 requests per minute per `(App, wallet)`, with a 30 requests per minute aggregate ceiling per App           |
 | Other endpoints        | 200 requests per minute                                                                                     |
 
-`/requests` and `/requests/v2` share the 5 rps bucket; `/requests/v3` has its own 20 rps bucket.
+`/requests` and `/requests/v2` share the 5 rps bucket; `/requests/v3` has its own 20 rps bucket. `/published-requests` has a separate bucket with the same limits listed above as `/requests/v3`; traffic to either endpoint does not consume the other's allowance.
 
-`/authorize` is bucketed by the `wallet` field in the request body alongside your API key, so concurrent authorizations from different end-users don't compete for the same bucket. The aggregate per-key ceiling still applies across all wallets and bounds total volume of the on-chain authorization path.
+`/authorize` is bucketed by the `wallet` field in the request body alongside your App, so concurrent authorizations from different end-users don't compete for the same bucket. The aggregate per-App ceiling still applies across all wallets and bounds total volume of the on-chain authorization path.
 
 To request higher limits, get in touch through the support widget in the [Relay Dashboard](https://dashboard.relay.link).
 
@@ -111,7 +133,7 @@ const quote = await getClient()?.actions.getQuote(quoteParams, undefined, {
 
 ### Proxy API
 
-If you're calling the SDK from the browser, stand up a proxy that appends the key server-side and point `baseApiUrl` at it. This keeps the key out of client bundles while preserving your key's rate limits.
+If you're calling the SDK from the browser, stand up a proxy that appends the key server-side and point `baseApiUrl` at it. This keeps the key out of client bundles and keeps your App's rate limits.
 
 ```typescript
 import {
@@ -127,10 +149,10 @@ createClient({
 
 ## Keeping Your API key Secure
 
-Treat your API key like a password. It's tied to your account, controls your rate limits, and every request made with it is attributed to you.
+Treat your API key like a password. A person who has your key can make requests as your App. These requests use your App's rate limits and are attributed to you.
 
 <Warning>
-If your key is leaked, anyone holding it can consume your rate limits or make requests on your behalf. Revoke and re-create the key in the [Relay Dashboard](https://dashboard.relay.link) immediately if you suspect it has been compromised.
+If your key is leaked, anyone holding it can consume your rate limits or make requests on your behalf. If you think that a key is compromised, [rotate it](#add-or-rotate-an-api-key) in the [Relay Dashboard](https://dashboard.relay.link). Change your integration to use the replacement key. Then deactivate the compromised key. Do not activate it again.
 </Warning>
 
 **Best practices:**
@@ -139,4 +161,4 @@ If your key is leaked, anyone holding it can consume your rate limits or make re
 - **Use environment variables** — store the key in environment variables, not hardcoded in source code.
 - **Don't commit it to version control** — add it to `.gitignore` or use a secrets manager.
 - **Restrict access** — only share the key with team members who need it.
-- **Rotate regularly** — create a new key in the [Relay Dashboard](https://dashboard.relay.link) and revoke the old one whenever a team member with access leaves.
+- **Rotate keys** — [rotate a key](#add-or-rotate-an-api-key) on a regular schedule. Also rotate it immediately when a team member with access leaves.

@@ -14,8 +14,10 @@ on:
     - cron: "37 * * * *"
   workflow_dispatch:
 
-# Touches nothing in the repo; the Mintlify credentials do all the work.
-permissions: {}
+# Touches nothing in the repo; the Mintlify credentials do all the work. actions: read is only
+# for looking up the previous run's conclusion, so Slack hears about a change, not every hour.
+permissions:
+  actions: read
 
 concurrency:
   group: sync-api-reference
@@ -26,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Queue a deployment and wait for it
+        id: deploy
         env:
           MINTLIFY_API_KEY: ${{ secrets.MINTLIFY_API_KEY }}
           MINTLIFY_PROJECT_ID: ${{ secrets.MINTLIFY_PROJECT_ID }}
@@ -67,7 +70,9 @@ jobs:
                 exit 0
                 ;;
               failure)
-                echo "::error::Mintlify deployment $status_id failed: $(jq -r '.summary // "no summary"' <<<"$body")"
+                summary=$(jq -r '.summary // "no summary" | gsub("\n"; " ")' <<<"$body")
+                echo "summary=$summary" >> "$GITHUB_OUTPUT"
+                echo "::error::Mintlify deployment $status_id failed: $summary"
                 jq -r '.logs[]? | "  " + .' <<<"$body"
                 exit 1
                 ;;
@@ -82,3 +87,65 @@ jobs:
 
           echo "::error::deployment $status_id did not finish within 15 minutes"
           exit 1
+
+      # Alerts on the first failure and on recovery only. A broken deploy otherwise fails every
+      # hour, and an hourly repeat of the same alert gets muted.
+      - name: Decide whether to alert
+        id: alert
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.deploy.outcome }}
+          SUMMARY: ${{ steps.deploy.outputs.summary }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # Compare deploy steps, not run conclusions, which also count failures in these alert steps.
+          # A failed lookup reads as "no previous failure": a possible repeat alert, never a lost one.
+          previous=""
+          if previous_run=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/sync-api-reference.yml/runs?status=completed&per_page=1" \
+            --jq '.workflow_runs[0].id // empty') && [ -n "$previous_run" ]; then
+            previous=$(gh api "repos/${{ github.repository }}/actions/runs/$previous_run/jobs" \
+              --jq '[.jobs[].steps[] | select(.name == "Queue a deployment and wait for it") | .conclusion][0] // ""') \
+              || previous=""
+          fi
+          echo "previous deploy: ${previous:-unknown}, this deploy: $OUTCOME"
+
+          if [ "$OUTCOME" = "failure" ] && [ "$previous" != "failure" ]; then
+            title="Mintlify deployment failed"
+            emoji=":rotating_light:"
+            detail="${SUMMARY:-See the run logs.}"
+          elif [ "$OUTCOME" = "success" ] && [ "$previous" = "failure" ]; then
+            title="Mintlify deployment recovered"
+            emoji=":white_check_mark:"
+            detail="Docs are deploying again."
+          else
+            echo "send=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          payload=$(jq -nc --arg title "$title" --arg emoji "$emoji" --arg detail "$detail" --arg url "$RUN_URL" '{
+            text: $title,
+            blocks: [{
+              type: "section",
+              text: { type: "mrkdwn", text: ($emoji + " *" + $title + "*\n" + $detail) },
+              accessory: {
+                type: "button",
+                text: { type: "plain_text", text: "View run" },
+                url: $url
+              }
+            }]
+          }')
+          echo "send=true" >> "$GITHUB_OUTPUT"
+          echo "payload=$payload" >> "$GITHUB_OUTPUT"
+
+      - name: Post to Slack
+        if: always() && steps.alert.outputs.send == 'true'
+        uses: unevenlabs/slack-github-action@v1.0.5
+        with:
+          channel-id: "team-dx-alarms"
+          payload: ${{ steps.alert.outputs.payload }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

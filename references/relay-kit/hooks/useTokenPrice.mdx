@@ -9,7 +9,7 @@ sidebarTitle: useTokenPrice
 | Parameter        | Description                                                                                                                        | Required |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | **baseApiUrl**   | Base api url for the relay api, defaults to https://api.relay.link but can also be configured to https://api.testnets.relay.link   | ❌       |
-| **options**      | Query parameters that map directly to the [prices API](/references/api/get-token-price).                                           | ✅       |
+| **options**      | Query parameters that map directly to the [prices API](/references/api/get-token-price-v2).                                           | ✅       |
 | **queryOptions** | Tanstack query options. Refer to the [Tanstack](https://tanstack.com/query/latest/docs/framework/react/guides/query-options) docs. | ❌       |
 
 ## Return Data
@@ -17,7 +17,7 @@ sidebarTitle: useTokenPrice
 The hook returns an object with the base
 [Tanstack Query response](https://tanstack.com/query/v5/docs/framework/react/reference/useQuery).
 The data property maps to the object returned in the aforementioned
-[prices API](/references/api/get-token-price).
+[prices API](/references/api/get-token-price-v2). From `@relayprotocol/relay-kit-hooks` 6.0.0 the hook calls `GET /currencies/token/price/v2`, so `price` is a decimal string.
 
 ## Usage
 

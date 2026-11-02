@@ -26,6 +26,22 @@ of opening the first match directly.
 
 <!-- Entries below, newest first. -->
 
+## 2026-10-23 — Apps now contain your API keys and their configuration
+
+**Added** — The Dashboard now organizes your integration into Apps. Each App contains API keys
+and one configuration that all of its keys use. The configuration includes rate limits,
+features, the webhook, IP restrictions, allowed origins, the fee sponsorship wallet, and app
+fees. Give each product or environment its own App, so that every key for it behaves the same
+way. For more information, see [API keys](/references/api/api-keys).
+
+**Added** — You can now rotate an API key without a change to its configuration. Create a
+replacement key in the same App. Change your integration to use the replacement key. Then
+deactivate the old key.
+
+**Changed** — Each API key from before this release is now a separate App. Each App has the
+same name and configuration as its key, so your integration does not need changes. The API
+Keys page is now the Apps page, and links to `/api-keys` redirect to `/apps`.
+
 ## 2026-08-11 — Observability for your API traffic
 
 **Added** — A new Observability page shows what your integration is actually doing: request

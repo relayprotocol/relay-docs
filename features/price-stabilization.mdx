@@ -1326,6 +1326,12 @@ request, and settles against your sponsoring wallet's balance. The settled amoun
 the quoted estimate in both size and direction, so do not treat the quote as a commitment.
 </Warning>
 
+### Accounting for Fixed Rates
+
+Every fixed-rate settlement posts to your sponsoring wallet's balance as a balance event: `fixed-rate-credit` when you earned the difference, and `fixed-rate-debit` when you sponsored it. Export these with [Get Balance Events](/references/api/get-balance-events) to reconcile settled amounts against your quotes, since the settled value can differ from the quote-time `fixedRateFee` estimate.
+
+The same endpoint records your [fee sponsorship](/features/fee-sponsorship) activity and fee credits, so one export covers the full ledger. See [Accounting and Reconciliation](/features/fee-sponsorship#accounting-and-reconciliation) for how to distinguish app fees from revenue share.
+
 ## Why This Works for Stablecoins
 
 Stablecoin pairs are uniquely suited to price stabilization because the swap impact component of Relay's fees is typically sub 1bps between major stablecoins. That leaves the flat execution fee (\~\$0.02) and the Relay bps fee as the dominant costs — both small, predictable amounts that are cheap to sponsor or absorb into a fixed rate.

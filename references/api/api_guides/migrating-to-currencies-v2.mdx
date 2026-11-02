@@ -1,0 +1,235 @@
+---
+title: "Migrating to Currencies v2"
+description: "What changed in POST /currencies/v2 and how to upgrade from POST /currencies/v1."
+---
+
+`POST /currencies/v2` is the latest version of the Currencies API. It takes the same request body as v1 and returns a flat list of currencies instead of nested groups, ranks verified currencies first, and applies **`limit`** consistently. `POST /currencies/v1` remains available during a deprecation window (see the [sunset timeline](#sunset-timeline) below) — migrate before it's retired.
+
+The `v2` endpoint suffix is a platform API version. It does not mean a request uses a particular version of [Relay Protocol](/references/protocol/overview).
+
+## Sunset timeline
+
+`POST /currencies/v1` is **deprecated as of October 30, 2026**. It keeps working, but migrate to `POST /currencies/v2` before it's fully retired on **January 28, 2027**.
+
+| Date | What changes |
+| --- | --- |
+| **Oct 30, 2026** | v1 is deprecated; v2 is the recommended version. v1 keeps working. |
+| **Dec 14, 2026 onward** | Relay reduces the v1 rate limit in stages; requests over the limit receive `429`. v2 is not affected. |
+| **Jan 28, 2027** | v1 is fully retired — all traffic must be on v2. |
+
+## Detecting deprecation programmatically
+
+Every response from `POST /currencies/v1` carries in-band deprecation signals, so clients can surface or log the sunset timeline without hard-coding dates.
+
+- **`Deprecation`** header — RFC 9745 date, e.g. `@1793318400`.
+- **`Sunset`** header — HTTP-date, e.g. `Thu, 28 Jan 2027 00:00:00 GMT`.
+- **`Link`** header — three lines with `rel="deprecation"`, `rel="sunset"`, and `rel="successor-version"` pointing to this guide and to `POST /currencies/v2`.
+
+```http
+Deprecation: @1793318400
+Sunset: Thu, 28 Jan 2027 00:00:00 GMT
+Link: <https://docs.relay.link/references/api/api_guides/migrating-to-currencies-v2>; rel="deprecation"; type="text/html"
+Link: <https://docs.relay.link/references/api/api_guides/migrating-to-currencies-v2>; rel="sunset"; type="text/html"
+Link: <https://api.relay.link/currencies/v2>; rel="successor-version"
+```
+
+These headers are attached to every v1 response (`2xx`, `4xx`, and `5xx`) and are listed in `Access-Control-Expose-Headers`, so browser clients using `fetch` or `XMLHttpRequest` can read them cross-origin:
+
+```javascript
+const res = await fetch("https://api.relay.link/currencies/v1", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ chainIds: [1], term: "USDC", limit: 20 }),
+});
+const sunset = res.headers.get("sunset");
+const deprecation = res.headers.get("deprecation");
+```
+
+<Note>
+  The v1 success body is a JSON array, so it carries no in-body `deprecation` object. Use the headers above to detect deprecation on `200` responses.
+</Note>
+
+When v1 rate-limits your traffic, `429` responses return a route-specific body that also points at v2:
+
+```json
+{
+  "message": "You reached the rate limit for POST /currencies/v1. Relay reduces this limit in stages. Relay retires POST /currencies/v1 on January 28, 2027. Migrate to POST /currencies/v2.",
+  "successor": "https://api.relay.link/currencies/v2",
+  "migrationGuide": "https://docs.relay.link/references/api/api_guides/migrating-to-currencies-v2"
+}
+```
+
+For guidance on reducing your request volume, see [Handling Rate Limits](/references/api/api_core_concepts/handling-rate-limits).
+
+## Response shape
+
+The same request — `{ "chainIds": [1], "term": "USDC", "limit": 2 }` — shown for v1 and v2, plus a focused diff of what moved.
+
+<Tabs>
+  <Tab title="v1">
+    ```json
+    [
+      [
+        {
+          "chainId": 1,
+          "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "symbol": "USDC",
+          "name": "USD Coin",
+          "decimals": 6,
+          "vmType": "evm",
+          "metadata": { "logoURI": "https://...", "verified": true }
+        }
+      ],
+      [
+        {
+          "chainId": 1,
+          "address": "0x54c2c91a456490b942d2ce6c5032c6e971b4fb57",
+          "symbol": "USDC",
+          "name": "Circle USD",
+          "decimals": 18,
+          "vmType": "evm",
+          "metadata": { "logoURI": "", "verified": false }
+        }
+      ]
+    ]
+    ```
+  </Tab>
+  <Tab title="v2">
+    ```json
+    [
+      {
+        "chainId": 1,
+        "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "vmType": "evm",
+        "metadata": { "logoURI": "https://...", "verified": true }
+      },
+      {
+        "chainId": 1,
+        "address": "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490",
+        "symbol": "3Crv",
+        "name": "Curve.fi DAI/USDC/USDT",
+        "decimals": 18,
+        "vmType": "evm",
+        "metadata": { "logoURI": "https://...", "verified": true }
+      }
+    ]
+    ```
+  </Tab>
+  <Tab title="Difference">
+    ```jsonc
+    [
+      [                                                   // [!code --] v1 wraps each currency group in its own array
+        { "symbol": "USDC", "name": "USD Coin" }          // [!code --]
+      ],                                                  // [!code --]
+      { "symbol": "USDC", "name": "USD Coin" },           // [!code ++] v2 lists currencies directly
+      [                                                   // [!code --]
+        { "symbol": "USDC", "name": "Circle USD", "metadata": { "verified": false } } // [!code --] v1: next group by match score, then pool depth
+      ],                                                  // [!code --]
+      { "symbol": "3Crv", "name": "Curve.fi DAI/USDC/USDT", "metadata": { "verified": true } } // [!code ++] v2: verified matches rank first
+    ]
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+  The full OpenAPI schema lives at [api.relay.link/documentation/json](https://api.relay.link/documentation/json).
+</Info>
+
+<Warning>
+  **`limit` now counts currencies, not groups, and defaults to 20.** A v1 search without `limit` returned every match; the same v2 call returns 20. Values above 100 are rejected with `400`. Set `limit` explicitly and expect at most 100 currencies per call.
+</Warning>
+
+## What changed
+
+### Request
+
+The request body and the optional `x-api-key` header are the same as v1, with three differences.
+
+<AccordionGroup>
+  <Accordion title="limit — defaults to 20, maximum 100" icon="list-ol">
+    v2 applies **`limit`** to the flat list of currencies in every mode. When you omit it, v2 returns 20 currencies. Values above 100 fail validation:
+
+    ```json
+    {
+      "statusCode": 400,
+      "code": "FST_ERR_VALIDATION",
+      "error": "Bad Request",
+      "message": "body/limit must be <= 100"
+    }
+    ```
+
+    v1 applied **`limit`** to groups rather than currencies, and only in some modes: a search without **`limit`** returned every match, and **`defaultList`** could return more groups than the limit asked for.
+  </Accordion>
+
+  <Accordion title="tokens — first 100 entries only" icon="coins">
+    v2 reads the first 100 entries of **`tokens`** and ignores the rest. Batch larger lookups into calls of 100 `chainId:address` pairs. v1 did not cap the list.
+  </Accordion>
+
+  <Accordion title="depositAddressOnly — eligibility for your deposit-address mode" icon="inbox">
+    In v2, **`depositAddressOnly: true`** returns the currencies that are eligible as deposit-address inputs for the deposit-address mode of the API key you send, so results can differ between keys. Eligibility does not guarantee availability for every destination and amount. v1 applied one static filter for every caller. See [Deposit Addresses](/features/deposit-addresses).
+  </Accordion>
+</AccordionGroup>
+
+### Response
+
+<AccordionGroup>
+  <Accordion title="Flat list instead of groups" icon="layer-group">
+    v1 returned `Currency[][]`: an outer array of groups, each an inner array of one or more currencies. v2 returns `Currency[]`. The currency object is unchanged — `chainId`, `address`, `symbol`, `name`, `decimals`, `vmType`, and `metadata` with `logoURI`, `verified`, and `isNative` — except that the optional `groupID` field declared on v1 is gone.
+
+    ```typescript
+    const currencies = groups.flat(); // [!code --] v1
+    const currencies = response;      // [!code ++] v2
+    ```
+  </Accordion>
+
+  <Accordion title="Ranking — verified currencies first" icon="ranking-star">
+    v2 ranks verified currencies above unverified ones that match equally well, and orders verified results by recent trading volume. v1 ordered groups by match quality and then by pool depth. With a **`term`**, both versions rank exact symbol or name matches first, then prefix matches, then partial matches.
+
+    Positions can change between calls on both versions. Match currencies by `chainId` and `address`, not by index — this includes **`tokens`** lookups, which do not return currencies in request order.
+  </Accordion>
+
+  <Accordion title="Chains with limited token support" icon="filter">
+    On chains whose `tokenSupport` is `Limited` in [GET /chains](/references/api/get-chains), v2 returns only the currencies Relay supports on that chain. v1 returned every indexed match, including currencies you cannot route through Relay.
+  </Accordion>
+
+  <Accordion title="Default list" icon="star">
+    With **`defaultList: true`**, v2 returns the highest-volume currencies on the requested chains and substitutes native currencies for their wrapped forms (ETH for WETH, SOL for WSOL). Because the list follows volume, it can include unverified currencies; check `metadata.verified` if you only want verified ones. v1 returned Relay's curated default list, topped up with trending tokens.
+  </Accordion>
+</AccordionGroup>
+
+## Field migration reference
+
+| v1 | v2 |
+| --- | --- |
+| Response `Currency[][]` — one inner array per group | `Currency[]` |
+| `groupID` — optional field on each currency | Removed |
+| `limit` — optional, counts groups, no maximum | Defaults to 20, maximum 100, counts currencies |
+| `tokens` — no cap | First 100 entries |
+| `depositAddressOnly` — one static filter | Eligibility for the caller's deposit-address mode |
+
+## RelayKit
+
+`useTokenList` and `queryTokenList` in `@relayprotocol/relay-kit-hooks` have called v2 since version 1.9.0, and `data` is the v2 flat list. If you are on an older release, upgrade and follow the checklist below for your consumers. See [useTokenList](/references/relay-kit/hooks/useTokenList).
+
+## Migration checklist
+
+<Steps>
+  <Step title="Switch the path">
+    Point requests at `POST /currencies/v2`. The request body and headers are unchanged.
+  </Step>
+  <Step title="Flatten your response handling">
+    Iterate the response as `Currency[]` and remove `flat()`, `[0]`, or other group-walking logic. Drop reads of `groupID`.
+  </Step>
+  <Step title="Set limit explicitly">
+    If you relied on v1 returning every match, pass **`limit`** (at most 100) and narrow the query with **`chainIds`**, **`term`**, **`address`**, or **`tokens`**. Split **`tokens`** lookups into batches of 100.
+  </Step>
+  <Step title="Stop depending on order">
+    Match currencies by `chainId` and `address`. If you show search results, expect verified currencies first.
+  </Step>
+  <Step title="Confirm nothing still calls v1">
+    Watch for the `Deprecation` header in your response logs. v2 responses never carry it, so once it stops appearing your traffic has moved.
+  </Step>
+</Steps>
