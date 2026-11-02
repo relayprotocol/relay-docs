@@ -41,6 +41,10 @@ How a block surfaces depends on when the address is flagged.
 
 `BLOCKED_WALLET_ADDRESS` is returned by `/quote/v2` (see [Handling Quote Errors](/references/api/api_core_concepts/handling-errors#expected-errors)). `BLOCKED_WALLET` is the `failReason` on a submitted request (see [Handling Execution Errors](/references/api/api_core_concepts/execution-errors)). The owning integrator can see which addresses caused a `BLOCKED_WALLET` failure through `data.blockedAddresses` on [`GET /requests/v3`](/references/api/api_guides/migrating-to-requests-v3#what-changed) by authenticating with its API key and passing `includeAuthenticatedData=true`.
 
+<Warning>
+Set `refundTo` and `recoveryAddress` to wallets that can sign a Relay withdrawal on the origin chain. Either address can become the protocol depositor, and withdrawing is then the only way to recover the funds, so an address that can only receive funds, such as an exchange deposit address, is not enough. See [Supported Chains and Signers](/references/protocol/guides/withdrawals#supported-chains-and-signers) for which wallets can withdraw.
+</Warning>
+
 See [Unsupported Exchanges](/security/unsupported-exchanges) before sending to or from an exchange.
 
 ## Screening Records
