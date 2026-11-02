@@ -86,10 +86,13 @@ mode: "center"
 
 **Behavior change**
 
+- `GET /chains`: the per-chain `currency` object (the native-gas currency: `id`, `symbol`, `name`, `address`, `decimals`, `supportsBridging`) is now optional and may be omitted on entries where `vmType` is `"atlasvm"`. On other `vmType` values `currency` is still present. Treat `currency` as potentially absent and read any native-currency-derived fields defensively. Chain-level `depositFee` and `withdrawalFee` fall back to the chain default when no native currency is present, and `surgeEnabled` is `false` for these entries.
+- deposit-address flows (`POST /quote/v2` with `useDepositAddress: true`): requests targeting a chain with `vmType: "atlasvm"` are rejected with `400` and `message: "Deposit addresses are not supported for Atlas"`. Use the standard quote-and-execute flow for Atlas destinations.
 - `POST /currencies/v1`: unfiltered requests that omit `limit` now return a default of **20** currency groups. Requests that include any filter (`defaultList`, `chainIds`, `term`, `address`, `symbol`, `groupID`, `tokens`, `verified`, or `depositAddressOnly`) or an explicit `limit` are unaffected. If your integration relied on receiving the full curated list in one call, send an explicit `limit` or a filter.
 
 **Added**
 
+- `GET /chains`: the response `vmType` enum gains **`atlasvm`**, identifying chains that settle without a native gas currency. Existing `vmType` values are unchanged.
 - `POST /currencies/v1` and `POST /currencies/v2`: `symbol` and `groupID` are now documented request fields — optional string filters by currency symbol and currency group ID. Behavior is unchanged from how these filters were previously accepted.
 
 </Update>
