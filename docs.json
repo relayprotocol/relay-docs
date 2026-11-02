@@ -148,6 +148,7 @@
               "references/api/execute-permits",
               "references/api/get-intents-status-v3",
               "references/api/get-requests",
+              "references/api/get-published-requests",
               "references/api/utilities",
               "references/api/get-chains",
               "references/api/get-chains-liquidity",
