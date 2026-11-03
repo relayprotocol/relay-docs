@@ -22,7 +22,7 @@ Use the table below to choose between an access token and the other ways to call
 
 The flow has four steps:
 
-1. Your backend sends your API key to `POST /access-tokens`.
+1. Your backend sends your API key to [`POST /access-tokens`](/references/api/create-access-token).
 2. Your backend returns the token to the client.
 3. The client sends the token in the `Authorization` header on supported Relay endpoints.
 4. When the token expires, the client requests a new token from your backend.
@@ -133,10 +133,11 @@ The API also calls a token an API session, for example in the error code `INVALI
 
 | Status | Error code | Meaning | What to do |
 | --- | --- | --- | --- |
+| `400` | `INVALID_REQUEST_PARAMS` | The request used a parameter that tokens cannot use, for example fee sponsorship | Send that request from your backend with your API key |
 | `401` | `INVALID_API_SESSION` | The token is invalid, expired, or revoked | Mint a new token through your backend |
-| `403` | | The API key cannot mint tokens because its App does not have elevated rate limits | Request [elevated rate limits](/references/api/api-keys#elevated-rate-limits) |
+| `403` | `FORBIDDEN` | The API key cannot mint tokens because its App does not have elevated rate limits | Request [elevated rate limits](/references/api/api-keys#elevated-rate-limits) |
 | `429` | `RATE_LIMITED` | A rate limit was reached | Wait and retry |
-| `500` | | A Relay infrastructure error | Retry with backoff |
+| `500` | `API_SESSION_UNAVAILABLE` | Token minting or validation is temporarily unavailable | Retry with backoff |
 
 ## Caveats
 

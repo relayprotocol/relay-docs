@@ -82,6 +82,7 @@
               "references/api/overview",
               "references/api/quickstart",
               "references/api/api-keys",
+              "references/api/api_guides/access-tokens",
               {
                 "group": "Core Concepts",
                 "pages": [
@@ -118,8 +119,7 @@
                   },
                   "references/api/api_guides/deep-linking",
                   "references/api/api_guides/websockets",
-                  "references/api/api_guides/webhooks",
-                  "references/api/api_guides/access-tokens"
+                  "references/api/api_guides/webhooks"
                 ]
               },
               {
@@ -165,6 +165,7 @@
               "references/api/advanced",
               "references/api/fast-fill",
               "references/api/get-swap-sources",
+              "references/api/create-access-token",
               "references/api/execute",
               {
                 "group": "Withdrawals",
