@@ -58,6 +58,7 @@ The following limits apply per App. All API keys in the App share these limits:
 | `/quote`               | 50 requests per minute  |
 | `/requests`            | 100 requests per minute |
 | `/requests/v3`         | 200 requests per minute |
+| `/published-requests`  | 200 requests per minute |
 | `/transactions/status` | 200 requests per minute |
 | Other endpoints        | 200 requests per minute |
 
@@ -69,12 +70,13 @@ Higher limits are available on request. They apply per App:
 | ---------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `/quote`               | 50 requests per second                                                                                      |
 | `/requests/v3`         | 20 requests per second                                                                                      |
+| `/published-requests`  | 20 requests per second                                                                                      |
 | `/requests`            | 5 requests per second                                                                                       |
 | `/transactions/status` | 10 requests per second                                                                                      |
 | `/authorize`           | 5 requests per minute per `(App, wallet)`, with a 30 requests per minute aggregate ceiling per App           |
 | Other endpoints        | 200 requests per minute                                                                                     |
 
-`/requests` and `/requests/v2` share the 5 rps bucket; `/requests/v3` has its own 20 rps bucket.
+`/requests` and `/requests/v2` share the 5 rps bucket; `/requests/v3` has its own 20 rps bucket. `/published-requests` has a separate bucket with the same limits listed above as `/requests/v3`; traffic to either endpoint does not consume the other's allowance.
 
 `/authorize` is bucketed by the `wallet` field in the request body alongside your App, so concurrent authorizations from different end-users don't compete for the same bucket. The aggregate per-App ceiling still applies across all wallets and bounds total volume of the on-chain authorization path.
 

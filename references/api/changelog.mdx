@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-11-02 — `GET /published-requests` added for cross-integrator reads
+
+**Added** — `GET /published-requests`: a new authenticated endpoint that returns a public subset of cross-chain requests across integrators. Results are limited to **terminal** requests (`success`, `failure`, `refund`) that are at least **one minute old**. Supports the same public filter surface as `GET /requests/v3` (identity, status, chain, and currency filters, including v3-style OR groups via `filters`), `sortBy` (`createdAt` | `updatedAt`) + `sortDirection` (`asc` | `desc`), opaque `continuation` cursor pagination, and an optional `includeTotal` flag. `limit` defaults to **20** and is capped at **100**. Private fields and private-only filters are rejected; unknown query parameters return `400`. Access to private chains is gated by the API key's existing permissions and must be requested via `privateChainsToInclude`. Requires `x-api-key`; short-lived session tokens are **not** accepted on this endpoint. Rate limits follow the same per-tier shape as `GET /requests/v3`. See [`GET /published-requests`](/references/api/get-published-requests).
+
 ## 2026-10-28 — `includePendingRequests` opt-in for pending results on `GET /requests/v3`
 
 **Behavior change** — `GET /requests/v3`: pending requests are no longer returned unless the request explicitly sets `includePendingRequests=true`. By default — or when `includePendingRequests=false` is sent — results are limited to terminal requests (`success`, `failure`, `refund`), and both the response page and the opt-in `total` count are computed on that filtered set. Previously, pending requests permitted by the caller's access scope were returned without an opt-in. Terminal results are unchanged in both modes. Only applies to `/requests/v3`; `/requests` and `/requests/v2` are unaffected.
@@ -20,6 +24,14 @@ description: "Record of breaking changes, deprecations, and notable additions to
 ## 2026-10-21 — Access tokens for browser and mobile clients
 
 **Added** — [`POST /access-tokens`](/references/api/create-access-token): exchanges an API key from an App with elevated rate limits for a 15-minute access token. Send the token as `Authorization: Bearer` from a browser or mobile client on supported endpoints. Token requests are rate limited per parent API key and client IP. See the [Access Tokens](/references/api/api_guides/access-tokens) guide.
+
+## 2026-10-21 — `atlasvm` on `GET /chains` and optional native `currency`
+
+**Added** — `GET /chains`: the response `vmType` enum gains **`atlasvm`**, identifying chains that settle without a native gas currency. Existing `vmType` values are unchanged.
+
+**Behavior change** — `GET /chains`: the per-chain `currency` object (the native-gas currency: `id`, `symbol`, `name`, `address`, `decimals`, `supportsBridging`) is now optional and may be omitted on entries where `vmType` is `"atlasvm"`. On other `vmType` values `currency` is still present. Treat `currency` as potentially absent and read any native-currency-derived fields defensively. Chain-level `depositFee` and `withdrawalFee` fall back to the chain default when no native currency is present, and `surgeEnabled` is `false` for these entries.
+
+**Behavior change** — deposit-address flows (`POST /quote/v2` with `useDepositAddress: true`): requests targeting a chain with `vmType: "atlasvm"` are rejected with `400` and `message: "Deposit addresses are not supported for Atlas"`. Use the standard quote-and-execute flow for Atlas destinations.
 
 ## 2026-10-21 — `/currencies` request validation and v1 default page size
 

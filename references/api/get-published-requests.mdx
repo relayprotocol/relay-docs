@@ -1,0 +1,9 @@
+---
+title: "Get Published Requests"
+description: "Returns a public subset of cross-chain requests across integrators, limited to terminal requests that are at least one minute old."
+openapi: get /published-requests
+---
+
+<Note>
+  `GET /published-requests` requires a valid `x-api-key`. Short-lived session tokens are not accepted on this endpoint. Private-chain results are only returned when the API key has an explicit grant for those chains.
+</Note>
