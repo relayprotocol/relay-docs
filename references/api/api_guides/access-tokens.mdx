@@ -32,19 +32,26 @@ The flow has four steps:
 Send your API key in the **`x-api-key`** header with an empty JSON body.
 
 ```typescript
-// 1. Mint a token with your API key (server-side only)
-const response = await fetch("https://api.relay.link/access-tokens", {
-  method: "POST",
-  headers: {
-    "x-api-key": process.env.RELAY_API_KEY!,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({}),
-});
-const { token, expiresAt } = await response.json();
+// Route handler on your backend, for example POST /api/relay-token
+export async function POST() {
+  // 1. Mint a token with your API key (server-side only)
+  const response = await fetch("https://api.relay.link/access-tokens", {
+    method: "POST",
+    headers: {
+      "x-api-key": process.env.RELAY_API_KEY!,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+  if (!response.ok) {
+    const { errorCode } = await response.json();
+    return Response.json({ error: errorCode }, { status: response.status });
+  }
 
-// 2. Return only the token and its expiry to your client
-return { token, expiresAt };
+  // 2. Return only the token and its expiry to your client
+  const { token, expiresAt } = await response.json();
+  return Response.json({ token, expiresAt });
+}
 ```
 
 The response has four fields:
@@ -63,7 +70,12 @@ The response has `Cache-Control: no-store`. Do not cache it.
 Send the token in the `Authorization` header over HTTPS.
 
 ```typescript
-// Client-side: use the token from your backend, never the API key
+// 1. Get a token from your backend, never the API key
+const { token } = await fetch("/api/relay-token", { method: "POST" }).then(
+  (r) => r.json()
+);
+
+// 2. Call Relay with the token
 const quote = await fetch("https://api.relay.link/quote/v2", {
   method: "POST",
   headers: {
@@ -134,13 +146,12 @@ The API also calls a token an API session, for example in the error code `INVALI
 | Status | Error code | Meaning | What to do |
 | --- | --- | --- | --- |
 | `400` | `INVALID_REQUEST_PARAMS` | The request used a parameter that tokens cannot use, for example fee sponsorship | Send that request from your backend with your API key |
-| `401` | `INVALID_API_SESSION` | The token is invalid, expired, or revoked | Mint a new token through your backend |
+| `401` | `INVALID_API_SESSION` | The token is invalid or expired, or its API key was deactivated | Mint a new token through your backend |
 | `403` | `FORBIDDEN` | The API key cannot mint tokens because its App does not have elevated rate limits | Request [elevated rate limits](/references/api/api-keys#elevated-rate-limits) |
 | `429` | `RATE_LIMITED` | A rate limit was reached | Wait and retry |
 | `500` | `API_SESSION_UNAVAILABLE` | Token minting or validation is temporarily unavailable | Retry with backoff |
 
 ## Caveats
 
-* A token works from any origin and IP address. The App's IP and origin restrictions apply only when your backend mints the token.
-* Restrict your App to your backend's IP addresses. Relay checks those restrictions only on the mint request, which comes from your backend.
+* A token works from any origin and IP address, because Relay checks the App's IP and origin restrictions only on the mint request. Restrict your App to your backend's IP addresses.
 * Protect your token endpoint against automated abuse. Anyone who can call it can get a token, so authenticate or throttle it.
