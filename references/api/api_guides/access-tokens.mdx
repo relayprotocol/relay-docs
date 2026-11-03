@@ -3,7 +3,7 @@ title: "Access Tokens"
 description: "Mint short-lived tokens so browser clients can call the Relay API without exposing your API key."
 ---
 
-An access token is a short-lived credential that your backend mints from your API key and passes to a browser or mobile client. The client sends the token to Relay, so the API key never leaves your server. Each token expires after 15 minutes.
+An access token is a short-lived credential that your backend mints (issues) from your API key and passes to a browser or mobile client. The client sends the token to Relay, so the API key never leaves your server. Each token expires after 15 minutes.
 
 Use the table below to choose between an access token and the other ways to call Relay from a client.
 
@@ -15,7 +15,7 @@ Use the table below to choose between an access token and the other ways to call
 
 ## Requirements
 
-1. **An API key with elevated rate limits** — Only Apps with [elevated rate limits](/references/api/api-keys#elevated-rate-limits) can mint tokens. Request them through the support widget in the [Relay Dashboard](https://dashboard.relay.link).
+1. **An App with elevated rate limits** — Only Apps with [elevated rate limits](/references/api/api-keys#elevated-rate-limits) can mint tokens. Request them through the support widget in the [Relay Dashboard](https://dashboard.relay.link).
 2. **A token endpoint on your backend** — This endpoint holds the API key, mints tokens, and returns them to your client.
 
 ## How to use it?
@@ -124,7 +124,7 @@ When a limit is reached, Relay returns `429` with the error code `RATE_LIMITED`.
 | The token reaches 15 minutes | Requests return `401` | Mint a new token through your backend |
 | The client changes network | The token keeps working. Its rate limit counts under the new IP | Nothing |
 | You deactivate the API key | All its tokens stop working after Relay's key cache refreshes | Mint tokens from an active key |
-| You rotate the API key or change its settings | Existing tokens keep working until they expire | Nothing |
+| You rotate the API key or change the App's settings | Existing tokens keep working until they expire | Nothing |
 | You need to revoke one token | Relay cannot revoke a single token | Deactivate the API key to revoke all its tokens |
 
 ## Errors
@@ -140,6 +140,6 @@ The API also calls a token an API session, for example in the error code `INVALI
 
 ## Caveats
 
-* A token works from any origin and IP address. The API key's IP and origin restrictions apply only when your backend mints the token.
-* Restrict your API key to your backend's IP addresses. Relay sees your clients' mint requests as coming from your backend.
+* A token works from any origin and IP address. The App's IP and origin restrictions apply only when your backend mints the token.
+* Restrict your App to your backend's IP addresses. Relay checks those restrictions only on the mint request, which comes from your backend.
 * Protect your token endpoint against automated abuse. Anyone who can call it can get a token, so authenticate or throttle it.
