@@ -60,7 +60,7 @@ App fees are supported on the following transaction types:
 
 You can verify that app fees are being collected correctly using the following endpoints:
 
-**Per-transaction:** Use `/requests/v2` which returns both `appFees` (the fee quoted to the user) and `paidAppFees` (the fee actually collected). If `appFees` is present but `paidAppFees` is empty or zero, the fee was not collected for that transaction.
+**Per-transaction:** Use `/requests/v2` which returns both `appFees` (the fee quoted to the user) and `paidAppFees` (the fee actually collected). If `appFees` is present but `paidAppFees` is empty or zero, the fee was not collected for that transaction. This is expected for refunded requests, which never accrue app fees. See [Fees on refunded requests](/references/api/api_core_concepts/refunds#fees-on-refunded-requests).
 
 **Accumulated balance:** Use `/app-fees/{address}/balances` to check your total accumulated app fee balance available for withdrawal.
 
