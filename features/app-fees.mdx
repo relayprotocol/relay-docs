@@ -110,7 +110,7 @@ To learn more about this api, see the [Get App Fee Balance](/references/api/get-
 
 ### How to withdraw your off-chain balance?
 
-To withdraw your app fees, use the app fees claim API. If using the API, the response will guide you through signing and submitting a message to the `/execute/permit` endpoint to verify ownership of your claim address. The SDK automates this process for you.
+To withdraw your app fees, use the app fees claim API. If using the API, the response will guide you through signing and submitting a message to the `/execute/permits` endpoint to verify ownership of your claim address. The SDK automates this process for you.
 
 <Info>
 The claim `recipient` must be a wallet address that can receive payout. The API rejects claim recipients that are Relay deposit addresses, the zero address, well-known burn addresses, or otherwise unresolvable targets with `400 Invalid destination chain and/or recipient` — both when authorizing the claim and when submitting the signed permit. Omit `recipient` to default to the wallet that owns the balance.
@@ -176,7 +176,7 @@ const { data } = await getClient().actions.claimAppFees({
 ```
 </CodeGroup>
 
-If you're using the API directly, you can then send a request to `/execute/permit` with the `requestId` and `signature` to claim your fees. An example request would be:
+If you're using the API directly, you can then send a request to `/execute/permits` with the `requestId` and `signature` to claim your fees. An example request would be:
 
 ```bash cURL
 curl -X POST \
