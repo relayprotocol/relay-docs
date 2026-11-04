@@ -134,7 +134,7 @@
     max-height: 32px;
   }
 
-  @media (width < 700px) {
+  @media (max-width: 699px) {
     [class*="intercom-with-namespace"],
     .intercom-lightweight-app-launcher {
       bottom: 60px !important;
@@ -231,7 +231,7 @@
     color: #a78bfa;
   }
 
-  @media (width < 700px) {
+  @media (max-width: 699px) {
     .homepage-bg {
       height: 30vh;
     }
@@ -249,7 +249,7 @@
     }
   }
 
-  @media (width < 600px) {
+  @media (max-width: 599px) {
     .homepage-bg {
       height: 20vh;
     }
@@ -262,7 +262,7 @@
     }
   }
 
-  @media (width < 900px) {
+  @media (max-width: 899px) {
     .homepage-cards {
       flex-direction: column;
       align-items: center;
