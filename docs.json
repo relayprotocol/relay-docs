@@ -54,7 +54,7 @@
           {
             "group": "Safety & Security",
             "pages": [
-              "security/compliance",
+              "security/transaction-screening",
               "security/unsupported-exchanges",
               "security/bounties",
               "security/mev-protection",
@@ -492,7 +492,11 @@
     },
     {
       "source": "/resources/security-and-compliance",
-      "destination": "/security/compliance"
+      "destination": "/security/transaction-screening"
+    },
+    {
+      "source": "/security/compliance",
+      "destination": "/security/transaction-screening"
     },
     {
       "source": "/resources/bounties",
