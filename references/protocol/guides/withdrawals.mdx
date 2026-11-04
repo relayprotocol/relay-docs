@@ -18,7 +18,7 @@ These endpoints power the Relay withdrawal UI. They are stable enough to build a
 
 No API key is required for these withdrawal endpoints. The recovery owner (the **`owner`**) authorizes withdrawals with a wallet signature; reading balances requires no signature. The base URL is `https://api.relay.link`.
 
-For deposit-address flows, a configured **`recoveryAddress`** is recorded as the protocol depositor. It can differ from the wallet that sent the funds, so use that recovery address as the owner when preparing and signing a withdrawal.
+For deposit-address flows, the protocol depositor is the **`refundTo`** or **`recoveryAddress`** set on the quote, not the wallet that sent the funds. Read it from `protocol.deposit.origin.depositor` on [Get Requests](/references/api/get-requests), and use that address as the owner when preparing and signing a withdrawal.
 
 | Endpoint | Purpose |
 | --- | --- |
@@ -73,7 +73,7 @@ Once funds are credited to the recovery owner's account on the hub, you can enum
 curl "https://api.relay.link/withdrawals/balances?recoveryAddress=0xRECOVERY_ADDRESS&ownerChainId=8453&limit=20"
 ```
 
-- **`recoveryAddress`** — the recovery owner's address; for deposit-address flows, use the configured recovery address, which may differ from the wallet that sent the funds
+- **`recoveryAddress`** — the recovery owner's address; for deposit-address flows, use the protocol depositor, which may differ from the wallet that sent the funds
 - **`ownerChainId`** — the numeric Relay chain id that identifies the recovery owner's protocol account (the same EVM address on different owner chains derives different hub accounts)
 - **`limit`** — page size, default `20`, max `50`
 - **`continuation`** — opaque cursor returned by the previous page; keep calling until it is `null`
