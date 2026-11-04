@@ -15,6 +15,7 @@ These are known validation and routing issues that developers should gracefully 
 | --------------------------------------------- | -------------------------------------------------------------------------- |
 | `AMOUNT_TOO_HIGH`                             | The requested quote amount exceeds the maximum configured for the selected token pair. Reduce the amount (or split into smaller quotes) and retry. |
 | `AMOUNT_TOO_LOW`                              | The amount provided is below the minimum threshold required for a quote.   |
+| `BLOCKED_WALLET_ADDRESS`                      | An address in the quote (sender, recipient, `refundTo`, `recoveryAddress`, or an app fee recipient) failed [wallet screening](/security/compliance), so no quote is returned. Distinct from the fill-time [`BLOCKED_WALLET`](/references/api/api_core_concepts/execution-errors) failure. |
 | `CHAIN_DISABLED`                              | The origin or destination chain is currently disabled or unsupported.      |
 | `EXTRA_TXS_NOT_SUPPORTED`                     | Extra transactions are not supported for this trade type.                  |
 | `FORBIDDEN`                                   | User does not have the required role or permission.                        |

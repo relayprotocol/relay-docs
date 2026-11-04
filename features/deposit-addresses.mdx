@@ -944,6 +944,10 @@ If users may send from a centralized exchange, **do not set `refundTo` as the us
 When auto-refund to the original depositor is triggered, the request's `outTxs` will contain **two** refund transactions. The first transaction is the solver-to-depositor transfer that actually returns funds to the depositor — this is the one to track from your integration. The second is an internal protocol-settlement transaction that does not move user funds and can be ignored by integrators.
 </Info>
 
+<Warning>
+Set `refundTo` and `recoveryAddress` to wallets that can sign a Relay withdrawal on the origin chain. Either address can become the protocol depositor, and withdrawing is then the only way to recover the funds, so an address that can only receive funds, such as an exchange deposit address, is not enough. See [Supported Chains and Signers](/references/protocol/guides/withdrawals#supported-chains-and-signers) for which wallets can withdraw.
+</Warning>
+
 ### `recoveryAddress`
 
 `recoveryAddress` is for cases where Relay cannot auto-refund. It should be an integrator-controlled EOA on the origin chain.
