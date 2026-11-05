@@ -655,8 +655,8 @@ Learn more about how [fee sponsorship](/features/fee-sponsorship) works.
 
 **Before you request a fixed-rate quote**, complete these three setup steps:
 
-1. **Enable fixed rates for each API key** — Contact Relay Support through the support widget in the [Relay Dashboard](https://dashboard.relay.link) to request access for the API key you will use. Include your app name and the key's label so Support can identify it. Passing `fixedRate` in a request does not enable access, and enabling one key does not enable your other keys.
-2. **Link a fee sponsorship wallet** — Link a wallet to that API key from the [App Balance page](https://dashboard.relay.link/balance). Fixed rates require this wallet even when `subsidizeFees` is `false`, because it settles the difference between the fixed rate and the market rate.
+1. **Enable fixed rates for each API key** — Contact Relay Support through the support widget in the [Relay Dashboard](https://dashboard.relay.link) to request access for the API key you will use. Include your app name and the key's label as it appears in the Dashboard (not the key itself) so Support can identify it. Passing `fixedRate` in a request does not enable access, and enabling one key does not enable your other keys.
+2. **Link a fee sponsorship wallet** — Link a wallet to your app from the [App Balance page](https://dashboard.relay.link/balance); all API keys in the app share this wallet and its balance. Fixed rates require this wallet even when `subsidizeFees` is `false`, because it settles the difference between the fixed rate and the market rate.
 3. **Fund your App Balance** — Maintain sufficient funds to cover the fixed-rate spread and any fees you sponsor. Follow the [fee sponsorship setup guide](/features/fee-sponsorship).
 
 Linking a wallet or funding your App Balance does not enable fixed-rate access. Ask Support to confirm enablement for each key before using it for fixed-rate quotes.
