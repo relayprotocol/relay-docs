@@ -652,6 +652,15 @@ curl --request POST \
 Learn more about how [fee sponsorship](/features/fee-sponsorship) works.
 
 ### Fixed Rates
+
+**Before you request a fixed-rate quote**, complete these three setup steps:
+
+1. **Enable fixed rates for each API key** — Contact Relay Support through the support widget in the [Relay Dashboard](https://dashboard.relay.link) to request access for the API key you will use. Include your app name and the key's label so Support can identify it. Passing `fixedRate` in a request does not enable access, and enabling one key does not enable your other keys.
+2. **Link a fee sponsorship wallet** — Link a wallet to that API key from the [App Balance page](https://dashboard.relay.link/balance). Fixed rates require this wallet even when `subsidizeFees` is `false`, because it settles the difference between the fixed rate and the market rate.
+3. **Fund your App Balance** — Maintain sufficient funds to cover the fixed-rate spread and any fees you sponsor. Follow the [fee sponsorship setup guide](/features/fee-sponsorship).
+
+Linking a wallet or funding your App Balance does not enable fixed-rate access. Ask Support to confirm enablement for each key before using it for fixed-rate quotes.
+
 If your goal is to give the user 1:1, you can use fixed rates. In this case, the user would always get 100 USDT, and you would sponsor a dynamic amount. If USDT is worth less than USDC, you actually would earn the difference as fees.
 
 The figures below assume you are sponsoring fees as well (`"subsidizeFees": true`, as in the request example at the end of this section); the case without fee sponsorship is covered further down:
@@ -684,6 +693,8 @@ If 1 USDT = 1.0005 USDC, user gets 99.97 USDT, you sponsor \$0.05
 Turning off `subsidizeFees` moves the Relay fee onto the user; it does not turn off fixed-rate settlement.
 
 Fixed rates work for stablecoins listed as solver currencies on the requested chain, such as USDC, USDC.e, USDT, USDe, USDH, mUSD, and DAI. Solvers supply this liquidity; the platform exposes supported currencies through each chain's **`solverCurrencies`** array in the [chains API](/references/api/get-chains). Check that array for current support rather than assuming the same inventory across chains.
+
+Use the enabled API key in the `x-api-key` header in the example below. Before executing, confirm the quote returns `details.isFixedRate: true`; for this sponsored `1:1` example, also confirm the input and output token amounts match after accounting for their decimals. Supported currencies alone do not confirm that your API key has fixed-rate access.
 
 <CodeGroup>
 ```bash Request
