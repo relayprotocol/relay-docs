@@ -35,14 +35,14 @@ For example, if your deposit transaction swaps a memecoin into USDC, the refunda
 
 ### Fees on refunded requests
 
-Relay does not keep fees on a refunded request. The refund gas cost and any origin swap, described above, are the only reasons the refund can be less than your deposit.
+Relay does not keep Platform Fees or app fees on a refunded request.
 
 | Fee | Treatment on a refunded request |
 | --- | --- |
-| Relay service fee | Not retained |
+| [Platform Fees](/references/api/api_core_concepts/fees) | Not retained |
 | App fees | Not collected |
 
-App fees should not accrue on a refunded request, so `paidAppFees` is empty or zero. To check, see [Verifying Fee Collection](/features/app-fees#verifying-fee-collection).
+On a refunded request, `paidAppFees` on `/requests/v2` is empty or zero. To check, see [Verifying Fee Collection](/features/app-fees#verifying-fee-collection).
 
 ## When is there no refund given?
 If the refund amount is not enough to cover the cost of gas, Relay will 
