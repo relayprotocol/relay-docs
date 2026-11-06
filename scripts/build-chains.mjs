@@ -32,7 +32,7 @@ async function render(url) {
 
   const rows = chains
     .slice()
-    .sort((a, b) => a.displayName.localeCompare(b.displayName, 'en') || a.id - b.id)
+    .sort((a, b) => String(a.displayName ?? '').localeCompare(String(b.displayName ?? ''), 'en') || a.id - b.id)
     .map((chain) => `| ${cell(chain.displayName)} | ${chain.id} | ${cell(chain.vmType)} | ${cell(chain.tokenSupport)} |`)
 
   return [
