@@ -19,6 +19,7 @@ These are known validation and routing issues that developers should gracefully 
 | `CHAIN_DISABLED`                              | The origin or destination chain is currently disabled or unsupported.      |
 | `EXTRA_TXS_NOT_SUPPORTED`                     | Extra transactions are not supported for this trade type.                  |
 | `FORBIDDEN`                                   | User does not have the required role or permission.                        |
+| `INPUT_TOKEN_NOT_TRANSFERABLE`                | For permit-based swaps (Permit2 and EIP-3009): the input token cannot be transferred from the user's wallet at the full quote amount — most often a wallet-level blacklist, a honeypot balance, or a token-wide transfer restriction. The response `message` carries the decoded revert reason reported by the token. Returned before the user signs the permit; only applies to permit-based origin swaps. |
 | `INSUFFICIENT_FUNDS`                          | The user's wallet does not have enough balance to perform the swap.        |
 | `INSUFFICIENT_LIQUIDITY`                      | There is not enough liquidity available to complete the swap.              |
 | `INVALID_ADDRESS`                             | The provided user or recipient address is not valid for the target chain.  |
