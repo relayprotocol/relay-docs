@@ -47,6 +47,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Retire the sync branch only if its whole tree matches main: deleting a PR head
+          # branch closes the PR, and the branch may hold edits this job did not make.
           if git diff --quiet -- $SNIPPETS; then
             echo "chain snippets already match main"
             if git ls-remote --exit-code --heads origin "$SYNC_BRANCH" >/dev/null 2>&1; then
@@ -63,6 +65,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # Resolved before the content check: matching content only means "nothing to do" when
+          # a PR is actually open on the branch.
           state=$(gh pr view "$SYNC_BRANCH" --json state --jq .state 2>/dev/null || echo NONE)
 
           git checkout -B "$SYNC_BRANCH"

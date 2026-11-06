@@ -18,7 +18,11 @@ const SOURCES = [
   { url: 'https://api.testnets.relay.link/chains', out: 'snippets/supported-chains-testnets.mdx' }
 ]
 
-const cell = (value) => String(value ?? '').replace(/\|/g, '\\|').trim()
+const cell = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/[|{}<>]/g, '\\$&')
+    .trim()
 
 async function render(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(30_000) })
@@ -39,10 +43,11 @@ async function render(url) {
   ].join('\n')
 }
 
+const rendered = await Promise.all(SOURCES.map(async ({ url, out }) => ({ out, next: await render(url) })))
+
 let stale = false
-for (const { url, out } of SOURCES) {
+for (const { out, next } of rendered) {
   const path = join(ROOT, out)
-  const next = await render(url)
   let current = null
   try {
     current = readFileSync(path, 'utf8')

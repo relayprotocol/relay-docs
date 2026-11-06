@@ -29,6 +29,8 @@ Pages in `solutions/`, `resources/`, `security/`, `references/protocol/`, `refer
 
 **Nav-organization stubs (ignore):** `references/api/advanced.mdx`, `references/api/core.mdx`, and `references/api/utilities.mdx` are empty files that exist only to create group headers in the API Reference sidebar. They render no content, so frontmatter requirements and other §2 / §3 rules do not apply. Automation should skip them.
 
+**Generated snippets (never edit by hand):** `snippets/supported-chains-mainnets.mdx` and `snippets/supported-chains-testnets.mdx` are written by `scripts/build-chains.mjs` from the live `/chains` API. They are the agent-only copy of the Supported Chains tables; the Sync Supported Chains workflow opens a PR when they change.
+
 ### 1.2 Platform, protocol, and solver positioning
 
 These rules apply to all public surfaces, including pages outside the profile table, examples, snippets, diagrams, and generated content:
