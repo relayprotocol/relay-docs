@@ -4,6 +4,8 @@ description: ""
 ---
 
 import { Chains } from "/snippets/Chains.mdx";
+import MainnetChains from "/snippets/supported-chains-mainnets.mdx";
+import TestnetChains from "/snippets/supported-chains-testnets.mdx";
 
 Relay is currently supported on the following chains. Please reach out to learn more about how to add Relay to your chain.
 
@@ -13,9 +15,17 @@ Relay is currently supported on the following chains. Please reach out to learn 
 
 <Chains id="mainnetChains" env="mainnets" />
 
+<Visibility for="agents">
+  <MainnetChains />
+</Visibility>
+
 ### Testnets
 
 <Chains id="testnetChains" env="testnets" />
+
+<Visibility for="agents">
+  <TestnetChains />
+</Visibility>
 
 ## Adding Relay to Your Chain
 
