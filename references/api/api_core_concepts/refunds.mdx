@@ -33,6 +33,17 @@ The refund amount may be less than what you originally deposited due to several 
 
 For example, if your deposit transaction swaps a memecoin into USDC, the refundable amount is the USDC deposited after that swap, minus refund gas costs.
 
+### Fees on refunded requests
+
+Relay does not keep Platform Fees or app fees on a refunded request.
+
+| Fee | Treatment on a refunded request |
+| --- | --- |
+| [Platform Fees](/references/api/api_core_concepts/fees) | Not retained |
+| App fees | Not collected |
+
+On a refunded request, `paidAppFees` on `/requests/v2` is empty or zero. To check, see [Verifying Fee Collection](/features/app-fees#verifying-fee-collection).
+
 ## When is there no refund given?
 If the refund amount is not enough to cover the cost of gas, Relay will 
 mark the bridge or swap as failed & no refund will be sent.
