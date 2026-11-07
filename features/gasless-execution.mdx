@@ -15,6 +15,8 @@ This is where the `/execute` API comes in. The API allows users to submit raw ca
 
 To use gasless execution you'll need an API key with a linked funding address and a funded app balance. Create an API key in the [Relay Dashboard](https://dashboard.relay.link), then see [Fee Sponsorship](/features/fee-sponsorship) for details on linking a funding address and funding your app balance.
 
+Every `/execute` request must include **`executionOptions.subsidizeFees`**. Set it to `false` when the user covers fees through the quote, or `true` when your app balance pays the gas. Requests without it return `400`.
+
 ### Executing a gasless quote
 
 In this example use case you want to execute a gasless Relay quote with the [execute](/references/api/execute) API.
@@ -422,7 +424,7 @@ In this example use case you want to execute a gasless Relay quote with the [exe
             value: steps[0].items[0].data.value, //Quote value from previous step
           },
           executionOptions: {
-            //Optional execution options
+            subsidizeFees: false, // Required. false: the user covers fees through the quote. true: your app balance pays
           }
         })
       };
@@ -681,9 +683,12 @@ If Relay cannot map a custom error selector to a known contract error, the respo
                 executionKind: 'rawCalls',
                 data: {
                   chainId: 8453,
-                  to: 'YOUR_WALLET_ADDRESS',
+                  to: ENTRY_POINT, // handleOps is an EntryPoint function; the Smart Account is the userOp sender
                   data: handleOpsData,
                   value: "0"
+                },
+                executionOptions: {
+                  subsidizeFees: true // Required. Your app balance pays the gas
                 }
               })
             };
@@ -773,6 +778,9 @@ If Relay cannot map a custom error selector to a known contract error, the respo
                   data: initCalldata,
                   value: "0",
                   authorizationList: [authorization]
+                },
+                executionOptions: {
+                  subsidizeFees: true // Required. Your app balance pays the gas
                 }
               })
             };
