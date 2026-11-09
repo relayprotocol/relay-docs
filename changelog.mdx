@@ -17,6 +17,20 @@ mode: "center"
 
 </Update>
 
+<Update label="2026-11-05" tags={["API"]}>
+
+### API
+
+**Behavior change**
+
+- `POST /execute`: calls with `executionOptions.subsidizeFees: false` now require a `requestId` from a prior `POST /quote` call. Requests that omit `requestId` while `subsidizeFees` is disabled return `400` with `errorCode: "INVALID_REQUEST_PARAMS"` and `message: "requestId from a prior /quote call is required when subsidizeFees is disabled"`. Previously the same combination passed validation, ran simulation, and then failed an internal quote lookup — surfacing as `500`. Standalone executions with `subsidizeFees: true` (no `requestId`) continue to be supported unchanged, and unsubsidized calls that pass a `requestId` from a prior quote are unaffected. The guard mirrors the existing `SPONSOR_WALLET_REQUIRED` check: subsidized execution needs a sponsor wallet, unsubsidized execution needs a quote to prove payment to the solver. See [Gasless Execution](/features/gasless-execution).
+
+**Added**
+
+- `POST /execute`: the `400` response schema now documents an `errorCode` field alongside the existing `error` field. Only the new `INVALID_REQUEST_PARAMS` response populates `errorCode` today; every other `400` on this endpoint (`APPROVE_NOT_ALLOWED`, `NATIVE_VALUE_NOT_ALLOWED`, `SPONSOR_WALLET_REQUIRED`, and decoded simulation reverts) continues to carry its code in `error` only. Read `error` for those, and do not rely on `errorCode` being present on this endpoint yet.
+
+</Update>
+
 <Update label="2026-11-04" tags={["SDK", "UI Kit", "Hooks", "Adapters"]}>
 
 ### RelayKit
