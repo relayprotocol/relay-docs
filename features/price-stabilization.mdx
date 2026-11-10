@@ -696,7 +696,7 @@ Fixed rates work for stablecoins listed as solver currencies on the requested ch
 
 Use the enabled API key in the `x-api-key` header in the example below. Before executing, confirm the quote returns `details.isFixedRate: true`; for this sponsored `1:1` example, also confirm the input and output token amounts match after accounting for their decimals. Supported currencies alone do not confirm that your API key has fixed-rate access.
 
-If the request succeeds but the route does not support fixed-rate quotes, the response is returned with `details.isFixedRate: false` and a top-level `warnings` array containing `{ "code": "FIXED_RATE_NOT_APPLIED", "message": "..." }`. Treat the presence of that warning as a signal to stop and investigate rather than executing the quote.
+If you send `fixedRate` and the quote is not priced at it, for example because the route does not support fixed-rate quotes, the request still succeeds and the response includes a top-level `warnings` array containing `{ "code": "FIXED_RATE_NOT_APPLIED", "message": "..." }`. Check for that warning as well as `details.isFixedRate` before executing.
 
 <CodeGroup>
 ```bash Request
