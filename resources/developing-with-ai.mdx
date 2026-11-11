@@ -5,6 +5,25 @@ description: "Use AI coding assistants to build with Relay faster"
 
 Relay documentation is optimized for AI coding assistants. Whether you're using Claude, ChatGPT, Cursor, GitHub Copilot, or other AI tools, you can reference our docs directly to get accurate, up-to-date information about the Relay API and SDK.
 
+## Relay MCP Server
+
+The Relay MCP server ([`@relayprotocol/relay-mcp`](https://github.com/relayprotocol/relay-mcp)) gives AI agents tools to quote bridges and swaps, estimate fees, look up chains and tokens, check chain health, and track transactions through the Relay API. It is read-only: it returns quotes and status, and does not sign or broadcast transactions.
+
+Add it to any MCP client that runs local servers, such as Claude Desktop, Claude Code, or Cursor:
+
+```json
+{
+  "mcpServers": {
+    "relay": {
+      "command": "npx",
+      "args": ["-y", "@relayprotocol/relay-mcp"]
+    }
+  }
+}
+```
+
+Set `RELAY_API_KEY` in the server's environment for higher rate limits. `get_transaction_history` requires it. See [Apps, API keys, and Rate Limits](/references/api/api-keys).
+
 ## LLM-Optimized Documentation
 
 ### llms.txt Files
@@ -28,7 +47,7 @@ This is useful when you need focused context about a specific API endpoint or fe
 
 Provide Relay documentation directly to your AI coding assistant for more accurate, context-aware code generation.
 
-### MCP Server
+### Docs MCP Server
 
 Install the Relay docs MCP server for rich, queryable access to our documentation directly from Cursor, Claude Desktop, Windsurf, or any MCP-compatible client.
 
@@ -99,7 +118,7 @@ Create a dedicated Claude Project for Relay development. Add `https://docs.relay
 
 ### Claude Code
 
-Use Claude Code with the Relay MCP server for context-aware assistance directly in your terminal. Add the following to your `.mcp.json`:
+Use Claude Code with the Relay docs MCP server for context-aware assistance directly in your terminal. Add the following to your `.mcp.json`:
 
 ```json
 {

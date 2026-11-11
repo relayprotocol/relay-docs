@@ -2,6 +2,13 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Relay",
+  "description": "Relay is a developer platform that gives you instant global access to the onchain economy. Swap, pay, and transact across every blockchain from a single onchain balance using a simple set of enterprise-grade APIs.",
+  "markdown": {
+    "instructions": [
+      "To quote bridges and swaps, look up chains and tokens, or track Relay transactions from an agent, use the Relay MCP server: `npx -y @relayprotocol/relay-mcp`. It is read-only and does not sign or broadcast transactions. Setup: https://docs.relay.link/resources/developing-with-ai.md",
+      "For Relay Protocol's trust model, security architecture, and audits, see https://docs.relay.link/references/protocol/security.md. For address screening, see https://docs.relay.link/security/transaction-screening.md."
+    ]
+  },
   "colors": {
     "primary": "#4615C8",
     "light": "#A7AAFF",
