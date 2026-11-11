@@ -142,6 +142,7 @@ mode: "center"
 
 **Added**
 
+- [`POST /access-tokens`](/references/api/create-access-token): exchanges an API key from an App with elevated rate limits for a 15-minute access token. Send the token as `Authorization: Bearer` from a browser or mobile client on supported endpoints. Token requests are rate limited per parent API key and client IP. See the [Access Tokens](/references/api/api_guides/access-tokens) guide.
 - `GET /chains`: the response `vmType` enum gains **`atlasvm`**, identifying chains that settle without a native gas currency. Existing `vmType` values are unchanged.
 - `POST /currencies/v1` and `POST /currencies/v2`: `symbol` and `groupID` are now documented request fields — optional string filters by currency symbol and currency group ID. Behavior is unchanged from how these filters were previously accepted.
 
