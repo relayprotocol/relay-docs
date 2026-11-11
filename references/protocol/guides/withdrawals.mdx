@@ -195,6 +195,8 @@ Status entries are retained for 24 hours. An unknown or evicted id reports `proc
 
 `ready` is not done. On TON the solver broadcasts for you and the status moves to `executed` on its own, but on every other supported chain, `ready` hands you a `transaction` object that the owner wallet must sign and broadcast on-chain, paying its own gas. Depending on the chain this is an EVM transaction request, Solana instructions, or a Tron `TriggerSmartContract` payload.
 
+Bitcoin is the exception to signing and gas. There `transaction` is `{ "psbt": "<hex>" }`, a hex-encoded PSBT (it starts with `70736274ff`, not base64) whose inputs already carry every signature they need: the depository inputs are signed by the protocol and the miner fee is paid from the solver's `feeUtxos` returned by prepare, with any fee change going to `feeChangeAddress`. The owner adds no signatures and pays no fee. The inputs are signed with `SIGHASH_ALL` but not finalized, so finalize them, extract the transaction, and broadcast the raw hex to any Bitcoin node or explorer API, for example with bitcoinjs-lib `Psbt.fromHex(psbt).finalizeAllInputs().extractTransaction().toHex()`. Passing it to a wallet's `signPsbt` is unnecessary and can fail because the wallet has no inputs to sign. Because every input commits to the whole transaction, its fee cannot be bumped by changing it.
+
 A job stuck at `ready` because the transaction was never broadcast is the most common integration mistake. After broadcasting, keep polling until the status reaches `executed`. If the owner is on a different VM than the withdrawal chain, the returned transaction is built for the `recipient` to broadcast instead.
 
 ## Caveats
