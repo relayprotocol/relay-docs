@@ -7,5 +7,5 @@ openapi: get /withdrawals/status
 [How do programmatic withdrawals work?](/references/protocol/guides/withdrawals)
 
 <Note>
-Pass the `jobId` returned by [Request Withdrawal](/references/api/request-withdrawal) as `id`. On most chains a `ready` status includes a `transaction` the owner wallet must broadcast. Status entries are retained for 24 hours.
+Pass the `jobId` returned by [Request Withdrawal](/references/api/request-withdrawal) as `id`. On most chains a `ready` status includes a `transaction` the owner wallet must broadcast. On Bitcoin it is a fully signed, unfinalized hex PSBT (`transaction.psbt`) to finalize and broadcast; the owner adds no signatures and the solver pays the fee. Status entries are retained for 24 hours.
 </Note>

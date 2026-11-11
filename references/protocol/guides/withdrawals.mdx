@@ -184,7 +184,7 @@ curl "https://api.relay.link/withdrawals/status?id={jobId}"
 | Status | What to do |
 | --- | --- |
 | `processing`, `initiating`, `attesting` | Keep polling (~5s; back off to ~15s on a `429`) |
-| `ready` | The response includes a `transaction` — broadcast it from the owner wallet (next step), then keep polling |
+| `ready` | The response includes a `transaction` — broadcast it from the owner wallet (next step; on Bitcoin, finalize the PSBT first and broadcast from anywhere), then keep polling |
 | `executed` | Done — the funds are with the recipient |
 | `expired` | The nonce or job expired and the funds returned to the hub balance. Restart from the prepare step. |
 | `failed` | See `reason`, then restart from the prepare step |
@@ -193,15 +193,22 @@ Status entries are retained for 24 hours. An unknown or evicted id reports `proc
 
 ### Step 7: Broadcast the Transaction
 
-`ready` is not done. On TON the solver broadcasts for you and the status moves to `executed` on its own, but on every other supported chain, `ready` hands you a `transaction` object that the owner wallet must sign and broadcast on-chain, paying its own gas. Depending on the chain this is an EVM transaction request, Solana instructions, or a Tron `TriggerSmartContract` payload.
+`ready` is not done. On TON the solver broadcasts for you and the status moves to `executed` on its own, but on every other supported chain, `ready` hands you a `transaction` object to broadcast on-chain. Except on Bitcoin, the owner wallet must sign it and pay its own gas. Depending on the chain this is an EVM transaction request, Solana instructions, a Tron `TriggerSmartContract` payload, or a Bitcoin PSBT.
 
-A job stuck at `ready` because the transaction was never broadcast is the most common integration mistake. After broadcasting, keep polling until the status reaches `executed`. If the owner is on a different VM than the withdrawal chain, the returned transaction is built for the `recipient` to broadcast instead.
+On Bitcoin, `transaction` is `{ "psbt": "<hex>" }`, a hex-encoded PSBT (it starts with `70736274ff`, not base64) whose inputs already carry every signature they need. The protocol's TEE signer signs the depository inputs, and the miner fee is paid from the solver's `feeUtxos` returned by prepare, with any fee change going to `feeChangeAddress`. The owner adds no signatures and pays no fee.
+
+The inputs are signed with `SIGHASH_ALL` but not finalized. Finalize them, extract the transaction, and broadcast the raw hex to any Bitcoin node or explorer API, for example with bitcoinjs-lib `Psbt.fromHex(psbt).finalizeAllInputs().extractTransaction().toHex()`.
+
+- Don't pass it to a wallet's `signPsbt`: there is nothing to sign, and some wallets reject it.
+- Every input is signed with `SIGHASH_ALL`, so you can't add inputs or change outputs to raise the fee. If it stalls and the recipient controls its output, the recipient can speed it up with a child transaction (CPFP) spending that output.
+
+A job stuck at `ready` because the transaction was never broadcast is the most common integration mistake. After broadcasting, keep polling until the status reaches `executed`. On chains other than Bitcoin, if the owner is on a different VM than the withdrawal chain, the returned transaction is built for the `recipient` to broadcast instead.
 
 ## Caveats
 
 - Attestation and balance discovery use numeric chain ids. Withdrawal preparation and execution use protocol slugs (`base`, not `8453`).
 - Sign and execute with the `amount` that prepare returned, not your original input.
-- `ready` is not done — broadcast the returned transaction and keep polling.
+- `ready` is not done — broadcast the returned transaction (on Bitcoin, finalize the PSBT first) and keep polling.
 - Move quickly between prepare, sign, and execute. The nonce is short-lived; on `expired`, re-prepare.
 - One withdrawal at a time per (chain, owner, currency). A second in-flight request returns a `409` with the existing `jobId`, and the balance unlocks when the job reaches a terminal state.
 
