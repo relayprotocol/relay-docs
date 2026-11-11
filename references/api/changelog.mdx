@@ -27,6 +27,10 @@ description: "Record of breaking changes, deprecations, and notable additions to
 
 **Behavior change** — All authenticated endpoints: rate-limit and burst-allowance budgets are now scoped to the App rather than to the individual API key, so every active and rotated key in an App shares one budget per route. Previously, each key received its own counters, which allowed additional or rotated keys to multiply effective capacity. Elevated `/authorize` buckets now key on `(App, wallet)` with an aggregate per-App ceiling (previously `(API key, wallet)` with a per-API-key ceiling). Anonymous fallbacks, user/session rules, and pre-authentication `/access-tokens` limits are unchanged. See [Apps, API keys, and Rate Limits](/references/api/api-keys#default-rate-limits).
 
+## 2026-10-21 — Access tokens for browser and mobile clients
+
+**Added** — [`POST /access-tokens`](/references/api/create-access-token): exchanges an API key from an App with elevated rate limits for a 15-minute access token. Send the token as `Authorization: Bearer` from a browser or mobile client on supported endpoints. Token requests are rate limited per parent API key and client IP. See the [Access Tokens](/references/api/api_guides/access-tokens) guide.
+
 ## 2026-10-21 — `atlasvm` on `GET /chains` and optional native `currency`
 
 **Added** — `GET /chains`: the response `vmType` enum gains **`atlasvm`**, identifying chains that settle without a native gas currency. Existing `vmType` values are unchanged.
