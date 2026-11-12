@@ -149,7 +149,9 @@ Sign the digest with the owner key and submit the signature as 0x-prefixed hex:
 | Solana | `signMessage(digest)` (the digest as a UTF-8 string), then hex-encode the ed25519 signature |
 | Tron | `tronWeb.trx.signMessageV2(digest)` |
 | TON | TonConnect `signData({ type: "text", text: digest })`, then hex-encode the signature |
-| Bitcoin | Sign the digest with the owner's BTC key as a Bitcoin message signature and submit it as 0x-prefixed hex |
+| Bitcoin | `signMessage(digest)` (the digest as a text message) as a BIP-322 simple or BIP-137 signature, then hex-encode the signature bytes |
+
+On Bitcoin, sign the 64-character hex digest string itself, not its 32 raw bytes, and don't add a `0x` prefix to the message. Both signature formats are accepted for P2WPKH (`bc1q…`), P2SH-P2WPKH (`3…`), and single-key P2TR (`bc1p…`) owners; legacy P2PKH (`1…`) owners must use BIP-137. Wallets return the signature as base64: decode it to bytes and submit those bytes as 0x-prefixed hex, not the base64 string.
 
 On TON, the wallet's `signData` response also includes a `timestamp` and `domain`. Submit them in the execute call as `additionalData["ton-vm"] = { timestamp, domain }`. They are needed for verification but are not part of the signed digest above.
 
