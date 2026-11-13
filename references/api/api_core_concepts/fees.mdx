@@ -21,6 +21,8 @@ In any given token swap or bridge powered by Relay, there are four potential fee
    - DEX swap impact
    - Solver cross-chain rebalancing fees
 
+   Swap Cost can be negative or positive. See [Positive and negative values](#positive-and-negative-values).
+
    Note: Hyperliquid charges a $1 activation fee for new deposits. Relay cannot change this fee — it is passed through to users.
 
 3. **Platform Fees (formerly Relay Fees)**
@@ -119,7 +121,7 @@ _Please note that the above fee structure applies to standard cases. In certain 
 
 **execution** - Execution costs covering network gas on the origin and/or destination chain plus the flat fee.
 
-**swap** - Swap costs from cross-currency and cross-chain exchange, including DEX fees, swap slippage, and solver rebalancing.
+**swap** - Net swap costs from cross-currency and cross-chain exchange, including DEX fees, swap slippage, and solver rebalancing. Positive when the user receives price improvement.
 
 **platform** - The Platform Fees, a flat basis-point fee charged by Relay for routing and meta-aggregation services.
 
@@ -138,6 +140,17 @@ When displaying fees to users, we recommend mapping the `data.fees` fields as fo
 <Note>
 In the quote API and [`GET /requests/v2`](/references/api/get-requests-v2), this same breakdown is returned as the `expandedPriceImpact` object, and the **platform** component is named **relay**.
 </Note>
+
+### Positive and negative values
+
+Fee `usd` values are signed from the user's point of view: negative is a cost the user paid, positive is value returned to the user. **swap** is positive when the user gets price improvement. The sign is only on `usd`; `amount` and `amountFormatted` are unsigned.
+
+When displaying fees, keep the sign and don't hide positive rows, or the rows won't add up to the total. Pair positive values with a color or label (e.g. "Price improvement") so the direction is clear.
+
+```jsonc
+"swap": { "usd": "-0.120000" } // Swap Cost: -$0.12 (user paid)
+"swap": { "usd": "0.030000" }  // Swap Cost: +$0.03 (returned to user)
+```
 
 ## Fee Sponsorship
 
