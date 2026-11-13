@@ -111,6 +111,8 @@ In any given token swap or bridge powered by Relay, there are four potential fee
 
 If you are interested in learning how app fees work, and how you can add them to your quotes please check out our [App Fees Doc](/features/app-fees).
 
+To check how a token is classified programmatically, use [`GET /currencies/classifications`](/references/api/get-currency-classifications), which returns the current stable and major symbol lists; any token in neither list is treated as minor.
+
 _Please note that the above fee structure applies to standard cases. In certain cases, such as route-specific campaigns or promotions, different fees may apply._
 
 ## Fees in the API
