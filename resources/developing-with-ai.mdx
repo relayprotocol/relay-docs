@@ -24,6 +24,33 @@ Add it to any MCP client that runs local servers, such as Claude Desktop, Claude
 
 Set `RELAY_API_KEY` in the server's environment for higher rate limits. `get_transaction_history` requires it. See [Apps, API keys, and Rate Limits](/references/api/api-keys).
 
+### Available tools
+
+The server registers 20 tools. All of them are read-only.
+
+| Tool | Description |
+|------|-------------|
+| `check_chain_status` | Check if a chain is healthy, view solver liquidity and depository contracts, and optionally check route configuration between two chains. |
+| `convert_amount` | Convert between human-readable token amounts and smallest-unit values (wei, lamports, satoshis). |
+| `estimate_fees` | Estimate the fees for a bridge or swap route without committing to execution. |
+| `execute_api_call` | Call a read-only Relay API endpoint with full parameters and get the raw response. |
+| `get_api_schema` | Discover Relay API endpoints and their schemas. |
+| `get_app_fees` | Check claimable app fee balances and past claim history for an integrator wallet. |
+| `get_bridge_quote` | Get a quote for bridging the same token from one chain to another. |
+| `get_multi_input_quote` | Get a quote for consolidating tokens from multiple origin chains into a single destination. |
+| `get_relay_app_url` | Generate a deep link to the Relay web app with pre-filled bridge or swap parameters. |
+| `get_supported_chains` | List all blockchain networks supported by Relay for bridging and swapping. |
+| `get_supported_tokens` | Search for tokens supported by Relay across chains. |
+| `get_swap_quote` | Get a quote for swapping between different tokens, same-chain or cross-chain. |
+| `get_swap_sources` | List all DEX aggregators and AMMs that Relay routes swaps through. |
+| `get_token_details` | Get detailed information about a token: price, market cap, volume, liquidity, and optionally a price chart. |
+| `get_token_price` | Get the current USD price of a token on a specific chain. |
+| `get_transaction_history` | Get past Relay bridge and swap transactions for a wallet address. Requires an API key. |
+| `get_transaction_status` | Check the status of a Relay bridge or swap transaction. |
+| `get_trending_tokens` | List currently trending tokens across Relay-supported chains. |
+| `get_user_balance` | Check a user's balance for a specific token on a route. |
+| `index_transaction` | Tell Relay to index a transaction it may have missed. |
+
 ## LLM-Optimized Documentation
 
 ### llms.txt Files
