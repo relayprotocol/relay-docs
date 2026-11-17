@@ -1,0 +1,446 @@
+---
+title: "Migrating to Quote v3"
+description: "What changed in POST /quote/v3 and how to upgrade from /quote, /quote/v2, /price, and /execute/permits."
+---
+
+`POST /quote/v3` is the latest version of the Quote API. It takes the same request as `/quote/v2` and returns a flatter, stricter response: one step per action, a fee breakdown that matches [`GET /requests/v3`](/references/api/get-requests), and one error shape with a code on every error. This guide covers every change and how to upgrade.
+
+`/quote/v3` replaces `POST /quote`, `POST /quote/v2`, and `POST /price`. Its signature steps post to `POST /execute/permits/v2`, which replaces `POST /execute/permits`. The old endpoints keep working during a deprecation window (see the [sunset timeline](#sunset-timeline) below).
+
+The `v3` endpoint suffix is a platform API version. It does not mean a request uses a particular version of [Relay Protocol](/references/protocol/overview).
+
+<Warning>
+  `/quote/v3` requires authentication. Send an `x-api-key` header, or an [access token](/references/api/api_guides/access-tokens) as `Authorization: Bearer <token>` from a browser or mobile client. Requests without either return `401` with `errorCode: "UNAUTHORIZED_QUOTE"`. See [API Keys](/references/api/api-keys).
+</Warning>
+
+## Endpoints and successors
+
+| Retiring endpoint | Successor | Notes |
+| --- | --- | --- |
+| `POST /quote` | `POST /quote/v3` | Same request. Steps check status on `/intents/status/v3` instead of `/intents/status`. |
+| `POST /quote/v2` | `POST /quote/v3` | Same request, minus `useExternalLiquidity` and `useFallbacks`. |
+| `POST /price` | `POST /quote/v3` with `indicativeQuote: true` | Returns no steps and saves no request, like `/price`. Requires an API key or access token. |
+| `POST /execute/permits` | `POST /execute/permits/v2` | Same request. Returns flat steps. `/quote/v3` signature steps already point to it. |
+| `GET /intents/status` | [`GET /intents/status/v3`](/references/api/get-intents-status-v3) | No API key needed. |
+| `GET /intents/status/v2` | [`GET /intents/status/v3`](/references/api/get-intents-status-v3) | No API key needed. |
+
+## Sunset timeline
+
+The endpoints above are **deprecated as of November 25, 2026**. They keep working, but migrate before they're fully retired on **February 23, 2027**. All six endpoints retire together.
+
+| Date | What changes |
+| --- | --- |
+| **Nov 25, 2026** | The retiring endpoints are deprecated; `/quote/v3`, `/execute/permits/v2`, and `/intents/status/v3` are the recommended versions. The old endpoints keep working. |
+| **Jan 9, 2027 onward** | Relay reduces the rate limits of the retiring endpoints in stages; requests over the limit receive `429`. The successors are not affected. |
+| **Feb 23, 2027** | The retiring endpoints are fully retired — all traffic must be on the successors. |
+
+## Detecting deprecation programmatically
+
+Every response from a retiring endpoint carries in-band deprecation signals, so clients can surface or log the sunset timeline without hard-coding dates.
+
+- **`Deprecation`** header — RFC 9745 date, e.g. `@1795564800`.
+- **`Sunset`** header — HTTP-date, e.g. `Tue, 23 Feb 2027 00:00:00 GMT`.
+- **`Link`** header — three lines with `rel="deprecation"`, `rel="sunset"`, and `rel="successor-version"`, pointing to this guide and to the endpoint's successor.
+
+For `POST /quote/v2`, the headers look like this:
+
+```http
+Deprecation: @1795564800
+Sunset: Tue, 23 Feb 2027 00:00:00 GMT
+Link: <https://docs.relay.link/references/api/api_guides/migrating-to-quote-v3>; rel="deprecation"; type="text/html"
+Link: <https://docs.relay.link/references/api/api_guides/migrating-to-quote-v3>; rel="sunset"; type="text/html"
+Link: <https://api.relay.link/quote/v3>; rel="successor-version"
+```
+
+These headers are attached to every response from a retiring endpoint (`2xx`, `4xx`, and `5xx`) and are listed in `Access-Control-Expose-Headers`, so browser clients using `fetch` or `XMLHttpRequest` can read them cross-origin:
+
+```javascript
+const res = await fetch("https://api.relay.link/quote/v2", { method: "POST", body })
+const sunset = res.headers.get("sunset")
+const deprecation = res.headers.get("deprecation")
+```
+
+Successful (`200`) responses also include a top-level `deprecation` object:
+
+```json
+"deprecation": {
+  "message": "POST /quote/v2 is deprecated. Migrate to POST /quote/v3. Relay reduces the POST /quote/v2 rate limit in stages from January 9, 2027. Relay retires POST /quote/v2 on February 23, 2027.",
+  "deprecatedAt": "2026-11-25T00:00:00Z",
+  "throttledFrom": "2027-01-09T00:00:00Z",
+  "sunsetAt": "2027-02-23T00:00:00Z",
+  "successor": "https://api.relay.link/quote/v3",
+  "migrationGuide": "https://docs.relay.link/references/api/api_guides/migrating-to-quote-v3"
+}
+```
+
+Once rate limits are reduced, `429` responses from a retiring endpoint return a route-specific body with the same `successor` and `migrationGuide` links. For guidance on reducing your request volume, see [Handling Rate Limits](/references/api/api_core_concepts/handling-rate-limits).
+
+## Migration checklist
+
+1. Send `x-api-key` (server) or an access token (client) on every `/quote/v3` call.
+2. Remove `useExternalLiquidity` and `useFallbacks` from the request body.
+3. Read `status`, `data`, and `check` from the step itself instead of from `step.items[]`.
+4. Match step ids `approve` and `authorize` instead of `approval`, `authorize1`, and `authorize2`.
+5. Read fees from the new `fees` object and origin gas from `originGas`.
+6. Read `step.depositAddress` as an object.
+7. Handle errors by `errorCode`.
+8. Poll status on `/intents/status/v3` and post signatures to `/execute/permits/v2`, following the endpoints in each step.
+
+## Request changes
+
+<AccordionGroup>
+  <Accordion title="Authentication" icon="key">
+    ```bash
+    POST /quote/v3
+    Headers:
+    x-api-key: <your-api-key>        # required, or Authorization: Bearer <access-token> [!code ++]
+    ```
+
+    `/quote/v2` accepted keyless requests. `/quote/v3` checks authentication before it validates the body, so a request without a key or token returns `401` with `errorCode: "UNAUTHORIZED_QUOTE"` whatever its body.
+  </Accordion>
+
+  <Accordion title="Removed parameters" icon="trash">
+    `useExternalLiquidity` and `useFallbacks` are removed.
+
+    `/quote/v3` also rejects parameters it does not know, where `/quote/v2` ignored them. Sending a removed or misspelled parameter returns `400` with `errorCode: "INVALID_REQUEST_PARAMS"`.
+
+    Every other `/quote/v2` parameter is unchanged, including `indicativeQuote`, `usePermit`, `useDepositAddress`, `subsidizeFees`, and `sponsoredFeeComponents`.
+  </Accordion>
+</AccordionGroup>
+
+## Response shape
+
+The same bridge quote in v2 and v3, plus a focused diff of what moved. Values are abbreviated.
+
+<Tabs>
+  <Tab title="v2">
+    ```json expandable
+    {
+      "requestId": "0x92b9...",
+      "steps": [
+        {
+          "id": "deposit",
+          "action": "Confirm transaction in your wallet",
+          "description": "Depositing funds to the relayer to execute the swap for ETH",
+          "kind": "transaction",
+          "requestId": "0x92b9...",
+          "items": [
+            {
+              "status": "incomplete",
+              "data": { "from": "0x0350...", "to": "0xa5f5...", "data": "0x...", "value": "1000000000000000000", "chainId": 8453 },
+              "check": { "endpoint": "/intents/status/v3?requestId=0x92b9...", "method": "GET" }
+            }
+          ]
+        }
+      ],
+      "fees": {
+        "gas": { "currency": { "chainId": 8453, "symbol": "ETH", "decimals": 18 }, "amount": "21000000000", "amountFormatted": "0.000000021", "amountUsd": "0.00007" },
+        "relayer": { "currency": { "chainId": 8453, "symbol": "ETH", "decimals": 18 }, "amount": "15000000000000", "amountUsd": "0.05" },
+        "relayerGas": { "amount": "5000000000000", "amountUsd": "0.02" },
+        "relayerService": { "amount": "10000000000000", "amountUsd": "0.03" },
+        "app": { "amount": "0", "amountUsd": "0" },
+        "subsidized": { "amount": "0", "amountUsd": "0" }
+      },
+      "details": {
+        "operation": "bridge",
+        "sender": "0x0350...",
+        "recipient": "0x0350...",
+        "currencyIn": { "currency": { "chainId": 8453, "symbol": "ETH", "decimals": 18 }, "amount": "1000000000000000000", "amountFormatted": "1.0", "amountUsd": "3300.00" },
+        "currencyOut": { "currency": { "chainId": 10, "symbol": "ETH", "decimals": 18 }, "amount": "999985000000000000", "amountFormatted": "0.999985", "amountUsd": "3299.95" },
+        "totalImpact": { "usd": "-0.05", "percent": "-0.00" },
+        "swapImpact": { "usd": "0", "percent": "0" },
+        "expandedPriceImpact": {
+          "swap": { "usd": "0" },
+          "execution": { "usd": "-0.02" },
+          "relay": { "usd": "-0.03" },
+          "app": { "usd": "0" },
+          "sponsored": { "usd": "0" }
+        },
+        "rate": "0.999985",
+        "timeEstimate": 2,
+        "userBalance": "5000000000000000000"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="v3">
+    ```json expandable
+    {
+      "requestId": "0x92b9...",
+      "steps": [
+        {
+          "id": "deposit",
+          "action": "Confirm transaction in your wallet",
+          "description": "Depositing funds to the relayer to execute the swap for ETH",
+          "kind": "transaction",
+          "status": "incomplete",
+          "data": { "from": "0x0350...", "to": "0xa5f5...", "data": "0x...", "value": "1000000000000000000", "chainId": 8453 },
+          "check": { "endpoint": "/intents/status/v3?requestId=0x92b9...", "method": "GET" }
+        }
+      ],
+      "fees": {
+        "execution": { "usd": "-0.02", "amount": "5000000000000", "amountFormatted": "0.000005" },
+        "swap": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+        "platform": { "usd": "-0.03", "amount": "10000000000000", "amountFormatted": "0.00001" },
+        "app": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+        "sponsored": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+        "currency": { "chainId": 8453, "address": "0x0000000000000000000000000000000000000000", "symbol": "ETH", "name": "Ether", "decimals": 18 }
+      },
+      "originGas": { "currency": { "chainId": 8453, "symbol": "ETH", "decimals": 18 }, "amount": "21000000000", "amountFormatted": "0.000000021", "amountUsd": "0.00007" },
+      "details": {
+        "operation": "bridge",
+        "sender": "0x0350...",
+        "recipient": "0x0350...",
+        "currencyIn": { "currency": { "chainId": 8453, "symbol": "ETH", "decimals": 18 }, "amount": "1000000000000000000", "amountFormatted": "1.0", "amountUsd": "3300.00" },
+        "currencyOut": { "currency": { "chainId": 10, "symbol": "ETH", "decimals": 18 }, "amount": "999985000000000000", "amountFormatted": "0.999985", "amountUsd": "3299.95" },
+        "totalImpact": { "usd": "-0.05", "percent": "-0.00" },
+        "swapImpact": { "usd": "0", "percent": "0" },
+        "rate": "0.999985",
+        "timeEstimate": 2,
+        "userBalance": "5000000000000000000"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Difference">
+    ```jsonc expandable
+    {
+      "requestId": "0x92b9...",                   // now always present
+      "steps": [
+        {
+          "id": "deposit",
+          "kind": "transaction",
+          "requestId": "0x92b9...",               // [!code --] use the top-level requestId
+          "items": [ { "status": "…", "data": {}, "check": {} } ], // [!code --]
+          "status": "incomplete",                 // [!code ++] moved up from items[]
+          "data": { },                            // [!code ++] moved up from items[]
+          "check": { "endpoint": "/intents/status/v3?requestId=0x92b9...", "method": "GET" } // [!code ++]
+        }
+      ],
+      "fees": { "gas": {}, "relayer": {}, "relayerGas": {}, "relayerService": {}, "app": {}, "subsidized": {} }, // [!code --]
+      "fees": {                                   // [!code ++] was details.expandedPriceImpact
+        "execution": {}, "swap": {}, "platform": {}, "app": {}, "sponsored": {}, // [!code ++]
+        "currency": { "symbol": "ETH", "decimals": 18 } // [!code ++]
+      },                                          // [!code ++]
+      "originGas": { "amount": "21000000000" },   // [!code ++] was fees.gas
+      "details": {
+        "expandedPriceImpact": { "relay": { "usd": "-0.03" } } // [!code --] moved to fees, relay renamed platform
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+  The full OpenAPI schema lives at [api.relay.link/documentation/json](https://api.relay.link/documentation/json).
+</Info>
+
+<Warning>
+  **`fees` has changed meaning.** The key `fees` is reused for a different shape. In v2, `fees` held `gas`, `relayer`, `relayerGas`, `relayerService`, `app`, and `subsidized`. In v3, `fees` holds the breakdown v2 returned as `details.expandedPriceImpact`. Code reading `fees.relayer` or `fees.gas` will break.
+</Warning>
+
+## What changed
+
+Every response change, in the order you are likely to hit it.
+
+<AccordionGroup>
+  <Accordion title="Steps are flat" icon="list">
+    Each step carries `status`, `data`, and `check` directly. There is no `items` array: every v2 item becomes its own step, in the same order. Execute steps in array order.
+
+    Steps no longer carry `requestId`. Use the top-level `requestId`.
+
+    Step `id`s can repeat. For example, a quote that needs a pre-approval returns two `approve` steps, and the EIP-3009 permit flow returns two `authorize` steps.
+  </Accordion>
+
+  <Accordion title="Step ids" icon="tag">
+    | v2 `id` | v3 `id` |
+    | --- | --- |
+    | `approval` | `approve` |
+    | `authorize1`, `authorize2` | `authorize` |
+    | `deposit`, `approve`, `authorize`, `swap`, `send` | unchanged |
+
+    Tell two steps with the same id apart by their position and `kind`, not by id.
+  </Accordion>
+
+  <Accordion title="Status checks and permit submission" icon="arrows-rotate">
+    `check` is `{ endpoint, method: "GET" }`, and `endpoint` is `/intents/status/v3?requestId=<requestId>`. `/quote/v2` already pointed here; `/quote` pointed to `/intents/status`.
+
+    Signature steps that post to `/execute/permits` in v2 post to `/execute/permits/v2` in v3 (`step.data.post.endpoint`). Other `post` endpoints are unchanged. See [Submitting permits](#submitting-permits).
+  </Accordion>
+
+  <Accordion title="Fees" icon="coins">
+    `fees` now matches `data.fees.quoted` on [`GET /requests/v3`](/references/api/get-requests) for the same request. See [Fees in the API](/references/api/api_core_concepts/fees#fees-in-the-api).
+
+    | v3 field | v2 equivalent |
+    | --- | --- |
+    | `fees.execution` | `details.expandedPriceImpact.execution` |
+    | `fees.swap` | `details.expandedPriceImpact.swap` |
+    | `fees.platform` | `details.expandedPriceImpact.relay` |
+    | `fees.app` | `details.expandedPriceImpact.app` |
+    | `fees.sponsored` | `details.expandedPriceImpact.sponsored` |
+    | `fees.currency` | none — the currency of every `amount` above |
+    | `originGas` | `fees.gas` |
+    | removed | `fees.relayer`, `fees.relayerGas`, `fees.relayerService`, `fees.app`, `fees.subsidized` |
+
+    Each component is `{ usd, amount, amountFormatted }`, and all five are always present, as `"0"` when there is no fee. Costs have a negative `usd`; `sponsored` is positive.
+  </Accordion>
+
+  <Accordion title="Origin gas" icon="gas-pump">
+    `originGas` is the estimated gas the wallet pays on the origin chain, including required approvals. It is a currency amount: `{ currency, amount, amountFormatted, amountUsd }`.
+
+    It is not part of `fees.execution`, because the user pays it to the network. `originGas` is omitted when it is zero, and when the solver pays origin gas through execution fees, as in [gasless execution](/features/gasless-execution).
+  </Accordion>
+
+  <Accordion title="Fee sponsorship" icon="hand-holding-dollar">
+    `feeSponsorship` now uses the [`GET /requests/v3`](/references/api/get-requests) shape:
+
+    - The `relay` component is named `platform`, in both `selectedComponents` and `components`.
+    - The currency moves to one `feeSponsorship.currency`. Amounts inside `components`, `sponsoredTotal`, and `userPaysTotal` no longer repeat it.
+
+    The request parameter `sponsoredFeeComponents` still takes `"relay"`. See [Fee Sponsorship](/features/fee-sponsorship).
+  </Accordion>
+
+  <Accordion title="Deposit addresses" icon="building-columns">
+    With `useDepositAddress: true`, `step.depositAddress` is an object instead of a string:
+
+    ```json
+    "depositAddress": {
+      "address": "0x...",
+      "type": "open",
+      "depositor": null,
+      "depositTxHash": null,
+      "recoveryAddress": null
+    }
+    ```
+
+    `type` is `strict` or `open`. This is the same object `GET /requests/v3` returns. See [Deposit Addresses](/features/deposit-addresses).
+  </Accordion>
+
+  <Accordion title="Required fields" icon="asterisk">
+    `requestId`, `steps`, `fees`, and `details` are always present on a `200`. Each step always has `id`, `action`, `description`, `kind`, and `status`.
+
+    `details` keeps every v2 field except `expandedPriceImpact`. `details.rate` and `details.userBalance` are always strings.
+  </Accordion>
+
+  <Accordion title="Errors" icon="triangle-exclamation">
+    Every error, on every status code (`400`, `401`, `403`, `429`, `500`, `503`), has one shape:
+
+    ```json
+    { "message": "…", "errorCode": "INVALID_REQUEST_PARAMS", "requestId": "0x…" }
+    ```
+
+    `errorCode` is always set. `requestId` is set when the error happened after a request id was assigned. When no specific code applies, `401` returns `UNAUTHORIZED_QUOTE`, `429` returns `RATE_LIMITED`, `503` returns `SERVICE_UNAVAILABLE`, other `4xx` return `INVALID_REQUEST_PARAMS`, and other `5xx` return `UNKNOWN_ERROR`.
+
+    The `400` fields `errorData`, `approxSimulatedBlock`, and `failedCallData` are no longer returned. See [Handling Errors](/references/api/api_core_concepts/handling-errors).
+  </Accordion>
+</AccordionGroup>
+
+## Executing v3 steps
+
+The loop is the same as before, one level shallower: read each step's `kind` and `data`, act on it, and follow the endpoints the step gives you. Steps already marked `complete` need no action. The example below uses an EVM wallet with viem.
+
+```typescript expandable
+const quote = await fetch("https://api.relay.link/quote/v3", {
+  method: "POST",
+  headers: { "content-type": "application/json", "x-api-key": YOUR_API_KEY },
+  body: JSON.stringify({
+    user: WALLET_ADDRESS,
+    recipient: WALLET_ADDRESS,
+    originChainId: 8453,
+    destinationChainId: 10,
+    originCurrency: "0x0000000000000000000000000000000000000000",
+    destinationCurrency: "0x0000000000000000000000000000000000000000",
+    amount: "1000000000000000000",
+    tradeType: "EXACT_INPUT",
+  }),
+}).then((res) => res.json())
+
+const steps = [...quote.steps]
+for (let i = 0; i < steps.length; i++) {
+  const step = steps[i]
+  if (step.status === "complete") continue
+
+  if (step.kind === "signature") {
+    // 1. Sign, then post the signature where the step says
+    const { sign, post } = step.data
+    const signature =
+      sign.signatureKind === "eip191"
+        ? await walletClient.signMessage({ message: sign.message })
+        : await walletClient.signTypedData({
+            domain: sign.domain,
+            types: sign.types,
+            primaryType: sign.primaryType,
+            message: sign.value,
+          })
+    const result = await fetch(
+      `https://api.relay.link${post.endpoint}?signature=${signature}`,
+      {
+        method: post.method,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(post.body),
+      }
+    ).then((res) => res.json())
+    // 2. Run any steps the permit returns next, before the remaining quote steps
+    if (result.steps) steps.splice(i + 1, 0, ...result.steps)
+  } else {
+    // 3. Send the transaction as given
+    const { to, data, value, gas } = step.data
+    await walletClient.sendTransaction({
+      to,
+      data,
+      value: BigInt(value),
+      gas: gas ? BigInt(gas) : undefined,
+    })
+  }
+}
+
+// 4. Poll status
+const status = await fetch(
+  `https://api.relay.link/intents/status/v3?requestId=${quote.requestId}`
+).then((res) => res.json())
+```
+
+For the full lifecycle, including polling intervals and terminal states, see [Step Execution](/references/api/api_core_concepts/step-execution).
+
+## Migrating from `/price`
+
+Send the same request to `/quote/v3` with `indicativeQuote: true`. Like `/price`, an indicative quote returns no executable steps and saves no request.
+
+```json
+{
+  "user": "0x0350...",
+  "originChainId": 8453,
+  "destinationChainId": 10,
+  "originCurrency": "0x0000000000000000000000000000000000000000",
+  "destinationCurrency": "0x0000000000000000000000000000000000000000",
+  "amount": "1000000000000000000",
+  "tradeType": "EXACT_INPUT",
+  "indicativeQuote": true
+}
+```
+
+The response has `steps: []`, no `protocol` object, and the v3 `fees`, `originGas`, and `details` described above. It includes a `requestId`, but the request is not saved, so you cannot execute or track it. Request an executable quote when the user is ready to proceed.
+
+`/price` accepted keyless requests. `/quote/v3` needs an API key on your server, or an [access token](/references/api/api_guides/access-tokens) from a browser or mobile client.
+
+## Submitting permits
+
+`POST /execute/permits/v2` takes the same request as `/execute/permits`: the `kind`, `requestId`, and `api` from the signature step's `post.body`, and the signature in the `signature` query parameter. You do not build this call yourself: `/quote/v3` signature steps already point to it.
+
+The response is `{ message, steps? }`. When the permit starts a transaction the wallet must send, such as the swap in a same-chain permit swap, `steps` holds that step in the v3 flat shape. Its `data` includes `gas` and either `maxFeePerGas` and `maxPriorityFeePerGas` or `gasPrice`, and its `check` points to `/intents/status/v3`. Run it before the remaining quote steps.
+
+Errors follow the v3 shape. `4xx` errors can include an `errorData` object, such as the `required` and `available` amounts for an allowance or balance error.
+
+`/quote` and `/quote/v2` steps keep posting to `/execute/permits` until those endpoints retire.
+
+## Status polling
+
+Poll [`GET /intents/status/v3`](/references/api/get-intents-status-v3) with the quote's `requestId`. It needs no API key, so browser clients can poll it directly.
+
+If you call `/quote` today, your steps point to `GET /intents/status`. If you call `/intents/status` or `/intents/status/v2` yourself, switch to `/intents/status/v3`; both are retiring (see the [sunset timeline](#sunset-timeline)).
+
+## Using the Relay SDK
+
+`executeSteps` in `@relayprotocol/relay-sdk` 8.1.0 and later runs flat v3 steps as well as `items` steps, so step execution keeps working when you pass it a `/quote/v3` response.
+
+**TBD:** the SDK release in which `getQuote` and the hooks call `/quote/v3`. Until then, they call `/quote/v2`.
