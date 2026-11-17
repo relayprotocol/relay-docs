@@ -1,0 +1,179 @@
+---
+title: "Limit Orders API Reference"
+sidebarTitle: "API Reference"
+description: "Look up the limit orders endpoints, the Order object, statuses, error codes, and limits."
+hidden: true
+---
+
+<Warning>
+**Closed beta.** These endpoints can change before general availability. Start with the [integration guide](/limit-orders/guide).
+</Warning>
+
+## Overview
+
+- **Base URL:** `https://api.relay.link`
+- **Authentication:** send your API key in the `x-api-key` header on every request.
+- **Format:** JSON requests and responses. Create, sign, and cancel return `{ order }`; list returns `{ orders, continuation }`.
+
+| Method | Path | Purpose | SDK action | API key needs |
+| --- | --- | --- | --- | --- |
+| `POST` | `/orders` | [Create an order](/limit-orders/create-order) | `createOrder` | Limit orders enabled for its app |
+| `POST` | `/orders/{orderId}/signature` | [Sign an order](/limit-orders/sign-order), which opens it | `signOrder` | Limit orders enabled for its app |
+| `GET` | `/orders` | [List orders](/limit-orders/list-orders), or read one by id | `getOrders` | Any active key |
+| `POST` | `/orders/{orderId}/cancel` | [Cancel an order](/limit-orders/cancel-order) | `cancelOrder` | Any active key |
+
+Relay sends status changes to your server with the [order.updated webhook](/limit-orders/webhook).
+
+**Relay SDK.** The actions above are on `getClient().actions` in `@relayprotocol/relay-sdk`, along with `executeOrder`, which runs an order's `steps` with a wallet. Given a `wallet`, `createOrder` and `cancelOrder` also run the steps they return. The SDK returns the order itself rather than `{ order }`, and throws an `APIError` on failure, with the API's `errorCode` in `error.rawError.errorCode`. Pass `apiKey` to `createClient` only on your server; in the browser, point `baseApiUrl` at a proxy that adds the key.
+
+**Ownership.** Orders belong to your account, not to the key that created them. Any of your keys can read and cancel any of your orders, and open orders keep running when you rotate the key that created them. Another account's order returns `404 ORDER_NOT_FOUND`. If limit orders are turned off for your app, its open orders are cancelled with `cancellationReason: "access_revoked"`.
+
+**Conventions.**
+
+- Amounts are strings in base units of their currency.
+- Prices are decimal strings in USD.
+- Timestamps in responses are ISO 8601 strings. The list filters `startTimestamp` and `endTimestamp` take Unix seconds.
+- Addresses come back lowercased.
+- Unknown fields in a request body are dropped.
+
+## The Order object
+
+| Field | Description |
+| --- | --- |
+| **id** | The order id, `order_id_<uuid>`. Use it in every path. |
+| **clientOrderId** | Your id from create, or `null`. |
+| **orderHash** | EIP-712 hash of the permit the user signs. |
+| **type** | `"limit"`. |
+| **status** | `pending`, `open`, `processing`, `requires_action`, or `closed`. See [Statuses](#statuses). |
+| **outcome** | How a closed order ended; `null` until it closes. See [Outcomes](#outcomes). |
+| **cancellationReason** | `requested` or `access_revoked`; `null` unless `outcome` is `cancelled`. |
+| **requiredAction** | What has to happen before the order can continue; `null` unless `status` is `requires_action`. See [Required actions](#required-actions). |
+| **latestCheck** | The latest price check, or `null` before the first one. See [Price check](#price-check). |
+| **user**, **recipient**, **refundTo** | The wallet that funds and signs the order, who receives the output, and who receives refunds. |
+| **side**, **targetCurrency**, **targetChainId**, **settlementCurrency**, **settlementChainId**, **targetPrice**, **amount** | The terms from create. |
+| **originChainId**, **originCurrency** | Where the funds are spent: the target on a sell, the settlement currency on a buy. The steps run on `originChainId`. |
+| **destinationChainId**, **destinationCurrency** | Where the output is delivered. |
+| **appFees**, **subsidizeFees**, **sponsoredFeeComponents**, **maxSubsidizationAmount**, **subsidizationBps** | The fee options from create. |
+| **fees** | Fees estimated at create: `gas`, `relayer`, `relayerGas`, `relayerService`, `app`, and `subsidized`, each in the same shape as a quote's fees. |
+| **createdAt**, **updatedAt**, **expiresAt** | ISO 8601 timestamps. |
+| **closedAt** | When the order closed; `null` while it's active. |
+| **requestIds** | The Relay requests that moved the order's funds. Empty until Relay pulls them. |
+| **filledAmount** | Base units of the destination currency delivered to the recipient. |
+| **refundedAmount** | Base units sent back after Relay pulled the funds, in the currency Relay held when it refunded: the origin currency, or the token an origin swap converted it to. A refunded order closes as `cancelled` or `expired`. |
+| **withdrawnAmount** | Base units withdrawn by the owner. Always `"0"` during the beta. |
+| **steps** | What the owner still has to sign or send, in order. Empty when nothing is needed. |
+
+### Steps
+
+Order steps are flat: each step carries its own `status`, `data`, and `check`, with no `items` array.
+
+| Field | Description |
+| --- | --- |
+| **id** | `approve`, `authorize`, `cancel`, or `withdraw`. |
+| **action**, **description** | Text you can show the user. |
+| **kind** | `transaction` (send `data` as a transaction) or `signature` (sign `data.sign`, then post to `data.post`). |
+| **status** | `incomplete` or `complete`. |
+| **data** | For a transaction: `from`, `to`, `data`, `value`, `chainId`. For a signature: `sign` (EIP-712 `domain`, `types`, `primaryType`, `value`) and `post` (`endpoint`, `method`, `body`). |
+| **check** | Optional `{ endpoint, method }` to confirm the step. |
+
+| Step | When it appears |
+| --- | --- |
+| `approve` | On a `pending` order, when the wallet hasn't approved Permit2 for the token. A transaction that approves Permit2. |
+| `authorize` | On a `pending` order. The Permit2 permit to sign; its `post` is `/orders/{orderId}/signature` and its `check` is `GET /orders?orderId={orderId}`. |
+| `cancel` | After an onchain cancel, while the permit is still valid and unused. A transaction to Permit2 that burns the permit's nonce. |
+| `withdraw` | Reserved. No order produces it during the beta. |
+
+### Statuses
+
+| `status` | Meaning |
+| --- | --- |
+| `pending` | Created and waiting for the user's signature. |
+| `open` | Signed. Relay is watching the price and the funds are still in the user's wallet. This includes the moment Relay pulls the funds, and an order whose pull failed, which goes back to waiting. |
+| `processing` | Relay holds the funds: a fill or a refund is under way, or Relay is retrying after a failed fill. |
+| `requires_action` | The order needs an action before it can continue. `requiredAction` says which. |
+| `closed` | Final. See `outcome`. |
+
+Statuses only move forward. An order past `expiresAt` that Relay never took funds for reads as `closed` with `outcome: "expired"`.
+
+### Outcomes
+
+| `outcome` | Meaning |
+| --- | --- |
+| `filled` | The order filled. See `filledAmount`. |
+| `cancelled` | Cancelled; see `cancellationReason`. If Relay held the funds, they were refunded first; see `refundedAmount`. |
+| `expired` | `expiresAt` passed before the order filled or was signed. If Relay held the funds, they were refunded first; see `refundedAmount`. |
+
+An order whose funds can be neither delivered nor returned doesn't close: it stays `requires_action`.
+
+### Required actions
+
+| `requiredAction` | Meaning |
+| --- | --- |
+| `compliance_review` | A wallet check stopped the fill, and Relay is reviewing it. |
+| `manual_refund` | Relay couldn't send the refund automatically and will refund the funds manually. |
+
+More values may be added, so handle an unknown `requiredAction` by showing the order as needing attention.
+
+### Price check
+
+`latestCheck` on the order, and `price_check` entries in webhooks, describe one of Relay's price checks:
+
+| Field | Description |
+| --- | --- |
+| **marketPrice** | USD per whole unit of the target before Relay's and the app's fees; `null` when the order couldn't be quoted. |
+| **allInPrice** | USD per whole unit of the target after all fees, which is what Relay compares with `targetPrice`; `null` when the order couldn't be quoted. |
+| **reason** | Why the check didn't start a fill: `price_not_reached`, `no_route`, `insufficient_balance`, or `insufficient_allowance`. `null` when nothing stopped it. |
+| **checkedAt** | When the check ran. On a webhook entry this is `createdAt`. |
+
+An order short of balance or Permit2 allowance doesn't trigger; it stays `open` until the user fixes it or the order expires.
+
+### Cancel reasons
+
+| `cancellationReason` | Meaning |
+| --- | --- |
+| `requested` | You cancelled the order. |
+| `access_revoked` | Relay cancelled it because your app lost access to limit orders. |
+
+## Errors
+
+Errors return `{ "message": "...", "errorCode": "..." }`. Schema validation errors, such as a missing field or a bad format, return only `message`, for example `{"message":"body must have required property 'type'"}`.
+
+| `errorCode` | Status | Endpoints | When |
+| --- | --- | --- | --- |
+| `INVALID_REQUEST_PARAMS` | 400 | Create, sign | `expiresAt` outside 15 minutes to 7 days; target and settlement are the same currency; sponsorship options without `subsidizeFees`; `targetPrice` and `amount` give a zero minimum output; a sign request without a signature. |
+| `INVALID_ADDRESS` | 400 | Create | `user` isn't a valid EVM address. |
+| `UNSUPPORTED_CURRENCY` | 400 | Create | The target is the native currency; a buy's target isn't held by Relay; a sell's target isn't a token on its chain; the settlement currency isn't an accepted stablecoin. |
+| `UNSUPPORTED_ROUTE` | 400 | Create | The currency spent isn't on an EVM chain, or the origin chain doesn't support swapping a token Relay doesn't hold. |
+| `AMOUNT_TOO_LOW` | 400 | Create | The amount is too small to quote. |
+| `NO_QUOTES` | 400 | Create | Any other reason the order can't be quoted, such as no route, an amount that is too high, or an invalid app fee recipient. `message` says which. |
+| `INSUFFICIENT_FUNDS` | 400 | Create | The wallet holds less than `amount` of the currency it spends. |
+| `MAX_OPEN_ORDERS_REACHED` | 400 | Create, sign | The wallet already has 100 `open` or `processing` orders. |
+| `MAX_OPEN_ORDER_PAIRS_REACHED` | 400 | Create, sign | The wallet's `open` and `processing` orders are already on 50 token pairs, and this order is on another pair. |
+| `INVALID_SIGNATURE` | 400 | Sign | The signature isn't the `user`'s signature of the order. |
+| `UNAUTHORIZED` | 401 | All | Missing or invalid API key. |
+| `FORBIDDEN` | 403 | Create, sign | The key's app doesn't have limit orders enabled. |
+| `ORDER_NOT_FOUND` | 404 | Sign, cancel | No order with this id in your account. |
+| `IDEMPOTENCY_KEY_REUSED` | 409 | Create | The `Idempotency-Key` already created an order from a different body. |
+| `CLIENT_ORDER_ID_EXISTS` | 409 | Create | The `clientOrderId` already belongs to an order created with another `Idempotency-Key` or none. |
+| `ORDER_ALREADY_SIGNED` | 409 | Sign | The order was already opened with this signature. Treat it as success. |
+| `ORDER_NOT_PENDING` | 409 | Sign | The order isn't `pending`. |
+| `ORDER_ALREADY_CANCELLED` | 409 | Cancel | The order is already cancelled, or its cancel is waiting on a refund. |
+| `ORDER_NOT_CANCELLABLE` | 409 | Cancel | The order can't be cancelled in its current state. |
+| `UNKNOWN_ERROR` | 500 | All | An unexpected error: "Could not process request". Safe to retry; on create, retry with the same `Idempotency-Key`. |
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Order lifetime (`expiresAt`) | At least 15 minutes and at most 7 days from create |
+| `open` and `processing` orders per wallet | 100, across all integrators and chains |
+| Token pairs with `open` or `processing` orders per wallet | 50 |
+| `Idempotency-Key` | 1–255 characters, per account, never expires |
+| `clientOrderId` | 1–128 characters, once per account |
+| List page size | 1–50, default 20 |
+
+## Not live yet
+
+These are in development and **not** available on the API today. Don't build against them yet:
+
+- **A standard error shape**, `{ message, errorCode, errorData, requestId }`, and operation ids `createOrder`, `listOrders`, `signOrder`, and `cancelOrder` in the API spec.

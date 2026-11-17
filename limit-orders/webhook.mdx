@@ -1,0 +1,40 @@
+---
+title: "Webhook: order.updated"
+sidebarTitle: "order.updated Webhook"
+description: "Receive each new entry in a limit order's history as a signed webhook."
+hidden: true
+---
+
+Relay posts `order.updated` to every endpoint of the order's app that is enabled and subscribed to the event, once for each new entry in the order's history. Contact the Relay team to set up `order.updated` webhooks for your app; they can't be configured in the Dashboard yet.
+
+Shared objects, error codes, and limits are on the [Limit Orders API Reference](/limit-orders/api-reference).
+
+## Payload
+
+| Field | Description |
+| --- | --- |
+| **event** | `"order.updated"`. |
+| **timestamp** | When Relay sent the webhook, in Unix milliseconds. |
+| **data.order** | The full [Order](/limit-orders/api-reference#the-order-object) object as it is when the webhook is sent. |
+| **data.entry** | One new history entry; see below. |
+
+## History entry
+
+Every entry has an `id` that is unique within the order (`event_<n>` or `check_<n>`), a `createdAt` timestamp, and a `type`:
+
+| `type` | Other fields | Meaning |
+| --- | --- | --- |
+| `status` | `status`, `outcome` | The order's status changed; `outcome` is set when it closes. |
+| `deposit` | `state`, `recordId` | Relay's pull of the user's funds with the permit. |
+| `fill` | `state`, `recordId` | A fill of the order. |
+| `refund` | `state`, `recordId` | A refund of the pulled funds. |
+| `price_check` | `marketPrice`, `allInPrice`, `reason` | A price check; see [Price check](/limit-orders/api-reference#price-check). Sent for the first check, any check whose `reason` differs from the previous check's or whose price moved into a different band from `targetPrice` (within 1%, 5%, or 10%, or further), and the check that clears the order to fill (`reason` is `null`). Other checks aren't sent. |
+
+`state` is `started`, `succeeded`, or `failed`, and `recordId` is the Relay request id, also listed in `order.requestIds`. `claim` and `withdrawal` are reserved types.
+
+## Delivery
+
+- Webhooks carry `X-Signature-Timestamp` and `X-Signature-SHA256`, the HMAC-SHA256 of `<timestamp>.<body>` keyed with one of the app's active API keys. Verify against each active key, as for [request webhooks](/references/api/api_guides/webhooks#verification).
+- Each entry is delivered once per endpoint, with retries and exponential backoff when your endpoint fails. Deduplicate on `entry.id`.
+- Deliveries can arrive out of order; keep the `data.order` with the latest `updatedAt`.
+- Entries from before an endpoint subscribed aren't sent.

@@ -1,0 +1,64 @@
+---
+title: "Create an Order"
+description: "Validate and price a limit order, and get the steps the user signs to open it."
+hidden: true
+---
+
+`POST /orders` · SDK: `createOrder({ order, idempotencyKey?, wallet?, onProgress? })`
+
+Validates and prices a limit order and returns it as `pending`, with the steps the user has to complete. The order opens once its `authorize` step is signed and posted. Nothing happens onchain at create.
+
+Shared objects, error codes, and limits are on the [Limit Orders API Reference](/limit-orders/api-reference).
+
+## Headers
+
+| Header | Description | Required |
+| --- | --- | --- |
+| **x-api-key** | Your API key. Its app must have limit orders enabled. | ✅ |
+| **Idempotency-Key** | 1–255 characters, scoped to your account. The same key and body return the first order without quoting again; the same key with another body returns `409 IDEMPOTENCY_KEY_REUSED`. Keys don't expire. | ❌ |
+
+## Body
+
+| Property | Description | Required |
+| --- | --- | --- |
+| **type** | Always `"limit"`. | ✅ |
+| **user** | EVM address that funds the order and signs it. | ✅ |
+| **side** | `"sell"` spends the target for the settlement currency; `"buy"` spends the settlement currency for the target. | ✅ |
+| **targetCurrency** | Address of the token being traded. Must be an ERC-20, not the native currency. On a buy, it must be a currency Relay holds on its chain. | ✅ |
+| **targetChainId** | Chain id of `targetCurrency`. | ✅ |
+| **settlementCurrency** | Address of the stablecoin the order is priced and paid in. Must be an accepted stablecoin that Relay holds on its chain, such as USDC or USDT. | ✅ |
+| **settlementChainId** | Chain id of `settlementCurrency`. | ✅ |
+| **targetPrice** | USD per 1 whole unit of the target, all-in (after Relay's fees, gas, and app fees). Sell: minimum net proceeds per unit. Buy: maximum total cost per unit. A positive decimal string with up to 18 decimal places. The settlement stablecoin counts as exactly $1. | ✅ |
+| **amount** | Base units of the currency spent: `targetCurrency` on a sell, `settlementCurrency` on a buy. | ✅ |
+| **expiresAt** | RFC 3339 time when the order expires: at least 15 minutes and at most 7 days from now. | ✅ |
+| **recipient** | Receives the output. Defaults to `user`. | ❌ |
+| **refundTo** | Receives refunds on the origin chain. Defaults to `user`. | ❌ |
+| **clientOrderId** | Your own id for the order, 1–128 characters. Each value can be used once per account. | ❌ |
+| **appFees** | `[{ recipient, fee }]`, with `fee` in bps, as on a quote. | ❌ |
+| **subsidizeFees** | Sponsor the order's fees from your app balance, as on a quote. | ❌ |
+| **sponsoredFeeComponents** | Which fees to sponsor: any of `execution`, `swap`, `relay`, `app`, `rent`, without duplicates. Defaults to all but `rent`. Requires `subsidizeFees`. | ❌ |
+| **maxSubsidizationAmount** | Cap on the sponsored amount, in base units. Requires `subsidizeFees`. | ❌ |
+| **subsidizationBps** | Share of the fees to sponsor, 0–10000. Requires `subsidizeFees`. | ❌ |
+
+The currency spent (the target on a sell, the settlement currency on a buy) must be on an EVM chain, because the order is authorized with Permit2. On a sell, a target Relay doesn't hold is swapped on the origin chain first, on chains that support it.
+
+## Checks
+
+Create runs these checks in order:
+
+1. Request schema. Failures return `400` with only a `message`.
+2. API key and app permission.
+3. `Idempotency-Key` and `clientOrderId` reuse. A replay of an earlier create returns its order here, before any other check.
+4. Currencies and addresses.
+5. `expiresAt` window.
+6. Open orders: the wallet must have fewer than 100 orders that are `open` or `processing`, counted across all integrators and chains, and those orders must be on fewer than 50 token pairs unless the new order's pair is already one of them. `pending` orders don't count.
+7. Balance: the wallet must hold at least `amount` of the currency it spends. The balance isn't reserved, and the Permit2 allowance isn't checked here.
+8. Quote, including app fee and route checks.
+
+## Response
+
+`200`: `{ order }`, a `pending` [Order](/limit-orders/api-reference#the-order-object) with its `approve` (when needed) and `authorize` steps.
+
+## Errors
+
+`INVALID_REQUEST_PARAMS`, `INVALID_ADDRESS`, `UNSUPPORTED_CURRENCY`, `UNSUPPORTED_ROUTE`, `AMOUNT_TOO_LOW`, `NO_QUOTES`, `INSUFFICIENT_FUNDS`, `MAX_OPEN_ORDERS_REACHED`, `MAX_OPEN_ORDER_PAIRS_REACHED`, `IDEMPOTENCY_KEY_REUSED`, `CLIENT_ORDER_ID_EXISTS`, `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_ERROR`. Create only returns these codes; any other reason the order can't be quoted comes back as `NO_QUOTES` with a message that says why. See [Errors](/limit-orders/api-reference#errors) for when each one applies.

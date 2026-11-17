@@ -1,0 +1,42 @@
+---
+title: "List Orders"
+description: "List your account's limit orders, or read one order by id."
+hidden: true
+---
+
+`GET /orders` · SDK: `getOrders(query)`, with `status` as an array
+
+Lists your account's orders, newest first by default. Pass `orderId` to read one order.
+
+Shared objects, error codes, and limits are on the [Limit Orders API Reference](/limit-orders/api-reference).
+
+## Parameters
+
+| Query parameter | Description |
+| --- | --- |
+| **orderId** | Return only this order. |
+| **appId** | Only orders created by this app of your account. |
+| **user** | Only orders of this wallet. EVM addresses match in any letter case. |
+| **status** | Comma-separated statuses, such as `open,processing`. Values are matched as given, so an unknown status returns an empty list rather than an error. |
+| **originChainId** | Only orders that spend on this chain. |
+| **destinationChainId** | Only orders that deliver on this chain. |
+| **limit** | Page size, 1–50. Default 20. |
+| **continuation** | The `continuation` from the previous page. |
+| **startTimestamp**, **endTimestamp** | Unix seconds, applied to the `sortBy` field. |
+| **sortBy** | `createdAt` (default) or `updatedAt`. |
+| **sortDirection** | `desc` (default) or `asc`. |
+
+## Response
+
+`200`:
+
+| Field | Description |
+| --- | --- |
+| **orders** | Array of [Order](/limit-orders/api-reference#the-order-object) objects. Empty when nothing matches, including an `orderId` that doesn't exist. |
+| **continuation** | Pass it back to read the next page. Absent on the last page. |
+| **status** | Only with `orderId`. The answer to the `authorize` step's `check`: `waiting` until the order is signed, `success` once it is, `failure` if it closed unsigned. |
+| **txHashes** | Only with `orderId`. Always `[]`, because signing sends no transaction. |
+
+## Errors
+
+`400` for invalid query parameters (`message` only), `401 UNAUTHORIZED`, and `500 UNKNOWN_ERROR`.

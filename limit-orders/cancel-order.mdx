@@ -1,0 +1,40 @@
+---
+title: "Cancel an Order"
+description: "Cancel a limit order with a gasless soft cancel or an onchain Permit2 nonce invalidation."
+hidden: true
+---
+
+`POST /orders/{orderId}/cancel` · SDK: `cancelOrder({ orderId, onchain?, wallet? })`, which sends the `cancel` step when given a wallet
+
+Cancels an order that isn't being filled. The order closes with `outcome: "cancelled"` and `cancellationReason: "requested"`, and Relay never uses its signature.
+
+Shared objects, error codes, and limits are on the [Limit Orders API Reference](/limit-orders/api-reference).
+
+## Parameters
+
+| Parameter | In | Description | Required |
+| --- | --- | --- | --- |
+| **orderId** | path | The order's `id`. | ✅ |
+| **onchain** | body | Default `false`, a soft cancel: immediate and gasless. With `true`, the order also returns a `cancel` transaction step that burns the permit's Permit2 nonce, so the signature can never be used. The body itself is optional. | ❌ |
+
+## Which orders can be cancelled
+
+- `pending` orders, and `open` orders that are waiting for their price, close at once.
+- A `processing` order that Relay is retrying after a failed fill is refunded first. It stays `processing` and closes as `cancelled` once the refund lands, with the amount in `refundedAmount`.
+- Anything else returns `409`: an order whose funds are being pulled, filled, or refunded, a `requires_action` order, an order past `expiresAt`, and a closed order.
+
+The `cancel` step appears only after an onchain cancel, while the permit is still valid and only if Relay never used it. Relay doesn't track whether you sent it, so it stays `incomplete`. Choose soft or onchain on the first call: a second cancel returns `ORDER_ALREADY_CANCELLED`.
+
+## Response
+
+`200`: `{ order }`.
+
+## Errors
+
+| Status | `errorCode` | When |
+| --- | --- | --- |
+| 400 | — | Invalid body, such as a non-boolean `onchain`, or `Content-Type: application/json` with an empty body. |
+| 401 | `UNAUTHORIZED` | Missing or invalid API key. |
+| 404 | `ORDER_NOT_FOUND` | No order with this id in your account. |
+| 409 | `ORDER_ALREADY_CANCELLED` | The order is already cancelled, or its cancel is waiting on a refund. |
+| 409 | `ORDER_NOT_CANCELLABLE` | The order can't be cancelled now: "Order is processing", "Order is closed", and so on. |
