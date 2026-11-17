@@ -15,6 +15,24 @@ Webhooks are self-serve in the [Relay Dashboard](https://dashboard.relay.link). 
 4. Enable the webhook and enter your **Webhook URL** — an HTTPS endpoint to POST to when the status of a request changes (e.g. `https://my.server/receive-relay-event`).
 5. Optionally add **Custom Headers** to include on every webhook request (e.g. `Authorization: Bearer 0x123`), then save.
 
+## Destination restrictions
+
+Relay validates the webhook destination when you save a configuration and again at delivery time, so a configuration that passes save-time checks will still be refused on delivery if the hostname later resolves to a blocked address. Invalid configurations are rejected with a `400` from the save endpoint; invalid destinations detected at delivery time cause the event to be skipped and recorded in delivery logs.
+
+**URL requirements:**
+
+- Must use the `http` or `https` scheme — other schemes are rejected.
+- Must not embed credentials (`https://user:pass@host`).
+- Must not resolve to a loopback, private, link-local, or otherwise reserved IP range. Every DNS answer for the hostname is checked at both save time and delivery time.
+- Redirects are not followed. Point the configured URL directly at the endpoint that should receive events.
+
+**Custom header restrictions:**
+
+- Header names must match `[A-Za-z0-9-]+`, and header values must not contain carriage returns or line feeds.
+- The following headers cannot be set as custom headers, because they would override routing or HTTP framing: `Host`, `Connection`, `Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `Proxy-Connection`, `TE`, `Trailer`, `Transfer-Encoding`, `Upgrade`, `Content-Length`.
+
+<Info>If you host the receiving endpoint behind infrastructure that only exposes an internal-range IP, point the webhook at a publicly reachable gateway or proxy (for example, [Hookdeck](https://hookdeck.com)) rather than the internal host directly.</Info>
+
 ## Webhook Events
 
 Relay Webhooks specifically stream transaction statuses for both cross and same-chain status, though the stages differ slightly.

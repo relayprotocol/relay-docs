@@ -3,6 +3,14 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-11-17 — Webhook destinations validated at delivery time
+
+**Behavior change** — Webhook delivery: the destination hostname is re-resolved and checked at send time, not only when the configuration is saved. Destinations whose hostname resolves to a loopback, private, link-local, or reserved IP range at delivery time are refused and the event is skipped (and recorded in delivery logs). Destinations that resolve to public addresses are unaffected. HTTP redirects are no longer followed — configure the URL that should receive events directly.
+
+**Breaking** — Webhook configuration: webhook URLs must use the `http` or `https` scheme and must not embed credentials (`https://user:pass@host`). URLs whose hostname resolves (at save time) to a loopback, private, link-local, or reserved IP range are rejected with `400`. Previously these were accepted.
+
+**Breaking** — Webhook configuration: custom header names are restricted to `[A-Za-z0-9-]+`, header values must not contain carriage returns or line feeds, and the hop-by-hop / routing / framing headers (`Host`, `Connection`, `Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `Proxy-Connection`, `TE`, `Trailer`, `Transfer-Encoding`, `Upgrade`, `Content-Length`) are rejected at save time and never forwarded on delivery. Existing configurations that include any of these are accepted until the next save, at which point they must be removed. See [Webhooks — Destination restrictions](/references/api/api_guides/webhooks#destination-restrictions).
+
 ## 2026-11-05 — `POST /execute` rejects unsubsidized calls without a `requestId`
 
 **Behavior change** — `POST /execute`: calls with `executionOptions.subsidizeFees: false` now require a `requestId` from a prior `POST /quote` call. Requests that omit `requestId` while `subsidizeFees` is disabled return `400` with `errorCode: "INVALID_REQUEST_PARAMS"` and `message: "requestId from a prior /quote call is required when subsidizeFees is disabled"`. Previously the same combination passed validation, ran simulation, and then failed an internal quote lookup — surfacing as `500`. Standalone executions with `subsidizeFees: true` (no `requestId`) continue to be supported unchanged, and unsubsidized calls that pass a `requestId` from a prior quote are unaffected. The guard mirrors the existing `SPONSOR_WALLET_REQUIRED` check: subsidized execution needs a sponsor wallet, unsubsidized execution needs a quote to prove payment to the solver. See [Gasless Execution](/features/gasless-execution).
