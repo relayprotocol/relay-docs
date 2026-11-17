@@ -4,15 +4,3 @@ description: "Cancel a limit order with a gasless soft cancel or an onchain Perm
 openapi: post /orders/{orderId}/cancel
 hidden: true
 ---
-
-A cancelled order closes with `outcome: "cancelled"` and `cancellationReason: "requested"`, and Relay never uses its signature.
-
-**Which orders can be cancelled:**
-
-- `pending` orders, and `open` orders that are waiting for their price, close at once.
-- A `processing` order that Relay is retrying after a failed fill is refunded first. It stays `processing` and closes as `cancelled` once the refund lands, with the amount in `refundedAmount`.
-- Anything else returns `409 ORDER_NOT_CANCELLABLE`: an order whose funds are being pulled, filled, or refunded, a `requires_action` order, an order past `expiresAt`, and a closed order.
-
-With `onchain: true`, the order also returns a `cancel` transaction step that burns the permit's Permit2 nonce. It appears only while the permit is still valid and unused, and stays `incomplete` because Relay doesn't track whether you sent it. Choose soft or onchain on the first call: a second cancel returns `409 ORDER_ALREADY_CANCELLED`.
-
-See [Cancel an order](/limit-orders/guide#cancel-an-order) in the integration guide for examples.
