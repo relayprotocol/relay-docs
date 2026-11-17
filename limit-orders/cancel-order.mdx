@@ -5,7 +5,7 @@ openapi: post /orders/{orderId}/cancel
 hidden: true
 ---
 
-SDK: `cancelOrder({ orderId, onchain?, wallet? })`, which sends the `cancel` step when given a wallet. A cancelled order closes with `outcome: "cancelled"` and `cancellationReason: "requested"`, and Relay never uses its signature.
+A cancelled order closes with `outcome: "cancelled"` and `cancellationReason: "requested"`, and Relay never uses its signature.
 
 **Which orders can be cancelled:**
 
@@ -15,4 +15,4 @@ SDK: `cancelOrder({ orderId, onchain?, wallet? })`, which sends the `cancel` ste
 
 With `onchain: true`, the order also returns a `cancel` transaction step that burns the permit's Permit2 nonce. It appears only while the permit is still valid and unused, and stays `incomplete` because Relay doesn't track whether you sent it. Choose soft or onchain on the first call: a second cancel returns `409 ORDER_ALREADY_CANCELLED`.
 
-See [Cancel an order](/limit-orders/guide#cancel-an-order) in the integration guide for SDK and API examples.
+See [Cancel an order](/limit-orders/guide#cancel-an-order) in the integration guide for examples.

@@ -5,7 +5,7 @@ openapi: get /orders
 hidden: true
 ---
 
-SDK: `getOrders(query)`, with `status` as an array. Orders come back newest first by default; pass `orderId` to read one order.
+Orders come back newest first by default; pass `orderId` to read one order.
 
 - An `orderId` that doesn't exist returns an empty `orders` array, not a `404`.
 - `status` values are matched as given, so an unknown status returns an empty list rather than an error.

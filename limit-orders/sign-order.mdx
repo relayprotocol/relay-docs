@@ -5,12 +5,4 @@ openapi: post /orders/{orderId}/signature
 hidden: true
 ---
 
-SDK: `signOrder({ orderId, signature })`, or `executeOrder({ order, wallet })` to sign and post in one go. No transaction is sent: Relay keeps the permit and uses it only when the price meets the limit.
-
-- Send the signature in the `signature` query parameter, where the `authorize` step's `post` expects it. The body's `signature` is read only when the query has none.
-- Send a JSON body even then: the step's `post.body` is `{}`, and `Content-Type: application/json` with an empty body is rejected.
-- The signature must come from the order's `user`; any other signer returns `400 INVALID_SIGNATURE`.
-- Signing checks the open-order caps again, because `pending` orders aren't counted at create.
-- Posting a signature the order was already opened with returns `409 ORDER_ALREADY_SIGNED`. Treat it as success.
-
-Step 3 of the [integration guide](/limit-orders/guide) shows the full signing flow with the SDK and the API.
+No transaction is sent: Relay keeps the permit and uses it only when the price meets the limit.
