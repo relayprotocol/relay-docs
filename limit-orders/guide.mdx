@@ -57,24 +57,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     ### Set up the SDK
 
-    The order actions are on `getClient().actions` once you create the client: `createOrder`, `getOrders`, `signOrder`, `cancelOrder`, and `executeOrder`.
-
-    ```typescript
-    // npm install @relayprotocol/relay-sdk viem
-    import { createClient, convertViemChainToRelayChain, MAINNET_RELAY_API } from '@relayprotocol/relay-sdk'
-    import { base } from 'viem/chains'
-
-    createClient({
-      baseApiUrl: MAINNET_RELAY_API,
-      apiKey: 'YOUR_API_KEY', // server-side only
-      source: 'YOUR.SOURCE',
-      chains: [convertViemChainToRelayChain(base)]
-    })
-    ```
-
-    <Warning>
-    Only pass `apiKey` to a client that runs on your server. In the browser, set `baseApiUrl` to a proxy you control that adds the `x-api-key` header and forwards the `Idempotency-Key` header, so the key never reaches the client.
-    </Warning>
+    Install and configure the SDK as described in [Installation](/references/relay-kit/sdk/installation) and [createClient](/references/relay-kit/sdk/createClient). The order actions are on `getClient().actions`: `createOrder`, `getOrders`, `signOrder`, `cancelOrder`, and `executeOrder`. If you proxy requests to keep your API key off the client, make the proxy forward the `Idempotency-Key` header too.
 
     ### Currencies
 

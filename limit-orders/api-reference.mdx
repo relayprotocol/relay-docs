@@ -36,45 +36,13 @@ Relay sends status changes to your server with the [order.updated webhook](/limi
 - Addresses come back lowercased.
 - Unknown fields in a request body are dropped.
 
-## The Order object
+## Order values
 
-| Field | Description |
-| --- | --- |
-| **id** | The order id, `order_id_<uuid>`. Use it in every path. |
-| **clientOrderId** | Your id from create, or `null`. |
-| **orderHash** | EIP-712 hash of the permit the user signs. |
-| **type** | `"limit"`. |
-| **status** | `pending`, `open`, `processing`, `requires_action`, or `closed`. See [Statuses](#statuses). |
-| **outcome** | How a closed order ended; `null` until it closes. See [Outcomes](#outcomes). |
-| **cancellationReason** | `requested` or `access_revoked`; `null` unless `outcome` is `cancelled`. |
-| **requiredAction** | What has to happen before the order can continue; `null` unless `status` is `requires_action`. See [Required actions](#required-actions). |
-| **latestPriceCheck** | The latest price check, or `null` before the first one. See [Price check](#price-check). |
-| **user**, **recipient**, **refundTo** | The wallet that funds and signs the order, who receives the output, and who receives refunds. |
-| **side**, **targetCurrency**, **targetChainId**, **settlementCurrency**, **settlementChainId**, **targetPrice**, **amount** | The terms from create. |
-| **originChainId**, **originCurrency** | Where the funds are spent: the target on a sell, the settlement currency on a buy. The steps run on `originChainId`. |
-| **destinationChainId**, **destinationCurrency** | Where the output is delivered. |
-| **appFees**, **subsidizeFees**, **sponsoredFeeComponents**, **maxSubsidizationAmount**, **subsidizationBps** | The fee options from create. |
-| **fees** | Fees estimated at create: `gas`, `relayer`, `relayerGas`, `relayerService`, `app`, and `subsidized`, each in the same shape as a quote's fees. |
-| **createdAt**, **updatedAt**, **expiresAt** | ISO 8601 timestamps. |
-| **closedAt** | When the order closed; `null` while it's active. |
-| **requestIds** | The Relay requests that moved the order's funds. Empty until Relay pulls them. |
-| **filledAmount** | Base units of the destination currency delivered to the recipient. |
-| **refundedAmount** | Base units sent back after Relay pulled the funds, in the currency Relay held when it refunded: the origin currency, or the token an origin swap converted it to. A refunded order closes as `cancelled` or `expired`. |
-| **withdrawnAmount** | Base units withdrawn by the owner. Always `"0"` during the beta. |
-| **steps** | What the owner still has to sign or send, in order. Empty when nothing is needed. |
+Each endpoint page lists every field of the Order object from the API spec. The tables below explain the values that the spec only lists by name.
 
 ### Steps
 
-Order steps are flat: each step carries its own `status`, `data`, and `check`, with no `items` array.
-
-| Field | Description |
-| --- | --- |
-| **id** | `approve`, `authorize`, `cancel`, or `withdraw`. |
-| **action**, **description** | Text you can show the user. |
-| **kind** | `transaction` (send `data` as a transaction) or `signature` (sign `data.sign`, then post to `data.post`). |
-| **status** | `incomplete` or `complete`. |
-| **data** | For a transaction: `from`, `to`, `data`, `value`, `chainId`. For a signature: `sign` (EIP-712 `domain`, `types`, `primaryType`, `value`) and `post` (`endpoint`, `method`, `body`). |
-| **check** | Optional `{ endpoint, method }` to confirm the step. |
+Order steps are flat: each step carries its own `status`, `data`, and `check`, with no `items` array. Send a `transaction` step's `data` as a transaction; sign a `signature` step's `data.sign`, then post to `data.post`.
 
 | Step | When it appears |
 | --- | --- |
@@ -114,18 +82,18 @@ An order whose funds can be neither delivered nor returned doesn't close: it sta
 
 More values may be added, so handle an unknown `requiredAction` by showing the order as needing attention.
 
-### Price check
+### Price check reasons
 
-`latestPriceCheck` on the order, and `price_check` entries in webhooks, describe one of Relay's price checks:
+`latestPriceCheck.reason`, and `reason` on `price_check` webhook entries, says why a check didn't start a fill. Relay checks in this order and reports the first that applies; prices are still filled in when the order could be quoted.
 
-| Field | Description |
+| `reason` | Meaning |
 | --- | --- |
-| **marketPrice** | USD per whole unit of the target before Relay's and the app's fees; `null` when the order couldn't be quoted or a fee has no USD amount. |
-| **allInPrice** | USD per whole unit of the target after all fees, which is what Relay compares with `targetPrice`; `null` when the order couldn't be quoted. |
-| **reason** | Why the check didn't start a fill: `insufficient_balance`, `insufficient_allowance`, `no_route`, or `price_not_reached`, checked in that order, so the first that applies is reported. `null` when nothing stopped it. |
-| **checkedAt** | When the check ran. On a webhook entry this is `createdAt`. |
+| `insufficient_balance` | The wallet holds less than `amount` of the currency it spends. |
+| `insufficient_allowance` | The wallet's Permit2 allowance for the token is below `amount`. |
+| `no_route` | No route can currently quote the order. |
+| `price_not_reached` | The all-in price hasn't reached `targetPrice`. |
 
-An order short of balance or Permit2 allowance doesn't trigger; it stays `open` until the user fixes it or the order expires.
+`reason` is `null` when nothing stopped the fill. An order short of balance or Permit2 allowance doesn't trigger; it stays `open` until the user fixes it or the order expires.
 
 ### Cancel reasons
 

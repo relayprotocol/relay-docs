@@ -1,41 +1,14 @@
 ---
 title: "Sign an Order"
 description: "Submit the user's Permit2 signature to open a pending limit order."
+openapi: post /orders/{orderId}/signature
 hidden: true
 ---
 
-`POST /orders/{orderId}/signature` · SDK: `signOrder({ orderId, signature })`, or `executeOrder({ order, wallet })` to sign and post in one go
+SDK: `signOrder({ orderId, signature })`, or `executeOrder({ order, wallet })` to sign and post in one go. No transaction is sent: Relay keeps the permit and uses it only when the price meets the limit.
 
-Submits the user's signature of the order's Permit2 permit, from the `authorize` step's `data.sign`, and opens the order. Relay keeps the permit and uses it only when the price meets the limit. No transaction is sent.
-
-Shared objects, error codes, and limits are on the [Limit Orders API Reference](/limit-orders/api-reference).
-
-## Parameters
-
-| Parameter | In | Description | Required |
-| --- | --- | --- | --- |
-| **orderId** | path | The order's `id`. | ✅ |
-| **signature** | query | The EIP-712 signature. This is where the `authorize` step's `post` expects it. | ✅ (❌ if sent in the body) |
-| **signature** | body | Read only when the query has none. | ❌ |
-
-Send a JSON body even when the signature is in the query: the step's `post.body` is `{}`. A request with `Content-Type: application/json` and an empty body is rejected.
-
-## Response
-
-`200`: `{ order }`, now `open`.
-
-The signature must come from the order's `user`. Posting a signature the order was already opened with returns `409 ORDER_ALREADY_SIGNED`; treat it as success. Signing checks the open-order caps again, because `pending` orders aren't counted at create.
-
-## Errors
-
-| Status | `errorCode` | When |
-| --- | --- | --- |
-| 400 | `INVALID_REQUEST_PARAMS` | No signature: "signature is required". Checked before the API key. |
-| 400 | `INVALID_SIGNATURE` | The signature isn't the `user`'s signature of this order. |
-| 400 | `MAX_OPEN_ORDERS_REACHED` | The wallet already has 100 `open` or `processing` orders. |
-| 400 | `MAX_OPEN_ORDER_PAIRS_REACHED` | The wallet's `open` and `processing` orders are already on 50 token pairs, and this order is on another pair. |
-| 401 | `UNAUTHORIZED` | Missing or invalid API key. |
-| 403 | `FORBIDDEN` | The key's app doesn't have limit orders enabled. |
-| 404 | `ORDER_NOT_FOUND` | No order with this id in your account. |
-| 409 | `ORDER_ALREADY_SIGNED` | The order was already opened with this signature. |
-| 409 | `ORDER_NOT_PENDING` | The order isn't `pending`: "Order is open", "Order is closed", and so on. |
+- Send the signature in the `signature` query parameter, where the `authorize` step's `post` expects it. The body's `signature` is read only when the query has none.
+- Send a JSON body even then: the step's `post.body` is `{}`, and `Content-Type: application/json` with an empty body is rejected.
+- The signature must come from the order's `user`; any other signer returns `400 INVALID_SIGNATURE`.
+- Signing checks the open-order caps again, because `pending` orders aren't counted at create.
+- Posting a signature the order was already opened with returns `409 ORDER_ALREADY_SIGNED`. Treat it as success.

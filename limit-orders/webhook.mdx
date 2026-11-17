@@ -15,7 +15,7 @@ Shared objects, error codes, and limits are on the [Limit Orders API Reference](
 | --- | --- |
 | **event** | `"order.updated"`. |
 | **timestamp** | When Relay sent the webhook, in Unix milliseconds. |
-| **data.order** | The full [Order](/limit-orders/api-reference#the-order-object) object as it is when the webhook is sent. |
+| **data.order** | The full order as it is when the webhook is sent, in the same shape [List orders](/limit-orders/list-orders) returns. |
 | **data.entry** | One new history entry; see below. |
 
 ## History entry
@@ -28,7 +28,7 @@ Every entry has an `id` that is unique within the order (`event_<n>` or `check_<
 | `deposit` | `state`, `recordId` | Relay's pull of the user's funds with the permit. |
 | `fill` | `state`, `recordId` | A fill of the order. |
 | `refund` | `state`, `recordId` | A refund of the pulled funds. |
-| `price_check` | `marketPrice`, `allInPrice`, `reason` | A price check; see [Price check](/limit-orders/api-reference#price-check). Sent for the first check, any check whose `reason` differs from the previous check's or whose price moved into a different band from `targetPrice` (within 1%, 5%, or 10%, or further), and the check that clears the order to fill (`reason` is `null`). Other checks aren't sent. |
+| `price_check` | `marketPrice`, `allInPrice`, `reason` | A price check, with the same fields as the order's `latestPriceCheck`. Sent for the first check, any check whose `reason` differs from the previous check's or whose price moved into a different band from `targetPrice` (within 1%, 5%, or 10%, or further), and the check that clears the order to fill (`reason` is `null`). Other checks aren't sent. |
 
 `state` is `started`, `succeeded`, or `failed`, and `recordId` is the Relay request id, also listed in `order.requestIds`. `claim` and `withdrawal` are reserved types.
 
