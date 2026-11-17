@@ -102,7 +102,7 @@ More values may be added, so handle an unknown `requiredAction` by showing the o
 
 ## Errors
 
-Errors return `{ "message": "...", "errorCode": "..." }`. Schema validation errors, such as a missing field or a bad format, return only `message`, for example `{"message":"body must have required property 'type'"}`.
+Errors return `{ message, errorCode, errorData?, requestId? }`. `errorData` holds the error's details when it has any, such as the quote's details behind a `NO_QUOTES`. `requestId` names the Relay request a failed create ran under, once create has started quoting the order; include it when you contact support. Schema validation errors, such as a missing field or a bad format, return only `message`, for example `{"message":"body must have required property 'type'"}`.
 
 | `errorCode` | Status | Endpoints | When |
 | --- | --- | --- | --- |
@@ -125,7 +125,7 @@ Errors return `{ "message": "...", "errorCode": "..." }`. Schema validation erro
 | `ORDER_NOT_PENDING` | 409 | Sign | The order isn't `pending`. |
 | `ORDER_ALREADY_CANCELLED` | 409 | Cancel | The order is already cancelled, or its cancel is waiting on a refund. |
 | `ORDER_NOT_CANCELLABLE` | 409 | Cancel | The order can't be cancelled in its current state. |
-| `UNKNOWN_ERROR` | 500 | All | An unexpected error: "Could not process request". Safe to retry; on create, retry with the same `Idempotency-Key`. |
+| `UNKNOWN_ERROR` | 500 | All | An unexpected error: "Could not process request", with `requestId` when the call had one. Safe to retry; on create, retry with the same `Idempotency-Key`. |
 
 ## Limits
 

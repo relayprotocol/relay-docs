@@ -237,7 +237,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - those orders are on fewer than **50** token pairs, unless the new order is on a pair the wallet already trades;
     - the wallet holds at least `amount` of the currency it spends right now. The balance isn't reserved, so two orders can rely on the same funds.
 
-    Each failed check returns an `errorCode`; see [Errors](/limit-orders/api-reference#errors). In the SDK, a failed request throws an `APIError`; read the code from `error.rawError.errorCode`.
+    Each failed check returns an `errorCode`, plus a `requestId` to share with support once the order has been quoted; see [Errors](/limit-orders/api-reference#errors). In the SDK, a failed request throws an `APIError`; read the code from `error.rawError.errorCode`.
   </Step>
   <Step title="Execute (sign the order)">
     Each step in the order's `steps` array carries its own `status`, `data`, and `check`; see [Steps](/limit-orders/api-reference#steps) for when each one appears. Run the `incomplete` steps in order:
