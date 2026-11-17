@@ -2,3 +2,22 @@
 title: "Intent Status"
 asyncapi: "/websocket-reference.json relay-ws"
 ---
+
+## Subscription limits
+
+Each WebSocket message is bounded before any channels are allocated. A subscribe or unsubscribe request that violates any of the limits below is rejected as a whole and no partial subscriptions are created.
+
+| Limit | Value | Applies to |
+| ----- | ----- | ---------- |
+| **Incoming message size** | 16 KiB | Every client-to-server frame |
+| **Filter keys per message** | 16 | Keys in the `filters` object of a `subscribe` or `unsubscribe` request |
+| **Filter combinations per message** | 1000 | Cartesian product of the array values in `filters` |
+| **Subscriptions per connection** | Tier-dependent | Total active subscriptions on a single WebSocket connection |
+
+A `subscribe` request whose filters would expand to more **new** channels than the connection has remaining capacity is rejected without subscribing to any of them. Re-subscribing to channels the connection already holds does not consume additional capacity.
+
+The filter-key and filter-combination limits also apply to `unsubscribe` requests, so a connection whose subscriptions were created under older, more permissive limits should release them in appropriately sized batches.
+
+## Error responses
+
+A rejected `subscribe` or `unsubscribe` request produces a response with `status: "error"` and a `data.message` describing the reason — for example, exceeding the filter-key limit, exceeding the filter-combination limit, exceeding remaining subscription capacity, or supplying a malformed `filters` object. The request has no effect on the connection's subscriptions when this happens.
