@@ -131,6 +131,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     ```
 
     ```bash API
+    # Replace EXPIRES_AT with an RFC 3339 time 15 minutes to 7 days from now
     curl -X POST "https://api.relay.link/orders" \
       -H "Content-Type: application/json" \
       -H "x-api-key: YOUR_API_KEY" \
@@ -145,7 +146,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
         "settlementChainId": 4663,
         "targetPrice": "4000",
         "amount": "10000000000000000",
-        "expiresAt": "2026-11-16T12:00:00Z",
+        "expiresAt": "EXPIRES_AT",
         "clientOrderId": "my-order-123"
       }'
     ```
@@ -200,7 +201,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
         "filledAmount": "0",
         "refundedAmount": "0",
         "withdrawnAmount": "0",
-        "latestCheck": null,
+        "latestPriceCheck": null,
         "steps": [
           {
             "id": "approve",
@@ -461,14 +462,14 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     **Handle deliveries.**
 
-    - Relay retries a failed delivery with exponential backoff, and delivers each entry once per endpoint. Use `entry.id` to drop duplicates on your side.
+    - Relay retries a failed delivery with exponential backoff, and delivers each entry once per endpoint. Entry ids are unique within an order, so drop duplicates on the pair of `data.order.id` and `entry.id`.
     - Webhooks can arrive out of order. Order entries by `entry.createdAt`, and keep the `order` with the latest `updatedAt` as the current state.
     - Relay doesn't send entries from before an endpoint subscribed to `order.updated`. Read the order with `GET /orders?orderId=` to catch up.
     - Respond with a 2xx quickly and do slow work afterwards.
 
     ### Why hasn't my order filled?
 
-    Every order carries `latestCheck`, the result of Relay's latest price check, so you can show progress and explain a wait:
+    Every order carries `latestPriceCheck`, the result of Relay's latest price check, so you can show progress and explain a wait:
 
     | Field | Description |
     | --- | --- |
@@ -479,12 +480,14 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     | `reason` | What it means | What to show |
     | --- | --- | --- |
-    | `price_not_reached` | The all-in price hasn't reached `targetPrice`. | The distance between `allInPrice` and `targetPrice`. |
-    | `no_route` | No route can currently quote the order. | That the order is waiting for liquidity. |
     | `insufficient_balance` | The wallet holds less than `amount` of the currency it spends. | Ask the user to top up. |
     | `insufficient_allowance` | The wallet's Permit2 allowance for the token is below `amount`. | Ask the user to approve Permit2 again. |
+    | `no_route` | No route can currently quote the order. | That the order is waiting for liquidity. |
+    | `price_not_reached` | The all-in price hasn't reached `targetPrice`. | The distance between `allInPrice` and `targetPrice`. |
 
-    `latestCheck` is `null` until the first check. An order short of balance or allowance doesn't trigger: it stays `open` and fills once the user fixes it, if the price is still met before `expiresAt`.
+    When more than one applies, `reason` is the first in the table: Relay checks balance and allowance before the route and the price. The prices are still filled in whenever the order could be quoted, so you can show the distance to the limit while asking the user to fix their balance.
+
+    `latestPriceCheck` is `null` until the first check. An order short of balance or allowance doesn't trigger: it stays `open` and fills once the user fixes it, if the price is still met before `expiresAt`.
 
     ### Outcomes
 
@@ -536,12 +539,12 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
   <Step title="Optimize">
     You've placed and tracked your first limit order. These options help in production:
 
-    - **Retry creates safely.** Send an `Idempotency-Key` header (`idempotencyKey` in the SDK), 1–255 characters, on every create. A retry with the same key and body returns the first order instead of a second one; the same key with a different body returns `409 IDEMPOTENCY_KEY_REUSED`. `clientOrderId` lets you look orders up by your own id and is rejected with `409 CLIENT_ORDER_ID_EXISTS` if it was already used. When you retry, resend the exact body, including the same `expiresAt`.
+    - **Retry creates safely.** Send an `Idempotency-Key` header (`idempotencyKey` in the SDK), 1–255 characters, on every create. A retry with the same key and body returns the first order instead of a second one; the same key with a different body returns `409 IDEMPOTENCY_KEY_REUSED`. `clientOrderId` stores your own id on the order, returned as `order.clientOrderId`, so you can match orders to your records; it is rejected with `409 CLIENT_ORDER_ID_EXISTS` if it was already used. When you retry, resend the exact body, including the same `expiresAt`.
     - **Show the market price.** Read the target's USD price with [GET /currencies/token/price/v2](/references/api/get-token-price-v2) to offer presets such as market, +1%, or +5%. `targetPrice` is all-in, so a limit set exactly at the market price waits until the market moves past it by the fees.
     - **Charge app fees.** Add `appFees: [{ "recipient": "...", "fee": "50" }]`, in bps, as on a quote. See [App Fees](/features/app-fees). App fees are part of the all-in price the order must meet.
     - **Sponsor fees.** `subsidizeFees`, `sponsoredFeeComponents`, `maxSubsidizationAmount`, and `subsidizationBps` work as on a quote and draw on your app balance. See [Fee Sponsorship](/features/fee-sponsorship).
     - **Trade on one chain or across chains.** This guide delivers on Robinhood Chain because `settlementChainId` differs from `targetChainId`. Use the same chain for both to place a same-chain order. The steps always run on the chain of the currency spent, `originChainId`.
-    - **Warn about balance and approvals.** Relay checks the balance at create but doesn't reserve it. If the user moves the funds or revokes the Permit2 approval, the order stays `open` with `latestCheck.reason` set to `insufficient_balance` or `insufficient_allowance`. Surface that reason so the user can fix it before `expiresAt`.
+    - **Warn about balance and approvals.** Relay checks the balance at create but doesn't reserve it. If the user moves the funds or revokes the Permit2 approval, the order stays `open` with `latestPriceCheck.reason` set to `insufficient_balance` or `insufficient_allowance`. Surface that reason so the user can fix it before `expiresAt`.
     - **Keep orders private.** An open order's `targetPrice`, `amount`, and `user` tell others exactly when and how big the fill will be, so a leaked order can be sandwiched when it executes. Read orders from your backend and show each user only their own, don't expose them in public endpoints, pages, analytics, or logs, and keep your API key server-side so nobody else can list your app's orders.
 
     <Note>

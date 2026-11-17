@@ -48,7 +48,7 @@ Relay sends status changes to your server with the [order.updated webhook](/limi
 | **outcome** | How a closed order ended; `null` until it closes. See [Outcomes](#outcomes). |
 | **cancellationReason** | `requested` or `access_revoked`; `null` unless `outcome` is `cancelled`. |
 | **requiredAction** | What has to happen before the order can continue; `null` unless `status` is `requires_action`. See [Required actions](#required-actions). |
-| **latestCheck** | The latest price check, or `null` before the first one. See [Price check](#price-check). |
+| **latestPriceCheck** | The latest price check, or `null` before the first one. See [Price check](#price-check). |
 | **user**, **recipient**, **refundTo** | The wallet that funds and signs the order, who receives the output, and who receives refunds. |
 | **side**, **targetCurrency**, **targetChainId**, **settlementCurrency**, **settlementChainId**, **targetPrice**, **amount** | The terms from create. |
 | **originChainId**, **originCurrency** | Where the funds are spent: the target on a sell, the settlement currency on a buy. The steps run on `originChainId`. |
@@ -116,13 +116,13 @@ More values may be added, so handle an unknown `requiredAction` by showing the o
 
 ### Price check
 
-`latestCheck` on the order, and `price_check` entries in webhooks, describe one of Relay's price checks:
+`latestPriceCheck` on the order, and `price_check` entries in webhooks, describe one of Relay's price checks:
 
 | Field | Description |
 | --- | --- |
-| **marketPrice** | USD per whole unit of the target before Relay's and the app's fees; `null` when the order couldn't be quoted. |
+| **marketPrice** | USD per whole unit of the target before Relay's and the app's fees; `null` when the order couldn't be quoted or a fee has no USD amount. |
 | **allInPrice** | USD per whole unit of the target after all fees, which is what Relay compares with `targetPrice`; `null` when the order couldn't be quoted. |
-| **reason** | Why the check didn't start a fill: `price_not_reached`, `no_route`, `insufficient_balance`, or `insufficient_allowance`. `null` when nothing stopped it. |
+| **reason** | Why the check didn't start a fill: `insufficient_balance`, `insufficient_allowance`, `no_route`, or `price_not_reached`, checked in that order, so the first that applies is reported. `null` when nothing stopped it. |
 | **checkedAt** | When the check ran. On a webhook entry this is `createdAt`. |
 
 An order short of balance or Permit2 allowance doesn't trigger; it stays `open` until the user fixes it or the order expires.
