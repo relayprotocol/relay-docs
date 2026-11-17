@@ -40,7 +40,7 @@ Each endpoint page lists every field of the Order object from the API spec. The 
 
 ### Steps
 
-Order steps are flat: each step carries its own `status`, `data`, and `check`, with no `items` array. Send a `transaction` step's `data` as a transaction; sign a `signature` step's `data.sign`, then post to `data.post`.
+Each step carries its own `status`, `data`, and `check`. Send a `transaction` step's `data` as a transaction; sign a `signature` step's `data.sign`, then post to `data.post`.
 
 | Step | When it appears |
 | --- | --- |

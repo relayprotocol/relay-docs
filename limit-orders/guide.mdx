@@ -245,7 +245,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     Each failed check returns an `errorCode`; see [Errors](/limit-orders/api-reference#errors). In the SDK, a failed request throws an `APIError`; read the code from `error.rawError.errorCode`.
   </Step>
   <Step title="Execute (sign the order)">
-    The order's `steps` array works like a quote's steps, with one difference: each step carries its own `status`, `data`, and `check`, with no `items` array. Run the `incomplete` steps in order:
+    Each step in the order's `steps` array carries its own `status`, `data`, and `check`. Run the `incomplete` steps in order:
 
     - **`approve`** (`transaction`): approves Permit2 to spend the token. It appears only when the wallet hasn't approved Permit2 for this token yet. Send it and wait for the receipt.
     - **`authorize`** (`signature`, EIP-712): the Permit2 permit that lets Relay pull the funds once the price is met. Sign `data.sign`, then post `data.post.body` to `data.post.endpoint` with the signature in the `signature` query parameter. The response is the order, now `open`.
