@@ -276,11 +276,11 @@ Every response change, in the order you are likely to hit it.
     | `fees.execution` | `details.expandedPriceImpact.execution` |
     | `fees.swap` | `details.expandedPriceImpact.swap` |
     | `fees.platform` | `details.expandedPriceImpact.relay` |
-    | `fees.app` | `details.expandedPriceImpact.app` |
+    | `fees.app` | `details.expandedPriceImpact.app` (also replaces the legacy `fees.app`) |
     | `fees.sponsored` | `details.expandedPriceImpact.sponsored` |
     | `fees.currency` | none — the currency of every `amount` above |
     | `originGas` | `fees.gas` |
-    | removed | `fees.relayer`, `fees.relayerGas`, `fees.relayerService`, `fees.app`, `fees.subsidized` |
+    | removed | `fees.relayer`, `fees.relayerGas`, `fees.relayerService`, `fees.subsidized` |
 
     Each component is `{ usd, amount, amountFormatted }`, and all five are always present, as `"0"` when there is no fee. Costs have a negative `usd`; `sponsored` is positive.
   </Accordion>
@@ -337,15 +337,23 @@ Every response change, in the order you are likely to hit it.
 
 ## Executing v3 steps
 
-The loop is the same as before, one level shallower: read each step's `kind` and `data`, act on it, and follow the endpoints the step gives you. Steps already marked `complete` need no action. The example below uses viem on EVM chains: `walletClient` signs and sends, and `publicClient` reads receipts on the step's chain.
+The loop is the same as before, one level shallower: read each step's `kind` and `data`, act on it, and follow the endpoints the step gives you. Steps already marked `complete` need no action. The example below uses viem with a browser wallet on Base, the origin chain of the quote. For steps on other chains, read receipts with a `publicClient` for that chain.
 
 ```typescript expandable
+import { createPublicClient, createWalletClient, custom, http } from "viem"
+import { base } from "viem/chains"
+
+const [account] = await window.ethereum.request({ method: "eth_requestAccounts" })
+const walletClient = createWalletClient({ account, chain: base, transport: custom(window.ethereum) })
+const publicClient = createPublicClient({ chain: base, transport: http() })
+
 const quote = await fetch("https://api.relay.link/quote/v3", {
   method: "POST",
-  headers: { "content-type": "application/json", "x-api-key": YOUR_API_KEY },
+  // In the browser, authenticate with an access token minted by your backend
+  headers: { "content-type": "application/json", authorization: `Bearer ${ACCESS_TOKEN}` },
   body: JSON.stringify({
-    user: WALLET_ADDRESS,
-    recipient: WALLET_ADDRESS,
+    user: account,
+    recipient: account,
     originChainId: 8453,
     destinationChainId: 10,
     originCurrency: "0x0000000000000000000000000000000000000000",
