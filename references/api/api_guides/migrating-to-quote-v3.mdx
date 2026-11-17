@@ -104,7 +104,18 @@ Once rate limits are reduced, `429` responses from a retiring endpoint return a 
 
     `/quote/v3` also rejects parameters it does not know, where `/quote/v2` ignored them. Sending a removed or misspelled parameter returns `400` with `errorCode: "INVALID_REQUEST_PARAMS"`.
 
-    Every other `/quote/v2` parameter is unchanged, including `indicativeQuote`, `usePermit`, `useDepositAddress`, `subsidizeFees`, and `sponsoredFeeComponents`.
+    Every other `/quote/v2` parameter is still accepted, including `indicativeQuote`, `usePermit`, `useDepositAddress`, `subsidizeFees`, and `sponsoredFeeComponents`. As in v2, values that convert to the right type are accepted, such as `"8453"` for `originChainId`.
+
+    Validation errors name the field, including nested paths, e.g. `body/usePermit should be boolean`.
+  </Accordion>
+
+  <Accordion title="Sponsorship parameters" icon="hand-holding-dollar">
+    `/quote/v3` validates the [Fee Sponsorship](/features/fee-sponsorship) parameters before quoting:
+
+    - `maxSubsidizationAmount` must be a nonnegative integer string, such as `"0"` or `"5000000"`. Other values return `400` with `errorCode: "INVALID_REQUEST_PARAMS"`.
+    - `maxSubsidizationAmount` and `subsidizeRent: true` now require `subsidizeFees: true`, like `subsidizationBps` and `sponsoredFeeComponents`. `/quote/v2` ignored them without it; `/quote/v3` returns `400` with `errorCode: "INVALID_REQUEST_PARAMS"`. `subsidizeRent: false` is still allowed.
+
+    Sponsorship stays best effort. When a requested sponsorship can't apply, for example when the sponsor wallet is underfunded, the quote still returns `200` with user-paid fees. Check `fees.sponsored` and `feeSponsorship` to see what was sponsored.
   </Accordion>
 </AccordionGroup>
 
@@ -456,4 +467,4 @@ If you call `/quote` today, your steps point to `GET /intents/status`. If you ca
 
 `executeSteps` in `@relayprotocol/relay-sdk` 8.1.0 and later runs flat v3 steps as well as `items` steps, so step execution keeps working when you pass it a `/quote/v3` response.
 
-**TBD:** the SDK release in which `getQuote` and the hooks call `/quote/v3`. Until then, they call `/quote/v2`.
+**`{{PLACEHOLDER}}`**: the SDK release in which `getQuote` and the hooks call `/quote/v3`. Until then, they call `/quote/v2`.
