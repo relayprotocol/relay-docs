@@ -11,3 +11,5 @@ SDK: `getOrders(query)`, with `status` as an array. Orders come back newest firs
 - `status` values are matched as given, so an unknown status returns an empty list rather than an error.
 - `user` matches EVM addresses in any letter case.
 - With `orderId`, the response also carries `status` and `txHashes`, the answer to the `authorize` step's `check`. `txHashes` is always empty because signing sends no transaction.
+
+Step 4 of the [integration guide](/limit-orders/guide#webhooks) covers monitoring orders, including the `order.updated` webhook.

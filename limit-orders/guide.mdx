@@ -22,11 +22,11 @@ In this walkthrough you'll place a cross-chain order: sell 0.01 WETH on Base for
 | `pending` | Created and waiting for the user's signature. No funds move. | Sign or cancel. |
 | `open` | Signed. Relay is watching the price, and the funds are still in the user's wallet. | Cancel, except for the few seconds while Relay pulls the funds. |
 | `processing` | The price was met and Relay holds the funds: a fill or a refund is under way, or Relay is retrying after a failed fill. | Wait. An order that is retrying after a failed fill can be cancelled; it is refunded first. |
-| `requires_action` | The order needs an action before it can continue. `requiredAction` says which one. | Check `requiredAction`. |
+| `requires_action` | The order needs an action before it can continue. `requiredAction` says which one. | Check [`requiredAction`](/limit-orders/api-reference#required-actions). |
 | `closed` | Final. `outcome` says how the order ended: `filled`, `cancelled`, or `expired`. See [Outcomes](#outcomes). | Nothing. |
 
-1. **Create.** You send the order to `POST /orders`. Relay checks it, prices it, and returns it as `pending` with the steps the user has to complete.
-2. **Sign.** The user approves Permit2 for the token (once per token) and signs the order's Permit2 permit. Relay verifies the signature and the order becomes `open`. No funds move.
+1. **Create.** You send the order to [`POST /orders`](/limit-orders/create-order). Relay checks it, prices it, and returns it as `pending` with the steps the user has to complete.
+2. **Sign.** The user approves Permit2 for the token (once per token) and signs the order's Permit2 permit, which you post to [`POST /orders/{orderId}/signature`](/limit-orders/sign-order). Relay verifies the signature and the order becomes `open`. No funds move.
 3. **Watch.** Relay checks the all-in price periodically.
 4. **Fill.** When the price meets the limit, Relay pulls the funds with the permit and a solver fills the order. The order is `processing`.
 5. **Close.** The order becomes `closed` with an `outcome`: `filled`, `cancelled`, or `expired`.
@@ -48,7 +48,6 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **Create** and **sign** need an active key whose app has limit orders enabled. Otherwise they return `403 FORBIDDEN`.
     - **List** and **cancel** accept any active key of your app.
     - Orders belong to your app, not to the key that created them. Any of your keys can read and cancel them, and open orders keep running when you rotate a key.
-    - If limit orders are turned off for your app, its open orders are cancelled with `cancellationReason: "access_revoked"`.
     </Callout>
 
     ### Set up the SDK
@@ -57,7 +56,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     ### Currencies
 
-    An order has a **target** currency, the token being traded, and a **settlement** currency, the stablecoin it is priced and paid in. The **side** decides which one the user spends:
+    An order has a **`targetCurrency`** on **`targetChainId`**, the token being traded, and a **`settlementCurrency`** on **`settlementChainId`**, the stablecoin it is priced and paid in. **`side`** decides which one the user spends:
 
     | `side` | The user spends | The recipient receives |
     | --- | --- | --- |
@@ -78,7 +77,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     ```
   </Step>
   <Step title="Create the order">
-    Create the order with `POST /orders`, which returns the order with the steps the user still has to complete. Nothing happens onchain until the user signs.
+    Create the order with [`POST /orders`](/limit-orders/create-order), which returns the order with the steps the user still has to complete. Nothing happens onchain until the user signs.
 
     ### Request
 
@@ -241,10 +240,10 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     Each failed check returns an `errorCode`; see [Errors](/limit-orders/api-reference#errors). In the SDK, a failed request throws an `APIError`; read the code from `error.rawError.errorCode`.
   </Step>
   <Step title="Execute (sign the order)">
-    Each step in the order's `steps` array carries its own `status`, `data`, and `check`. Run the `incomplete` steps in order:
+    Each step in the order's `steps` array carries its own `status`, `data`, and `check`; see [Steps](/limit-orders/api-reference#steps) for when each one appears. Run the `incomplete` steps in order:
 
     - **`approve`** (`transaction`): approves Permit2 to spend the token. It appears only when the wallet hasn't approved Permit2 for this token yet. Send it and wait for the receipt.
-    - **`authorize`** (`signature`, EIP-712): the Permit2 permit that lets Relay pull the funds once the price is met. Sign `data.sign`, then post `data.post.body` to `data.post.endpoint` with the signature in the `signature` query parameter. The response is the order, now `open`.
+    - **`authorize`** (`signature`, EIP-712): the Permit2 permit that lets Relay pull the funds once the price is met. Sign `data.sign`, then post `data.post.body` to `data.post.endpoint` ([Sign an order](/limit-orders/sign-order)) with the signature in the `signature` query parameter. The response is the order, now `open`.
 
     The SDK runs both steps for you: pass the order and a wallet to `executeOrder`. To create and sign in one call, pass `wallet` to `createOrder` instead.
 
@@ -368,11 +367,11 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **Signing counts toward the caps.** It returns `400 MAX_OPEN_ORDERS_REACHED` or `400 MAX_OPEN_ORDER_PAIRS_REACHED` if the wallet reached a cap after create.
     - **Posting the same signature twice returns `409 ORDER_ALREADY_SIGNED`.** The order is already open, so treat it as success, for example when you retry a post whose response you lost.
     - **An unsigned order closes as `expired`** at `expiresAt`.
-    - **To resume an abandoned order,** read it with `getOrders` (`GET /orders?orderId=`) and run its steps again with `executeOrder`. A `pending` order keeps its steps.
-    - **If you collect the signature yourself,** for example from a wallet your backend doesn't control, submit it with `signOrder({ orderId, signature })`.
+    - **To resume an abandoned order,** read it with `getOrders` ([`GET /orders?orderId=`](/limit-orders/list-orders)) and run its steps again with `executeOrder`. A `pending` order keeps its steps.
+    - **If you collect the signature yourself,** for example from a wallet your backend doesn't control, submit it with `signOrder({ orderId, signature })`; see [Sign an order](/limit-orders/sign-order).
   </Step>
   <Step title="Monitor">
-    Read the order until `status` is `closed`, then read its `outcome`. To show a wallet's active orders, list them by `user` and `status`:
+    Read the order until `status` is `closed`, then read its `outcome`. To show a wallet's active orders, [list them](/limit-orders/list-orders) by `user` and `status`:
 
     <CodeGroup>
     ```typescript SDK
@@ -443,7 +442,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     - Relay retries a failed delivery with exponential backoff, and delivers each entry once per endpoint. Entry ids are unique within an order, so drop duplicates on the pair of `data.order.id` and `entry.id`.
     - Webhooks can arrive out of order. Order entries by `entry.createdAt`, and keep the `order` with the latest `updatedAt` as the current state.
-    - Relay doesn't send entries from before an endpoint subscribed to `order.updated`. Read the order with `GET /orders?orderId=` to catch up.
+    - Relay doesn't send entries from before an endpoint subscribed to `order.updated`. Read the order with [`GET /orders?orderId=`](/limit-orders/list-orders) to catch up.
     - Respond with a 2xx quickly and do slow work afterwards.
 
     ### Why hasn't my order filled?
@@ -513,7 +512,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     ```
     </CodeGroup>
 
-    An order that is being filled, being refunded, in `requires_action`, or past `expiresAt` returns `409 ORDER_NOT_CANCELLABLE`. An order that is already cancelled returns `409 ORDER_ALREADY_CANCELLED`, so choose soft or onchain on the first call: you can't add an onchain cancel to a soft-cancelled order.
+    An order that is being filled, being refunded, in `requires_action`, or past `expiresAt` returns `409 ORDER_NOT_CANCELLABLE`. An order that is already cancelled returns `409 ORDER_ALREADY_CANCELLED`, so choose soft or onchain on the first call: you can't add an onchain cancel to a soft-cancelled order. See [Cancel an order](/limit-orders/cancel-order) for the full rules.
   </Step>
   <Step title="Optimize">
     You've placed and tracked your first limit order. These options help in production:

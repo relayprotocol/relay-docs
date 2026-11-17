@@ -18,4 +18,4 @@ Create runs its checks in this order, so the first failure decides the error:
 7. Balance: the wallet must hold at least `amount` of the currency it spends. The balance isn't reserved, and the Permit2 allowance isn't checked here.
 8. Quote, including app fee and route checks. Any reason the order can't be quoted that has no code of its own comes back as `NO_QUOTES`.
 
-See [Errors](/limit-orders/api-reference#errors) for every error code.
+See [Errors](/limit-orders/api-reference#errors) for every error code, and Step 2 of the [integration guide](/limit-orders/guide#request) for a worked example.

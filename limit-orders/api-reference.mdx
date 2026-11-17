@@ -24,7 +24,7 @@ Relay sends status changes to your server with the [order.updated webhook](/limi
 
 **Relay SDK.** The actions above are on `getClient().actions` in `@relayprotocol/relay-sdk`, along with `executeOrder`, which runs an order's `steps` with a wallet. Given a `wallet`, `createOrder` and `cancelOrder` also run the steps they return. The SDK returns the order itself rather than `{ order }`, and throws an `APIError` on failure, with the API's `errorCode` in `error.rawError.errorCode`. Pass `apiKey` to `createClient` only on your server; in the browser, point `baseApiUrl` at a proxy that adds the key.
 
-**Ownership.** Orders belong to your account, not to the key that created them. Any of your keys can read and cancel any of your orders, and open orders keep running when you rotate the key that created them. Another account's order returns `404 ORDER_NOT_FOUND`. If limit orders are turned off for your app, its open orders are cancelled with `cancellationReason: "access_revoked"`.
+**Ownership.** Orders belong to your account, not to the key that created them. Any of your keys can read and cancel any of your orders, and open orders keep running when you rotate the key that created them. Another account's order returns `404 ORDER_NOT_FOUND`.
 
 **Conventions.**
 

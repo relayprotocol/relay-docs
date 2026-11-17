@@ -14,3 +14,5 @@ SDK: `cancelOrder({ orderId, onchain?, wallet? })`, which sends the `cancel` ste
 - Anything else returns `409 ORDER_NOT_CANCELLABLE`: an order whose funds are being pulled, filled, or refunded, a `requires_action` order, an order past `expiresAt`, and a closed order.
 
 With `onchain: true`, the order also returns a `cancel` transaction step that burns the permit's Permit2 nonce. It appears only while the permit is still valid and unused, and stays `incomplete` because Relay doesn't track whether you sent it. Choose soft or onchain on the first call: a second cancel returns `409 ORDER_ALREADY_CANCELLED`.
+
+See [Cancel an order](/limit-orders/guide#cancel-an-order) in the integration guide for SDK and API examples.

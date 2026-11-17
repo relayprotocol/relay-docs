@@ -12,3 +12,5 @@ SDK: `signOrder({ orderId, signature })`, or `executeOrder({ order, wallet })` t
 - The signature must come from the order's `user`; any other signer returns `400 INVALID_SIGNATURE`.
 - Signing checks the open-order caps again, because `pending` orders aren't counted at create.
 - Posting a signature the order was already opened with returns `409 ORDER_ALREADY_SIGNED`. Treat it as success.
+
+Step 3 of the [integration guide](/limit-orders/guide) shows the full signing flow with the SDK and the API.
