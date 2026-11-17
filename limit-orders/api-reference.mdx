@@ -26,14 +26,6 @@ Relay sends status changes to your server with the [order.updated webhook](/limi
 
 **Ownership.** Orders belong to your account, not to the key that created them. Any of your keys can read and cancel any of your orders, and open orders keep running when you rotate the key that created them. Another account's order returns `404 ORDER_NOT_FOUND`.
 
-**Conventions.**
-
-- Amounts are strings in base units of their currency.
-- Prices are decimal strings in USD.
-- Timestamps in responses are ISO 8601 strings. The list filters `startTimestamp` and `endTimestamp` take Unix seconds.
-- Addresses come back lowercased.
-- Unknown fields in a request body are dropped.
-
 ## Order values
 
 Each endpoint page lists every field of the Order object from the API spec. The tables below explain the values that the spec only lists by name.
