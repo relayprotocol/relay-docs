@@ -5,17 +5,4 @@ openapi: post /orders
 hidden: true
 ---
 
-SDK: `createOrder({ order, idempotencyKey?, wallet?, onProgress? })`. The order is returned as `pending` with its `approve` (when needed) and `authorize` steps, and opens once the `authorize` step is signed and posted. Nothing happens onchain at create.
-
-Create runs its checks in this order, so the first failure decides the error:
-
-1. Request schema. Failures return `400` with only a `message`.
-2. API key and app permission.
-3. `Idempotency-Key` and `clientOrderId` reuse. A replay of an earlier create returns its order here, before any other check.
-4. Currencies and addresses.
-5. `expiresAt` window: at least 15 minutes and at most 7 days from now.
-6. Open orders: fewer than 100 `open` or `processing` orders per wallet across all integrators, on fewer than 50 token pairs unless the new order's pair is already one of them. `pending` orders don't count.
-7. Balance: the wallet must hold at least `amount` of the currency it spends. The balance isn't reserved, and the Permit2 allowance isn't checked here.
-8. Quote, including app fee and route checks. Any reason the order can't be quoted that has no code of its own comes back as `NO_QUOTES`.
-
-See [Errors](/limit-orders/api-reference#errors) for every error code, and Step 2 of the [integration guide](/limit-orders/guide#request) for a worked example.
+The order is returned as `pending` with its `approve` (when needed) and `authorize` steps, and opens once the `authorize` step is signed and posted. Nothing happens onchain at create.
