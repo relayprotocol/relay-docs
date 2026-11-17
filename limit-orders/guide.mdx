@@ -524,9 +524,5 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **Trade on one chain or across chains.** This guide delivers on Robinhood Chain because `settlementChainId` differs from `targetChainId`. Use the same chain for both to place a same-chain order. The steps always run on the chain of the currency spent, `originChainId`.
     - **Warn about balance and approvals.** Relay checks the balance at create but doesn't reserve it. If the user moves the funds or revokes the Permit2 approval, the order stays `open` with `latestPriceCheck.reason` set to `insufficient_balance` or `insufficient_allowance`. Surface that reason so the user can fix it before `expiresAt`.
     - **Keep orders private.** An open order's `targetPrice`, `amount`, and `user` tell others exactly when and how big the fill will be, so a leaked order can be sandwiched when it executes. Read orders from your backend and show each user only their own, don't expose them in public endpoints, pages, analytics, or logs, and keep your API key server-side so nobody else can list your app's orders.
-
-    <Note>
-    **Coming soon, not live yet.** Errors will gain `errorData` and `requestId` alongside `message` and `errorCode`. We'll update this guide when it ships.
-    </Note>
   </Step>
 </Steps>
