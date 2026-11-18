@@ -104,7 +104,7 @@ Errors return `{ message, errorCode, errorData?, requestId? }`. `errorData` hold
 | `INVALID_ADDRESS` | 400 | Create | `user` isn't a valid EVM address. |
 | `UNSUPPORTED_CURRENCY` | 400 | Create | The target is the native currency; a buy's target isn't held by Relay; a sell's target isn't a token on its chain; the settlement currency isn't an accepted stablecoin. |
 | `UNSUPPORTED_ROUTE` | 400 | Create | The currency spent isn't on an EVM chain, or the origin chain doesn't support swapping a token Relay doesn't hold. |
-| `AMOUNT_TOO_LOW` | 400 | Create | The amount is too small to quote. |
+| `AMOUNT_TOO_LOW` | 400 | Create | The amount is too small to cover fees and the route's minimums. There is no fixed minimum order size. |
 | `NO_QUOTES` | 400 | Create | Any other reason the order can't be quoted, such as no route, an amount that is too high, or an invalid app fee recipient. `message` says which. |
 | `INSUFFICIENT_FUNDS` | 400 | Create | The wallet holds less than `amount` of the currency it spends. |
 | `MAX_OPEN_ORDERS_REACHED` | 400 | Create, sign | The wallet already has 100 `open` or `processing` orders. |
@@ -115,8 +115,8 @@ Errors return `{ message, errorCode, errorData?, requestId? }`. `errorData` hold
 | `ORDER_NOT_FOUND` | 404 | Sign, cancel | No order with this id in your app. |
 | `IDEMPOTENCY_KEY_REUSED` | 409 | Create | The `Idempotency-Key` already created an order from a different body. |
 | `CLIENT_ORDER_ID_EXISTS` | 409 | Create | The `clientOrderId` already belongs to an order created with another `Idempotency-Key` or none. |
-| `ORDER_ALREADY_SIGNED` | 409 | Sign | The order was already opened with this signature. Treat it as success. |
-| `ORDER_NOT_PENDING` | 409 | Sign | The order isn't `pending`. |
+| `ORDER_ALREADY_SIGNED` | 409 | Sign | The order is already signed. Treat it as success. |
+| `ORDER_NOT_PENDING` | 409 | Sign | The order closed without being signed: it was cancelled while `pending` or expired. |
 | `ORDER_ALREADY_CANCELLED` | 409 | Cancel | The order is already cancelled, or its cancel is waiting on a refund. |
 | `ORDER_NOT_CANCELLABLE` | 409 | Cancel | The order can't be cancelled in its current state. |
 | `UNKNOWN_ERROR` | 500 | All | An unexpected error: "Could not process request", with `requestId` when the call had one. Safe to retry; on create, retry with the same `Idempotency-Key`. |
