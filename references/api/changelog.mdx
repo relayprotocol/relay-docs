@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-11-18 — `POST /fast-fill` caps `solverInputCurrencyAmount` at the quoted amount
+
+**Behavior change** — `POST /fast-fill`: the optional `solverInputCurrencyAmount` body field is now bounded by the quote and cannot exceed the quoted `amount`. For an **EXACT_INPUT** or **EXPECTED_OUTPUT** quote with an origin swap the value must fall within `[minimumAmount, amount]` (inclusive); for a fixed-payout quote (**EXACT_OUTPUT**, or integrator fixed-bps in exact-output mode) or any quote without an origin swap the value must equal `amount`. Values outside those bounds — including an observed amount above the quote (positive slippage) — return `400`. Omitting the field continues to default to the quoted `amount`, which is the recommended path. Fast fills that already send the quoted `amount` (the dominant pattern, including EXACT_OUTPUT stablecoin routes) are unaffected. See [Fast Fill](/features/fast-fill) and the [Fast Fill API reference](/references/api/fast-fill).
+
 ## 2026-11-17 — Webhook destinations validated at delivery time
 
 **Behavior change** — Webhook delivery: the destination hostname is re-resolved and checked at send time, not only when the configuration is saved. Destinations whose hostname resolves to a loopback, private, link-local, or reserved IP range at delivery time are refused and the event is skipped (and recorded in delivery logs). Destinations that resolve to public addresses are unaffected. HTTP redirects are no longer followed — configure the URL that should receive events directly.
