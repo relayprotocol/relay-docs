@@ -74,7 +74,7 @@ More values may be added, so handle an unknown `requiredAction` by showing the o
 
 ### Price check reasons
 
-`latestPriceCheck.reason`, and `reason` on `price_check` webhook entries, says why a check didn't start a fill. Relay checks in this order and reports the first that applies; prices are still filled in when the order could be quoted.
+`reason` on `latestPriceCheck` and `closestPriceCheck` says why a check didn't start a fill. Relay checks in this order and reports the first that applies; prices are still filled in when the order could be quoted.
 
 | `reason` | Meaning |
 | --- | --- |

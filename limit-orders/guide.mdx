@@ -46,8 +46,8 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     **API key permissions**
 
     - **Create** and **sign** need an active key whose app has limit orders enabled. Otherwise they return `403 FORBIDDEN`.
-    - **List** and **cancel** accept any active key of your app.
-    - Orders belong to your app, not to the key that created them. Any of your keys can read and cancel them, and open orders keep running when you rotate a key.
+    - **List** and **cancel** accept any active key of your account, including keys of apps that don't have limit orders enabled.
+    - Orders belong to your account, not to the app or key that created them. Any of your keys can read and cancel any of your orders, and open orders keep running when you rotate a key.
     </Callout>
 
     ### Set up the SDK
@@ -180,6 +180,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
         "refundedAmount": "0",
         "withdrawnAmount": "0",
         "latestPriceCheck": null,
+        "closestPriceCheck": null,
         "steps": [
           {
             "id": "approve",
@@ -366,7 +367,8 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **The signature must come from `user`.** Any other signer returns `400 INVALID_SIGNATURE`.
     - **Signing counts toward the caps.** It returns `400 MAX_OPEN_ORDERS_REACHED` or `400 MAX_OPEN_ORDER_PAIRS_REACHED` if the wallet reached a cap after create.
     - **Posting the same signature twice returns `409 ORDER_ALREADY_SIGNED`.** The order is already open, so treat it as success, for example when you retry a post whose response you lost.
-    - **An unsigned order closes as `expired`** at `expiresAt`.
+    - **Signing an order that isn't `pending` returns `409 ORDER_NOT_PENDING`**: one that was cancelled, expired, or already opened with a different signature.
+    - **An unsigned order reads as `closed` with `outcome: "expired"`** once `expiresAt` passes, but Relay sends no webhook for it. Read the order to see that it closed.
     - **To resume an abandoned order,** read it with `getOrders` ([`GET /orders?orderId=`](/limit-orders/list-orders)) and run its steps again with `executeOrder`. A `pending` order keeps its steps.
     - **If you collect the signature yourself,** for example from a wallet your backend doesn't control, submit it with `signOrder({ orderId, signature })`; see [Sign an order](/limit-orders/sign-order).
   </Step>
@@ -405,7 +407,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     ### Webhooks
 
-    Relay sends an `order.updated` webhook each time an order's history gets a new entry: a status change, a movement of its funds, or a notable price check. The user is often away when an order fills, so we recommend webhooks over polling.
+    Relay sends an `order.updated` webhook each time an order's history gets a new entry: a status change or a movement of its funds. The user is often away when an order fills, so we recommend webhooks over polling.
 
     **Configuration.** Contact the Relay team to set up `order.updated` webhooks for your app; they can't be configured in the Dashboard yet. Send the HTTPS endpoint URL that should receive them, and any custom headers to include on each request.
 
@@ -447,7 +449,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     ### Why hasn't my order filled?
 
-    Every order carries `latestPriceCheck`, the result of Relay's latest price check, so you can show progress and explain a wait:
+    Every order carries `latestPriceCheck`, the result of Relay's latest price check, and `closestPriceCheck`, the check whose all-in price came closest to `targetPrice`, so you can show progress and explain a wait. Both have these fields:
 
     | Field | Description |
     | --- | --- |
@@ -465,7 +467,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     When more than one applies, `reason` is the first in the table: Relay checks balance and allowance before the route and the price. The prices are still filled in whenever the order could be quoted, so you can show the distance to the limit while asking the user to fix their balance.
 
-    `latestPriceCheck` is `null` until the first check. An order short of balance or allowance doesn't trigger: it stays `open` and fills once the user fixes it, if the price is still met before `expiresAt`.
+    `latestPriceCheck` is `null` until the first check, and `closestPriceCheck` until a check has an all-in price. On a sell `closestPriceCheck` is the check with the highest all-in price so far, and on a buy the lowest; once a check reaches `targetPrice`, it is the one furthest past it. An order short of balance or allowance doesn't trigger: it stays `open` and fills once the user fixes it, if the price is still met before `expiresAt`.
 
     ### Outcomes
 
@@ -475,7 +477,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     | `cancelled` | The order was cancelled. `cancellationReason` is `requested` when you cancelled it, or `access_revoked` when your app lost access to limit orders. |
     | `expired` | `expiresAt` passed before the order filled, or before it was signed. |
 
-    `outcome` and `cancellationReason` are `null` until the order closes. A `cancelled` or `expired` order whose funds Relay had already pulled shows what came back in `refundedAmount`. `requestIds` lists the Relay requests that moved the order's funds; include them when you contact support.
+    `outcome` and `cancellationReason` are `null` until the order closes. A `cancelled` or `expired` order whose funds Relay had already pulled shows what came back in `refundedAmount`, in base units of the currency Relay held: the currency the user spent or, on a sell that was swapped on the origin chain first, the currency it was swapped to. `requestIds` lists the Relay requests that moved the order's funds; include them when you contact support.
 
     <Info>
     **When a fill doesn't go through.** If a fill fails after Relay has pulled the funds, Relay keeps them and retries. The order stays `processing` until it fills, is cancelled, or reaches `expiresAt`; then the funds are refunded and the order closes as `cancelled` or `expired`, with the amount in `refundedAmount`. If Relay can't pull the funds at all, for example because the user spent them or revoked the approval, the order stays `open` and Relay keeps watching.
@@ -523,6 +525,6 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **Sponsor fees.** `subsidizeFees`, `sponsoredFeeComponents`, `maxSubsidizationAmount`, and `subsidizationBps` work as on a quote and draw on your app balance. See [Fee Sponsorship](/features/fee-sponsorship).
     - **Trade on one chain or across chains.** This guide delivers on Robinhood Chain because `settlementChainId` differs from `targetChainId`. Use the same chain for both to place a same-chain order. The steps always run on the chain of the currency spent, `originChainId`.
     - **Warn about balance and approvals.** Relay checks the balance at create but doesn't reserve it. If the user moves the funds or revokes the Permit2 approval, the order stays `open` with `latestPriceCheck.reason` set to `insufficient_balance` or `insufficient_allowance`. Surface that reason so the user can fix it before `expiresAt`.
-    - **Keep orders private.** An open order's `targetPrice`, `amount`, and `user` tell others exactly when and how big the fill will be, so a leaked order can be sandwiched when it executes. Read orders from your backend and show each user only their own, don't expose them in public endpoints, pages, analytics, or logs, and keep your API key server-side so nobody else can list your app's orders.
+    - **Keep orders private.** An open order's `targetPrice`, `amount`, and `user` tell others exactly when and how big the fill will be, so a leaked order can be sandwiched when it executes. Read orders from your backend and show each user only their own, don't expose them in public endpoints, pages, analytics, or logs, and keep your API keys server-side so nobody else can list your account's orders.
   </Step>
 </Steps>
