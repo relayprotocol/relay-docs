@@ -70,7 +70,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **The currency spent must be an ERC-20 on an EVM chain**, because the order is authorized with Permit2. Native currencies aren't supported on either side; use the wrapped token, such as WETH.
     - **The settlement currency must be an accepted stablecoin that Relay holds on its chain**, such as USDC, USDT, or USDG. Relay values it at exactly $1 when it compares the price with your limit.
     - **On a buy, the target must be a currency Relay holds on its chain.** These are listed under `solverCurrencies` in [GET /chains](/references/api/get-chains).
-    - **On a sell, the target can be any ERC-20 on its chain.** A token Relay doesn't hold is swapped on the origin chain first, on chains that support it.
+    - **On a sell, the target can be any ERC-20 on its chain.** A token Relay doesn't hold is swapped on the origin chain first, on chains that support it. Relay runs that swap through a Relay-operated contract and checks its output onchain before the deposit, so this step relies on Relay rather than on Relay Protocol's settlement guarantees.
 
     For currency pickers, we recommend reading `solverCurrencies` from `/chains` and leaving out the native currency. For example, for Robinhood Chain (chain id `4663`):
 
