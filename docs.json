@@ -132,6 +132,7 @@
               {
                 "group": "Migration Guides",
                 "pages": [
+                  "references/api/api_guides/migrating-to-quote-v3",
                   "references/api/api_guides/migrating-to-requests-v3",
                   "references/api/api_guides/migrating-to-currencies-v2",
                   "references/api/api_guides/migrating-to-token-price-v2"
