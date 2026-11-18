@@ -46,8 +46,8 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     **API key permissions**
 
     - **Create** and **sign** need an active key whose app has limit orders enabled. Otherwise they return `403 FORBIDDEN`.
-    - **List** and **cancel** accept any active key of your account, including keys of apps that don't have limit orders enabled.
-    - Orders belong to your account, not to the app or key that created them. Any of your keys can read and cancel any of your orders, and open orders keep running when you rotate a key.
+    - **List** and **cancel** accept any active key of your app.
+    - Orders belong to your app, not to the key that created them. Any of your app's keys can read and cancel them, and open orders keep running when you rotate a key.
     </Callout>
 
     ### Set up the SDK
@@ -525,6 +525,6 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **Sponsor fees.** `subsidizeFees`, `sponsoredFeeComponents`, `maxSubsidizationAmount`, and `subsidizationBps` work as on a quote and draw on your app balance. See [Fee Sponsorship](/features/fee-sponsorship).
     - **Trade on one chain or across chains.** This guide delivers on Robinhood Chain because `settlementChainId` differs from `targetChainId`. Use the same chain for both to place a same-chain order. The steps always run on the chain of the currency spent, `originChainId`.
     - **Warn about balance and approvals.** Relay checks the balance at create but doesn't reserve it. If the user moves the funds or revokes the Permit2 approval, the order stays `open` with `latestPriceCheck.reason` set to `insufficient_balance` or `insufficient_allowance`. Surface that reason so the user can fix it before `expiresAt`.
-    - **Keep orders private.** An open order's `targetPrice`, `amount`, and `user` tell others exactly when and how big the fill will be, so a leaked order can be sandwiched when it executes. Read orders from your backend and show each user only their own, don't expose them in public endpoints, pages, analytics, or logs, and keep your API keys server-side so nobody else can list your account's orders.
+    - **Keep orders private.** An open order's `targetPrice`, `amount`, and `user` tell others exactly when and how big the fill will be, so a leaked order can be sandwiched when it executes. Read orders from your backend and show each user only their own, don't expose them in public endpoints, pages, analytics, or logs, and keep your API keys server-side so nobody else can list your app's orders.
   </Step>
 </Steps>
