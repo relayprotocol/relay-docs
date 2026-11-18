@@ -1,0 +1,8 @@
+---
+title: "Sign an Order"
+description: "Submit the user's Permit2 signature to open a pending limit order."
+openapi: post /orders/{orderId}/signature
+hidden: true
+---
+
+No transaction is sent: Relay keeps the permit and uses it only when the price meets the limit.
