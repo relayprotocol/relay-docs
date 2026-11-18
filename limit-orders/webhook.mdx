@@ -35,5 +35,5 @@ Every entry has an `id` that is unique within the order (`event_<n>`), a `create
 
 - Webhooks carry `X-Signature-Timestamp` and `X-Signature-SHA256`, the HMAC-SHA256 of `<timestamp>.<body>` keyed with one of the app's active API keys. Verify against each active key, as for [request webhooks](/references/api/api_guides/webhooks#verification).
 - Each entry is delivered once per endpoint, with retries and exponential backoff when your endpoint fails. Entry ids are unique within an order, so deduplicate on the pair of `data.order.id` and `entry.id`.
-- Deliveries can arrive out of order; keep the `data.order` with the latest `updatedAt`.
+- Deliveries can arrive out of order. Order entries by the number in `entry.id`, since entries written together share a `createdAt`, and keep the `data.order` with the latest `updatedAt`.
 - Entries from before an endpoint subscribed aren't sent.

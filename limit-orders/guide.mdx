@@ -20,7 +20,7 @@ In this walkthrough you'll place a cross-chain order: sell 0.01 WETH on Base for
 | Status | What it means | What the user can do |
 | --- | --- | --- |
 | `pending` | Created and waiting for the user's signature. No funds move. | Sign or cancel. |
-| `open` | Signed. Relay is watching the price, and the funds are still in the user's wallet. | Cancel, except for the few seconds while Relay pulls the funds. |
+| `open` | Signed. Relay is watching the price, and the funds are still in the user's wallet. | Cancel, except while Relay pulls the funds. |
 | `processing` | The price was met and Relay holds the funds: a fill or a refund is under way, or Relay is retrying after a failed fill. | Wait. An order that is retrying after a failed fill can be cancelled; it is refunded first. |
 | `requires_action` | The order needs an action before it can continue. `requiredAction` says which one. | Check [`requiredAction`](/limit-orders/api-reference#required-actions). |
 | `closed` | Final. `outcome` says how the order ended: `filled`, `cancelled`, or `expired`. See [Outcomes](#outcomes). | Nothing. |
@@ -369,7 +369,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **Posting the same signature twice returns `409 ORDER_ALREADY_SIGNED`.** The order is already open, so treat it as success, for example when you retry a post whose response you lost.
     - **Signing an order that isn't `pending` returns `409 ORDER_NOT_PENDING`**: one that was cancelled, expired, or already opened with a different signature.
     - **An unsigned order reads as `closed` with `outcome: "expired"`** once `expiresAt` passes, but Relay sends no webhook for it. Read the order to see that it closed.
-    - **To resume an abandoned order,** read it with `getOrders` ([`GET /orders?orderId=`](/limit-orders/list-orders)) and run its steps again with `executeOrder`. A `pending` order keeps its steps.
+    - **To resume an abandoned order,** read it with `getOrders` ([`GET /orders?orderId=`](/limit-orders/list-orders)) and run its steps again with `executeOrder`. A `pending` order keeps its steps, and its `approve` step stays `incomplete` after you send it, so with the API skip an approval you already sent.
     - **If you collect the signature yourself,** for example from a wallet your backend doesn't control, submit it with `signOrder({ orderId, signature })`; see [Sign an order](/limit-orders/sign-order).
   </Step>
   <Step title="Monitor">
@@ -443,7 +443,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     **Handle deliveries.**
 
     - Relay retries a failed delivery with exponential backoff, and delivers each entry once per endpoint. Entry ids are unique within an order, so drop duplicates on the pair of `data.order.id` and `entry.id`.
-    - Webhooks can arrive out of order. Order entries by `entry.createdAt`, and keep the `order` with the latest `updatedAt` as the current state.
+    - Webhooks can arrive out of order. Order entries by the number in `entry.id` (`event_<n>`), since entries written together share a `createdAt`, and keep the `order` with the latest `updatedAt` as the current state.
     - Relay doesn't send entries from before an endpoint subscribed to `order.updated`. Read the order with [`GET /orders?orderId=`](/limit-orders/list-orders) to catch up.
     - Respond with a 2xx quickly and do slow work afterwards.
 
@@ -480,7 +480,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     `outcome` and `cancellationReason` are `null` until the order closes. A `cancelled` or `expired` order whose funds Relay had already pulled shows what came back in `refundedAmount`, in base units of the currency Relay held: the currency the user spent or, on a sell that was swapped on the origin chain first, the currency it was swapped to. `requestIds` lists the Relay requests that moved the order's funds; include them when you contact support.
 
     <Info>
-    **When a fill doesn't go through.** If a fill fails after Relay has pulled the funds, Relay keeps them and retries. The order stays `processing` until it fills, is cancelled, or reaches `expiresAt`; then the funds are refunded and the order closes as `cancelled` or `expired`, with the amount in `refundedAmount`. If Relay can't pull the funds at all, for example because the user spent them or revoked the approval, the order stays `open` and Relay keeps watching.
+    **When a fill doesn't go through.** If a fill fails after Relay has pulled the funds, Relay keeps them and retries once the price is met again. The order stays `processing` until it fills, is cancelled, or reaches `expiresAt`; then the funds are refunded and the order closes as `cancelled` or `expired`, with the amount in `refundedAmount`. If Relay can't pull the funds at all, for example because the user spent them or revoked the approval, the order stays `open` and Relay keeps watching.
     </Info>
 
     ### Cancel an order
@@ -514,7 +514,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     ```
     </CodeGroup>
 
-    An order that is being filled, being refunded, in `requires_action`, or past `expiresAt` returns `409 ORDER_NOT_CANCELLABLE`. An order that is already cancelled returns `409 ORDER_ALREADY_CANCELLED`, so choose soft or onchain on the first call: you can't add an onchain cancel to a soft-cancelled order. See [Cancel an order](/limit-orders/cancel-order) for the full rules.
+    An order whose funds Relay is pulling, filling, or refunding, an order in `requires_action`, and an order past `expiresAt` return `409 ORDER_NOT_CANCELLABLE`. An order that is already cancelled returns `409 ORDER_ALREADY_CANCELLED`, so choose soft or onchain on the first call: you can't add an onchain cancel to a soft-cancelled order. See [Cancel an order](/limit-orders/cancel-order) for the full rules.
   </Step>
   <Step title="Optimize">
     You've placed and tracked your first limit order. These options help in production:
