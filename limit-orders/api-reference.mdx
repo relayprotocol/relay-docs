@@ -94,7 +94,9 @@ More values may be added, so handle an unknown `requiredAction` by showing the o
 
 ## Errors
 
-Errors return `{ message, errorCode, errorData?, requestId? }`. `errorData` holds the error's details when it has any, such as the quote's details behind a `NO_QUOTES`. `requestId` names the Relay request a failed create ran under, once create has started quoting the order; include it when you contact support. Schema validation errors, such as a missing field or a bad format, return only `message`, for example `{"message":"body must have required property 'type'"}`.
+Errors return `{ message, errorCode, errorData?, requestId? }`. `errorData` holds the error's details when it has any, such as the quote's details behind a `NO_QUOTES`.
+
+`requestId` names the Relay request a failed create ran under, once create has started quoting the order; include it when you contact support. Schema validation errors, such as a missing field or a bad format, return only `message`, for example `{"message":"body must have required property 'type'"}`.
 
 | `errorCode` | Status | Endpoints | When |
 | --- | --- | --- | --- |

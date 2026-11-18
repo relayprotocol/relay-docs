@@ -11,7 +11,9 @@ hidden: true
 
 Limit orders let your users sell or buy a token at a price they choose. The user signs once and their funds stay in their wallet while the order waits. When the market reaches the limit, Relay pulls the funds with the signed permit and a solver fills the order, on the same chain or across chains.
 
-In this walkthrough you'll place a cross-chain order: sell 0.01 WETH on Base for USDG on Robinhood Chain once 1 WETH is worth at least $4,000 after fees. You'll create the order, sign it, and track it until it closes. Each step shows the Relay SDK and the API. Every endpoint, field, and error code is in the [Limit Orders API Reference](/limit-orders/api-reference).
+In this walkthrough you'll place a cross-chain order: sell 0.01 WETH on Base for USDG on Robinhood Chain once 1 WETH is worth at least $4,000 after fees. You'll create the order, sign it, and track it until it closes.
+
+Each step shows the Relay SDK and the API. Every endpoint, field, and error code is in the [Limit Orders API Reference](/limit-orders/api-reference).
 
 ## How a limit order works
 
@@ -132,14 +134,14 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     The fields that define the order:
 
-    | Field | Description |
-    | --- | --- |
-    | **targetPrice** | USD per 1 whole unit of the target, **all-in**: after Relay's fees, gas, and your app fees. On a sell it is the minimum net proceeds per unit; on a buy, the maximum total cost per unit. A decimal string with up to 18 decimal places. |
-    | **amount** | Base units of the currency spent: the target on a sell, the settlement currency on a buy. Here `10000000000000000` is 0.01 WETH. |
-    | **expiresAt** | RFC 3339 time, at least 15 minutes and at most 7 days from now. The clock starts at create, not at signing. |
-    | **recipient**, **refundTo** | Optional. Who receives the output and who receives refunds. Both default to `user`. |
-    | **clientOrderId** | Optional. Your own id for the order, 1–128 characters, usable once. |
-    | `Idempotency-Key` header (`idempotencyKey` in the SDK) | Optional. Makes a retried create safe; see Step 5. |
+    | Property | Description | Required |
+    | --- | --- | --- |
+    | **targetPrice** | USD per 1 whole unit of the target, **all-in**: after Relay's fees, gas, and your app fees. On a sell it is the minimum net proceeds per unit; on a buy, the maximum total cost per unit. A decimal string with up to 18 decimal places. | ✅ |
+    | **amount** | Base units of the currency spent: the target on a sell, the settlement currency on a buy. Here `10000000000000000` is 0.01 WETH. | ✅ |
+    | **expiresAt** | RFC 3339 time, at least 15 minutes and at most 7 days from now. The clock starts at create, not at signing. | ✅ |
+    | **recipient**, **refundTo** | Who receives the output and who receives refunds. Both default to `user`. | ❌ |
+    | **clientOrderId** | Your own id for the order, 1–128 characters, usable once. | ❌ |
+    | **Idempotency-Key** header (**idempotencyKey** in the SDK) | Makes a retried create safe; see Optimize. | ❌ |
 
     ### Response
 
@@ -232,7 +234,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     Before it quotes, create checks that:
 
-    - the currencies follow the rules in Step 1;
+    - the currencies follow the rules under Configure;
     - `expiresAt` is between 15 minutes and 7 days away;
     - the wallet has fewer than **100** orders that are `open` or `processing`, counted across all integrators (`pending` orders don't count);
     - those orders are on fewer than **50** token pairs, unless the new order is on a pair the wallet already trades;
@@ -370,7 +372,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **Signing an order that isn't `pending` returns `409 ORDER_NOT_PENDING`**: one that was cancelled, expired, or already opened with a different signature.
     - **An unsigned order reads as `closed` with `outcome: "expired"`** once `expiresAt` passes, but Relay sends no webhook for it. Read the order to see that it closed.
     - **To resume an abandoned order,** read it with `getOrders` ([`GET /orders?orderId=`](/limit-orders/list-orders)) and run its steps again with `executeOrder`. A `pending` order keeps its steps, and its `approve` step stays `incomplete` after you send it, so with the API skip an approval you already sent.
-    - **If you collect the signature yourself,** for example from a wallet your backend doesn't control, submit it with `signOrder({ orderId, signature })`; see [Sign an order](/limit-orders/sign-order).
+    - **If you collect the signature yourself,** for example from a wallet your backend doesn't control, submit it with `signOrder({ orderId, signature })`, or post it to the `authorize` step's endpoint as above. The same rules apply: it must come from `user`, and the API call needs a JSON body.
   </Step>
   <Step title="Monitor">
     Read the order until `status` is `closed`, then read its `outcome`. To show a wallet's active orders, [list them](/limit-orders/list-orders) by `user` and `status`:
@@ -403,7 +405,9 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     ```
     </CodeGroup>
 
-    Both return `{ orders, continuation }`. Pass `continuation` back to read the next page. For live updates, use the `order.updated` webhook below instead of polling. If you do poll, every 5–10 seconds while the user is looking at an order is plenty.
+    Both return `{ orders, continuation }`. Pass `continuation` back to read the next page.
+
+    For live updates, use the `order.updated` webhook below instead of polling. If you do poll, every 5–10 seconds while the user is looking at an order is plenty.
 
     ### Webhooks
 
@@ -494,6 +498,8 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     ```typescript SDK
     import { getClient } from '@relayprotocol/relay-sdk'
 
+    // wallet: the viem wallet client from the Execute step
+
     // Soft cancel
     await getClient().actions.cancelOrder({ orderId: 'order_id_3f9a1c52-7d0e-4b8a-9a61-2f4e8c1d7b90' })
 
@@ -514,12 +520,18 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     ```
     </CodeGroup>
 
-    An order whose funds Relay is pulling, filling, or refunding, an order in `requires_action`, and an order past `expiresAt` return `409 ORDER_NOT_CANCELLABLE`. An order that is already cancelled returns `409 ORDER_ALREADY_CANCELLED`, so choose soft or onchain on the first call: you can't add an onchain cancel to a soft-cancelled order. See [Cancel an order](/limit-orders/cancel-order) for the full rules.
+    Which orders can be cancelled:
+
+    - **`pending` orders, and `open` orders waiting for their price,** close at once.
+    - **A `processing` order that Relay is retrying after a failed fill** is refunded first. It stays `processing` and closes as `cancelled` once the refund lands, with the amount in `refundedAmount`.
+    - **Any other order returns `409 ORDER_NOT_CANCELLABLE`:** one whose funds Relay is pulling, filling, or refunding, one in `requires_action`, one past `expiresAt`, and one that already filled or expired.
+    - **An order that is already cancelled returns `409 ORDER_ALREADY_CANCELLED`,** so choose soft or onchain on the first call: you can't add an onchain cancel to a soft-cancelled order.
   </Step>
   <Step title="Optimize">
     You've placed and tracked your first limit order. These options help in production:
 
-    - **Retry creates safely.** Send an `Idempotency-Key` header (`idempotencyKey` in the SDK), 1–255 characters, on every create. A retry with the same key and body returns the first order instead of a second one; the same key with a different body returns `409 IDEMPOTENCY_KEY_REUSED`. `clientOrderId` stores your own id on the order, returned as `order.clientOrderId`, so you can match orders to your records; it is rejected with `409 CLIENT_ORDER_ID_EXISTS` if it was already used. When you retry, resend the exact body, including the same `expiresAt`.
+    - **Retry creates safely.** Send an `Idempotency-Key` header (`idempotencyKey` in the SDK), 1–255 characters, on every create. A retry with the same key and body returns the first order instead of a second one; the same key with a different body returns `409 IDEMPOTENCY_KEY_REUSED`. When you retry, resend the exact body, including the same `expiresAt`.
+    - **Match orders to your records.** `clientOrderId` stores your own id on the order, returned as `order.clientOrderId`. It is rejected with `409 CLIENT_ORDER_ID_EXISTS` if it was already used.
     - **Show the market price.** Read the target's USD price with [GET /currencies/token/price/v2](/references/api/get-token-price-v2) to offer presets such as market, +1%, or +5%. `targetPrice` is all-in, so a limit set exactly at the market price waits until the market moves past it by the fees.
     - **Charge app fees.** Add `appFees: [{ "recipient": "...", "fee": "50" }]`, in bps, as on a quote. See [App Fees](/features/app-fees). App fees are part of the all-in price the order must meet.
     - **Sponsor fees.** `subsidizeFees`, `sponsoredFeeComponents`, `maxSubsidizationAmount`, and `subsidizationBps` work as on a quote and draw on your app balance. See [Fee Sponsorship](/features/fee-sponsorship).
