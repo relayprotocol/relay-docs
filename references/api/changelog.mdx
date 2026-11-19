@@ -3,6 +3,12 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-11-18 — `POST /fast-fill` enforces quote ownership and bounds `solverInputCurrencyAmount`
+
+**Breaking** — `POST /fast-fill`: the endpoint now verifies that the quote's `requestId` was issued to the caller's integrator before any collateral is reserved or any solve is queued. Requests for a quote owned by a different integrator, or a quote with no owner, return `403` with `message: "Forbidden: Quote request is not owned by caller."`. Other API keys belonging to the same integrator can still fast fill that integrator's quotes.
+
+**Breaking** — `POST /fast-fill`: the optional `solverInputCurrencyAmount` request field is now validated. The value must be a raw base-unit integer string; for a quote with an origin swap it must fall within the quote's slippage band — between the quote's `minimumAmount` and `quotedAmount + (quotedAmount − minimumAmount)` inclusive; for a quote without an origin swap it must equal the quoted amount. Values outside the allowed range, or that are not well-formed integer strings (for example `1e18`, `-1`, `""`, or values with leading zeros that fall outside the range), return `400` with a message describing the allowed bounds. Omit the field to use the quoted amount. See [Fast Fill](/features/fast-fill).
+
 ## 2026-11-17 — Webhook destinations validated at delivery time
 
 **Behavior change** — Webhook delivery: the destination hostname is re-resolved and checked at send time, not only when the configuration is saved. Destinations whose hostname resolves to a loopback, private, link-local, or reserved IP range at delivery time are refused and the event is skipped (and recorded in delivery logs). Destinations that resolve to public addresses are unaffected. HTTP redirects are no longer followed — configure the URL that should receive events directly.

@@ -217,6 +217,7 @@ You can use the **`maxFillAmountUsd`** parameter to set a maximum USD value for 
 
 ## Caveats
 
-* Slippage may lead to a surplus or shortage in your app balance. If you have a good estimate of the final amount you can use the **`solverInputCurrencyAmount`** parameter to specify the exact amount of input currency you want to use for the fill, thus minimizing slippage.
+* Slippage may lead to a surplus or shortage in your app balance. If you've observed the solver input amount actually received on origin, pass it as **`solverInputCurrencyAmount`** to minimize that gap. For a quote with an origin swap, the value must be a raw base-unit integer within the quote's slippage band — between the quote's `minimumAmount` and `quotedAmount + (quotedAmount − minimumAmount)` inclusive. For a quote without an origin swap the value must equal the quoted amount. Omit the field to use the quoted amount.
+* A quote can only be fast filled by an API key that belongs to the integrator that requested the quote. Other API keys under the same integrator can fast fill each other's quotes; callers from a different integrator receive a `403`.
 * We recommend protecting your API key on the backend by not exposing it to the client.
 * Fast Fill holds, outstanding fast fills that are waiting to be indexed on the destination chain, reduce the balance available for new fast fills and claims, but do not block fee sponsorship.
