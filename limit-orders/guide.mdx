@@ -11,7 +11,7 @@ hidden: true
 
 Limit orders let your users sell or buy a token at a price they choose. The user signs once and their funds stay in their wallet while the order waits. When the market reaches the limit, Relay pulls the funds with the signed permit and a solver fills the order, on the same chain or across chains.
 
-In this walkthrough you'll place a cross-chain order: sell 0.01 WETH on Base for USDG on Robinhood Chain once 1 WETH is worth at least $4,000 after fees. You'll create the order, sign it, and track it until it closes.
+In this walkthrough you'll place a cross-chain order: sell 0.001 cbBTC on Base for USDG on Robinhood Chain once 1 cbBTC is worth at least $100,000 after fees. You'll create the order, sign it, and track it until it closes.
 
 Each step shows the Relay SDK and the API. Every endpoint, field, and error code is in the [Limit Orders API Reference](/limit-orders/api-reference).
 
@@ -42,7 +42,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     - **Base URL:** `https://api.relay.link`
     - **API key with limit orders enabled:** Relay enables limit orders per app during the closed beta. Ask your Relay contact to enable your app, then send its key in the `x-api-key` header on every orders request.
     - **Environment:** Node.js 20 or later, with [viem](https://viem.sh). For the SDK path, also install `@relayprotocol/relay-sdk`.
-    - **Wallet:** an EVM wallet holding the token it sells (here at least 0.01 WETH on Base), plus a little ETH on Base for the one-time Permit2 approval.
+    - **Wallet:** an EVM wallet holding the token it sells (here at least 0.001 cbBTC on Base), plus a little ETH on Base for the one-time Permit2 approval.
 
     <Callout icon="key" color="#4615C8">
     **API key permissions**
@@ -67,15 +67,16 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     These rules apply during the beta:
 
-    - **The currency spent must be an ERC-20 on an EVM chain**, because the order is authorized with Permit2. Native currencies aren't supported on either side; use the wrapped token, such as WETH.
-    - **The settlement currency must be an accepted stablecoin that Relay holds on its chain**, such as USDC, USDT, or USDG. Relay values it at exactly $1 when it compares the price with your limit.
-    - **On a buy, the target must be a currency Relay holds on its chain.** These are listed under `solverCurrencies` in [GET /chains](/references/api/get-chains).
-    - **On a sell, the target can be any ERC-20 on its chain.** A token Relay doesn't hold is swapped on the origin chain first, on chains that support it. Relay runs that swap through a Relay-operated contract and checks its output onchain before the deposit, so this step relies on Relay rather than on Relay Protocol's settlement guarantees.
+    - **The currency spent must be an ERC-20 on an EVM chain**, because the order is authorized with Permit2.
+    - **The target can't be a native currency**, on a buy or a sell. Use the wrapped token, such as WETH.
+    - **The settlement currency must be an accepted stablecoin that Relay holds on its chain:** USDC (including USDC.e), USDT (including USDT0), USDG, mUSD, pUSD, or CASH. Relay values it at exactly $1 when it compares the price with your limit. On a sell, the settlement currency can be on a non-EVM chain, such as USDC on Solana; set `recipient` to an address on that chain.
+    - **On a buy, the target must be a currency Relay holds on its chain**, which can be any chain, EVM or not. These are listed under `solverCurrencies` in [GET /chains](/references/api/get-chains).
+    - **On a sell, the target can be any ERC-20 on its chain**, except fee-on-transfer tokens. A token Relay doesn't hold is swapped on the origin chain first, on chains that support it; on other chains the create fails with `UNSUPPORTED_ROUTE`. Relay runs that swap through a Relay-operated contract and checks its output onchain before the deposit, so this step relies on Relay rather than on Relay Protocol's settlement guarantees.
 
-    For currency pickers, we recommend reading `solverCurrencies` from `/chains` and leaving out the native currency. For example, for Robinhood Chain (chain id `4663`):
+    For currency pickers, we recommend reading `solverCurrencies` from `/chains` and leaving out the native currency. For the settlement currency, also keep only the accepted stablecoins, by `id`: `usdc`, `usdc.e`, `usdc.e-cronos`, `usdt`, `usdg`, `musd`, `pusd`, and `cash`. For example, for Robinhood Chain (chain id `4663`):
 
     ```bash
-    curl -s "https://api.relay.link/chains" | jq '.chains[] | select(.id == 4663) | .solverCurrencies[] | select(.address != "0x0000000000000000000000000000000000000000") | {symbol, address}'
+    curl -s "https://api.relay.link/chains" | jq '.chains[] | select(.id == 4663) | .solverCurrencies[] | select(.address != "0x0000000000000000000000000000000000000000") | {id, symbol, address}'
     ```
   </Step>
   <Step title="Create the order">
@@ -83,7 +84,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
 
     ### Request
 
-    Sell 0.01 WETH on Base for USDG on Robinhood Chain (chain id `4663`) once 1 WETH is worth at least $4,000 after fees, with the order expiring in 24 hours. The target and settlement currencies are on different chains, so the order is cross-chain. The user spends WETH on Base, where every step runs, and the recipient receives USDG on Robinhood Chain:
+    Sell 0.001 cbBTC on Base for USDG on Robinhood Chain (chain id `4663`) once 1 cbBTC is worth at least $100,000 after fees, with the order expiring in 24 hours. The target and settlement currencies are on different chains, so the order is cross-chain. The user spends cbBTC on Base, where every step runs, and the recipient receives USDG on Robinhood Chain:
 
     <CodeGroup>
     ```typescript SDK
@@ -96,12 +97,12 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
         type: 'limit',
         user: 'WALLET_ADDRESS',
         side: 'sell',
-        targetCurrency: '0x4200000000000000000000000000000000000006', // WETH on Base
+        targetCurrency: '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf', // cbBTC on Base
         targetChainId: 8453,
         settlementCurrency: '0x5fc5360d0400a0fd4f2af552add042d716f1d168', // USDG on Robinhood Chain
         settlementChainId: 4663,
-        targetPrice: '4000',
-        amount: '10000000000000000', // 0.01 WETH
+        targetPrice: '100000',
+        amount: '100000', // 0.001 cbBTC
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         clientOrderId: 'my-order-123'
       }
@@ -120,12 +121,12 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
         "type": "limit",
         "user": "WALLET_ADDRESS",
         "side": "sell",
-        "targetCurrency": "0x4200000000000000000000000000000000000006",
+        "targetCurrency": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
         "targetChainId": 8453,
         "settlementCurrency": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
         "settlementChainId": 4663,
-        "targetPrice": "4000",
-        "amount": "10000000000000000",
+        "targetPrice": "100000",
+        "amount": "100000",
         "expiresAt": "EXPIRES_AT",
         "clientOrderId": "my-order-123"
       }'
@@ -137,7 +138,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
     | Property | Description | Required |
     | --- | --- | --- |
     | **targetPrice** | USD per 1 whole unit of the target, **all-in**: after Relay's fees, gas, and your app fees. On a sell it is the minimum net proceeds per unit; on a buy, the maximum total cost per unit. A decimal string with up to 18 decimal places. | ✅ |
-    | **amount** | Base units of the currency spent: the target on a sell, the settlement currency on a buy. Here `10000000000000000` is 0.01 WETH. | ✅ |
+    | **amount** | Base units of the currency spent: the target on a sell, the settlement currency on a buy. Here `100000` is 0.001 cbBTC. | ✅ |
     | **expiresAt** | RFC 3339 time, at least 15 minutes and at most 7 days from now. The clock starts at create, not at signing. | ✅ |
     | **recipient**, **refundTo** | Who receives the output and who receives refunds. Both default to `user`. | ❌ |
     | **clientOrderId** | Your own id for the order, 1–128 characters, usable once. | ❌ |
@@ -162,16 +163,16 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
         "recipient": "WALLET_ADDRESS",
         "refundTo": "WALLET_ADDRESS",
         "side": "sell",
-        "targetCurrency": "0x4200000000000000000000000000000000000006",
+        "targetCurrency": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
         "targetChainId": 8453,
         "settlementCurrency": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
         "settlementChainId": 4663,
-        "targetPrice": "4000",
+        "targetPrice": "100000",
         "originChainId": 8453,
-        "originCurrency": "0x4200000000000000000000000000000000000006",
+        "originCurrency": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
         "destinationChainId": 4663,
         "destinationCurrency": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
-        "amount": "10000000000000000",
+        "amount": "100000",
         "fees": { "gas": { ... }, "relayer": { ... }, "app": { ... } },
         "createdAt": "2026-11-15T12:00:00.000Z",
         "updatedAt": "2026-11-15T12:00:00.000Z",
@@ -187,12 +188,12 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
           {
             "id": "approve",
             "action": "Confirm transaction in your wallet",
-            "description": "Sign an approval for WETH",
+            "description": "Sign an approval for cbBTC",
             "kind": "transaction",
             "status": "incomplete",
             "data": {
               "from": "WALLET_ADDRESS",
-              "to": "0x4200000000000000000000000000000000000006",
+              "to": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
               "data": "0x095ea7b3...",
               "value": "0",
               "chainId": 8453
@@ -201,7 +202,7 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
           {
             "id": "authorize",
             "action": "Sign authorization",
-            "description": "Sign to approve transfer of WETH",
+            "description": "Sign to approve transfer of cbBTC",
             "kind": "signature",
             "status": "incomplete",
             "data": {
@@ -276,12 +277,12 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
         type: 'limit',
         user: account.address,
         side: 'sell',
-        targetCurrency: '0x4200000000000000000000000000000000000006', // WETH on Base
+        targetCurrency: '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf', // cbBTC on Base
         targetChainId: 8453,
         settlementCurrency: '0x5fc5360d0400a0fd4f2af552add042d716f1d168', // USDG on Robinhood Chain
         settlementChainId: 4663,
-        targetPrice: '4000',
-        amount: '10000000000000000', // 0.01 WETH
+        targetPrice: '100000',
+        amount: '100000', // 0.001 cbBTC
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       },
       wallet,
@@ -317,12 +318,12 @@ An order lives for at least 15 minutes and at most 7 days, set by `expiresAt`.
           type: 'limit',
           user: account.address,
           side: 'sell',
-          targetCurrency: '0x4200000000000000000000000000000000000006', // WETH on Base
+          targetCurrency: '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf', // cbBTC on Base
           targetChainId: 8453,
           settlementCurrency: '0x5fc5360d0400a0fd4f2af552add042d716f1d168', // USDG on Robinhood Chain
           settlementChainId: 4663,
-          targetPrice: '4000',
-          amount: '10000000000000000', // 0.01 WETH
+          targetPrice: '100000',
+          amount: '100000', // 0.001 cbBTC
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         })
       })
