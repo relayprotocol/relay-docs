@@ -101,9 +101,9 @@ Errors return `{ message, errorCode, errorData?, requestId? }`. `errorData` hold
 | `errorCode` | Status | Endpoints | When |
 | --- | --- | --- | --- |
 | `INVALID_REQUEST_PARAMS` | 400 | Create, sign | `expiresAt` outside 15 minutes to 7 days; target and settlement are the same currency; sponsorship options without `subsidizeFees`; `targetPrice` and `amount` give a zero minimum output; a sign request without a signature. |
-| `INVALID_ADDRESS` | 400 | Create | `user` isn't a valid EVM address. |
-| `UNSUPPORTED_CURRENCY` | 400 | Create | The target is the native currency; a buy's target isn't held by Relay; a sell's target isn't a token on its chain; the settlement currency isn't an accepted stablecoin. |
-| `UNSUPPORTED_ROUTE` | 400 | Create | The currency spent isn't on an EVM chain, or the origin chain doesn't support swapping a token Relay doesn't hold. |
+| `INVALID_ADDRESS` | 400 | Create | `user` isn't a valid EVM address, or `recipient` isn't a valid address on the destination chain (`targetChainId` on a buy, `settlementChainId` on a sell). `recipient` defaults to `user`, so set it when the destination is on a non-EVM chain. |
+| `UNSUPPORTED_CURRENCY` | 400 | Create | The target is the native currency; a buy's target isn't held by Relay; a sell's target isn't a token on its chain; the settlement currency isn't an accepted stablecoin; the token charges a fee on transfer; or the token is restricted and your app isn't enabled for it. |
+| `UNSUPPORTED_ROUTE` | 400 | Create | The currency spent isn't on an EVM chain, the origin chain doesn't support swapping a token Relay doesn't hold, or Relay blocks the route on the origin chain. |
 | `AMOUNT_TOO_LOW` | 400 | Create | The amount is too small to cover fees and the route's minimums. There is no fixed minimum order size. |
 | `NO_QUOTES` | 400 | Create | Any other reason the order can't be quoted, such as no route, an amount that is too high, or an invalid app fee recipient. `message` says which. |
 | `INSUFFICIENT_FUNDS` | 400 | Create | The wallet holds less than `amount` of the currency it spends. |
