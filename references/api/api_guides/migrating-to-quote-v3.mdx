@@ -79,12 +79,13 @@ Once rate limits are reduced, `429` responses from a retiring endpoint return a 
 
 1. Send `x-api-key` (server) or an access token (client) on every `/quote/v3` call.
 2. Stop sending `useExternalLiquidity`, `useFallbacks`, `protocolVersion`, `useRebalancer`, and `userOperationGasOverhead`. `/quote/v3` rejects them.
-3. Read `status`, `data`, and `check` from the step itself instead of from `step.items[]`.
-4. Match step ids `approve` and `authorize` instead of `approval`, `authorize1`, and `authorize2`.
-5. Read fees from the new `fees` object and origin gas from `originGas`.
-6. Read `step.depositAddress` as an object.
-7. Handle errors by `errorCode`.
-8. Poll status on `/intents/status/v3` and post signatures to `/execute/permits/v2`, following the endpoints in each step.
+3. Send `"platform"` instead of `"relay"` in `sponsoredFeeComponents`, and include `fee` in every `appFees` item.
+4. Read `status`, `data`, and `check` from the step itself instead of from `step.items[]`.
+5. Match step ids `approve` and `authorize` instead of `approval`, `authorize1`, and `authorize2`.
+6. Read fees from the new `fees` object and origin gas from `originGas`, and allow `amountUsd` to be `null`.
+7. Read `step.depositAddress` as an object.
+8. Handle errors by `errorCode`, and check `warnings` when you send `fixedRate`.
+9. Poll status on `/intents/status/v3` and post signatures to `/execute/permits/v2`, following the endpoints in each step.
 
 ## Request changes
 
@@ -108,17 +109,20 @@ Once rate limits are reduced, `429` responses from a retiring endpoint return a 
 
     Misspelled parameters fail the same way.
 
-    **Transaction items.** Each item in `txs` must include `to`, `data`, and `value`. `originalTxValue` stays optional.
+    **Array items.** Each item in `txs` must include `to`, `data`, and `value`; `originalTxValue` stays optional. Each item in `appFees` must include `fee`.
 
     Every other `/quote/v2` parameter is still accepted, including `indicativeQuote`, `usePermit`, `useDepositAddress`, `subsidizeFees`, `sponsoredFeeComponents`, `preferredSolverFillCurrency`, and `preferredSolverDepositCurrency`. As in v2, values that convert to the right type are accepted, such as `"8453"` for `originChainId`.
 
     Validation errors name the field, including nested paths, e.g. `body/usePermit should be boolean`.
+
+    Send the body as JSON with `Content-Type: application/json`. A request with an unsupported content type returns `415` with `errorCode: "INVALID_REQUEST_PARAMS"`.
   </Accordion>
 
   <Accordion title="Sponsorship parameters" icon="hand-holding-dollar">
     `/quote/v3` validates the [Fee Sponsorship](/features/fee-sponsorship) parameters before quoting:
 
     - `maxSubsidizationAmount` must be a nonnegative integer string, such as `"0"` or `"5000000"`. Other values return `400` with `errorCode: "INVALID_REQUEST_PARAMS"`.
+    - `sponsoredFeeComponents` takes `execution`, `swap`, `platform`, `app`, and `rent`. Use `platform` for the Relay fee: the legacy name `relay` returns `400` with `errorCode: "INVALID_REQUEST_PARAMS"`. When omitted, it defaults to `execution`, `swap`, `platform`, and `app`.
     - `maxSubsidizationAmount` and `subsidizeRent: true` now require `subsidizeFees: true`, like `subsidizationBps` and `sponsoredFeeComponents`. `/quote/v2` ignored them without it; `/quote/v3` returns `400` with `errorCode: "INVALID_REQUEST_PARAMS"`. `subsidizeRent: false` is still allowed.
 
     Sponsorship stays best effort. When a requested sponsorship can't apply, for example when the sponsor wallet is underfunded, the quote still returns `200` with user-paid fees. Check `fees.sponsored` and `feeSponsorship` to see what was sponsored.
@@ -300,10 +304,12 @@ Every response change, in the order you are likely to hit it.
     | removed | `fees.relayer`, `fees.relayerGas`, `fees.relayerService`, `fees.subsidized` |
 
     Each component is `{ usd, amount, amountFormatted }`, and all five are always present, as `"0"` when there is no fee. Costs have a negative `usd`; `sponsored` is positive.
+
+    For a same-chain swap the wallet executes itself, no solver executes anything, so `fees.execution` is `"0"` and sponsorship never covers execution.
   </Accordion>
 
   <Accordion title="Origin gas" icon="gas-pump">
-    `originGas` is the estimated gas the wallet pays on the origin chain, including required approvals. It is a currency amount: `{ currency, amount, amountFormatted, amountUsd }`.
+    `originGas` is the estimated gas the wallet pays on the origin chain, including required approvals. It is a currency amount: `{ currency, amount, amountFormatted, amountUsd }`. Like every currency amount in v3, `amountUsd` is `null` when Relay has no USD price for the currency.
 
     It is not part of `fees.execution`, because the user pays it to the network. `originGas` is omitted when it is zero, and when the solver pays origin gas through execution fees, as in [gasless execution](/features/gasless-execution).
   </Accordion>
@@ -314,7 +320,7 @@ Every response change, in the order you are likely to hit it.
     - The `relay` component is named `platform`, in both `selectedComponents` and `components`.
     - The currency moves to one `feeSponsorship.currency`. Amounts inside `components`, `sponsoredTotal`, and `userPaysTotal` no longer repeat it.
 
-    The request parameter `sponsoredFeeComponents` still takes `"relay"`. See [Fee Sponsorship](/features/fee-sponsorship).
+    The request parameter `sponsoredFeeComponents` uses the same name: send `"platform"`, because `"relay"` returns `400`. See [Sponsorship parameters](#request-changes) and [Fee Sponsorship](/features/fee-sponsorship).
   </Accordion>
 
   <Accordion title="Deposit addresses" icon="building-columns">
@@ -336,17 +342,34 @@ Every response change, in the order you are likely to hit it.
   <Accordion title="Required fields" icon="asterisk">
     `requestId`, `steps`, `fees`, and `details` are always present on a `200`. Each step always has `id`, `action`, `description`, `kind`, and `status`.
 
-    `details` keeps every v2 field except `expandedPriceImpact`. `details.rate` and `details.userBalance` are always strings.
+    `details` keeps every v2 field except `expandedPriceImpact`. `details.rate` and `details.userBalance` are always strings, and EVM addresses in `details.sender` and `details.recipient` are lowercase.
+
+    `amountUsd` can be `null` in `details.currencyIn`, `details.currencyOut`, `details.refundCurrency`, `details.currencyGasTopup`, the `details.route` currencies, and `originGas`, when Relay has no USD price for the currency. Treat it as unknown rather than zero.
+  </Accordion>
+
+  <Accordion title="Warnings" icon="circle-info">
+    A successful quote can include a top-level `warnings` array of `{ code, message }` objects. It is omitted when there is nothing to report.
+
+    ```json
+    "warnings": [
+      {
+        "code": "FIXED_RATE_NOT_APPLIED",
+        "message": "fixedRate was not applied to this quote."
+      }
+    ]
+    ```
+
+    The only code today is `FIXED_RATE_NOT_APPLIED`: you sent `fixedRate` (as `input:output`, e.g. `"1:0.9996"`), but the quote is not priced at that rate. The quote still succeeds, and `details.isFixedRate` does not tell you whether your rate was applied, so check `warnings`. More codes may be added; ignore codes you don't recognize. `/quote/v2` returns the same field.
   </Accordion>
 
   <Accordion title="Errors" icon="triangle-exclamation">
-    Every error, on every status code (`400`, `401`, `403`, `429`, `500`, `503`), has one shape:
+    Every error, on every status code (`400`, `401`, `403`, `415`, `429`, `500`, `503`), has one shape:
 
     ```json
     { "message": "…", "errorCode": "INVALID_REQUEST_PARAMS", "requestId": "0x…" }
     ```
 
-    `errorCode` is always set. `requestId` is set when the error happened after a request id was assigned. When no specific code applies, `401` returns `UNAUTHORIZED_QUOTE`, `429` returns `RATE_LIMITED`, `503` returns `SERVICE_UNAVAILABLE`, other `4xx` return `INVALID_REQUEST_PARAMS`, and other `5xx` return `UNKNOWN_ERROR`.
+    `errorCode` is always set. `requestId` is set when the error happened after a request id was assigned. When no specific code applies, `401` returns `UNAUTHORIZED_QUOTE`, `403` returns `FORBIDDEN`, `429` returns `RATE_LIMITED`, `503` returns `SERVICE_UNAVAILABLE`, other `4xx` return `INVALID_REQUEST_PARAMS`, and other `5xx` return `UNKNOWN_ERROR`. `5xx` errors carry a generic `message`, so rely on `errorCode`.
 
     The `400` fields `errorData`, `approxSimulatedBlock`, and `failedCallData` are no longer returned. See [Handling Errors](/references/api/api_core_concepts/handling-errors).
   </Accordion>
@@ -458,6 +481,8 @@ The response has `steps: []`, no `protocol` object, and the v3 `fees`, `originGa
 `POST /execute/permits/v2` takes the same request as `/execute/permits`: the `kind`, `requestId`, and `api` from the signature step's `post.body`, and the signature in the `signature` query parameter. You do not build this call yourself: `/quote/v3` signature steps already point to it.
 
 The response is `{ message, steps? }`. When the permit starts a transaction the wallet must send, such as the swap in a same-chain permit swap, `steps` holds that step in the v3 flat shape. Its `data` includes `gas` and either `maxFeePerGas` and `maxPriorityFeePerGas` or `gasPrice`, and its `check` points to `/intents/status/v3`. Run it before the remaining quote steps.
+
+`api` is required when `kind` is `permit2` or `eip3009`; the step's `post.body` already includes it. A signature that can't be verified returns `400` with `errorCode: "INVALID_SIGNATURE"`.
 
 Errors follow the v3 shape. `4xx` errors can include an `errorData` object, such as the `required` and `available` amounts for an allowance or balance error.
 
