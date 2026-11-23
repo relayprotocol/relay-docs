@@ -140,7 +140,7 @@ To sponsor the rent for ATA creation on Solana destination transactions, include
 | `subsidizeRent` | `boolean` | Deprecated alias. Setting it to `true` adds `rent` to `sponsoredFeeComponents`, so the sponsor pays the ATA rent on the destination chain. Prefer `sponsoredFeeComponents` with `rent` included. |
 
 <Warning>
-Rent is its own fee component and is never sponsored by default. With `subsidizeFees: true` and `rent` not selected, the sponsor pays the selected components (`execution`, `swap`, `relay`, and `app` when `sponsoredFeeComponents` is omitted) and the user pays the ATA rent. Rent sponsorship requires `subsidizeFees: true`; `rent` in `sponsoredFeeComponents` or `subsidizeRent` without it has no effect.
+Rent is its own fee component and is never sponsored by default. With `subsidizeFees: true` and `rent` not selected, the sponsor pays the selected components (`execution`, `swap`, `relay`, and `app` when `sponsoredFeeComponents` is omitted) and the user pays the ATA rent. Rent sponsorship requires `subsidizeFees: true`. A request that sets `sponsoredFeeComponents` without it is rejected with a `400`, and `subsidizeRent` without it is ignored.
 </Warning>
 
 **Important considerations:**
@@ -235,7 +235,7 @@ In this example, a user bridges USDC from Solana to Base. The `depositFeePayer` 
 Fee sponsorship is designed to cover relay and execution costs, but certain fees remain outside its scope:
 
 - **Origin chain gas fees** — Users must pay the gas required to submit their transaction on the origin chain (unless using `depositFeePayer` for Solana origins).
-- **Solana ATA rent** — The `rent` component is user-paid unless you select it explicitly in `sponsoredFeeComponents` or set `subsidizeRent`. See [Solana Fee Sponsorship](#solana-fee-sponsorship).
+- **Solana ATA rent** — The `rent` component is user-paid unless you select it explicitly in `sponsoredFeeComponents` (or set the deprecated `subsidizeRent` alias). See [Solana Fee Sponsorship](#solana-fee-sponsorship).
 - **First-time approval transactions when using `usePermit`** — The initial approval transaction required for permit-based flows is not covered by fee sponsorship. However, all subsequent requests after the approval will be sponsored.
 
 <Note>
