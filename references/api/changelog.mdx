@@ -3,6 +3,16 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-11-23 — `POST /quote/v3` and `POST /execute/permits/v2`
+
+**Added** — [`POST /quote/v3`](/references/api/get-quote-v3): a new quote endpoint that returns flattened execution `steps` alongside a named fee breakdown (`execution`, `swap`, `platform`, `app`, `sponsored`) sharing the shape used by [`GET /requests/v3`](/references/api/get-requests). Wallet-paid origin gas is reported separately in `originGas`. `warnings` is present when a requested `fixedRate` was not applied (code `FIXED_RATE_NOT_APPLIED`) and omitted otherwise. Authentication is required on every request — pass `x-api-key` or an `authorization` bearer token. Permit continuations from v3 quotes point at `/execute/permits/v2`. `POST /quote` and `POST /quote/v2` are unchanged.
+
+**Added** — [`POST /execute/permits/v2`](/references/api/execute-permits-v2): a new permit-submission endpoint that returns the same flattened `steps` shape as `/quote/v3` and a structured error envelope (`{ message, errorCode, errorData? }`) with `errorData` populated for approval and balance failures. The `kind` body field accepts the standard permit kinds and, for the two-signature EIP-3009 flow on approval proxy 3.1+, `multicall-authorization` (post the multicall-authorization signature first, then the `eip3009` signature). `api` (`bridge` | `swap` | `user-swap`) is required for `permit2` and `eip3009` and optional otherwise. `POST /execute/permits` is unchanged.
+
+**Added** — `POST /quote/v3`: new `sponsoredFeeComponents` request field selects which fee components the sponsor pays when `subsidizeFees=true`. Accepts a non-empty, unique subset of `execution`, `swap`, `platform`, `app`, `rent`. Defaults to `execution`, `swap`, `platform`, and `app` when omitted; `rent` remains user-paid unless explicitly selected. Use `platform` as the component name — the legacy `relay` name is not accepted on v3. The deprecated `subsidizeRent` boolean still works as a compatibility alias that adds `rent` to the set.
+
+**Added** — `POST /quote/v3`: new `subsidizationBps` request field (0–10000) sets the share of each sponsored fee component the sponsor covers. Defaults to full coverage when omitted; the user pays the remainder. Applied before `maxSubsidizationAmount`, which still caps the sponsor's total.
+
 ## 2026-11-19 — Upcoming Solana solver wallet change
 
 **Behavior change** — Relay will gradually move a share of new Solana requests to a new solver wallet. If your integration hardcodes, allowlists, or tracks the current solver address `F7p3dFrjRTbtRp8FRF6qHLomXbKRBzpvBLjtQcfcgmNe`, add `4KdsvcEJ2JakGhbZtMFyFZdWbt9unisT5LeCm8FmSJY3` alongside it before the rollout. Keep both addresses during the transition. The Solana `solverAddresses` array in [`GET /chains`](/references/api/get-chains) is the source for the current list. Relay will announce the rollout timing separately.
