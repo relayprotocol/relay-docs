@@ -498,4 +498,4 @@ If you call `/quote` today, your steps point to `GET /intents/status`. If you ca
 
 `executeSteps` in `@relayprotocol/relay-sdk` 8.1.0 and later runs flat v3 steps as well as `items` steps, so step execution keeps working when you pass it a `/quote/v3` response.
 
-**`{{PLACEHOLDER}}`**: the SDK release in which `getQuote` and the hooks call `/quote/v3`. Until then, they call `/quote/v2`.
+Starting with `@relayprotocol/relay-sdk` 9.0.0, `getQuote` calls `/quote/v3` and returns its flat steps. The matching releases are `@relayprotocol/relay-kit-hooks` 7.0.0, where `useQuote` calls `/quote/v3`, and `@relayprotocol/relay-kit-ui` 13.0.0. Earlier versions call `/quote/v2`.
