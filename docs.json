@@ -153,7 +153,9 @@
             "pages": [
               "references/api/core",
               "references/api/get-quote-v2",
+              "references/api/get-quote-v3",
               "references/api/execute-permits",
+              "references/api/execute-permits-v2",
               "references/api/get-intents-status-v3",
               "references/api/get-requests",
               "references/api/get-published-requests",
