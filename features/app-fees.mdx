@@ -33,6 +33,14 @@ App Fees are measured in basis points (bps) based on the input value of an order
 If you include the `appFees` parameter on an unsupported transaction type (such as sends, transfers, or gasless execution without a prior quote), the API will not return an error — but no fees will be collected. Always verify fee collection is working using the [monitoring endpoints](#verifying-fee-collection) described below.
 </Warning>
 
+## App Fee Recipients in the Dashboard
+
+You set the App Fee recipient in the API request, as `appFees[].recipient`. There is no setup step for it in the Relay Dashboard: you do not link, register, or verify an App Fee recipient.
+
+Once you send a quote request that names that wallet in `appFees[].recipient` with your API key, the wallet appears on the [Balances page](https://dashboard.relay.link/balance) of the Dashboard automatically, with the **App Fee recipient** role. Opening the Balances page checks for new recipients, so a wallet used for the first time shows up on your next visit, after a short delay for the request to be logged. The balance it shows is the same off-chain USDC balance returned by the [balances API](#get-app-balance).
+
+The **Link wallet for Fee Sponsorship** action on the Balances page is not related to App Fees. That action links a wallet for [Fee Sponsorship](/features/fee-sponsorship); it does not make the wallet an App Fee recipient, and an App Fee recipient does not need that link. One wallet can hold both roles.
+
 ## Supported Transaction Types
 
 App fees are supported on the following transaction types:
