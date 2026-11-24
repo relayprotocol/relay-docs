@@ -1,5 +1,9 @@
 ---
-title: "Submit Permit"
-description: "This API is used to submit a permit from the quote API."
+title: "Submit Permit (v1)"
+description: "Deprecated. Submits a permit from the quote API. Use POST /execute/permits/v2 for new integrations."
 openapi: post /execute/permits
 ---
+
+<Warning>
+  `POST /execute/permits` is **deprecated as of November 25, 2026**: its rate limit is reduced in stages from January 9, 2027 until it is **retired on February 23, 2027**. Use [`POST /execute/permits/v2`](/references/api/execute-permits-v2), which takes the same request and returns flat steps. See the [migration guide](/references/api/api_guides/migrating-to-quote-v3#sunset-timeline) for the timeline and how to upgrade.
+</Warning>

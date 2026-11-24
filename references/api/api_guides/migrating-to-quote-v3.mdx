@@ -20,7 +20,7 @@ The `v3` endpoint suffix is a platform API version. It does not mean a request u
 | `POST /quote` | `POST /quote/v3` | Same request. Steps check status on `/intents/status/v3` instead of `/intents/status`. |
 | `POST /quote/v2` | `POST /quote/v3` | Same request, minus the [removed parameters](#request-changes). |
 | `POST /price` | `POST /quote/v3` with `indicativeQuote: true` | Returns no steps and saves no request, like `/price`. Requires an API key or access token. |
-| `POST /execute/permits` | `POST /execute/permits/v2` | Same request. Returns flat steps. `/quote/v3` signature steps already point to it. |
+| `POST /execute/permits` | [`POST /execute/permits/v2`](/references/api/execute-permits-v2) | Same request. Returns flat steps. `/quote/v3` signature steps already point to it. |
 | `GET /intents/status` | [`GET /intents/status/v3`](/references/api/get-intents-status-v3) | No API key needed. |
 | `GET /intents/status/v2` | [`GET /intents/status/v3`](/references/api/get-intents-status-v3) | No API key needed. |
 
@@ -483,7 +483,7 @@ The response has `steps: []`, no `protocol` object, and the v3 `fees`, `originGa
 
 ## Submitting permits
 
-`POST /execute/permits/v2` takes the same request as `/execute/permits`: the `kind`, `requestId`, and `api` from the signature step's `post.body`, and the signature in the `signature` query parameter. You do not build this call yourself: `/quote/v3` signature steps already point to it.
+[`POST /execute/permits/v2`](/references/api/execute-permits-v2) takes the same request as `/execute/permits`: the `kind`, `requestId`, and `api` from the signature step's `post.body`, and the signature in the `signature` query parameter. You do not build this call yourself: `/quote/v3` signature steps already point to it.
 
 The response is `{ message, steps? }`. When the permit starts a transaction the wallet must send, such as the swap in a same-chain permit swap, `steps` holds that step in the v3 flat shape. Its `data` includes `gas` and either `maxFeePerGas` and `maxPriorityFeePerGas` or `gasPrice`, and its `check` points to `/intents/status/v3`. Run it before the remaining quote steps.
 
