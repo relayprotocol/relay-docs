@@ -501,7 +501,7 @@ If you call `/quote` today, your steps point to `GET /intents/status`. If you ca
 
 ## Upgrading RelayKit
 
-RelayKit moves to `/quote/v3` in these releases. Earlier versions call `/quote/v2`, so upgrade before it retires.
+RelayKit quotes with `/quote/v3` starting with these releases, published on November 24, 2026. Earlier versions call `/quote/v2`, so upgrade before it retires.
 
 | Package | Version |
 | --- | --- |
@@ -533,6 +533,7 @@ Without a key, quotes fail with `401` and `errorCode: "UNAUTHORIZED_QUOTE"`. The
 
 ### UI kit
 
-- **SwapWidget:** you don't need to change any props. `onSwapValidating`, `onSwapSuccess`, and `onSwapError` still receive an `Execute` with `items` steps, but its `fees`, `originGas`, `depositAddress`, and `warnings` follow v3. Update any callback code that reads `fees.relayer`, `fees.gas`, or `depositAddress` as a string.
+- **SwapWidget:** existing props keep working. `onSwapValidating`, `onSwapSuccess`, and `onSwapError` still receive an `Execute` with `items` steps, but its `fees`, `originGas`, `depositAddress`, and `warnings` follow v3. Update any callback code that reads `fees.relayer`, `fees.gas`, or `depositAddress` as a string.
 - **OnrampWidget:** `onSuccess` and `onError` now receive a `Quote` instead of an `Execute`.
+- **`refundTo` prop:** `SwapWidget` and `OnrampWidget` accept an optional `refundTo` address, which they pass to `/quote/v3`. Set it if you support deposit-address routes that need a destination swap; without it, those quotes fail with `refundTo is required for deposit addresses that require a destination swap`.
 - **RelayKitProvider:** set `baseApiUrl` to your proxy, as described in [Authentication](#authentication). The provider warns when `baseApiUrl` points directly at the Relay API.
