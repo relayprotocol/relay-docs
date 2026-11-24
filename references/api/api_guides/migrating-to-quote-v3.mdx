@@ -507,12 +507,12 @@ The request is unchanged: pass `requestId` as a query parameter. The response ch
 | `updatedAt` | Renamed from `time` in v1 and v2. |
 | `quoteCreatedAt` | Returned since v2; not in v1. |
 | `failReason` | New. Why a fill failed, such as `SLIPPAGE` or `TTL_EXPIRED`; `"N/A"` when nothing failed. |
-| `refundFailReason` | New. Why a refund failed, such as `AMOUNT_TOO_LOW_TO_REFUND` or `REFUND_RECIPIENT_IS_BLOCKED`. |
+| `refundFailReason` | New. Why a refund failed, such as `AMOUNT_TOO_LOW_TO_REFUND` or `REFUND_RECIPIENT_IS_BLOCKED`; `"N/A"` (or `null`) when no refund failed. |
 | `revertReason` | New. The sanitized onchain revert reason, for debugging only. |
 
 `details`, `inTxHashes`, `txHashes`, `originChainId`, and `destinationChainId` are unchanged.
 
-- **Moving from `/intents/status`:** `received` and `fallback` no longer exist. Handle the v3 statuses listed on [Get Status](/references/api/get-intents-status-v3) instead. Only `success` and `refund` are final; a `failure` can still be retried or refunded, unless it has a `refundFailReason`.
+- **Moving from `/intents/status`:** `received` and `fallback` no longer exist. Handle the v3 statuses listed on [Get Status](/references/api/get-intents-status-v3) instead. Only `success` and `refund` are final; a `failure` can still be retried or refunded, unless `refundFailReason` holds a real reason rather than `"N/A"` or `null`.
 - **Moving from `/intents/status/v2`:** read `updatedAt` instead of `time`, and treat `submitted` like `pending`: the fill is on its way but not final.
 
 See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors) for every `failReason` and `refundFailReason` value.
