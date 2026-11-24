@@ -48,14 +48,14 @@ flowchart TD
 Use this approach when your app does **not** control the user's wallet (e.g. MetaMask, Rainbow, or any external EOA). The user signs an offchain EIP-3009 or Permit2 message and submits it through the Relay platform. Solvers execute the authorized flow and pay transaction gas.
 
 <Warning>
-  USDC is fully gasless. Other ERC-20 tokens require a one-time approval transaction. Same-chain ERC-20 → ERC-20 swaps do not support the permit flow: passing **`usePermit: true`** is ignored and the quote returns `approve` and `swap` transaction steps instead of a permit signature step. Same-chain ERC-20 → native swaps do return the [`authorize2`](/references/api/api_core_concepts/step-execution#authorize2) permit step.
+  USDC is fully gasless. Other ERC-20 tokens require a one-time approval transaction. Same-chain ERC-20 → ERC-20 swaps do not support the permit flow: passing **`usePermit: true`** is ignored and the quote returns `approve` and `swap` transaction steps instead of a permit signature step. Same-chain ERC-20 → native swaps do return an [`authorize`](/references/api/api_core_concepts/step-execution#same-chain-permit) permit step.
 </Warning>
 
 ### How it works
 
 <Steps>
   <Step title="Get a quote">
-    Call `/quote/v2` with `usePermit: true`
+    Call `/quote/v3` with `usePermit: true`
   </Step>
   <Step title="Sign the permit">
     Prompt the user to sign an EIP-712 typed-data permit message (off-chain, no gas)
@@ -72,15 +72,17 @@ Use this approach when your app does **not** control the user's wallet (e.g. Met
 
 From October 26, 2026, Relay routes permits through the v3.2 ApprovalProxy (see [Migrating to the new router](/references/api/api_resources/contract-addresses#migrating-to-the-new-router)). On that proxy, an ERC-3009 permit (the USDC style `TransferWithAuthorization`) needs a second signature: a `MulticallAuthorization` that ties the permit to the exact calls Relay runs with the user's tokens.
 
-Opt in by passing **`useMulticallAuthorization: true`** in the quote request. The permit signature step (`authorize1`, or `authorize2` for a same-chain swap) then holds two items. Sign and post them in this order:
+Opt in by passing **`useMulticallAuthorization: true`** in the quote request. The quote then returns two consecutive `authorize` signature steps for the permit. Sign and post them in this order:
 
-1. **`MulticallAuthorization`**: EIP-712 typed data with the domain name `RelayApprovalProxy`, version `3.1`, the chain id, and the v3.2 ApprovalProxy as the verifying contract. Post it to `/execute/permits` with kind `multicall-authorization`. This item has no `check`, since nothing executes yet.
-2. **ERC-3009 authorization**: the usual `TransferWithAuthorization`, posted with kind `eip3009`. Once both signatures are posted, Relay submits the permit. For a same-chain swap (`authorize2`), the response returns the swap transaction for the user to send instead.
+1. **`MulticallAuthorization`**: EIP-712 typed data with the domain name `RelayApprovalProxy`, version `3.1`, the chain id, and the v3.2 ApprovalProxy as the verifying contract. Post it to `/execute/permits/v2` with kind `multicall-authorization`. This step has no `check`, since nothing executes yet.
+2. **ERC-3009 authorization**: the usual `TransferWithAuthorization`, posted with kind `eip3009`. Once both signatures are posted, Relay submits the permit. For a same-chain swap, the `/execute/permits/v2` response returns the swap transaction step for the user to send instead.
 
-Posting the ERC-3009 signature first returns a 400. Sign both items as the quote returns them: the ERC-3009 nonce is derived from the `MulticallAuthorization`, so changing either one invalidates the pair.
+Posting the ERC-3009 signature first returns a 400. Sign both steps as the quote returns them: the ERC-3009 nonce is derived from the `MulticallAuthorization`, so changing either one invalidates the pair.
 
 ```json expandable
 {
+  "id": "authorize",
+  "kind": "signature",
   "status": "incomplete",
   "data": {
     "sign": {
@@ -141,7 +143,7 @@ Posting the ERC-3009 signature first returns a 400. Sign both items as the quote
       }
     },
     "post": {
-      "endpoint": "/execute/permits",
+      "endpoint": "/execute/permits/v2",
       "method": "POST",
       "body": {
         "kind": "multicall-authorization",
@@ -153,7 +155,7 @@ Posting the ERC-3009 signature first returns a 400. Sign both items as the quote
 }
 ```
 
-Without the opt in, ERC-3009 permits keep using the v3 ApprovalProxy with a single signature during the transition. You can pass the flag before the switch: until then the step holds only the ERC-3009 item.
+Without the opt in, ERC-3009 permits keep using the v3 ApprovalProxy with a single signature during the transition. You can pass the flag before the switch: until then the quote returns only the ERC-3009 step.
 
 Permit2 permits need no change. On the v3.2 ApprovalProxy the `RelayerWitness` in the quote's typed data includes `msgValue`; if you build Permit2 messages yourself, take the witness from the quote.
 
@@ -171,13 +173,13 @@ Use this approach if your app already uses ERC-4337 smart accounts. ERC-4337 Use
 
 ### `originGasOverhead`
 
-Pass **`originGasOverhead: 300000`** in the `/quote/v2` request. This tells Relay how much additional gas the UserOperation adds over a normal EOA transaction, used during simulation to accurately price the fee.
+Pass **`originGasOverhead: 300000`** in the `/quote/v3` request. This tells Relay how much additional gas the UserOperation adds over a normal EOA transaction, used during simulation to accurately price the fee.
 
 ### How it works
 
 <Steps>
   <Step title="Get a quote">
-    Call `/quote/v2` with `originGasOverhead: 300000` to get deposit transaction details
+    Call `/quote/v3` with `originGasOverhead: 300000` to get deposit transaction details
   </Step>
   <Step title="Build the UserOperation">
     Build a UserOperation that batches `approve` + `deposit` calls via `executeBatch`
@@ -216,7 +218,7 @@ Use this approach when your app controls an embedded or custodial wallet and you
 
 ### `originGasOverhead`
 
-Pass **`originGasOverhead: 80000`** in the `/quote/v2` request. This tells Relay how much additional gas the Calibur `execute()` wrapper adds over the raw inner calls (EIP-712 signature verification, batch dispatch, nonce check). This is lower than ERC-4337's `300000` because there's no EntryPoint or UserOp validation overhead.
+Pass **`originGasOverhead: 80000`** in the `/quote/v3` request. This tells Relay how much additional gas the Calibur `execute()` wrapper adds over the raw inner calls (EIP-712 signature verification, batch dispatch, nonce check). This is lower than ERC-4337's `300000` because there's no EntryPoint or UserOp validation overhead.
 
 <Info>
   The `80000` value is specific to [Calibur](https://github.com/Uniswap/calibur). Different BatchExecutor contracts may have different gas overheads — adjust this value based on the implementation you use.
@@ -229,7 +231,7 @@ Pass **`originGasOverhead: 80000`** in the `/quote/v2` request. This tells Relay
     Check if the user's EOA is already delegated to the BatchExecutor via EIP-7702
   </Step>
   <Step title="Get a quote">
-    Call `/quote/v2` with `originGasOverhead: 80000` to get deposit transaction details
+    Call `/quote/v3` with `originGasOverhead: 80000` to get deposit transaction details
   </Step>
   <Step title="Build the batch">
     Build a `BatchedCall` that atomically combines `approve()` and `deposit()`
@@ -272,10 +274,10 @@ Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solan
 
 <Steps>
   <Step title="Get a quote with a sponsor" id="get-a-quote-with-a-sponsor">
-    Call `/quote/v2` with **`depositFeePayer`** set to your sponsor wallet.
+    Call `/quote/v3` with **`depositFeePayer`** set to your sponsor wallet.
 
     ```bash
-    curl -X POST "https://api.relay.link/quote/v2" \
+    curl -X POST "https://api.relay.link/quote/v3" \
       -H "Content-Type: application/json" \
       -H "x-api-key: YOUR_API_KEY" \
       -d '{
@@ -307,10 +309,10 @@ Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solan
     } from "@solana/web3.js";
 
     const connection = new Connection(SOLANA_RPC_URL);
-    const item = quote.steps[0].items[0];
+    const step = quote.steps[0];
 
     // 1. Rebuild the instructions returned by the quote
-    const instructions = item.data.instructions.map(
+    const instructions = step.data.instructions.map(
       (i) =>
         new TransactionInstruction({
           programId: new PublicKey(i.programId),
@@ -326,7 +328,7 @@ Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solan
     // 2. Resolve the address lookup tables
     const lookupTables = (
       await Promise.all(
-        (item.data.addressLookupTableAddresses ?? []).map((address: string) =>
+        (step.data.addressLookupTableAddresses ?? []).map((address: string) =>
           connection
             .getAddressLookupTable(new PublicKey(address))
             .then((res) => res.value)
@@ -363,7 +365,7 @@ Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solan
 
     // Poll until "success" or "failure"
     const status = await fetch(
-      `https://api.relay.link${item.check.endpoint}`
+      `https://api.relay.link${step.check.endpoint}`
     ).then((r) => r.json());
     ```
 

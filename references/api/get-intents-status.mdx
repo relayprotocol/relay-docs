@@ -1,6 +1,9 @@
 ---
 title: "Get Execution Status"
-description: "This API returns current status of intent."
+description: "Deprecated. Returns the current status of an intent. Use GET /intents/status/v3 for new integrations."
 openapi: get /intents/status
 ---
-<Warning>Please use [Get Execution Status v2](/references/api/get-intents-status-v3) as this is deprecated</Warning>
+
+<Warning>
+  `GET /intents/status` is **deprecated as of November 25, 2026**: its rate limit is reduced in stages from January 9, 2027 until it is **retired on February 23, 2027**. Use [`GET /intents/status/v3`](/references/api/get-intents-status-v3), which needs no API key. See the [migration guide](/references/api/api_guides/migrating-to-quote-v3#status-polling) for the timeline and how to upgrade.
+</Warning>

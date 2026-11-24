@@ -71,7 +71,7 @@ const quote = await getClient().actions.getQuote({
   wallet,
 });
 
-const requestId = quote.steps[0].requestId;
+const requestId = quote.requestId;
 console.log(`Request ID: ${requestId}`);
 
 // 4. Execute the quote and fast fill once the transaction is submitted
@@ -123,11 +123,11 @@ const publicClient = createPublicClient({
 const API_KEY = "YOUR_API_KEY"; // Required for fast fill
 
 // 2. Get a quote from the Relay API
-const quoteResponse = await fetch("https://api.relay.link/quote/v2", {
+const quoteResponse = await fetch("https://api.relay.link/quote/v3", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${API_KEY}`,
+    "x-api-key": API_KEY,
   },
   body: JSON.stringify({
     user: account.address,
@@ -142,16 +142,15 @@ const quoteResponse = await fetch("https://api.relay.link/quote/v2", {
 
 const quote = await quoteResponse.json();
 const step = quote.steps[0];
-const item = step.items[0];
-const requestId = step.requestId;
+const requestId = quote.requestId;
 
 console.log(`Request ID: ${requestId}`);
 
 // 3. Submit the transaction on-chain
 const txHash = await walletClient.sendTransaction({
-  to: item.data.to as Hex,
-  data: item.data.data as Hex,
-  value: BigInt(item.data.value),
+  to: step.data.to as Hex,
+  data: step.data.data as Hex,
+  value: BigInt(step.data.value),
 });
 
 console.log(`Transaction submitted: ${txHash}`);

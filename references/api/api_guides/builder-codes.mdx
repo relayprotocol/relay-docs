@@ -3,7 +3,7 @@ title: "Base Builder Codes"
 description: "Attribute onchain activity by appending builder codes to your Relay transactions"
 ---
 
-import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+import QuoteAuthCallout from "/snippets/QuoteAuthCallout.mdx";
 
 
 Base builder codes are a way to attribute onchain activity. Each code enhances onchain transactions with offchain metadata and makes your application more discoverable. To learn more about builder codes, see the [Base documentation](https://docs.base.org/base-chain/builder-codes/builder-codes).
@@ -14,13 +14,13 @@ Base builder codes are a way to attribute onchain activity. Each code enhances o
 
 A builder code is an [ERC-8021](https://eip.tools/eip/8021) `dataSuffix` appended to the end of a deposit transaction's calldata. The called contract ignores the trailing bytes, but indexers read them to credit your application.
 
-Relay matches an onchain transaction to its quote by `requestId`. Appending bytes to arbitrary calldata changes the transaction, so the solver can no longer match it and the request stops tracking — even though the transaction succeeds onchain. To avoid this, request an [explicit deposit](/references/api/get-quote-v2#body-explicit-deposit) quote: set **`explicitDeposit`** to `true`. The explicit flow routes funds through the Relay Depository contract that carries the order ID as an argument, so the solver tracks the deposit by that order ID rather than by exact calldata — trailing suffix bytes don't affect it.
+Relay matches an onchain transaction to its quote by `requestId`. Appending bytes to arbitrary calldata changes the transaction, so the solver can no longer match it and the request stops tracking — even though the transaction succeeds onchain. To avoid this, request an [explicit deposit](/references/api/get-quote-v3#body-explicit-deposit) quote: set **`explicitDeposit`** to `true`. The explicit flow routes funds through the Relay Depository contract that carries the order ID as an argument, so the solver tracks the deposit by that order ID rather than by exact calldata — trailing suffix bytes don't affect it.
 
 Builder codes only work for quotes that route through the Relay Depository contract; same-chain swaps don't use the deposit flow and can't carry a builder code.
 
 ### Example
 
-<QuoteV2AuthCallout />
+<QuoteAuthCallout />
 
 ```typescript expandable
 import {
@@ -45,9 +45,10 @@ function buildDataSuffix(builderCode: string): Hex {
 }
 
 async function fetchQuote(req: Record<string, unknown>) {
-  const res = await fetch("https://api.relay.link/quote/v2", {
+  const res = await fetch("https://api.relay.link/quote/v3", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    // In the browser, authenticate with an access token minted by your backend
+    headers: { "content-type": "application/json", authorization: `Bearer ${ACCESS_TOKEN}` },
     body: JSON.stringify(req),
   });
   if (!res.ok) throw new Error(`Relay quote failed: ${res.status} ${await res.text()}`);
@@ -62,13 +63,7 @@ function applyDataSuffix(quote: any, dataSuffix: Hex) {
     steps: quote.steps.map((step: any) =>
       step.id !== "deposit"
         ? step
-        : {
-            ...step,
-            items: step.items.map((item: any) => ({
-              ...item,
-              data: { ...item.data, data: concatHex([item.data.data, dataSuffix]) },
-            })),
-          }
+        : { ...step, data: { ...step.data, data: concatHex([step.data.data, dataSuffix]) } }
     ),
   };
 }
@@ -86,7 +81,6 @@ const quote = await fetchQuote({
   destinationCurrency: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC on Arbitrum
   amount: "1000000", // 1 USDC (6 decimals)
   tradeType: "EXACT_INPUT",
-  protocolVersion: "v2",
   explicitDeposit: true,
 });
 
@@ -96,16 +90,15 @@ const quoteWithSuffix = applyDataSuffix(quote, dataSuffix);
 
 // 3. Execute each transaction step in order (approval first, then deposit).
 for (const step of quoteWithSuffix.steps) {
-  if (step.kind !== "transaction") continue;
-  for (const { data: tx } of step.items) {
-    await walletClient.sendTransaction({
-      account,
-      to: tx.to,
-      data: tx.data,
-      value: BigInt(tx.value ?? 0),
-      chainId: tx.chainId,
-    });
-  }
+  if (step.kind !== "transaction" || step.status === "complete") continue;
+  const tx = step.data;
+  await walletClient.sendTransaction({
+    account,
+    to: tx.to,
+    data: tx.data,
+    value: BigInt(tx.value ?? 0),
+    chainId: tx.chainId,
+  });
 }
 ```
 
@@ -113,6 +106,6 @@ for (const step of quoteWithSuffix.steps) {
 
 ## Caveats
 
-- Builder codes require an explicit deposit: set **`explicitDeposit`** to `true` and **`protocolVersion`** to `"v2"` in your quote request.
+- Builder codes require an explicit deposit: set **`explicitDeposit`** to `true` in your quote request.
 - Only quotes that route through the Relay Depository contract (`depositErc20`) support builder codes. Same-chain swaps do not.
 - Append the suffix to the `deposit` step only.

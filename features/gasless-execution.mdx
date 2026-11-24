@@ -23,10 +23,11 @@ In this example use case you want to execute a gasless Relay quote with the [exe
 
 <Steps>
   <Step title="Get a quote">
-    This flow assumes that the user is using a smart wallet. Use the [quote endpoint](/references/api/get-quote-v2) to get a quote for the transaction you want to execute. The `originGasOverhead` indicates how much additional gas overhead will be necessary to include the user operation on the chain as compared to a normal EOA transaction.
+    This flow assumes that the user is using a smart wallet. Use the [quote endpoint](/references/api/get-quote-v3) to get a quote for the transaction you want to execute. The `originGasOverhead` indicates how much additional gas overhead will be necessary to include the user operation on the chain as compared to a normal EOA transaction.
     <CodeGroup>
      ```bash cURL
-      curl -X POST "https://api.relay.link/quote/v2" \
+      curl -X POST "https://api.relay.link/quote/v3" \
+      -H "x-api-key: YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "user": "YOUR_WALLET_ADDRESS",
@@ -41,143 +42,88 @@ In this example use case you want to execute a gasless Relay quote with the [exe
       ```
       ```json Response expandable
       {
+        "requestId": "0xa9ad21ed31b40317d2dad7750d642b8a72adf086f250f8a33c1636488c780878",
         "steps": [
           {
             "id": "deposit",
             "action": "Confirm transaction in your wallet",
             "description": "Depositing funds to the depository contract",
             "kind": "transaction",
-            "items": [
-              {
-                "status": "incomplete",
-                "data": {
-                  "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
-                  "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
-                  "data": "0x49290c1c00000000000000000000000003508bb71268bba25ecacc8f620e01866650532c70387ea00ba97925c3bf1263363b2a7bdc0401faa00f0af4140627c7f385952c",
-                  "value": "100000000000000",
-                  "chainId": 8453,
-                  "maxFeePerGas": "3501361",
-                  "maxPriorityFeePerGas": "1000007"
-                },
-                "check": {
-                  "endpoint": "/intents/status/v3?requestId=0xa9ad21ed31b40317d2dad7750d642b8a72adf086f250f8a33c1636488c780878",
-                  "method": "GET"
-                }
-              }
-            ],
-            "requestId": "0xa9ad21ed31b40317d2dad7750d642b8a72adf086f250f8a33c1636488c780878",
-            "depositAddress": ""
+            "status": "incomplete",
+            "data": {
+              "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+              "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+              "data": "0x49290c1c00000000000000000000000003508bb71268bba25ecacc8f620e01866650532c70387ea00ba97925c3bf1263363b2a7bdc0401faa00f0af4140627c7f385952c",
+              "value": "100000000000000",
+              "chainId": 8453,
+              "maxFeePerGas": "3501361",
+              "maxPriorityFeePerGas": "1000007"
+            },
+            "check": {
+              "endpoint": "/intents/status/v3?requestId=0xa9ad21ed31b40317d2dad7750d642b8a72adf086f250f8a33c1636488c780878",
+              "method": "GET"
+            }
           }
-          # ...
         ],
         "fees": {
-          "gas": {
-            "currency": {
-              "chainId": 8453,
-              "address": "0x0000000000000000000000000000000000000000",
-              "symbol": "ETH",
-              "name": "Ether",
-              "decimals": 18,
-              "metadata": {
-                "logoURI": "https://assets.relay.link/icons/1/light.png",
-                "verified": true
-              }
-            },
-            "amount": "89121108862",
-            "amountFormatted": "0.000000089121108862",
-            "amountUsd": "0.000279",
-            "minimumAmount": "89121108862"
+          "execution": {
+            "usd": "-0.023822",
+            "amount": "7604424369144",
+            "amountFormatted": "0.000007604424369144"
           },
-          "relayer": {
-            "currency": {
-              "chainId": 8453,
-              "address": "0x0000000000000000000000000000000000000000",
-              "symbol": "ETH",
-              "name": "Ether",
-              "decimals": 18,
-              "metadata": {
-                "logoURI": "https://assets.relay.link/icons/1/light.png",
-                "verified": true
-              }
-            },
-            "amount": "9212128356056",
-            "amountFormatted": "0.000009212128356056",
-            "amountUsd": "0.028858",
-            "minimumAmount": "9212128356056"
+          "swap": {
+            "usd": "-0.000030",
+            "amount": "9576556589",
+            "amountFormatted": "0.000000009576556589"
           },
-          "relayerGas": {
-            "currency": {
-              "chainId": 8453,
-              "address": "0x0000000000000000000000000000000000000000",
-              "symbol": "ETH",
-              "name": "Ether",
-              "decimals": 18,
-              "metadata": {
-                "logoURI": "https://assets.relay.link/icons/1/light.png",
-                "verified": true
-              }
-            },
-            "amount": "1219936568400",
-            "amountFormatted": "0.0000012199365684",
-            "amountUsd": "0.003822",
-            "minimumAmount": "1219936568400"
-          },
-          "relayerService": {
-            "currency": {
-              "chainId": 8453,
-              "address": "0x0000000000000000000000000000000000000000",
-              "symbol": "ETH",
-              "name": "Ether",
-              "decimals": 18,
-              "metadata": {
-                "logoURI": "https://assets.relay.link/icons/1/light.png",
-                "verified": true
-              }
-            },
-            "amount": "7992191787656",
-            "amountFormatted": "0.000007992191787656",
-            "amountUsd": "0.025037",
-            "minimumAmount": "7992191787656"
+          "platform": {
+            "usd": "-0.005007",
+            "amount": "1598327294782",
+            "amountFormatted": "0.000001598327294782"
           },
           "app": {
-            "currency": {
-              "chainId": 8453,
-              "address": "0x0000000000000000000000000000000000000000",
-              "symbol": "ETH",
-              "name": "Ether",
-              "decimals": 18,
-              "metadata": {
-                "logoURI": "https://assets.relay.link/icons/1/light.png",
-                "verified": true
-              }
-            },
+            "usd": "0",
             "amount": "0",
-            "amountFormatted": "0.0",
-            "amountUsd": "0",
-            "minimumAmount": "0"
+            "amountFormatted": "0"
           },
-          "subsidized": {
-            "currency": {
-              "chainId": 8453,
-              "address": "0x0000000000000000000000000000000000000000",
-              "symbol": "ETH",
-              "name": "Ether",
-              "decimals": 18,
-              "metadata": {
-                "logoURI": "https://assets.relay.link/icons/1/light.png",
-                "verified": true
-              }
-            },
+          "sponsored": {
+            "usd": "0",
             "amount": "0",
-            "amountFormatted": "0.0",
-            "amountUsd": "0",
-            "minimumAmount": "0"
+            "amountFormatted": "0"
+          },
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
           }
+        },
+        "originGas": {
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "89121108862",
+          "amountFormatted": "0.000000089121108862",
+          "amountUsd": "0.000279",
+          "minimumAmount": "89121108862"
         },
         "details": {
           "operation": "swap",
-          "sender": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
-          "recipient": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+          "sender": "0x03508bb71268bba25ecacc8f620e01866650532c",
+          "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
           "currencyIn": {
             "currency": {
               "chainId": 8453,
@@ -236,20 +182,6 @@ In this example use case you want to execute a gasless Relay quote with the [exe
           "swapImpact": {
             "usd": "0.000000",
             "percent": "0.00"
-          },
-          "expandedPriceImpact": {
-            "swap": {
-              "usd": "-0.000030"
-            },
-            "execution": {
-              "usd": "-0.023822"
-            },
-            "relay": {
-              "usd": "-0.005007"
-            },
-            "app": {
-              "usd": "0"
-            }
           },
           "rate": "0.90787871643944",
           "slippageTolerance": {
@@ -415,13 +347,13 @@ In this example use case you want to execute a gasless Relay quote with the [exe
         method: 'POST',
         headers: {'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json'},
         body: JSON.stringify({
-          requestId: steps[0].requestId, //Quote requestId from previous step
+          requestId: quote.requestId, //Quote requestId from previous step
           executionKind: 'rawCalls',
           data: {
             chainId: 8453,
             to: 'YOUR_WALLET_ADDRESS',
-            data: steps[0].items[0].data.data, //Quote data from previous step
-            value: steps[0].items[0].data.value, //Quote value from previous step
+            data: quote.steps[0].data.data, //Quote data from previous step
+            value: quote.steps[0].data.value, //Quote value from previous step
           },
           executionOptions: {
             subsidizeFees: false, // Required. false: the user covers fees through the quote. true: your app balance pays

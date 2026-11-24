@@ -11,7 +11,7 @@ Let customers pay from the chains they use and receive funds in the asset your b
 
 Accept funds in any asset on any [supported chain](/references/api/api_resources/supported-chains) and receive your settlement asset through two integration paths:
 
-[Connected or embedded wallets](/references/api/get-quote-v2) — Use the standard quote and deposit flow when your user connects a wallet. Deposits are optionally [gasless](/features/gasless-execution), with [fixed or market rates](/features/price-stabilization).
+[Connected or embedded wallets](/references/api/get-quote-v3) — Use the standard quote and deposit flow when your user connects a wallet. Deposits are optionally [gasless](/features/gasless-execution), with [fixed or market rates](/features/price-stabilization).
 
 [Deposit addresses](/features/deposit-addresses) — Generate an address for each order or reusable route so users can pay without connecting a wallet, including from surfaces that don't support wallet connections, such as centralized exchanges. Funds sent to the address are routed and converted to your settlement asset automatically.
 
@@ -43,7 +43,7 @@ The platform screens transaction addresses using blockchain-analytics providers 
 
 ## Pricing
 
-Relay's cost is transparent in every quote. The `expandedPriceImpact` object breaks each payment into its execution, swap, and Relay fee components, plus any app fee you add — so your finance team can model unit economics exactly. Integrators above a volume threshold qualify for a revenue share on the Relay fee. See [Cost & Fee Structure](/references/api/api_core_concepts/fees).
+Relay's cost is transparent in every quote. The quote's `fees` object breaks each payment into its execution, swap, and Relay fee components, plus any app fee you add — so your finance team can model unit economics exactly. Integrators above a volume threshold qualify for a revenue share on the Relay fee. See [Cost & Fee Structure](/references/api/api_core_concepts/fees).
 
 
 ## Security
@@ -53,9 +53,9 @@ Relay's contracts are independently audited, and the protocol runs an ongoing bu
 
 ## Get Started
 
-Add cross-chain pay-ins and disbursements to your platform through a single integration. The [Quote API](/references/api/get-quote-v2) is the core endpoint behind both flows.
+Add cross-chain pay-ins and disbursements to your platform through a single integration. The [Quote API](/references/api/get-quote-v3) is the core endpoint behind both flows.
 
 - **[Quickstart Guide](/references/api/quickstart)** — make your first cross-chain transaction.
-- **[Quote API reference](/references/api/get-quote-v2)** — the core endpoint behind pay-ins and disbursements.
+- **[Quote API reference](/references/api/get-quote-v3)** — the core endpoint behind pay-ins and disbursements.
 - **[Deposit Addresses](/features/deposit-addresses)** — wallet-less acceptance.
 - **[Contact us](https://forms.gle/XNeELYavjwoJwPEf7)** — discuss your corridors, volumes, and settlement requirements.

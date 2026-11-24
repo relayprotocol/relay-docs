@@ -3,7 +3,7 @@ title: "Bridging Integration Guide"
 description: "How to integrate the Relay API for bridging and onboarding"
 ---
 
-import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+import QuoteAuthCallout from "/snippets/QuoteAuthCallout.mdx";
 
 
 import GetAnApiKey from "/snippets/GetAnApiKey.mdx";
@@ -24,7 +24,7 @@ While not mandatory for integration, doing the following will improve the UX for
 <Steps>
   <Step title="Get a Quote">
     ## Get a Quote
-    Every action in Relay starts with a Quote, this includes bridging. The quote provides all necessary information including fees, transaction data, and execution steps. Use the [quote endpoint](/references/api/get-quote-v2) to request a bridge quote.
+    Every action in Relay starts with a Quote, this includes bridging. The quote provides all necessary information including fees, transaction data, and execution steps. Use the [quote endpoint](/references/api/get-quote-v3) to request a bridge quote.
 
     Relay supports three [trade types](/references/api/api_core_concepts/trade-types) for bridging:
 
@@ -32,11 +32,12 @@ While not mandatory for integration, doing the following will improve the UX for
     - **`EXPECTED_OUTPUT`** — specify the approximate amount you want to receive; the input amount is calculated accordingly and the output may vary slightly due to slippage.
     - **`EXACT_OUTPUT`** — specify the exact amount you want to receive; the input amount is calculated accordingly. If the exact output cannot be filled, the request fails and the user is refunded on the origin chain.
 
-<QuoteV2AuthCallout />
+<QuoteAuthCallout />
 
     <CodeGroup>
     ```bash EXACT_INPUT
-    curl -X POST "https://api.relay.link/quote/v2" \
+    curl -X POST "https://api.relay.link/quote/v3" \
+      -H "x-api-key: YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
@@ -49,7 +50,8 @@ While not mandatory for integration, doing the following will improve the UX for
       }'
     ```
     ```bash EXACT_OUTPUT
-    curl -X POST "https://api.relay.link/quote/v2" \
+    curl -X POST "https://api.relay.link/quote/v3" \
+      -H "x-api-key: YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
@@ -63,40 +65,40 @@ While not mandatory for integration, doing the following will improve the UX for
     ```
     ```json Response expandable
     {
+      "requestId": "0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331",
       "steps": [
         {
           "id": "deposit",
           "action": "Confirm transaction in your wallet",
           "description": "Deposit funds for executing the bridge",
           "kind": "transaction",
-          "requestId": "0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331",
-          "items": [
-            {
-              "status": "incomplete",
-              "data": {
-                "from": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
-                "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-                "data": "0x00fad611",
-                "value": "100000000000000000",
-                "chainId": 1
-              },
-              "check": {
-                "endpoint": "/intents/status?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331",
-                "method": "GET"
-              }
-            }
-          ]
+          "status": "incomplete",
+          "data": {
+            "from": "0x742d35Cc6634C0532925a3b8D9d4DB0a2D7DD5B3",
+            "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+            "data": "0x00fad611",
+            "value": "100000000000000000",
+            "chainId": 1
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0x92b99e6e1ee1deeb9531b5ad7f87091b3d71254b3176de9e8b5f6c6d0bd3a331",
+            "method": "GET"
+          }
         }
       ],
       "fees": {
-        "gas": {
-          "amount": "21000000000000000",
-          "currency": "eth"
-        },
-        "relayer": {
-          "amount": "5000000000000000",
-          "currency": "eth"
-        }
+        "execution": { "usd": "-16.50", "amount": "5000000000000000", "amountFormatted": "0.005" },
+        "swap": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+        "platform": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+        "app": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+        "sponsored": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+        "currency": { "chainId": 1, "address": "0x0000000000000000000000000000000000000000", "symbol": "ETH", "name": "Ether", "decimals": 18 }
+      },
+      "originGas": {
+        "currency": { "chainId": 1, "address": "0x0000000000000000000000000000000000000000", "symbol": "ETH", "name": "Ether", "decimals": 18 },
+        "amount": "21000000000000000",
+        "amountFormatted": "0.021",
+        "amountUsd": "69.30"
       },
       "details": {
         "operation": "bridge",
@@ -126,7 +128,7 @@ While not mandatory for integration, doing the following will improve the UX for
     ```
     </CodeGroup>
 
-    You can learn more about quote request parameters and response data [here](/references/api/get-quote-v2).
+    You can learn more about quote request parameters and response data [here](/references/api/get-quote-v3).
 
     <GetAnApiKey />
   </Step>

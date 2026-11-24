@@ -3,14 +3,14 @@ title: "Hyperliquid Support"
 description: "How to deposit and withdraw from Hyperliquid to any Relay chain"
 ---
 
-import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+import QuoteAuthCallout from "/snippets/QuoteAuthCallout.mdx";
 
 
 Relay supports depositing and withdrawing Hyperliquid (Hypercore) perpsUSDC from any supported chain. To try it today, use the [Relay App](https://relay.link/bridge/hyperliquid). Relay also provides complete support for HyperEVM, which can be accessed using the standard quote flow with `chainId=999`. This document details how to integrate Hyperliquid deposits and withdrawals into your application.
 
 ## API Access
 
-Hyperliquid can be accessed using the standard Relay API flow. To get started, review the [**execution steps**](/references/api/api_core_concepts/step-execution) documentation. When you're ready to execute swaps, refer to the [**Get Quote**](/references/api/get-quote-v2) API endpoint.
+Hyperliquid can be accessed using the standard Relay API flow. To get started, review the [**execution steps**](/references/api/api_core_concepts/step-execution) documentation. When you're ready to execute swaps, refer to the [**Get Quote**](/references/api/get-quote-v3) API endpoint.
 
 ## Hyperliquid-Specific API Parameters
 
@@ -18,10 +18,9 @@ Hyperliquid can be accessed using the standard Relay API flow. To get started, r
 | ------------------------- | --------------- | --------- | ------------------------ |
 | Deposit to Hyperliquid    | toChainId       | 1337      | Hyperliquid Chain ID     |
 |                           | recipient       |           | Hyperliquid Address      |
-| Withdraw from Hyperliquid | protocolVersion | v2        | Required for withdrawals |
-|                           | fromChainId     | 1337      | Hyperliquid Chain ID     |
+| Withdraw from Hyperliquid | fromChainId     | 1337      | Hyperliquid Chain ID     |
 
-These parameters are specific to Hyperliquid interactions. All other standard API parameters remain required. Note that `protocolVersion: v2` is mandatory for withdrawals.
+These parameters are specific to Hyperliquid interactions. All other standard API parameters remain required.
 
 ## Supported Currencies
 
@@ -62,11 +61,12 @@ Hyperliquid withdrawals use a two-step signature flow. The v2 implementation lev
 Use the [Hyperliquid info API](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint) to query balances. Pass `clearinghouseState` as the `type` parameter, then read the `withdrawable` property, which returns a USD value in human-readable format.
 
 ### Example Quote Request
-<QuoteV2AuthCallout />
+<QuoteAuthCallout />
 
 <CodeGroup>
 ```bash Request
-curl 'https://api.relay.link/quote/v2' \
+curl 'https://api.relay.link/quote/v3' \
+  -H 'x-api-key: YOUR_API_KEY' \
   -H 'content-type: application/json' \
   -d '{
     "user": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
@@ -77,490 +77,395 @@ curl 'https://api.relay.link/quote/v2' \
     "recipient": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
     "tradeType": "EXACT_INPUT",
     "amount": "1000000000",
-    "refundTo": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-    "protocolVersion": "v2"
+    "refundTo": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e"
   }'
 ```
 ```json Response expandable
 {
-   "steps":[
-      {
-         "id":"authorize",
-         "action":"Sign nonce-mapping for the deposit",
-         "description":"Sign the message that maps the deposit to the order",
-         "kind":"signature",
-         "items":[
-            {
-               "status":"incomplete",
-               "data":{
-                  "sign":{
-                     "signatureKind":"eip712",
-                     "domain":{
-                        "name":"RelayNonceMapping",
-                        "version":"2",
-                        "chainId":1,
-                        "verifyingContract":"0x0000000000000000000000000000000000000000"
-                     },
-                     "types":{
-                        "NonceMapping":[
-                           {
-                              "name":"chainId",
-                              "type":"string"
-                           },
-                           {
-                              "name":"wallet",
-                              "type":"address"
-                           },
-                           {
-                              "name":"depositor",
-                              "type":"address"
-                           },
-                           {
-                              "name":"id",
-                              "type":"bytes32"
-                           },
-                           {
-                              "name":"nonce",
-                              "type":"uint256"
-                           }
-                        ]
-                     },
-                     "value":{
-                        "chainId":"hyperliquid",
-                        "wallet":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-                        "depositor":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-                        "nonce":1770329064777,
-                        "id":"0x3bfdb54176b619a1f1f59f091a0708d0216a9f74b985b34d092cdcc4f9f4f9f3"
-                     },
-                     "primaryType":"NonceMapping"
-                  },
-                  "post":{
-                     "endpoint":"/authorize",
-                     "method":"POST",
-                     "body":{
-                        "type":"nonce-mapping",
-                        "walletChainId":1337,
-                        "wallet":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-                        "depositor":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-                        "nonce":1770329064777,
-                        "id":"0x3bfdb54176b619a1f1f59f091a0708d0216a9f74b985b34d092cdcc4f9f4f9f3",
-                        "signatureChainId":1
-                     }
-                  }
-               }
-            }
-         ],
-         "requestId":"0x02e937b4d022321b56673e12a42064dde45f25b2f7da0db5eb6b4fa5b747f64a"
-      },
-      {
-         "id":"deposit",
-         "action":"Confirm transaction in your wallet",
-         "description":"Depositing funds to the depository contract",
-         "kind":"transaction",
-         "items":[
-            {
-               "status":"incomplete",
-               "data":{
-                  "action":{
-                     "type":"sendAsset",
-                     "parameters":{
-                        "hyperliquidChain":"Mainnet",
-                        "destination":"0x865eb9baa5492cef598adf7afb1038654fcb7081",
-                        "sourceDex":"",
-                        "destinationDex":"",
-                        "token":"USDC:0x6d1e7cde53ba9467b783cb7c530ce054",
-                        "amount":"10.000000",
-                        "fromSubAccount":"",
-                        "nonce":1770329064777
-                     }
-                  },
-                  "nonce":1770329064777,
-                  "eip712Types":{
-                     "HyperliquidTransaction:SendAsset":[
-                        {
-                           "name":"hyperliquidChain",
-                           "type":"string"
-                        },
-                        {
-                           "name":"destination",
-                           "type":"string"
-                        },
-                        {
-                           "name":"sourceDex",
-                           "type":"string"
-                        },
-                        {
-                           "name":"destinationDex",
-                           "type":"string"
-                        },
-                        {
-                           "name":"token",
-                           "type":"string"
-                        },
-                        {
-                           "name":"amount",
-                           "type":"string"
-                        },
-                        {
-                           "name":"fromSubAccount",
-                           "type":"string"
-                        },
-                        {
-                           "name":"nonce",
-                           "type":"uint64"
-                        }
-                     ]
-                  },
-                  "eip712PrimaryType":"HyperliquidTransaction:SendAsset"
-               },
-               "check":{
-                  "endpoint":"/intents/status/v3?requestId=0x02e937b4d022321b56673e12a42064dde45f25b2f7da0db5eb6b4fa5b747f64a",
-                  "method":"GET"
-               }
-            }
-         ],
-         "requestId":"0x02e937b4d022321b56673e12a42064dde45f25b2f7da0db5eb6b4fa5b747f64a",
-         "depositAddress":""
-      }
-   ],
-   "fees":{
-      "gas":{
-         "currency":{
-            "chainId":1337,
-            "address":"0x00000000000000000000000000000000",
-            "symbol":"USDC",
-            "name":"USDC (Perps)",
-            "decimals":8,
-            "metadata":{
-               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-               "verified":true
-            }
-         },
-         "amount":"0",
-         "amountFormatted":"0.0",
-         "amountUsd":"0",
-         "minimumAmount":"0"
-      },
-      "relayer":{
-         "currency":{
-            "chainId":1337,
-            "address":"0x00000000000000000000000000000000",
-            "symbol":"USDC",
-            "name":"USDC (Perps)",
-            "decimals":8,
-            "metadata":{
-               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-               "verified":true
-            }
-         },
-         "amount":"2924363",
-         "amountFormatted":"0.02924363",
-         "amountUsd":"0.029239",
-         "minimumAmount":"2924363"
-      },
-      "relayerGas":{
-         "currency":{
-            "chainId":1337,
-            "address":"0x00000000000000000000000000000000",
-            "symbol":"USDC",
-            "name":"USDC (Perps)",
-            "decimals":8,
-            "metadata":{
-               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-               "verified":true
-            }
-         },
-         "amount":"21060",
-         "amountFormatted":"0.0002106",
-         "amountUsd":"0.000211",
-         "minimumAmount":"21060"
-      },
-      "relayerService":{
-         "currency":{
-            "chainId":1337,
-            "address":"0x00000000000000000000000000000000",
-            "symbol":"USDC",
-            "name":"USDC (Perps)",
-            "decimals":8,
-            "metadata":{
-               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-               "verified":true
-            }
-         },
-         "amount":"2903303",
-         "amountFormatted":"0.02903303",
-         "amountUsd":"0.029028",
-         "minimumAmount":"2903303"
-      },
-      "app":{
-         "currency":{
-            "chainId":1337,
-            "address":"0x00000000000000000000000000000000",
-            "symbol":"USDC",
-            "name":"USDC (Perps)",
-            "decimals":8,
-            "metadata":{
-               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-               "verified":true
-            }
-         },
-         "amount":"0",
-         "amountFormatted":"0.0",
-         "amountUsd":"0",
-         "minimumAmount":"0"
-      },
-      "subsidized":{
-         "currency":{
-            "chainId":1337,
-            "address":"0x00000000000000000000000000000000",
-            "symbol":"USDC",
-            "name":"USDC (Perps)",
-            "decimals":8,
-            "metadata":{
-               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-               "verified":true
-            }
-         },
-         "amount":"0",
-         "amountFormatted":"0.0",
-         "amountUsd":"0",
-         "minimumAmount":"0"
-      }
-   },
-   "details":{
-      "operation":"swap",
-      "sender":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-      "recipient":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-      "currencyIn":{
-         "currency":{
-            "chainId":1337,
-            "address":"0x00000000000000000000000000000000",
-            "symbol":"USDC",
-            "name":"USDC (Perps)",
-            "decimals":8,
-            "metadata":{
-               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-               "verified":true
-            }
-         },
-         "amount":"1000000000",
-         "amountFormatted":"10.0",
-         "amountUsd":"9.998250",
-         "minimumAmount":"1000000000"
-      },
-      "currencyOut":{
-         "currency":{
-            "chainId":10,
-            "address":"0x0000000000000000000000000000000000000000",
-            "symbol":"ETH",
-            "name":"Ether",
-            "decimals":18,
-            "metadata":{
-               "logoURI":"https://assets.relay.link/icons/1/light.png",
-               "verified":true
-            }
-         },
-         "amount":"5388446518106479",
-         "amountFormatted":"0.005388446518106479",
-         "amountUsd":"9.962860",
-         "minimumAmount":"5280677587744349"
-      },
-      "refundCurrency":{
-         "currency":{
-            "chainId":1337,
-            "address":"0x00000000000000000000000000000000",
-            "symbol":"USDC",
-            "name":"USDC (Perps)",
-            "decimals":8,
-            "metadata":{
-               "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-               "verified":true
-            }
-         },
-         "amount":"1000000000",
-         "amountFormatted":"10.0",
-         "amountUsd":"9.998250",
-         "minimumAmount":"1000000000"
-      },
-      "totalImpact":{
-         "usd":"-0.035390",
-         "percent":"-0.35"
-      },
-      "swapImpact":{
-         "usd":"-0.006151",
-         "percent":"-0.06"
-      },
-      "expandedPriceImpact":{
-         "swap":{
-            "usd":"-0.008146"
-         },
-         "execution":{
-            "usd":"-0.020211"
-         },
-         "relay":{
-            "usd":"-0.007033"
-         },
-         "app":{
-            "usd":"0"
-         }
-      },
-      "rate":"0.0005388446518106479",
-      "slippageTolerance":{
-         "origin":{
-            "usd":"0.000000",
-            "value":"0",
-            "percent":"0.00"
-         },
-         "destination":{
-            "usd":"0.199257",
-            "value":"107768930362130",
-            "percent":"2.00"
-         }
-      },
-      "timeEstimate":2,
-      "userBalance":"0",
-      "isFixedRate":true,
-      "route":{
-         "origin":{
-            "inputCurrency":{
-               "currency":{
-                  "chainId":1337,
-                  "address":"0x00000000000000000000000000000000",
-                  "symbol":"USDC",
-                  "name":"USDC (Perps)",
-                  "decimals":8,
-                  "metadata":{
-                     "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-                     "verified":true
-                  }
-               },
-               "amount":"1000000000",
-               "amountFormatted":"10.0",
-               "amountUsd":"9.998250",
-               "minimumAmount":"1000000000"
-            },
-            "outputCurrency":{
-               "currency":{
-                  "chainId":1337,
-                  "address":"0x00000000000000000000000000000000",
-                  "symbol":"USDC",
-                  "name":"USDC (Perps)",
-                  "decimals":8,
-                  "metadata":{
-                     "logoURI":"https://ethereum-optimism.github.io/data/USDC/logo.png",
-                     "verified":true
-                  }
-               },
-               "amount":"1000000000",
-               "amountFormatted":"10.0",
-               "amountUsd":"9.998250",
-               "minimumAmount":"1000000000"
-            },
-            "router":"relay"
-         },
-         "destination":{
-            "inputCurrency":{
-               "currency":{
-                  "chainId":10,
-                  "address":"0x0000000000000000000000000000000000000000",
-                  "symbol":"ETH",
-                  "name":"Ether",
-                  "decimals":18,
-                  "metadata":{
-                     "logoURI":"https://assets.relay.link/icons/1/light.png",
-                     "verified":true
-                  }
-               },
-               "amount":"5388446518106479",
-               "amountFormatted":"0.005388446518106479",
-               "amountUsd":"9.962860",
-               "minimumAmount":"5280677587744349"
-            },
-            "outputCurrency":{
-               "currency":{
-                  "chainId":10,
-                  "address":"0x0000000000000000000000000000000000000000",
-                  "symbol":"ETH",
-                  "name":"Ether",
-                  "decimals":18,
-                  "metadata":{
-                     "logoURI":"https://assets.relay.link/icons/1/light.png",
-                     "verified":true
-                  }
-               },
-               "amount":"5388446518106479",
-               "amountFormatted":"0.005388446518106479",
-               "amountUsd":"9.962860",
-               "minimumAmount":"5280677587744349"
-            },
-            "router":"relay"
-         }
-      }
-   },
-   "protocol":{
-      "v2":{
-         "orderId":"0x3bfdb54176b619a1f1f59f091a0708d0216a9f74b985b34d092cdcc4f9f4f9f3",
-         "orderData":{
-            "version":"v1",
-            "solverChainId":"base",
-            "solver":"0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-            "salt":"0xd50b8811d6ae77508a80cf87b5045e00b62fb2507ffa7a2c2bdef8150a919a04",
-            "inputs":[
-               {
-                  "payment":{
-                     "chainId":"hyperliquid",
-                     "currency":"0x00000000000000000000000000000000",
-                     "amount":"1000000000",
-                     "weight":"1"
-                  },
-                  "refunds":[
-                     {
-                        "chainId":"hyperliquid",
-                        "recipient":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-                        "currency":"0x00000000000000000000000000000000",
-                        "minimumAmount":"0",
-                        "deadline":1770933867,
-                        "extraData":"0x"
-                     },
-                     {
-                        "chainId":"optimism",
-                        "recipient":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-                        "currency":"0x0000000000000000000000000000000000000000",
-                        "minimumAmount":"0",
-                        "deadline":1770933867,
-                        "extraData":"0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
-                     }
-                  ]
-               }
-            ],
-            "output":{
-               "chainId":"optimism",
-               "payments":[
-                  {
-                     "recipient":"0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-                     "currency":"0x0000000000000000000000000000000000000000",
-                     "minimumAmount":"5280677587744349",
-                     "expectedAmount":"5388446518106479"
-                  }
-               ],
-               "calls":[
-                  
-               ],
-               "deadline":1770933867,
-               "extraData":"0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
-            },
-            "fees":[
-               
+  "requestId": "0x02e937b4d022321b56673e12a42064dde45f25b2f7da0db5eb6b4fa5b747f64a",
+  "steps": [
+    {
+      "id": "authorize",
+      "action": "Sign nonce-mapping for the deposit",
+      "description": "Sign the message that maps the deposit to the order",
+      "kind": "signature",
+      "status": "incomplete",
+      "data": {
+        "sign": {
+          "signatureKind": "eip712",
+          "domain": {
+            "name": "RelayNonceMapping",
+            "version": "2",
+            "chainId": 1,
+            "verifyingContract": "0x0000000000000000000000000000000000000000"
+          },
+          "types": {
+            "NonceMapping": [
+              {
+                "name": "chainId",
+                "type": "string"
+              },
+              {
+                "name": "wallet",
+                "type": "address"
+              },
+              {
+                "name": "depositor",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "bytes32"
+              },
+              {
+                "name": "nonce",
+                "type": "uint256"
+              }
             ]
-         },
-         "paymentDetails":{
-            "chainId":"hyperliquid",
-            "depository":"0x865eb9baa5492cef598adf7afb1038654fcb7081",
-            "currency":"0x00000000000000000000000000000000",
-            "amount":"1000000000"
-         }
+          },
+          "value": {
+            "chainId": "hyperliquid",
+            "wallet": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+            "depositor": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+            "nonce": 1770329064777,
+            "id": "0x3bfdb54176b619a1f1f59f091a0708d0216a9f74b985b34d092cdcc4f9f4f9f3"
+          },
+          "primaryType": "NonceMapping"
+        },
+        "post": {
+          "endpoint": "/authorize",
+          "method": "POST",
+          "body": {
+            "type": "nonce-mapping",
+            "walletChainId": 1337,
+            "wallet": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+            "depositor": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+            "nonce": 1770329064777,
+            "id": "0x3bfdb54176b619a1f1f59f091a0708d0216a9f74b985b34d092cdcc4f9f4f9f3",
+            "signatureChainId": 1
+          }
+        }
       }
-   }
+    },
+    {
+      "id": "deposit",
+      "action": "Confirm transaction in your wallet",
+      "description": "Depositing funds to the depository contract",
+      "kind": "transaction",
+      "status": "incomplete",
+      "data": {
+        "action": {
+          "type": "sendAsset",
+          "parameters": {
+            "hyperliquidChain": "Mainnet",
+            "destination": "0x865eb9baa5492cef598adf7afb1038654fcb7081",
+            "sourceDex": "",
+            "destinationDex": "",
+            "token": "USDC:0x6d1e7cde53ba9467b783cb7c530ce054",
+            "amount": "10.000000",
+            "fromSubAccount": "",
+            "nonce": 1770329064777
+          }
+        },
+        "nonce": 1770329064777,
+        "eip712Types": {
+          "HyperliquidTransaction:SendAsset": [
+            {
+              "name": "hyperliquidChain",
+              "type": "string"
+            },
+            {
+              "name": "destination",
+              "type": "string"
+            },
+            {
+              "name": "sourceDex",
+              "type": "string"
+            },
+            {
+              "name": "destinationDex",
+              "type": "string"
+            },
+            {
+              "name": "token",
+              "type": "string"
+            },
+            {
+              "name": "amount",
+              "type": "string"
+            },
+            {
+              "name": "fromSubAccount",
+              "type": "string"
+            },
+            {
+              "name": "nonce",
+              "type": "uint64"
+            }
+          ]
+        },
+        "eip712PrimaryType": "HyperliquidTransaction:SendAsset"
+      },
+      "check": {
+        "endpoint": "/intents/status/v3?requestId=0x02e937b4d022321b56673e12a42064dde45f25b2f7da0db5eb6b4fa5b747f64a",
+        "method": "GET"
+      }
+    }
+  ],
+  "fees": {
+    "execution": {
+      "usd": "-0.020211",
+      "amount": "2021454",
+      "amountFormatted": "0.02021454"
+    },
+    "swap": {
+      "usd": "-0.008146",
+      "amount": "814743",
+      "amountFormatted": "0.00814743"
+    },
+    "platform": {
+      "usd": "-0.007033",
+      "amount": "703423",
+      "amountFormatted": "0.00703423"
+    },
+    "app": {
+      "usd": "0",
+      "amount": "0",
+      "amountFormatted": "0"
+    },
+    "sponsored": {
+      "usd": "0",
+      "amount": "0",
+      "amountFormatted": "0"
+    },
+    "currency": {
+      "chainId": 1337,
+      "address": "0x00000000000000000000000000000000",
+      "symbol": "USDC",
+      "name": "USDC (Perps)",
+      "decimals": 8,
+      "metadata": {
+        "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+        "verified": true
+      }
+    }
+  },
+  "details": {
+    "operation": "swap",
+    "sender": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+    "recipient": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+    "currencyIn": {
+      "currency": {
+        "chainId": 1337,
+        "address": "0x00000000000000000000000000000000",
+        "symbol": "USDC",
+        "name": "USDC (Perps)",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+          "verified": true
+        }
+      },
+      "amount": "1000000000",
+      "amountFormatted": "10.0",
+      "amountUsd": "9.998250",
+      "minimumAmount": "1000000000"
+    },
+    "currencyOut": {
+      "currency": {
+        "chainId": 10,
+        "address": "0x0000000000000000000000000000000000000000",
+        "symbol": "ETH",
+        "name": "Ether",
+        "decimals": 18,
+        "metadata": {
+          "logoURI": "https://assets.relay.link/icons/1/light.png",
+          "verified": true
+        }
+      },
+      "amount": "5388446518106479",
+      "amountFormatted": "0.005388446518106479",
+      "amountUsd": "9.962860",
+      "minimumAmount": "5280677587744349"
+    },
+    "refundCurrency": {
+      "currency": {
+        "chainId": 1337,
+        "address": "0x00000000000000000000000000000000",
+        "symbol": "USDC",
+        "name": "USDC (Perps)",
+        "decimals": 8,
+        "metadata": {
+          "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+          "verified": true
+        }
+      },
+      "amount": "1000000000",
+      "amountFormatted": "10.0",
+      "amountUsd": "9.998250",
+      "minimumAmount": "1000000000"
+    },
+    "totalImpact": {
+      "usd": "-0.035390",
+      "percent": "-0.35"
+    },
+    "swapImpact": {
+      "usd": "-0.006151",
+      "percent": "-0.06"
+    },
+    "rate": "0.0005388446518106479",
+    "slippageTolerance": {
+      "origin": {
+        "usd": "0.000000",
+        "value": "0",
+        "percent": "0.00"
+      },
+      "destination": {
+        "usd": "0.199257",
+        "value": "107768930362130",
+        "percent": "2.00"
+      }
+    },
+    "timeEstimate": 2,
+    "userBalance": "0",
+    "isFixedRate": true,
+    "route": {
+      "origin": {
+        "inputCurrency": {
+          "currency": {
+            "chainId": 1337,
+            "address": "0x00000000000000000000000000000000",
+            "symbol": "USDC",
+            "name": "USDC (Perps)",
+            "decimals": 8,
+            "metadata": {
+              "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+              "verified": true
+            }
+          },
+          "amount": "1000000000",
+          "amountFormatted": "10.0",
+          "amountUsd": "9.998250",
+          "minimumAmount": "1000000000"
+        },
+        "outputCurrency": {
+          "currency": {
+            "chainId": 1337,
+            "address": "0x00000000000000000000000000000000",
+            "symbol": "USDC",
+            "name": "USDC (Perps)",
+            "decimals": 8,
+            "metadata": {
+              "logoURI": "https://ethereum-optimism.github.io/data/USDC/logo.png",
+              "verified": true
+            }
+          },
+          "amount": "1000000000",
+          "amountFormatted": "10.0",
+          "amountUsd": "9.998250",
+          "minimumAmount": "1000000000"
+        },
+        "router": "relay"
+      },
+      "destination": {
+        "inputCurrency": {
+          "currency": {
+            "chainId": 10,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "5388446518106479",
+          "amountFormatted": "0.005388446518106479",
+          "amountUsd": "9.962860",
+          "minimumAmount": "5280677587744349"
+        },
+        "outputCurrency": {
+          "currency": {
+            "chainId": 10,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18,
+            "metadata": {
+              "logoURI": "https://assets.relay.link/icons/1/light.png",
+              "verified": true
+            }
+          },
+          "amount": "5388446518106479",
+          "amountFormatted": "0.005388446518106479",
+          "amountUsd": "9.962860",
+          "minimumAmount": "5280677587744349"
+        },
+        "router": "relay"
+      }
+    }
+  },
+  "protocol": {
+    "v2": {
+      "orderId": "0x3bfdb54176b619a1f1f59f091a0708d0216a9f74b985b34d092cdcc4f9f4f9f3",
+      "orderData": {
+        "version": "v1",
+        "solverChainId": "base",
+        "solver": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+        "salt": "0xd50b8811d6ae77508a80cf87b5045e00b62fb2507ffa7a2c2bdef8150a919a04",
+        "inputs": [
+          {
+            "payment": {
+              "chainId": "hyperliquid",
+              "currency": "0x00000000000000000000000000000000",
+              "amount": "1000000000",
+              "weight": "1"
+            },
+            "refunds": [
+              {
+                "chainId": "hyperliquid",
+                "recipient": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+                "currency": "0x00000000000000000000000000000000",
+                "minimumAmount": "0",
+                "deadline": 1770933867,
+                "extraData": "0x"
+              },
+              {
+                "chainId": "optimism",
+                "recipient": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+                "currency": "0x0000000000000000000000000000000000000000",
+                "minimumAmount": "0",
+                "deadline": 1770933867,
+                "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+              }
+            ]
+          }
+        ],
+        "output": {
+          "chainId": "optimism",
+          "payments": [
+            {
+              "recipient": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+              "currency": "0x0000000000000000000000000000000000000000",
+              "minimumAmount": "5280677587744349",
+              "expectedAmount": "5388446518106479"
+            }
+          ],
+          "calls": [],
+          "deadline": 1770933867,
+          "extraData": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f"
+        },
+        "fees": []
+      },
+      "paymentDetails": {
+        "chainId": "hyperliquid",
+        "depository": "0x865eb9baa5492cef598adf7afb1038654fcb7081",
+        "currency": "0x00000000000000000000000000000000",
+        "amount": "1000000000"
+      }
+    }
+  }
 }
 ```
 </CodeGroup>
@@ -582,53 +487,63 @@ Example authorize step response:
   "action": "Sign nonce-mapping for the deposit",
   "description": "Sign the message that maps the deposit to the order",
   "kind": "signature",
-  "items": [
-    {
-      "status": "incomplete",
-      "data": {
-        "sign": {
-          "signatureKind": "eip712",
-          "domain": {
-            "name": "RelayNonceMapping",
-            "version": "2",
-            "chainId": 1,
-            "verifyingContract": "0x0000000000000000000000000000000000000000"
+  "status": "incomplete",
+  "data": {
+    "sign": {
+      "signatureKind": "eip712",
+      "domain": {
+        "name": "RelayNonceMapping",
+        "version": "2",
+        "chainId": 1,
+        "verifyingContract": "0x0000000000000000000000000000000000000000"
+      },
+      "types": {
+        "NonceMapping": [
+          {
+            "name": "chainId",
+            "type": "string"
           },
-          "types": {
-            "NonceMapping": [
-              { "name": "chainId", "type": "string" },
-              { "name": "wallet", "type": "address" },
-              { "name": "depositor", "type": "address" },
-              { "name": "id", "type": "bytes32" },
-              { "name": "nonce", "type": "uint256" }
-            ]
+          {
+            "name": "wallet",
+            "type": "address"
           },
-          "value": {
-            "chainId": "hyperliquid",
-            "wallet": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-            "depositor": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-            "nonce": 1765463670254,
-            "id": "0x7b3e352d6bb600f7d937250968dc9b9c7deaf34b3787fb2312fc7374603f1667"
+          {
+            "name": "depositor",
+            "type": "address"
           },
-          "primaryType": "NonceMapping"
-        },
-        "post": {
-          "endpoint": "/authorize",
-          "method": "POST",
-          "body": {
-            "type": "nonce-mapping",
-            "walletChainId": 1337,
-            "wallet": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-            "depositor": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
-            "nonce": 1765463670254,
-            "id": "0x7b3e352d6bb600f7d937250968dc9b9c7deaf34b3787fb2312fc7374603f1667",
-            "signatureChainId": 1
+          {
+            "name": "id",
+            "type": "bytes32"
+          },
+          {
+            "name": "nonce",
+            "type": "uint256"
           }
-        }
+        ]
+      },
+      "value": {
+        "chainId": "hyperliquid",
+        "wallet": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+        "depositor": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+        "nonce": 1765463670254,
+        "id": "0x7b3e352d6bb600f7d937250968dc9b9c7deaf34b3787fb2312fc7374603f1667"
+      },
+      "primaryType": "NonceMapping"
+    },
+    "post": {
+      "endpoint": "/authorize",
+      "method": "POST",
+      "body": {
+        "type": "nonce-mapping",
+        "walletChainId": 1337,
+        "wallet": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+        "depositor": "0xf3d63166f0ca56c3c1a3508fce03ff0cf3fb691e",
+        "nonce": 1765463670254,
+        "id": "0x7b3e352d6bb600f7d937250968dc9b9c7deaf34b3787fb2312fc7374603f1667",
+        "signatureChainId": 1
       }
     }
-  ],
-  "requestId": "0x33d530353522088c2a4016a7eeb2185b8f5926ab230eff44d4495746a43a6f87"
+  }
 }
 ```
 
@@ -646,45 +561,64 @@ Example deposit step response:
   "action": "Confirm transaction in your wallet",
   "description": "Depositing funds to the depository contract",
   "kind": "transaction",
-  "items": [
-    {
-      "status": "incomplete",
-      "data": {
-        "action": {
-          "type": "sendAsset",
-          "parameters": {
-            "hyperliquidChain": "Mainnet",
-            "destination": "0x865eb9baa5492cef598adf7afb1038654fcb7081",
-            "sourceDex": "",
-            "destinationDex": "",
-            "token": "USDC:0x6d1e7cde53ba9467b783cb7c530ce054",
-            "amount": "10.000000",
-            "fromSubAccount": "",
-            "nonce": 1765463670254
-          }
-        },
-        "nonce": 1765463670254,
-        "eip712Types": {
-          "HyperliquidTransaction:SendAsset": [
-            { "name": "hyperliquidChain", "type": "string" },
-            { "name": "destination", "type": "string" },
-            { "name": "sourceDex", "type": "string" },
-            { "name": "destinationDex", "type": "string" },
-            { "name": "token", "type": "string" },
-            { "name": "amount", "type": "string" },
-            { "name": "fromSubAccount", "type": "string" },
-            { "name": "nonce", "type": "uint64" }
-          ]
-        },
-        "eip712PrimaryType": "HyperliquidTransaction:SendAsset"
-      },
-      "check": {
-        "endpoint": "/intents/status?requestId=0x33d530353522088c2a4016a7eeb2185b8f5926ab230eff44d4495746a43a6f87",
-        "method": "GET"
+  "status": "incomplete",
+  "data": {
+    "action": {
+      "type": "sendAsset",
+      "parameters": {
+        "hyperliquidChain": "Mainnet",
+        "destination": "0x865eb9baa5492cef598adf7afb1038654fcb7081",
+        "sourceDex": "",
+        "destinationDex": "",
+        "token": "USDC:0x6d1e7cde53ba9467b783cb7c530ce054",
+        "amount": "10.000000",
+        "fromSubAccount": "",
+        "nonce": 1765463670254
       }
-    }
-  ],
-  "requestId": "0x33d530353522088c2a4016a7eeb2185b8f5926ab230eff44d4495746a43a6f87"
+    },
+    "nonce": 1765463670254,
+    "eip712Types": {
+      "HyperliquidTransaction:SendAsset": [
+        {
+          "name": "hyperliquidChain",
+          "type": "string"
+        },
+        {
+          "name": "destination",
+          "type": "string"
+        },
+        {
+          "name": "sourceDex",
+          "type": "string"
+        },
+        {
+          "name": "destinationDex",
+          "type": "string"
+        },
+        {
+          "name": "token",
+          "type": "string"
+        },
+        {
+          "name": "amount",
+          "type": "string"
+        },
+        {
+          "name": "fromSubAccount",
+          "type": "string"
+        },
+        {
+          "name": "nonce",
+          "type": "uint64"
+        }
+      ]
+    },
+    "eip712PrimaryType": "HyperliquidTransaction:SendAsset"
+  },
+  "check": {
+    "endpoint": "/intents/status/v3?requestId=0x33d530353522088c2a4016a7eeb2185b8f5926ab230eff44d4495746a43a6f87",
+    "method": "GET"
+  }
 }
 ```
 
@@ -694,10 +628,9 @@ To sign the deposit step, you need to convert it into EIP-712 signature data. Ex
 
 ```typescript
 // Extract data from the deposit step
-const stepItem = step.items[0];
-const action = stepItem.data.action;
-const eip712Types = stepItem.data.eip712Types;
-const eip712PrimaryType = stepItem.data.eip712PrimaryType;
+const action = step.data.action;
+const eip712Types = step.data.eip712Types;
+const eip712PrimaryType = step.data.eip712PrimaryType;
 
 // The chain ID of the connected wallet
 const chainId = 1; // Example: Ethereum mainnet
