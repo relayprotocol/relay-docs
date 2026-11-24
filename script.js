@@ -84,7 +84,7 @@ function startPageObserver(onDomChange) {
 
 // ---- PAGE LOGIC ---------------------------
 
-function enhanceGetQuotePage() {
+function enhanceGetQuotePage(isV2) {
   waitForElementId("#body-trade-type", undefined, () => {
     addLearnMore(
       "body-trade-type",
@@ -107,13 +107,15 @@ function enhanceGetQuotePage() {
       "learn-more-topup-gas",
     );
 
-    addLearnMore(
-      "response-fees",
-      "/references/api/api_core_concepts/fees",
-      "Learn more about fees - [DEPRECATED]",
-      "learn-more-fees",
-      "before",
-    );
+    if (isV2) {
+      addLearnMore(
+        "response-fees",
+        "/references/api/api_core_concepts/fees",
+        "Learn more about fees - [DEPRECATED]",
+        "learn-more-fees",
+        "before",
+      );
+    }
   });
 }
 
@@ -495,7 +497,8 @@ function onPageChange() {
   }
 
   if (/\/references\/api\/get-quote-v[23]/.test(path)) {
-    startPageObserver(enhanceGetQuotePage);
+    const isV2 = path.includes("/references/api/get-quote-v2");
+    startPageObserver(() => enhanceGetQuotePage(isV2));
   } else if (path.includes("/references/api/get-chains")) {
     startPageObserver(enhanceGetChainsPage);
   } else if (path.replace(/\/$/, "").endsWith("/changelog")) {
