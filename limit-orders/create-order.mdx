@@ -1,0 +1,8 @@
+---
+title: "Create an Order"
+description: "Validate and price a limit order, and get the steps the user signs to open it."
+openapi: post /orders
+hidden: true
+---
+
+The order is returned as `pending` with its `approve` (when needed) and `authorize` steps, and opens once the `authorize` step is signed and posted. Nothing happens onchain at create.

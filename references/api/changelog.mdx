@@ -3,6 +3,18 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-11-19 — Upcoming Solana solver wallet change
+
+**Behavior change** — Relay will gradually move a share of new Solana requests to a new solver wallet. If your integration hardcodes, allowlists, or tracks the current solver address `F7p3dFrjRTbtRp8FRF6qHLomXbKRBzpvBLjtQcfcgmNe`, add `4KdsvcEJ2JakGhbZtMFyFZdWbt9unisT5LeCm8FmSJY3` alongside it before the rollout. Keep both addresses during the transition. The Solana `solverAddresses` array in [`GET /chains`](/references/api/get-chains) is the source for the current list. Relay will announce the rollout timing separately.
+
+## 2026-11-17 — Webhook destinations validated at delivery time
+
+**Behavior change** — Webhook delivery: the destination hostname is re-resolved and checked at send time, not only when the configuration is saved. Destinations whose hostname resolves to a loopback, private, link-local, or reserved IP range at delivery time are refused and the event is skipped (and recorded in delivery logs). Destinations that resolve to public addresses are unaffected. HTTP redirects are no longer followed — configure the URL that should receive events directly.
+
+**Breaking** — Webhook configuration: webhook URLs must use the `http` or `https` scheme and must not embed credentials (`https://user:pass@host`). URLs whose hostname resolves (at save time) to a loopback, private, link-local, or reserved IP range are rejected with `400`. Previously these were accepted.
+
+**Breaking** — Webhook configuration: custom header names are restricted to `[A-Za-z0-9-]+`, header values must not contain carriage returns or line feeds, and the hop-by-hop / routing / framing headers (`Host`, `Connection`, `Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `Proxy-Connection`, `TE`, `Trailer`, `Transfer-Encoding`, `Upgrade`, `Content-Length`) are rejected at save time and never forwarded on delivery. Existing configurations that include any of these are accepted until the next save, at which point they must be removed. See [Webhooks — Destination restrictions](/references/api/api_guides/webhooks#destination-restrictions).
+
 ## 2026-11-05 — `POST /execute` rejects unsubsidized calls without a `requestId`
 
 **Behavior change** — `POST /execute`: calls with `executionOptions.subsidizeFees: false` now require a `requestId` from a prior `POST /quote` call. Requests that omit `requestId` while `subsidizeFees` is disabled return `400` with `errorCode: "INVALID_REQUEST_PARAMS"` and `message: "requestId from a prior /quote call is required when subsidizeFees is disabled"`. Previously the same combination passed validation, ran simulation, and then failed an internal quote lookup — surfacing as `500`. Standalone executions with `subsidizeFees: true` (no `requestId`) continue to be supported unchanged, and unsubsidized calls that pass a `requestId` from a prior quote are unaffected. The guard mirrors the existing `SPONSOR_WALLET_REQUIRED` check: subsidized execution needs a sponsor wallet, unsubsidized execution needs a quote to prove payment to the solver. See [Gasless Execution](/features/gasless-execution).
@@ -214,6 +226,13 @@ description: "Record of breaking changes, deprecations, and notable additions to
 **Added** — `GET /requests/v3`: the recommended Requests API. It requires `x-api-key`, adds a broad filter/search/sort surface, and returns a cleaner, consolidated response. See the [migration guide](/references/api/api_guides/migrating-to-requests-v3).
 
 **Deprecated** — `GET /requests/v2` is deprecated as of today. It keeps working for now, but its rate limit will be progressively reduced each month until it is **fully retired on November 24, 2026**. Migrate to v3 before then — see the [sunset timeline](/references/api/api_guides/migrating-to-requests-v3#sunset-timeline).
+
+## 2026-07-15 — Solana ATA rent is a separate sponsorship component
+
+**Behavior change** — `POST /quote` and `POST /quote/v2`: with `subsidizeFees: true` and `rent` not selected in `sponsoredFeeComponents`, a fill that creates a Solana associated token account keeps the selected components sponsored and charges only the ATA rent to the user. Previously, the request was documented as falling back to user-paid fees for the whole fill. Rent is never sponsored by default; opt in by including `rent` in `sponsoredFeeComponents`. See [Solana Fee Sponsorship](/features/fee-sponsorship#solana-fee-sponsorship).
+
+**Deprecated** — `subsidizeRent` is now a compatibility alias that adds `rent` to `sponsoredFeeComponents`. Include `rent` in `sponsoredFeeComponents` instead.
+
 ## 2026-07-09 — Solana quote size check reserves compute-budget headroom
 
 **Behavior change** — `POST /quote/v2`: the Solana deposit-transaction size check on cross-chain Solana-origin quotes now reserves 60 bytes of headroom for the compute-budget instructions wallets and SDKs prepend at send time, so quotes are rejected when the compiled deposit transaction would exceed **1172 bytes** (1232 minus 60). Previously the check ran at the raw 1232-byte limit and could return `200` with calldata that no longer fit once the client added its compute-budget instructions. The `400` response body now names the effective limit and the reserved-bytes reason. Continue to use **`maxRouteLength`** or **`includedOriginSwapSources`** to keep transactions under the limit — see [Solana Support](/references/api/api_guides/solana#transaction-size-optimization).

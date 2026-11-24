@@ -373,7 +373,7 @@ Three restrictions from [Solana Fee Sponsorship](/features/fee-sponsorship#solan
 
 ### Fees
 
-**`depositFeePayer`** covers the origin transaction only: Solana transaction fees and rent for accounts the deposit creates. It is independent from the destination side and from your [App Balance](/features/fee-sponsorship#funding-your-app-balance). To also sponsor destination gas or rent, use [`subsidizeFees` and `subsidizeRent`](/features/fee-sponsorship#sponsorship-parameters), which draw from your App Balance instead of the sponsor wallet.
+**`depositFeePayer`** covers the origin transaction only: Solana transaction fees and rent for accounts the deposit creates. It is independent from the destination side and from your [App Balance](/features/fee-sponsorship#funding-your-app-balance). To also sponsor destination gas or rent, use [`subsidizeFees` with `rent` in `sponsoredFeeComponents`](/features/fee-sponsorship#sponsorship-parameters), which draw from your App Balance instead of the sponsor wallet.
 
 Each trade is one Solana deposit transaction, so the sponsor pays one fee per trade. If you also want fills to start before the deposit confirms, see [Fast Fill](/features/fast-fill).
 

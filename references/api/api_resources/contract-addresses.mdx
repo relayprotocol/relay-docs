@@ -17,12 +17,15 @@ This page lists platform execution contracts and solver addresses used by existi
 
 These addresses identify solvers in existing integrations, not a protocol-wide operator or a universal deposit destination. Retrieve current chain data from [Get Chains](/references/api/get-chains); use the [signature validation guide](/references/api/api_core_concepts/input-validation#validating-onchain) when checking an order commitment.
 
-| Chain Type | Solver Address                               |
-| ---------- | -------------------------------------------- |
-| Bitcoin    | bc1qq2mvrp4g3ugd424dw4xv53rgsf8szkrv853jrc   |
-| EVM        | 0xf70da97812cb96acdf810712aa562db8dfa3dbef   |
-| SVM        | F7p3dFrjRTbtRp8FRF6qHLomXbKRBzpvBLjtQcfcgmNe |
-| Tron       | TYVWGh8XkmU49Hi9PkGAZXiiJPB3J5zJZy           |
+| Chain Type        | Solver Address                               |
+| ----------------- | -------------------------------------------- |
+| Bitcoin           | bc1qq2mvrp4g3ugd424dw4xv53rgsf8szkrv853jrc   |
+| EVM               | 0xf70da97812cb96acdf810712aa562db8dfa3dbef   |
+| SVM (current)     | F7p3dFrjRTbtRp8FRF6qHLomXbKRBzpvBLjtQcfcgmNe |
+| SVM (upcoming)    | 4KdsvcEJ2JakGhbZtMFyFZdWbt9unisT5LeCm8FmSJY3 |
+| Tron              | TYVWGh8XkmU49Hi9PkGAZXiiJPB3J5zJZy           |
+
+Solana fills will gradually move to a new solver address, `4KdsvcEJ2JakGhbZtMFyFZdWbt9unisT5LeCm8FmSJY3`. Until the rollout begins, fills continue using `F7p3dFrjRTbtRp8FRF6qHLomXbKRBzpvBLjtQcfcgmNe`, and both addresses will remain active during the transition, so accept both if you check SVM solver addresses.
 
 ### Contract Versions
 
