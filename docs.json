@@ -132,6 +132,7 @@
               {
                 "group": "Migration Guides",
                 "pages": [
+                  "references/api/api_guides/migrating-to-quote-v3",
                   "references/api/api_guides/migrating-to-requests-v3",
                   "references/api/api_guides/migrating-to-currencies-v2",
                   "references/api/api_guides/migrating-to-token-price-v2"
@@ -152,8 +153,8 @@
             "group": "API Reference",
             "pages": [
               "references/api/core",
-              "references/api/get-quote-v2",
-              "references/api/execute-permits",
+              "references/api/get-quote-v3",
+              "references/api/execute-permits-v2",
               "references/api/get-intents-status-v3",
               "references/api/get-requests",
               "references/api/get-published-requests",
@@ -193,7 +194,9 @@
                   "references/api/get-intents-status",
                   "references/api/get-currencies",
                   "references/api/get-token-price",
-                  "references/api/get-quote"
+                  "references/api/get-quote-v2",
+                  "references/api/get-quote",
+                  "references/api/execute-permits"
                 ]
               }
             ]

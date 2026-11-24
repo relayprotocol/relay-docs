@@ -3,6 +3,14 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-11-25 — `POST /quote/v3` and `POST /execute/permits/v2` are live; legacy quote, price, permit and status APIs deprecated & scheduled for sunset
+
+**Added** — [`POST /quote/v3`](/references/api/get-quote-v3): the recommended Quote API. It requires an API key or access token, rejects unknown and removed request parameters with `400` and `errorCode: "INVALID_REQUEST_PARAMS"`, and returns one step per action, the same fee structure as `GET /requests/v3`, and one error shape with an `errorCode` on every error. Send `indicativeQuote: true` for a quote without steps, as `POST /price` returned. See the [migration guide](/references/api/api_guides/migrating-to-quote-v3).
+
+**Added** — [`POST /execute/permits/v2`](/references/api/execute-permits-v2): the permit endpoint that `/quote/v3` signature steps post to. It takes the same request as `POST /execute/permits` and returns flat steps. `api` is required when `kind` is `permit2` or `eip3009`.
+
+**Deprecated** — `POST /quote`, `POST /quote/v2`, `POST /price`, `POST /execute/permits`, `GET /intents/status`, and `GET /intents/status/v2` are deprecated as of today. They keep working, and their responses carry `Deprecation`, `Sunset`, and `Link` headers. Their rate limits are reduced in stages from **January 9, 2027** until they are **fully retired on February 23, 2027**. Migrate to `POST /quote/v3`, `POST /execute/permits/v2`, and [`GET /intents/status/v3`](/references/api/get-intents-status-v3) before then — see the [sunset timeline](/references/api/api_guides/migrating-to-quote-v3#sunset-timeline).
+
 ## 2026-11-19 — Upcoming Solana solver wallet change
 
 **Behavior change** — Relay will gradually move a share of new Solana requests to a new solver wallet. If your integration hardcodes, allowlists, or tracks the current solver address `F7p3dFrjRTbtRp8FRF6qHLomXbKRBzpvBLjtQcfcgmNe`, add `4KdsvcEJ2JakGhbZtMFyFZdWbt9unisT5LeCm8FmSJY3` alongside it before the rollout. Keep both addresses during the transition. The Solana `solverAddresses` array in [`GET /chains`](/references/api/get-chains) is the source for the current list. Relay will announce the rollout timing separately.
