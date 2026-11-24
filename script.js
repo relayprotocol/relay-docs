@@ -494,7 +494,7 @@ function onPageChange() {
     changelog.active = activeTagsFromUrl();
   }
 
-  if (path.includes("/references/api/get-quote-v2")) {
+  if (/\/references\/api\/get-quote-v[23]/.test(path)) {
     startPageObserver(enhanceGetQuotePage);
   } else if (path.includes("/references/api/get-chains")) {
     startPageObserver(enhanceGetChainsPage);

@@ -3,7 +3,7 @@ title: "Migrating to Quote v3"
 description: "What changed in POST /quote/v3 and how to upgrade from /quote, /quote/v2, /price, and /execute/permits."
 ---
 
-`POST /quote/v3` is the latest version of the Quote API. It takes the same request as `/quote/v2` and returns a flatter, stricter response: one step per action, the same fee structure as [`GET /requests/v3`](/references/api/get-requests), and one error shape with a code on every error. This guide covers every change and how to upgrade.
+[`POST /quote/v3`](/references/api/get-quote-v3) is the latest version of the Quote API. It takes the same request as `/quote/v2` and returns a flatter, stricter response: one step per action, the same fee structure as [`GET /requests/v3`](/references/api/get-requests), and one error shape with a code on every error. This guide covers every change and how to upgrade.
 
 `/quote/v3` replaces `POST /quote`, `POST /quote/v2`, and `POST /price`. Its signature steps post to `POST /execute/permits/v2`, which replaces `POST /execute/permits`. The old endpoints keep working during a deprecation window (see the [sunset timeline](#sunset-timeline) below).
 

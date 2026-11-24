@@ -1,10 +1,9 @@
 ---
-title: "Get Quote"
-description: "This API returns an executable quote for swapping, bridging and calling"
+title: "Get Quote (v2)"
+description: "Deprecated. Returns an executable quote for swapping, bridging and calling. Use POST /quote/v3 for new integrations."
 openapi: post /quote/v2
 ---
 
-import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
-
-<QuoteV2AuthCallout />
-
+<Warning>
+  `POST /quote/v2` is **deprecated as of November 25, 2026**: its rate limit is reduced in stages from January 9, 2027 until it is **retired on February 23, 2027**. Use [`POST /quote/v3`](/references/api/get-quote-v3), which returns one step per action, the same fee structure as `GET /requests/v3`, and one error shape. See the [migration guide](/references/api/api_guides/migrating-to-quote-v3#sunset-timeline) for the timeline and how to upgrade.
+</Warning>
