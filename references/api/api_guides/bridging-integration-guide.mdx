@@ -140,7 +140,7 @@ While not mandatory for integration, doing the following will improve the UX for
   </Step>
   <Step title="Monitor Bridge Status">
     ## Monitor Bridge Status
-    You can check the status of a bridge operation at any time using the [status endpoint](/references/api/get-intents-status-v3) with the `requestId` located inside each step object in your [quote response](/references/api/quickstart#request).
+    You can check the status of a bridge operation at any time using the [status endpoint](/references/api/get-intents-status-v3) with the top-level `requestId` (`quote.requestId`) from your [quote response](/references/api/quickstart#request).
 
     <CodeGroup>
     ```bash Request
