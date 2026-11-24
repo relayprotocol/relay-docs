@@ -3,7 +3,7 @@ title: "Migrating to Quote v3"
 description: "What changed in POST /quote/v3 and how to upgrade from /quote, /quote/v2, /price, and /execute/permits."
 ---
 
-`POST /quote/v3` is the latest version of the Quote API. It takes the same request as `/quote/v2` and returns a flatter, stricter response: one step per action, a fee breakdown that matches [`GET /requests/v3`](/references/api/get-requests), and one error shape with a code on every error. This guide covers every change and how to upgrade.
+`POST /quote/v3` is the latest version of the Quote API. It takes the same request as `/quote/v2` and returns a flatter, stricter response: one step per action, the same fee structure as [`GET /requests/v3`](/references/api/get-requests), and one error shape with a code on every error. This guide covers every change and how to upgrade.
 
 `/quote/v3` replaces `POST /quote`, `POST /quote/v2`, and `POST /price`. Its signature steps post to `POST /execute/permits/v2`, which replaces `POST /execute/permits`. The old endpoints keep working during a deprecation window (see the [sunset timeline](#sunset-timeline) below).
 
@@ -290,7 +290,7 @@ Every response change, in the order you are likely to hit it.
   </Accordion>
 
   <Accordion title="Fees" icon="coins">
-    `fees` now matches `data.fees.quoted` on [`GET /requests/v3`](/references/api/get-requests) for the same request. See [Fees in the API](/references/api/api_core_concepts/fees#fees-in-the-api).
+    `fees` has the same structure as `data.fees.quoted` on [`GET /requests/v3`](/references/api/get-requests). The values can differ for the same request: fees accumulated when the order is solved are not in the quote, and zero values are formatted differently. See [Fees in the API](/references/api/api_core_concepts/fees#fees-in-the-api).
 
     | v3 field | v2 equivalent |
     | --- | --- |
@@ -377,31 +377,40 @@ Every response change, in the order you are likely to hit it.
 
 ## Executing v3 steps
 
-The loop is the same as before, one level shallower: read each step's `kind` and `data`, act on it, and follow the endpoints the step gives you. Steps already marked `complete` need no action. The example below uses viem with a browser wallet on Base, the origin chain of the quote. For steps on other chains, read receipts with a `publicClient` for that chain.
+The loop is the same as before, one level shallower: read each step's `kind` and `data`, act on it, and follow the endpoints the step gives you. Steps already marked `complete` need no action. The example below uses viem with a browser wallet. It stops on any error response, switches the wallet to each transaction step's chain, and reads the receipt from that chain.
 
 ```typescript expandable
 import { createPublicClient, createWalletClient, custom, http } from "viem"
-import { base } from "viem/chains"
+import * as chains from "viem/chains"
+
+const chainById = (id) => Object.values(chains).find((chain) => chain.id === id)
+
+// Calls the Relay API and stops on an error response, such as a rejected quote or permit
+async function relay(path, body) {
+  const res = await fetch(`https://api.relay.link${path}`, {
+    method: "POST",
+    // In the browser, authenticate with an access token minted by your backend
+    headers: { "content-type": "application/json", authorization: `Bearer ${ACCESS_TOKEN}` },
+    body: JSON.stringify(body),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(`${json.errorCode}: ${json.message}`)
+  return json
+}
 
 const [account] = await window.ethereum.request({ method: "eth_requestAccounts" })
-const walletClient = createWalletClient({ account, chain: base, transport: custom(window.ethereum) })
-const publicClient = createPublicClient({ chain: base, transport: http() })
+const walletClient = createWalletClient({ account, transport: custom(window.ethereum) })
 
-const quote = await fetch("https://api.relay.link/quote/v3", {
-  method: "POST",
-  // In the browser, authenticate with an access token minted by your backend
-  headers: { "content-type": "application/json", authorization: `Bearer ${ACCESS_TOKEN}` },
-  body: JSON.stringify({
-    user: account,
-    recipient: account,
-    originChainId: 8453,
-    destinationChainId: 10,
-    originCurrency: "0x0000000000000000000000000000000000000000",
-    destinationCurrency: "0x0000000000000000000000000000000000000000",
-    amount: "1000000000000000000",
-    tradeType: "EXACT_INPUT",
-  }),
-}).then((res) => res.json())
+const quote = await relay("/quote/v3", {
+  user: account,
+  recipient: account,
+  originChainId: 8453,
+  destinationChainId: 10,
+  originCurrency: "0x0000000000000000000000000000000000000000",
+  destinationCurrency: "0x0000000000000000000000000000000000000000",
+  amount: "1000000000000000000",
+  tradeType: "EXACT_INPUT",
+})
 
 const steps = [...quote.steps]
 for (let i = 0; i < steps.length; i++) {
@@ -420,28 +429,24 @@ for (let i = 0; i < steps.length; i++) {
             primaryType: sign.primaryType,
             message: sign.value,
           })
-    const result = await fetch(
-      `https://api.relay.link${post.endpoint}?signature=${signature}`,
-      {
-        method: post.method,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(post.body),
-      }
-    ).then((res) => res.json())
+    const result = await relay(`${post.endpoint}?signature=${signature}`, post.body)
     // 2. Run any steps the permit returns next, before the remaining quote steps
     if (result.steps) steps.splice(i + 1, 0, ...result.steps)
   } else {
     // 3. Send the transaction on the step's chain and wait for it to confirm
     const { to, data, value, gas, chainId } = step.data
+    const chain = chainById(chainId)
     if ((await walletClient.getChainId()) !== chainId) {
       await walletClient.switchChain({ id: chainId })
     }
     const hash = await walletClient.sendTransaction({
+      chain,
       to,
       data,
       value: BigInt(value),
       gas: gas ? BigInt(gas) : undefined,
     })
+    const publicClient = createPublicClient({ chain, transport: http() })
     const receipt = await publicClient.waitForTransactionReceipt({ hash })
     if (receipt.status !== "success") throw new Error(`Step ${step.id} reverted`)
   }
@@ -494,8 +499,40 @@ Poll [`GET /intents/status/v3`](/references/api/get-intents-status-v3) with the 
 
 If you call `/quote` today, your steps point to `GET /intents/status`. If you call `/intents/status` or `/intents/status/v2` yourself, switch to `/intents/status/v3`; both are retiring (see the [sunset timeline](#sunset-timeline)).
 
-## Using the Relay SDK
+## Upgrading RelayKit
 
-`executeSteps` in `@relayprotocol/relay-sdk` 8.1.0 and later runs flat v3 steps as well as `items` steps, so step execution keeps working when you pass it a `/quote/v3` response.
+RelayKit moves to `/quote/v3` in these releases. Earlier versions call `/quote/v2`, so upgrade before it retires.
 
-Starting with `@relayprotocol/relay-sdk` 9.0.0, `getQuote` calls `/quote/v3` and returns its flat steps. The matching releases are `@relayprotocol/relay-kit-hooks` 7.0.0, where `useQuote` calls `/quote/v3`, and `@relayprotocol/relay-kit-ui` 13.0.0. Earlier versions call `/quote/v2`.
+| Package | Version |
+| --- | --- |
+| `@relayprotocol/relay-sdk` | 9.0.0 |
+| `@relayprotocol/relay-kit-hooks` | 7.0.0 |
+| `@relayprotocol/relay-kit-ui` | 13.0.0 |
+
+`executeSteps` in `@relayprotocol/relay-sdk` 8.1.0 and later already runs flat v3 steps, so step execution keeps working if you fetch `/quote/v3` yourself before upgrading.
+
+### Authentication
+
+`/quote/v3` requires an API key, so every RelayKit setup needs one:
+
+- **Server side:** pass `apiKey` to `createClient`. `getQuote` and `useQuote` send it when `baseApiUrl` is the Relay API.
+- **Browser:** point `baseApiUrl` at a proxy on your backend that adds `x-api-key`, as the UI kit already requires for `GET /requests/v3`. Make sure the proxy forwards `/quote/v3` and `/execute/permits/v2`.
+
+Without a key, quotes fail with `401` and `errorCode: "UNAUTHORIZED_QUOTE"`. The SDK's `APIError.statusCode` now reports that `401`.
+
+### SDK
+
+- `getQuote` returns a `Quote` with flat steps. Read `quote.steps[i].data` instead of `quote.steps[i].items[0].data`, and `quote.requestId` instead of `steps[0].requestId`.
+- `execute` and `executeGaslessBatch` take a `Quote`. `onProgress` and the result of `execute` still report steps with `items`. To convert a quote's steps to that shape yourself, call `normalizeSteps(quote.steps, quote.requestId)`.
+- `QuoteBody` follows the [request changes](#request-changes): remove `useExternalLiquidity`, `useFallbacks`, and any other extra field such as `source`, and use `platform` in `sponsoredFeeComponents`.
+- `Execute` follows the [response changes](#what-changed): `fees` is the v3 breakdown, `originGas` replaces `fees.gas`, `depositAddress` is an object, `QuoteStepId` uses `approve` and `authorize`, and `warnings` and `protocol` are added.
+
+### Hooks
+
+`useQuote` and `queryQuote` call `/quote/v3`, and `QuoteResponse` is now `Quote`, with the flat steps described above. `executeQuote` works as before. The other hooks are unchanged.
+
+### UI kit
+
+- **SwapWidget:** you don't need to change any props. `onSwapValidating`, `onSwapSuccess`, and `onSwapError` still receive an `Execute` with `items` steps, but its `fees`, `originGas`, `depositAddress`, and `warnings` follow v3. Update any callback code that reads `fees.relayer`, `fees.gas`, or `depositAddress` as a string.
+- **OnrampWidget:** `onSuccess` and `onError` now receive a `Quote` instead of an `Execute`.
+- **RelayKitProvider:** set `baseApiUrl` to your proxy, as described in [Authentication](#authentication). The provider warns when `baseApiUrl` points directly at the Relay API.
