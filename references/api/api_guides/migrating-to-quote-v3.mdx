@@ -499,6 +499,24 @@ Poll [`GET /intents/status/v3`](/references/api/get-intents-status-v3) with the 
 
 If you call `/quote` today, your steps point to `GET /intents/status`. If you call `/intents/status` or `/intents/status/v2` yourself, switch to `/intents/status/v3`; both are retiring (see the [sunset timeline](#sunset-timeline)).
 
+The request is unchanged: pass `requestId` as a query parameter. The response changes:
+
+| v3 field | What changed |
+| --- | --- |
+| `status` | Adds `submitted` to the v2 values (`waiting`, `depositing`, `pending`, `success`, `failure`, `refund`). The v1 values `received` and `fallback` no longer exist. |
+| `updatedAt` | Renamed from `time` in v1 and v2. |
+| `quoteCreatedAt` | Returned since v2; not in v1. |
+| `failReason` | New. Why a fill failed, such as `SLIPPAGE` or `TTL_EXPIRED`; `"N/A"` when nothing failed. |
+| `refundFailReason` | New. Why a refund failed, such as `AMOUNT_TOO_LOW_TO_REFUND` or `REFUND_RECIPIENT_IS_BLOCKED`. |
+| `revertReason` | New. The sanitized onchain revert reason, for debugging only. |
+
+`details`, `inTxHashes`, `txHashes`, `originChainId`, and `destinationChainId` are unchanged.
+
+- **Moving from `/intents/status`:** `received` and `fallback` no longer exist. Handle the v3 statuses listed on [Get Status](/references/api/get-intents-status-v3) instead. Only `success` and `refund` are final; a `failure` can still be retried or refunded, unless it has a `refundFailReason`.
+- **Moving from `/intents/status/v2`:** read `updatedAt` instead of `time`, and treat `submitted` like `pending`: the fill is on its way but not final.
+
+See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors) for every `failReason` and `refundFailReason` value.
+
 ## Upgrading RelayKit
 
 Upgrade to these releases, published on November 24, 2026, before the old endpoints retire:
