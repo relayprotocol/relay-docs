@@ -214,7 +214,7 @@ const data = {
 
 **Posting the data**
 
-After the message is signed the second action is to submit the `post` body to the `endpoint` provided in the `post` data. You'll also need to provide the signature that was generated from the sign data as a query parameter. If the request is successful we can mark the step as complete locally. Signature steps from `/quote/v3` post to [`/execute/permits/v2`](/references/api/execute-permits-v2). When its response includes `steps`, run those transaction steps before the remaining quote steps.
+After the message is signed the second action is to submit the `post` body to the `endpoint` provided in the `post` data. You'll also need to provide the signature that was generated from the sign data as a query parameter. If the request is successful we can mark the step as complete locally. Always post to the step's own `data.post.endpoint`: permit signatures from `/quote/v3` point to [`/execute/permits/v2`](/references/api/execute-permits-v2), while other signatures, such as Hyperliquid nonce mappings, use their own endpoint. When a `/execute/permits/v2` response includes `steps`, run those transaction steps before the remaining quote steps.
 
 The design pattern of this API is completely generic, allowing for automatic support of new types of liquidity without needing to update the app. This data can be fed directly into an Ethereum library such as viem, making it easy to sign and submit the exact data that is needed.
 

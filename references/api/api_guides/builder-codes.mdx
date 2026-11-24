@@ -45,10 +45,11 @@ function buildDataSuffix(builderCode: string): Hex {
 }
 
 async function fetchQuote(req: Record<string, unknown>) {
+  // In the browser, authenticate with an access token minted by your backend, never the API key
+  const { token } = await fetch("/api/relay-token", { method: "POST" }).then((r) => r.json());
   const res = await fetch("https://api.relay.link/quote/v3", {
     method: "POST",
-    // In the browser, authenticate with an access token minted by your backend
-    headers: { "content-type": "application/json", authorization: `Bearer ${ACCESS_TOKEN}` },
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
     body: JSON.stringify(req),
   });
   if (!res.ok) throw new Error(`Relay quote failed: ${res.status} ${await res.text()}`);

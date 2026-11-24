@@ -698,7 +698,7 @@ import axios from "axios";
 const { r, s, v } = parseSignature(signature);
 
 const action = signatureData.value;
-const nonce = stepItem.data.nonce;
+const nonce = step.data.nonce;
 
 // Submit to Hyperliquid
 const response = await axios.post("https://api.hyperliquid.xyz/exchange", {
