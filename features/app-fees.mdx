@@ -37,7 +37,7 @@ If you include the `appFees` parameter on an unsupported transaction type (such 
 
 You set the App Fee recipient in the API request, as `appFees[].recipient`. There is no setup step for it in the Relay Dashboard: you do not link, register, or verify an App Fee recipient.
 
-Once Relay records an App Fee for that wallet, the wallet appears on the [Balances page](https://dashboard.relay.link/balance) of the Dashboard automatically, with the `App Fee recipient` role. The Dashboard scans for new recipients once a day, so a recipient used for the first time can take up to a day to appear. The balance it shows is the same off-chain USDC balance returned by the [balances API](#get-app-balance).
+Once you send a quote request that names that wallet in `appFees[].recipient` with your API key, the wallet appears on the [Balances page](https://dashboard.relay.link/balance) of the Dashboard automatically, with the `App Fee recipient` role. Opening the Balances page checks for new recipients, so a wallet used for the first time shows up on your next visit, after a short delay for the request to be logged. The balance it shows is the same off-chain USDC balance returned by the [balances API](#get-app-balance).
 
 The `Link wallet for Fee Sponsorship` action on the Balances page is not related to App Fees. Linking a wallet there funds [Fee Sponsorship](/features/fee-sponsorship); it does not make the wallet an App Fee recipient, and an App Fee recipient does not need that link. One wallet can hold both roles.
 
