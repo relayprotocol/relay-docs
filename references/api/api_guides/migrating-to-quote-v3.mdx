@@ -107,7 +107,7 @@ Once rate limits are reduced, `429` responses from a retiring endpoint return a 
     - `protocolVersion` — obsolete. `/quote/v2` accepts it but no longer uses it.
     - `useRebalancer` and `userOperationGasOverhead` — not part of the public request.
 
-    Misspelled parameters fail the same way.
+    Misspelled parameters, and any other field `/quote/v2` silently ignored, such as `source`, fail the same way.
 
     **Array items.** Each item in `txs` must include `to`, `data`, and `value`; `originalTxValue` stays optional. Each item in `appFees` must include `fee`.
 
