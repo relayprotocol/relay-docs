@@ -82,7 +82,7 @@ Once rate limits are reduced, `429` responses from a retiring endpoint return a 
 3. Send `"platform"` instead of `"relay"` in `sponsoredFeeComponents`, and include `fee` in every `appFees` item.
 4. Read `status`, `data`, and `check` from the step itself instead of from `step.items[]`.
 5. Match step ids `approve` and `authorize` instead of `approval`, `authorize1`, and `authorize2`.
-6. Read fees from the new `fees` object and origin gas from `originGas`, and allow `amountUsd` to be `null`.
+6. Read fees from the new `fees` object and origin gas from `originGas`, and allow `amountUsd`, `details.totalImpact`, and `details.swapImpact` to be `null`.
 7. Read `step.depositAddress` as an object.
 8. Handle errors by `errorCode`, and check `warnings` when you send `fixedRate`.
 9. Poll status on `/intents/status/v3` and post signatures to `/execute/permits/v2`, following the endpoints in each step.

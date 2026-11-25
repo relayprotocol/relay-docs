@@ -171,7 +171,7 @@ Beyond the trade flow, these [quote](/references/api/get-quote-v3) parameters ha
 Set slippage per token rather than as one global value: keep it tight for major tokens and stablecoins, and allow more for newly launched or thinly traded tokens, where prices move fastest.
 
 <Warning>
-Combining **`overridePriceImpact`** with a wide **`slippageTolerance`** can leave your users with much less than the quoted amount. Show price impact and the minimum amount received before your users sign.
+Combining **`overridePriceImpact`** with a wide **`slippageTolerance`** can leave your users with much less than the quoted amount. Show price impact and the minimum amount received before your users sign. When `details.totalImpact` is `null`, Relay cannot price the input or output token, so show the impact as unknown rather than zero.
 </Warning>
 
 Leave **`includedSwapSources`** and **`excludedSwapSources`** unset, and exclude a source only if it consistently returns poor routes for your tokens.

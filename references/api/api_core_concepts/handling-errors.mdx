@@ -74,7 +74,7 @@ To accept the impact and receive the quote anyway, pass **`overridePriceImpact`*
 ```
 
 <Warning>
-With the override enabled, the quoted output can be far below the reference value of the input. Surface **`details.totalImpact`** from the quote response in your UI and require explicit user confirmation before execution. The override only bypasses the impact check — it does not help when no route is returned at all (`NO_SWAP_ROUTES_FOUND`).
+With the override enabled, the quoted output can be far below the reference value of the input. Surface **`details.totalImpact`** from the quote response in your UI and require explicit user confirmation before execution. `details.totalImpact` is `null` when Relay has no USD price for the input or output token; show the impact as unknown rather than zero. The override only bypasses the impact check — it does not help when no route is returned at all (`NO_SWAP_ROUTES_FOUND`).
 </Warning>
 
 ---
