@@ -70,9 +70,10 @@ How Relay handles each kind of deposit:
 | Different supported token | Requotes in the token received and fills | Refunds the full deposit |
 | Unsupported token | Not processed. See [Supported Currencies](#supported-currencies) | Not processed |
 | Same address, different EVM chain | Fills from the chain the funds landed on, if that chain and token are supported | Not processed automatically. Contact [Support](/resources/support) |
+| Same address, different VM (Hyperliquid and EVM) | Not processed. The funds may not be recoverable | Not processed. The funds may not be recoverable |
 | Later deposit to the same address | Open: fills as a new order. Strict: refunded | Refunded |
 
-A deposit can't land on a different VM by mistake. Address formats differ across VMs (EVM, Solana, Bitcoin, and others), so an EVM address can't receive funds on Solana.
+Relay processes a deposit only on the VM the address was created for. Most VMs use different address formats (EVM, Solana, Bitcoin, and others), so an EVM address can't receive funds on Solana. Hyperliquid is the exception: it uses the same address format as EVM chains, but it is a separate VM. An address created for an EVM chain can still receive funds on Hyperliquid. Relay doesn't process these deposits and may not be able to recover them, so send funds only on the chain the address was created for.
 
 ## Example Request and Response
 
@@ -884,7 +885,7 @@ Relay refunds automatically in these cases:
 - **An `EXACT_OUTPUT` deposit doesn't match the quote.** An underpayment or a different supported token is refunded in full, and an overpayment's surplus is refunded.
 - **A strict address receives another deposit.** Every deposit after the first is refunded.
 
-Relay can't refund a deposit that is too small to cover the refund's gas. It also doesn't return [unsupported tokens](#supported-currencies), or deposits to an `EXACT_OUTPUT` address on the wrong chain. Contact [Support](/resources/support) with the deposit transaction for these.
+Relay can't refund a deposit that is too small to cover the refund's gas. It also doesn't return [unsupported tokens](#supported-currencies), deposits to an `EXACT_OUTPUT` address on the wrong chain, or deposits on a different VM than the address was created for. Contact [Support](/resources/support) with the deposit transaction for these.
 
 If Relay can't send a refund, for example because the refund address is blocked, the funds stay in the Relay Depository. The depositor recorded for the order can [withdraw](/references/protocol/guides/withdrawals) them. That depositor is the `refundTo` or `recoveryAddress` you set on the quote.
 
@@ -1503,7 +1504,7 @@ Relay doesn't process unsupported tokens or NFTs sent to a deposit address, and 
 - **Bitcoin** — Relay detects deposits in the mempool and processes them after they confirm onchain.
 - **Solana** — Supports native SOL and SPL tokens, such as USDC, that are solver currencies on Solana.
 - **Tron** — Supports TRX and USDT. `refundTo` must be an explicit address, because Tron doesn't support refunds to the original sender.
-- **Hyperliquid** — Uses bridged USDC (USDC.e) with different decimal precision than native USDC on other chains. Account for the decimal difference when computing amounts.
+- **Hyperliquid** — Uses bridged USDC (USDC.e) with different decimal precision than native USDC on other chains. Account for the decimal difference when computing amounts. Hyperliquid addresses use the EVM address format, but Relay doesn't process a Hyperliquid deposit to an address created for an EVM chain. See [Comparison](#comparison).
 
 ### Other Limitations
 
