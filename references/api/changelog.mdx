@@ -3,6 +3,10 @@ title: "API Changelog"
 description: "Record of breaking changes, deprecations, and notable additions to the Relay API"
 ---
 
+## 2026-11-25 — `POST /quote/v3` returns `null` price impact when USD valuations are unknown
+
+**Behavior change** — `POST /quote/v3`: `details.totalImpact` and `details.swapImpact` are now `null` when either the input or output USD valuation is missing, non-finite, or non-positive, so clients can distinguish unknown price impact from a real zero. Previously these fields were returned as zero objects in the same cases. When both valuations are available, both fields are returned as before, including a genuine zero. Treat `null` as unknown rather than zero, as you already do for `amountUsd` on currency amounts. See the [Required fields](/references/api/api_guides/migrating-to-quote-v3#what-changed) section of the migration guide.
+
 ## 2026-11-25 — `POST /quote/v3` and `POST /execute/permits/v2` are live; legacy quote, price, permit and status APIs deprecated & scheduled for sunset
 
 **Added** — [`POST /quote/v3`](/references/api/get-quote-v3): the recommended Quote API. It requires an API key or access token, rejects unknown and removed request parameters with `400` and `errorCode: "INVALID_REQUEST_PARAMS"`, and returns one step per action, the same fee structure as `GET /requests/v3`, and one error shape with an `errorCode` on every error. Send `indicativeQuote: true` for a quote without steps, as `POST /price` returned. See the [migration guide](/references/api/api_guides/migrating-to-quote-v3).
