@@ -345,6 +345,8 @@ Every response change, in the order you are likely to hit it.
     `details` keeps every v2 field except `expandedPriceImpact`. `details.rate` and `details.userBalance` are always strings, and EVM addresses in `details.sender` and `details.recipient` are lowercase.
 
     `amountUsd` can be `null` in `details.currencyIn`, `details.currencyOut`, `details.refundCurrency`, `details.currencyGasTopup`, the `details.route` currencies, and `originGas`, when Relay has no USD price for the currency. Treat it as unknown rather than zero.
+
+    `details.totalImpact` and `details.swapImpact` can also be `null` when the input or output USD valuation is unavailable, so price impact cannot be computed. Treat `null` as unknown rather than zero; when both valuations are available, the impact objects are returned as before, including a genuine zero.
   </Accordion>
 
   <Accordion title="Warnings" icon="circle-info">
