@@ -35,7 +35,7 @@ This method applies only to quotes that contain `protocol.v2`. It does not apply
 Pass `includeProtocolData: true` so the response includes the full protocol order alongside the quote.
 
 ```bash
-curl -X POST https://api.relay.link/quote/v2 \
+curl -X POST https://api.relay.link/quote/v3 \
   -H 'Content-Type: application/json' \
   -H 'x-api-key: YOUR_API_KEY' \
   -d '{
@@ -123,7 +123,7 @@ Compare `minimumAmount`, not `expectedAmount`. `expectedAmount` is the quoted es
 
 ### 3. Recompute the order ID
 
-The examples below assume `quote` is the parsed `/quote/v2` response from step 1. Install the settlement SDK:
+The examples below assume `quote` is the parsed `/quote/v3` response from step 1. Install the settlement SDK:
 
 ```bash
 npm install @relay-protocol/settlement-sdk
@@ -209,8 +209,7 @@ if (quote.protocol.v2.paymentDetails.depository.toLowerCase() !== depository) {
 
 // 3. Find the step that pays it.
 const depositTx = quote.steps
-  .flatMap((step) => step.items)
-  .map((item) => item.data)
+  .map((step) => step.data)
   .find((tx) => tx?.to?.toLowerCase() === depository);
 
 if (!depositTx) {
@@ -313,4 +312,4 @@ The signature API returned a solver signature over a small subset of intent fiel
 - Its behavior was inconsistent across chains.
 - It attested to a request shape that does not map cleanly onto protocol orders.
 
-To migrate, replace the `GET /requests/:requestId/signature/v2` call with `includeProtocolData: true` on your existing `/quote/v2` request, and follow steps 2 to 4 above. The verification happens locally, so you remove a network round trip in the process.
+To migrate, replace the `GET /requests/:requestId/signature/v2` call with `includeProtocolData: true` on your existing `/quote/v3` request, and follow steps 2 to 4 above. The verification happens locally, so you remove a network round trip in the process.

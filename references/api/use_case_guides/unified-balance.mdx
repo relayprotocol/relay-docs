@@ -46,13 +46,13 @@ In this guide, you learn how to:
     **Sponsor funding transfers.** Pay the fees on funding transfers from your App Balance, so your users' deposits arrive in full. Leave trades unsponsored, so their fees stay in the price your users see on each quote. On each funding transfer quote:
 
     - Set **`subsidizeFees`** to `true`.
-    - Set **`sponsoredFeeComponents`** to `execution`, `swap`, and `relay`. Leaving it out also sponsors your own [app fee](/features/app-fees).
+    - Set **`sponsoredFeeComponents`** to `execution`, `swap`, and `platform`. Leaving it out also sponsors your own [app fee](/features/app-fees).
     - Set **`maxSubsidizationAmount`** to cap what each request can draw from your App Balance.
 
     [Fee Sponsorship](/features/fee-sponsorship) doesn't cover the gas on your users' deposit transactions on any chain; [step 1](#set-up-wallets) covers that on EVM chains and Solana. When the destination is Solana, Fee Sponsorship covers account rent only if you add `rent` to **`sponsoredFeeComponents`**; otherwise, your users pay rent the first time they receive each token.
   </Step>
   <Step title="Get a quote (server-side)" id="get-a-quote">
-    Call [`POST /quote/v2`](/references/api/get-quote-v2) from your backend with your [API key](/references/api/api-keys), and never expose the key in client code. Use `EXACT_INPUT` so your users spend exactly the amount they entered.
+    Call [`POST /quote/v3`](/references/api/get-quote-v3) from your backend with your [API key](/references/api/api-keys), and never expose the key in client code. Use `EXACT_INPUT` so your users spend exactly the amount they entered.
 
     <CodeGroup>
     ```typescript SDK
@@ -84,11 +84,11 @@ In this guide, you learn how to:
     });
 
     // 3. Return the requestId and steps to your client
-    const requestId = quote.steps[0]?.requestId;
+    const requestId = quote.requestId;
     ```
     ```typescript API
     // 1. Buy ETH on Base with your user's USDC balance on Solana
-    const response = await fetch("https://api.relay.link/quote/v2", {
+    const response = await fetch("https://api.relay.link/quote/v3", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -159,7 +159,7 @@ In this guide, you learn how to:
 
 ## Configure price protection and fees
 
-Beyond the trade flow, these [quote](/references/api/get-quote-v2) parameters have the most effect on a trading app:
+Beyond the trade flow, these [quote](/references/api/get-quote-v3) parameters have the most effect on a trading app:
 
 | Property | Description | Recommendation |
 | --- | --- | --- |
@@ -244,7 +244,7 @@ When destination liquidity is temporarily unavailable, Queueing lets your users 
 
 **How to enable**
 
-Enable Queueing on each sell quote with [`POST /quote/v2`](/references/api/get-quote-v2):
+Enable Queueing on each sell quote with [`POST /quote/v3`](/references/api/get-quote-v3):
 
 ```json
 {

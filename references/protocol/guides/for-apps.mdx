@@ -14,7 +14,7 @@ This page explains how the protocol surfaces in API responses and how to trace a
 
 Requests using protocol settlement have two identifiers with different purposes.
 
-The `requestId` is the Relay-level intent identifier. It covers the overall intent — including any origin or destination swaps — and is what most of the API works in: the [quote api](/references/api/get-quote-v2) returns it as `steps[].requestId`, and status polling, webhooks, and the [requests api](/references/api/get-requests) all key off it. It is not derivable from on-chain data alone.
+The `requestId` is the Relay-level intent identifier. It covers the overall intent — including any origin or destination swaps — and is what most of the API works in: the [quote api](/references/api/get-quote-v3) returns it as the top-level `requestId`, and status polling, webhooks, and the [requests api](/references/api/get-requests) all key off it. It is not derivable from on-chain data alone.
 
 The `orderId` is the protocol-level deposit identifier. It is the `bytes32 id` argument the [Depository](/references/protocol/components/depository) receives in `depositNative` / `depositErc20` (EVM) and `deposit_native` / `deposit_token` (Solana), and it is emitted in the matching deposit event. You can read it directly from on-chain data without an API call, which makes it the right identifier for indexers and merchant-style flows that react to deposits before talking to the Relay API.
 
@@ -22,7 +22,7 @@ If you only have an `orderId` from on-chain data, look it up via the [requests a
 
 ## Protocol Deposits via the API
 
-When a [quote](/references/api/get-quote-v2) includes protocol data, use **`protocol.v2`** to inspect the order and its deposit details. The following is an abbreviated example; API field names and endpoint versions do not identify a protocol rollout version.
+When a [quote](/references/api/get-quote-v3) includes protocol data, use **`protocol.v2`** to inspect the order and its deposit details. The following is an abbreviated example; API field names and endpoint versions do not identify a protocol rollout version.
 
 ```json
 {

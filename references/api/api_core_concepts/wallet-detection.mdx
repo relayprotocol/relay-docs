@@ -55,7 +55,6 @@ the optimal flow:
 
 You should implement wallet detection when:
 
-- Using `protocolVersion: "v2"` or `"preferV2"`
 - User is on an EVM chain
 - User is depositing ERC20 tokens (not native ETH)
 - You want to optimize transaction flow for your users
@@ -231,7 +230,6 @@ const quoteRequest = {
 	recipient: recipientAddress,
 	amount: amountInWei,
 	tradeType: "EXACT_INPUT",
-	protocolVersion: "preferV2",
 	explicitDeposit: explicitDepositValue, // Based on your detection
 };
 ```

@@ -60,7 +60,8 @@ You can force a refund by passing `debug-force-refund` as the referrer.
 
 ```bash cURL
 curl -X POST \
-  'https://api.relay.link/quote/v2' \
+  'https://api.relay.link/quote/v3' \
+  -H 'x-api-key: YOUR_API_KEY' \
   -H 'Content-Type: application/json' \
   -d '{
     "referrer": "debug-force-refund",

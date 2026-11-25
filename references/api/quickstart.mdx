@@ -3,7 +3,7 @@ title: 'Quickstart'
 description: 'Execute your first cross-chain transaction in under 5 minutes.'
 ---
 
-import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+import QuoteAuthCallout from "/snippets/QuoteAuthCallout.mdx";
 
 
 import StatusWebsockets from "/snippets/StatusWebsockets.mdx";
@@ -29,7 +29,7 @@ Follow this 5-step flow to integrate Relay into your application:
     Create an API key in the [Relay Dashboard](https://dashboard.relay.link). <br/>
     See [API keys and Rate Limits](/references/api/api-keys) for usage and limits.
 
-    <QuoteV2AuthCallout />
+    <QuoteAuthCallout />
     </Callout>
 
     ## Chain Configuration
@@ -140,7 +140,7 @@ Follow this 5-step flow to integrate Relay into your application:
   <Step title="Quote">
     Every action in Relay starts with a Quote. 
 
-    The [quote endpoint](/references/api/get-quote-v2) handles all of your use cases, whether it’s a [**bridge**](/use-cases/bridging), [**swap**](/use-cases/cross-chain-swaps), or [**cross-chain call**](/use-cases/calling). It calculates fees, finds the best route, and generates the transaction data.
+    The [quote endpoint](/references/api/get-quote-v3) handles all of your use cases, whether it’s a [**bridge**](/use-cases/bridging), [**swap**](/use-cases/cross-chain-swaps), or [**cross-chain call**](/use-cases/calling). It calculates fees, finds the best route, and generates the transaction data.
 
     ## **Request**
 
@@ -149,7 +149,8 @@ Follow this 5-step flow to integrate Relay into your application:
 
     <CodeGroup>
       ```bash Request
-      curl -X POST "https://api.relay.link/quote/v2" \
+      curl -X POST "https://api.relay.link/quote/v3" \
+      -H "x-api-key: YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "user": "YOUR_WALLET_ADDRESS",
@@ -163,59 +164,55 @@ Follow this 5-step flow to integrate Relay into your application:
       ```
       ```json Response expandable
       {
+        "requestId": "0x8a9b3c...",
         "steps": [
           {
             "id": "deposit",
             "action": "Confirm transaction in your wallet",
             "description": "Depositing funds to the depository contract",
             "kind": "transaction",
-            "requestId": "0x8a9b3c...", 
-            "items": [
-              {
-                "status": "incomplete",
-                "data": {
-                  "from": "YOUR_WALLET_ADDRESS",
-                  "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-                  "data": "0x00fad611...", 
-                  "value": "100000000000000",
-                  "chainId": 8453, 
-                  "gas": "150000",
-                  "maxFeePerGas": "100000000",
-                  "maxPriorityFeePerGas": "100000000"
-                },
-                "check": {
-                  "endpoint": "/intents/status?requestId=0x8a9b3c...",
-                  "method": "GET"
-                }
-              }
-            ],
-            "depositAddress": "" 
+            "status": "incomplete",
+            "data": {
+              "from": "YOUR_WALLET_ADDRESS",
+              "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+              "data": "0x00fad611...",
+              "value": "100000000000000",
+              "chainId": 8453,
+              "gas": "150000",
+              "maxFeePerGas": "100000000",
+              "maxPriorityFeePerGas": "100000000"
+            },
+            "check": {
+              "endpoint": "/intents/status/v3?requestId=0x8a9b3c...",
+              "method": "GET"
+            }
           }
         ],
-        # ...
         "fees": {
-          "gas": {
-            "amount": "21000", 
-            "currency": {
-              "chainId": 8453,
-              "address": "0x0000000000000000000000000000000000000000",
-              "symbol": "ETH",
-              "name": "Ether",
-              "decimals": 18
-            },
-            "amountUsd": "0.01" 
-          },
-          "relayer": {
-            "amount": "5000000000000",
-            "currency": {
-              "chainId": 8453,
-              "address": "0x0000000000000000000000000000000000000000",
-              "symbol": "ETH",
-              "name": "Ether",
-              "decimals": 18
-            },
-            "amountUsd": "0.02" 
+          "execution": { "usd": "-0.01", "amount": "3000000000000", "amountFormatted": "0.000003" },
+          "swap": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+          "platform": { "usd": "-0.01", "amount": "2000000000000", "amountFormatted": "0.000002" },
+          "app": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+          "sponsored": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18
           }
+        },
+        "originGas": {
+          "currency": {
+            "chainId": 8453,
+            "address": "0x0000000000000000000000000000000000000000",
+            "symbol": "ETH",
+            "name": "Ether",
+            "decimals": 18
+          },
+          "amount": "3000000000000",
+          "amountFormatted": "0.000003",
+          "amountUsd": "0.01"
         },
         "details": {
           "operation": "bridge",
@@ -232,7 +229,7 @@ Follow this 5-step flow to integrate Relay into your application:
             }
           },
           "currencyOut": {
-            "amount": "95000000000000", 
+            "amount": "95000000000000",
             "currency": {
               "chainId": 42161,
               "address": "0x0000000000000000000000000000000000000000",
@@ -251,17 +248,17 @@ Follow this 5-step flow to integrate Relay into your application:
     </CodeGroup>
   </Step>
   <Step title="Execute">
-    The [quote endpoint](/references/api/get-quote-v2) returns a `steps` array. Think of this as a recipe your application must follow. You need to iterate through these steps and prompt the user to sign or submit them.
+    The [quote endpoint](/references/api/get-quote-v3) returns a `steps` array. Think of this as a recipe your application must follow. You need to iterate through these steps and prompt the user to sign or submit them.
     <Callout icon="person-swimming" color="#4615C8">
       ### Deep Dive
       For the full logic on parsing steps, see [**Understanding Step Execution**](/references/api/api_core_concepts/step-execution).    
     </Callout>
 
     ## The Logic
-    For a simple ETH bridge, the `steps` array contains a single transaction item. To execute it:
+    For a simple ETH bridge, the `steps` array contains a single transaction step. To execute it:
 
     - **Check the Step Kind:** Identify if the step is a `transaction` (submit to chain) or a `signature` (sign off-chain).
-    - **Execute:** For transactions, submit the provided `data`, `to`, `value`, and `chainId` using the user's wallet. For signatures, follow the `signatureKind` provided in the step item to sign the `message`.
+    - **Execute:** For transactions, submit the provided `data`, `to`, `value`, and `chainId` using the user's wallet. For signatures, follow the `signatureKind` provided in the step's `data.sign` to sign the `message`.
 
     ## The Script (Node.js / Viem example)
     Copy the script below to execute the transaction returned by the Quote in Step 2. You'll need to add the wallet connection logic using your preferred provider.
@@ -288,17 +285,14 @@ Follow this 5-step flow to integrate Relay into your application:
 
       // Iterate through steps (usually just 1 for ETH bridge)
       for (const step of quote.steps) {
-        //Although there is an array of items, you can safely select the first item
-        //as there is just one returned
-        const item = step.items[0]
         if (step.kind === 'transaction') {
           console.log(`Submitting Transaction...`);
           
           // 3. Send Transaction
           const hash = await client.sendTransaction({
-            to: item.data.to,
-            data: item.data.data, 
-            value: BigInt(item.data.value),
+            to: step.data.to,
+            data: step.data.data,
+            value: BigInt(step.data.value),
             chain: base 
           });
           
@@ -306,7 +300,7 @@ Follow this 5-step flow to integrate Relay into your application:
           //to ensure that the origin transaction was successfully submitted.
           
           console.log(`✅ Bridge Initiated: ${hash}`);
-          console.log(`requestId: ${step.requestId}`); // Save this for Step 4!
+          console.log(`requestId: ${quote.requestId}`); // Save this for Step 4!
         }
       }
     }
@@ -317,7 +311,7 @@ Follow this 5-step flow to integrate Relay into your application:
   <Step title="Monitor">
     Once the deposit is indexed, a solver prepares and submits the destination-chain fill. The platform reports progress through the status API.
 
-    Use the [status endpoint](/references/api/get-intents-status-v3) with the  `requestId` located inside each step object in your [quote response](/references/api/quickstart#request) to track status and confirm success. You can also use the `check.endpoint` property inside the step item object as the endpoint for checking the status of the request. Poll until the status is `success` or `refund` — the two final statuses. A `failure` is not final: the fill can retry or move to `refund`. <br/>
+    Use the [status endpoint](/references/api/get-intents-status-v3) with the top-level `requestId` in your [quote response](/references/api/quickstart#request) to track status and confirm success. You can also use the `check.endpoint` property inside the step object as the endpoint for checking the status of the request. Poll until the status is `success` or `refund` — the two final statuses. A `failure` is not final: the fill can retry or move to `refund`. <br/>
     _Note: Replace with the requestId returned in your quote_
     <CodeGroup>
       ```bash Request

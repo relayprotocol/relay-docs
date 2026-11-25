@@ -43,7 +43,7 @@ Once your app balance is funded, you can sponsor transactions by including speci
 
 ### Sponsorship Parameters
 
-Add these parameters to your [Get Quote](/references/api/get-quote-v2) API request:
+Add these parameters to your [Get Quote](/references/api/get-quote-v3) API request:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -52,7 +52,7 @@ Add these parameters to your [Get Quote](/references/api/get-quote-v2) API reque
 | `subsidizationBps` | `integer` | _(Optional)_ The share of each selected fee bucket the sponsor covers, in basis points from `0` to `10000` (e.g., `10000` = 100%, `2500` = 25%). Requires `subsidizeFees: true`. Defaults to full coverage when omitted; the user pays the remainder. Applied per bucket before `maxSubsidizationAmount`, which still caps the sponsor's total. Only supported on swap execution flows. See [How `subsidizationBps` Works](#how-subsidizationbps-works). |
 | `subsidizeRent` | `boolean` | _(Optional, deprecated)_ Compatibility alias that adds `rent` to `sponsoredFeeComponents`. Prefer selecting `rent` in `sponsoredFeeComponents` directly. Requires `subsidizeFees` to also be enabled. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
 | `depositFeePayer` | `string` | _(Optional)_ A Solana address to pay deposit transaction fees for Solana origin transactions. See [Solana Fee Sponsorship](#solana-fee-sponsorship). |
-| `sponsoredFeeComponents` | `string[]` | _(Optional)_ You can also choose to sponsor specific Relay fees for your users using the `sponsoredFeeComponents` parameter. This allows integrators to selectively cover different fee types (such as gas fees or relayer fees) while still collecting app fees. |
+| `sponsoredFeeComponents` | `string[]` | _(Optional)_ The fee components to sponsor: `execution`, `swap`, `platform`, `app`, and `rent`. Defaults to `execution`, `swap`, `platform`, and `app`. Use it to cover some fees while still collecting app fees from the user. Requires `subsidizeFees: true`. |
 
 <Warning>
 [Deposit addresses](/features/deposit-addresses) do not support `sponsoredFeeComponents` or `subsidizationBps`. `maxSubsidizationAmount` is supported by deposit addresses but if the amount exceeds the maximum the user pays all fees and nothing is subsidized.
@@ -62,7 +62,7 @@ Add these parameters to your [Get Quote](/references/api/get-quote-v2) API reque
 
 ```bash cURL
 curl -X POST \
-  'https://api.relay.link/quote' \
+  'https://api.relay.link/quote/v3' \
   -H 'Content-Type: application/json' \
   -H 'x-api-key: your-api-key' \
   -d '{
@@ -142,7 +142,7 @@ To sponsor the rent for ATA creation on Solana destination transactions, include
 | `subsidizeRent` | `boolean` | Deprecated alias. Setting it to `true` adds `rent` to `sponsoredFeeComponents`, so the sponsor pays the ATA rent on the destination chain. Prefer `sponsoredFeeComponents` with `rent` included. |
 
 <Warning>
-Rent is its own fee component and is never sponsored by default. With `subsidizeFees: true` and `rent` not selected, the sponsor pays the selected components (`execution`, `swap`, `relay`, and `app` when `sponsoredFeeComponents` is omitted) and the user pays the ATA rent. Rent sponsorship requires `subsidizeFees: true`. A request that sets `sponsoredFeeComponents` without it is rejected with a `400`, and `subsidizeRent` without it is ignored.
+Rent is its own fee component and is never sponsored by default. With `subsidizeFees: true` and `rent` not selected, the sponsor pays the selected components (`execution`, `swap`, `platform`, and `app` when `sponsoredFeeComponents` is omitted) and the user pays the ATA rent. Rent sponsorship requires `subsidizeFees: true`. A request that sets `sponsoredFeeComponents` or `subsidizeRent: true` without it is rejected with a `400`.
 </Warning>
 
 **Important considerations:**
@@ -155,7 +155,7 @@ Rent is its own fee component and is never sponsored by default. With `subsidize
 
 ```bash cURL
 curl -X POST \
-  'https://api.relay.link/quote' \
+  'https://api.relay.link/quote/v3' \
   -H 'Content-Type: application/json' \
   -H 'x-api-key: your-api-key' \
   -d '{
@@ -168,7 +168,7 @@ curl -X POST \
     "recipient": "9aUn5swQzUTRanaaTwmszxiv89cvFwUCjEBv1vZCoT1u",
     "amount": "10000000",
     "subsidizeFees": true,
-    "sponsoredFeeComponents": ["execution", "swap", "relay", "app", "rent"],
+    "sponsoredFeeComponents": ["execution", "swap", "platform", "app", "rent"],
     "maxSubsidizationAmount": "5000000"
   }'
 ```
@@ -205,7 +205,7 @@ The `depositFeePayer` parameter operates independently from `subsidizeFees` and 
 
 ```bash cURL
 curl -X POST \
-  'https://api.relay.link/quote' \
+  'https://api.relay.link/quote/v3' \
   -H 'Content-Type: application/json' \
   -H 'x-api-key: your-api-key' \
   -d '{
@@ -241,7 +241,7 @@ Fee sponsorship is designed to cover relay and execution costs, but certain fees
 - **First-time approval transactions when using `usePermit`** — The initial approval transaction required for permit-based flows is not covered by fee sponsorship. However, all subsequent requests after the approval will be sponsored.
 
 <Note>
-**Swap costs and app fees are sponsored by default.** With `subsidizeFees: true` and no **`sponsoredFeeComponents`**, the sponsor covers `execution`, `swap`, `relay`, and `app`:
+**Swap costs and app fees are sponsored by default.** With `subsidizeFees: true` and no **`sponsoredFeeComponents`**, the sponsor covers `execution`, `swap`, `platform`, and `app`:
 
 - **Swap costs** (`swap`) cover DEX fees, DEX swap impact, and solver rebalancing. To leave them with the user, omit `swap` from `sponsoredFeeComponents`.
 - **App fees** (`app`) are drawn from your app balance and still accrue to the recipients named in `appFees`. Omit `app` from `sponsoredFeeComponents` to keep collecting app fees from the user while sponsoring the rest.
@@ -251,22 +251,31 @@ Fee sponsorship is designed to cover relay and execution costs, but certain fees
 
 ## Fees Object
 
-When you sponsor transactions, the quote response includes a `fees` object with a `subsidized` field showing the fees covered by your sponsorship:
+When you sponsor transactions, the quote response's `fees.sponsored` component shows the fees covered by your sponsorship, as a positive `usd` value. The `feeSponsorship` object breaks the sponsorship down by component, with every amount in `feeSponsorship.currency`:
 
 ```json
 {
   "fees": {
-    "relayerService": "...",
-    "relayerGas": "...",
-    "relayer": "...",
-    "app": "...",
-    "subsidized": {
-      "amount": "500000",
-      "amountUsd": "0.50"
+    "execution": { "usd": "-0.02", "amount": "20000", "amountFormatted": "0.02" },
+    "swap": { "usd": "-0.40", "amount": "400000", "amountFormatted": "0.4" },
+    "platform": { "usd": "-0.08", "amount": "80000", "amountFormatted": "0.08" },
+    "app": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+    "sponsored": { "usd": "0.50", "amount": "500000", "amountFormatted": "0.5" },
+    "currency": { "chainId": 8453, "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", "symbol": "USDC", "decimals": 6 }
+  },
+  "feeSponsorship": {
+    "currency": { "chainId": 8453, "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", "symbol": "USDC", "decimals": 6 },
+    "quoted": {
+      "selectedComponents": ["execution", "swap", "platform", "app"],
+      "capHit": false,
+      "sponsoredTotal": { "amount": "500000", "amountFormatted": "0.5", "amountUsd": "0.50" },
+      "userPaysTotal": { "amount": "0", "amountFormatted": "0", "amountUsd": "0" }
     }
   }
 }
 ```
+
+Values are abbreviated: `feeSponsorship.quoted` also includes a `components` object with the total, sponsored, and user-paid amount for each component.
 
 For more details on the fee structure, see [Cost & Fee Structure](/references/api/api_core_concepts/fees).
 
@@ -295,6 +304,6 @@ App-fee payments and revenue-share payments both appear as a single event type, 
 - [App Fees](/features/app-fees) — Learn how to collect fees from your users
 - [Get Balance Events](/references/api/get-balance-events) — API reference for the balance event history
 - [Get App Fee Balances](/references/api/get-app-fee-balances) — API reference for checking balances
-- [Get Quote](/references/api/get-quote-v2) — API reference for quote requests
+- [Get Quote](/references/api/get-quote-v3) — API reference for quote requests
 - [Cost & Fee Structure](/references/api/api_core_concepts/fees) — Understanding Relay's fee structure
 - [Solana Support](/references/api/api_guides/solana) — Guide to depositing and withdrawing on Solana

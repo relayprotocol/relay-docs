@@ -24,7 +24,7 @@ App Fees are measured in basis points (bps) based on the input value of an order
 
 - On same-chain operations where the solver holds neither the input or output currency, an extra swap is added within the transaction to swap from the input currency into a currency accepted by the solver for App Fees
   - For this to occur, the fee to be taken needs to be greater than $0.025. This is to prevent the situation where the action of taking the app fee will consume more in gas than the fee itself.
-  - The quote response signals this before execution: check `details.expandedPriceImpact.app.usd` — when the app component is `"0"`, no app fee will be collected for that swap. The deprecated `fees.app.amount` carries the same signal for legacy integrations. Check it at quote time rather than discovering the skipped fee in the [monitoring endpoints](#verifying-fee-collection) afterwards.
+  - The quote response signals this before execution: check `fees.app.usd` — when the app component is `"0"`, no app fee will be collected for that swap. Check it at quote time rather than discovering the skipped fee in the [monitoring endpoints](#verifying-fee-collection) afterwards.
 - App Fee Recipients _must_ be an EVM compatible wallet address, even for non-EVM chains.
 - App fees _can_ be an array, for setting multiple fees at once
 - App fees work the same way with deposit address flows as with regular quote requests.
@@ -80,7 +80,7 @@ Each balance returned by the [balances API](#get-app-balance) includes the chain
 
 When you claim, the estimated network gas for the claim transaction is converted to USDC and deducted from the amount you claim, so the amount that arrives in your wallet is slightly lower. The deduction tracks gas prices rather than a fixed amount or percentage, and there is no separate service fee.
 
-To hold the funds on another chain or in another currency, bridge or swap them with Relay after you claim. The [quote](/references/api/get-quote-v2) shows Relay's fees and the amount you'll receive. Unless the transaction is gasless, your wallet also pays origin-chain gas, and an ERC-20 may need a separate approval transaction.
+To hold the funds on another chain or in another currency, bridge or swap them with Relay after you claim. The [quote](/references/api/get-quote-v3) shows Relay's fees and the amount you'll receive. Unless the transaction is gasless, your wallet also pays origin-chain gas, and an ERC-20 may need a separate approval transaction.
 
 The easiest way to claim your App Balance is to use the [Relay App](https://relay.link/claim-app-fees). The Relay App Balance page also supports withdrawing via a multisig. Here's how you can withdraw via the API:
 

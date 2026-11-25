@@ -3,7 +3,7 @@ title: "Call Execution Integration Guide"
 description: "How to execute cross-chain calls using Relay"
 ---
 
-import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+import QuoteAuthCallout from "/snippets/QuoteAuthCallout.mdx";
 
 
 import GetAnApiKey from "/snippets/GetAnApiKey.mdx";
@@ -29,7 +29,7 @@ While not mandatory for integration, doing the following will improve the UX for
 <Steps>
   <Step title="Get a Quote">
     ## Get a Quote
-    To execute a cross-chain transaction, you need to specify the origin chain for payment, the destination chain where the contract is deployed, and the transaction data to execute. Use the [quote endpoint](/references/api/get-quote-v2) with specific parameters for cross-chain calling.
+    To execute a cross-chain transaction, you need to specify the origin chain for payment, the destination chain where the contract is deployed, and the transaction data to execute. Use the [quote endpoint](/references/api/get-quote-v3) with specific parameters for cross-chain calling.
 
     Cross-chain calls support both `EXACT_INPUT` and `EXACT_OUTPUT`. Use `EXACT_OUTPUT` when the destination call requires a precise output amount. Use `EXACT_INPUT` when you want to cap how much the user spends and can tolerate variable output.
 
@@ -54,10 +54,11 @@ While not mandatory for integration, doing the following will improve the UX for
 
     The request below is schematic. In practice, `txs[].data` must contain ABI-encoded calldata.
 
-<QuoteV2AuthCallout />
+<QuoteAuthCallout />
 
     ```bash
-    curl -X POST "https://api.relay.link/quote/v2" \
+    curl -X POST "https://api.relay.link/quote/v3" \
+      -H "x-api-key: YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "user": "WALLET",
@@ -86,7 +87,8 @@ While not mandatory for integration, doing the following will improve the UX for
 
     <CodeGroup>
     ```bash Request
-    curl -X POST "https://api.relay.link/quote/v2" \
+    curl -X POST "https://api.relay.link/quote/v3" \
+      -H "x-api-key: YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "user": "0x03508bb71268bba25ecacc8f620e01866650532c",
@@ -107,138 +109,84 @@ While not mandatory for integration, doing the following will improve the UX for
     ```
     ```json Response expandable
     {
+      "requestId": "0xa8de0141e504d2f7ed6b17cfd03455ecc2b17ab4e63120e43c38dce8015c1004",
       "steps": [
         {
           "id": "deposit",
           "action": "Confirm transaction in your wallet",
           "description": "Depositing funds to the depository contract",
           "kind": "transaction",
-          "items": [
-            {
-              "status": "incomplete",
-              "data": {
-                "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
-                "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
-                "data": "0x49290c1c00000000000000000000000003508bb71268bba25ecacc8f620e01866650532c0d0f5bc9e030aa965a11905d83e54a407697e6fcdba5c300875db0fbf93e186b",
-                "value": "100012440985606146",
-                "chainId": 1,
-                "gas": "32713",
-                "maxFeePerGas": "386206132",
-                "maxPriorityFeePerGas": "246844318"
-              },
-              "check": {
-                "endpoint": "/intents/status/v3?requestId=0xa8de0141e504d2f7ed6b17cfd03455ecc2b17ab4e63120e43c38dce8015c1004",
-                "method": "GET"
-              }
-            }
-          ],
-          "requestId": "0xa8de0141e504d2f7ed6b17cfd03455ecc2b17ab4e63120e43c38dce8015c1004",
-          "depositAddress": ""
+          "status": "incomplete",
+          "data": {
+            "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
+            "to": "0x4cd00e387622c35bddb9b4c962c136462338bc31",
+            "data": "0x49290c1c00000000000000000000000003508bb71268bba25ecacc8f620e01866650532c0d0f5bc9e030aa965a11905d83e54a407697e6fcdba5c300875db0fbf93e186b",
+            "value": "100012440985606146",
+            "chainId": 1,
+            "gas": "32713",
+            "maxFeePerGas": "386206132",
+            "maxPriorityFeePerGas": "246844318"
+          },
+          "check": {
+            "endpoint": "/intents/status/v3?requestId=0xa8de0141e504d2f7ed6b17cfd03455ecc2b17ab4e63120e43c38dce8015c1004",
+            "method": "GET"
+          }
         }
       ],
       "fees": {
-        "gas": {
-          "currency": {
-            "chainId": 1,
-            "address": "0x0000000000000000000000000000000000000000",
-            "symbol": "ETH",
-            "name": "Ether",
-            "decimals": 18,
-            "metadata": {
-              "logoURI": "https://assets.relay.link/icons/1/light.png",
-              "verified": true
-            }
-          },
-          "amount": "8496534904000",
-          "amountFormatted": "0.000008496534904",
-          "amountUsd": "0.019054",
-          "minimumAmount": "8496534904000"
+        "execution": {
+          "usd": "-0.0229",
+          "amount": "10211447685589",
+          "amountFormatted": "0.000010211447685589"
         },
-        "relayer": {
-          "currency": {
-            "chainId": 1,
-            "address": "0x0000000000000000000000000000000000000000",
-            "symbol": "ETH",
-            "name": "Ether",
-            "decimals": 18,
-            "metadata": {
-              "logoURI": "https://assets.relay.link/icons/1/light.png",
-              "verified": true
-            }
-          },
-          "amount": "12440985606146",
-          "amountFormatted": "0.000012440985606146",
-          "amountUsd": "0.027900",
-          "minimumAmount": "12440985606146"
+        "swap": {
+          "usd": "0",
+          "amount": "0",
+          "amountFormatted": "0"
         },
-        "relayerGas": {
-          "currency": {
-            "chainId": 1,
-            "address": "0x0000000000000000000000000000000000000000",
-            "symbol": "ETH",
-            "name": "Ether",
-            "decimals": 18,
-            "metadata": {
-              "logoURI": "https://assets.relay.link/icons/1/light.png",
-              "verified": true
-            }
-          },
-          "amount": "1293116969649",
-          "amountFormatted": "0.000001293116969649",
-          "amountUsd": "0.002900",
-          "minimumAmount": "1293116969649"
-        },
-        "relayerService": {
-          "currency": {
-            "chainId": 1,
-            "address": "0x0000000000000000000000000000000000000000",
-            "symbol": "ETH",
-            "name": "Ether",
-            "decimals": 18,
-            "metadata": {
-              "logoURI": "https://assets.relay.link/icons/1/light.png",
-              "verified": true
-            }
-          },
-          "amount": "11147868636497",
-          "amountFormatted": "0.000011147868636497",
-          "amountUsd": "0.025000",
-          "minimumAmount": "11147868636497"
+        "platform": {
+          "usd": "-0.005",
+          "amount": "2229573730478",
+          "amountFormatted": "0.000002229573730478"
         },
         "app": {
-          "currency": {
-            "chainId": 1,
-            "address": "0x0000000000000000000000000000000000000000",
-            "symbol": "ETH",
-            "name": "Ether",
-            "decimals": 18,
-            "metadata": {
-              "logoURI": "https://assets.relay.link/icons/1/light.png",
-              "verified": true
-            }
-          },
+          "usd": "0",
           "amount": "0",
-          "amountFormatted": "0.0",
-          "amountUsd": "0",
-          "minimumAmount": "0"
+          "amountFormatted": "0"
         },
-        "subsidized": {
-          "currency": {
-            "chainId": 1,
-            "address": "0x0000000000000000000000000000000000000000",
-            "symbol": "ETH",
-            "name": "Ether",
-            "decimals": 18,
-            "metadata": {
-              "logoURI": "https://assets.relay.link/icons/1/light.png",
-              "verified": true
-            }
-          },
+        "sponsored": {
+          "usd": "0",
           "amount": "0",
-          "amountFormatted": "0.0",
-          "amountUsd": "0",
-          "minimumAmount": "0"
+          "amountFormatted": "0"
+        },
+        "currency": {
+          "chainId": 1,
+          "address": "0x0000000000000000000000000000000000000000",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "metadata": {
+            "logoURI": "https://assets.relay.link/icons/1/light.png",
+            "verified": true
+          }
         }
+      },
+      "originGas": {
+        "currency": {
+          "chainId": 1,
+          "address": "0x0000000000000000000000000000000000000000",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "metadata": {
+            "logoURI": "https://assets.relay.link/icons/1/light.png",
+            "verified": true
+          }
+        },
+        "amount": "8496534904000",
+        "amountFormatted": "0.000008496534904",
+        "amountUsd": "0.019054",
+        "minimumAmount": "8496534904000"
       },
       "details": {
         "operation": "swap",
@@ -302,20 +250,6 @@ While not mandatory for integration, doing the following will improve the UX for
         "swapImpact": {
           "usd": "0.000000",
           "percent": "0.00"
-        },
-        "expandedPriceImpact": {
-          "swap": {
-            "usd": "0.000000"
-          },
-          "execution": {
-            "usd": "-0.0229"
-          },
-          "relay": {
-            "usd": "-0.005"
-          },
-          "app": {
-            "usd": "0"
-          }
         },
         "rate": "0.9998756056198255",
         "slippageTolerance": {
@@ -849,7 +783,7 @@ While not mandatory for integration, doing the following will improve the UX for
     | `txs[].value`         | string      | ETH value to send with call                                                                                                          |
     | `txs[].data`          | string      | Encoded function call data                                                                                                           |
 
-    You can learn more about quote request parameters and response data [here](/references/api/get-quote-v2).
+    You can learn more about quote request parameters and response data [here](/references/api/get-quote-v3).
   </Step>
   <Step title="Execute the Call">
     ## Execute the Call

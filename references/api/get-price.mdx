@@ -1,9 +1,9 @@
 ---
 title: "Get Price"
-description: "This API returns a lightweight quote without calldata or steps."
+description: "Deprecated. Returns a lightweight quote without calldata or steps. Use POST /quote/v3 with indicativeQuote: true for new integrations."
 openapi: post /price
 ---
 
-import { DeprecatedExecuteApi } from '/snippets/DeprecatedExecuteApi.mdx'
-
-<DeprecatedExecuteApi />
+<Warning>
+  `POST /price` is **deprecated as of November 25, 2026**: its rate limit is reduced in stages from January 9, 2027 until it is **retired on February 23, 2027**. Use [`POST /quote/v3`](/references/api/get-quote-v3) with `indicativeQuote: true`, which returns no steps and saves no request, like `/price`, but requires an API key or access token. See the [migration guide](/references/api/api_guides/migrating-to-quote-v3#sunset-timeline) for the timeline and how to upgrade.
+</Warning>

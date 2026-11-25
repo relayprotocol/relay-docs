@@ -3,7 +3,7 @@ title: getQuote
 description: Get a quote for a cross-chain relay (bridge, swap, call, etc)
 ---
 
-import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
+import QuoteAuthCallout from "/snippets/QuoteAuthCallout.mdx";
 
 
 ## Arguments
@@ -18,7 +18,9 @@ import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
 **Warning**: Never pass `x-api-key` in headers from client-side code. Only use the `headers` parameter with API keys when calling `getQuote` entirely on the server.
 </Warning>
 
-<QuoteV2AuthCallout />
+<QuoteAuthCallout />
+
+From `@relayprotocol/relay-sdk` 9.0.0, `getQuote` calls `POST /quote/v3` and returns a `Quote` with flat steps and the top-level `requestId`. Earlier versions call `/quote/v2`; see [Upgrading RelayKit](/references/api/api_guides/migrating-to-quote-v3#upgrading-relaykit).
 
 
 ## Quote Parameters
@@ -35,7 +37,7 @@ import QuoteV2AuthCallout from "/snippets/QuoteV2AuthCallout.mdx";
 | **amount**     | Amount in wei, in the supplied `currency`                                                                                                                                                                          | ❌                                            |
 | **wallet**     | A valid WalletClient from viem or an adapted wallet generated from an adapter that meets this [interface](https://github.com/relayprotocol/relay-kit/blob/main/packages/sdk/src/types/AdaptedWallet.ts).       | ❌                                            |
 | **txs**        | An array of either transaction objects (made up of a to, data and value properties) or viem request objects returned from viem's [simulateContract](https://viem.sh/docs/contract/simulateContract.html) function. | ❌                                            |
-| **options**    | Additional options that map directly to the [quote API](/references/api/get-quote-v2).                                                                                                                             | ❌                                            |
+| **options**    | Additional options that map directly to the [quote API](/references/api/get-quote-v3).                                                                                                                             | ❌                                            |
 | **disableCapabilitiesCheck** | Skip `wallet.getCapabilities` calls used for EIP-5792 atomic-batch detection and smart-wallet detection. Set this for wallets with a broken `getCapabilities` implementation that hangs or never resolves. When true, execution falls back to sequential transactions. | ❌                                            |
 
 <Info>

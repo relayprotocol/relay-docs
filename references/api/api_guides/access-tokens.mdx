@@ -76,7 +76,7 @@ const { token } = await fetch("/api/relay-token", { method: "POST" }).then(
 );
 
 // 2. Call Relay with the token
-const quote = await fetch("https://api.relay.link/quote/v2", {
+const quote = await fetch("https://api.relay.link/quote/v3", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${token}`,

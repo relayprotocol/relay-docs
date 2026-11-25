@@ -89,7 +89,7 @@ Already hitting a limit? See [Handling Rate Limits](/references/api/api_core_con
 ## How to Use an API key
 
 <Warning>
-Quote requests that set a `referrer` must be authenticated: pass your API key in the `x-api-key` header, or an [access token](/references/api/api_guides/access-tokens), on `POST /quote` and `POST /quote/v2`. Requests with a referrer but no valid key return `401` with `errorCode: "UNAUTHORIZED_QUOTE"`. Starting **October 2, 2026**, every `quote/v2` request requires a valid API key or [access token](/references/api/api_guides/access-tokens). `quote/v2` remains fully supported for authenticated requests.
+Every `POST /quote/v3` request must be authenticated: pass your API key in the `x-api-key` header, or an [access token](/references/api/api_guides/access-tokens). Requests without a valid key or token return `401` with `errorCode: "UNAUTHORIZED_QUOTE"`. The deprecated `POST /quote/v2` requires the same since **October 2, 2026**, and the deprecated `POST /quote` requires it on requests that set a `referrer`; see [Migrating to Quote v3](/references/api/api_guides/migrating-to-quote-v3).
 </Warning>
 
 ### HTTP requests

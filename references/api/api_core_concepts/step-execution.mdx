@@ -11,26 +11,26 @@ description: "How step execution works when driving Relay directly from the API"
 
 ## Step Execution using the API
 
-The [Relay platform](/references/api/overview) returns the steps needed to execute a quote, such as submitting a deposit transaction or signing a message. Follow the transaction targets, calldata, and amounts returned by the [quote endpoint](/references/api/get-quote-v2); they depend on the route and deposit method.
+The [Relay platform](/references/api/overview) returns the steps needed to execute a quote, such as submitting a deposit transaction or signing a message. Follow the transaction targets, calldata, and amounts returned by the [quote endpoint](/references/api/get-quote-v3); they depend on the route and deposit method.
 
-Step descriptions are display text, not a specification of fund ownership or settlement. Some API responses retain legacy “relayer” wording; use **`id`**, **`kind`**, and **`items`** to drive execution, and see [Input Validation](/references/api/api_core_concepts/input-validation) for verifying protocol deposits.
+Step descriptions are display text, not a specification of fund ownership or settlement. Some API responses retain legacy “relayer” wording; use **`id`**, **`kind`**, and **`data`** to drive execution, and see [Input Validation](/references/api/api_core_concepts/input-validation) for verifying protocol deposits.
 
 The flow looks like this:
 
 <Steps>
   <Step title="Fetching Steps" icon="server">
-    Call the [Get Quote API](/references/api/get-quote-v2) to start your
+    Call the [Get Quote API](/references/api/get-quote-v3) to start your
     execution.
   </Step>
   <Step title="Iterate Through Steps" icon="list-ul">
-    Iterate through the steps and the items within a step, taking the necessary
-    actions. Steps with no items, or an empty array of items, should be skipped.
-    If step item data is missing then polling the api is necessary.
+    Iterate through the steps in array order, taking the necessary actions.
+    Skip steps whose `status` is already `complete`. Step ids can repeat, so
+    track each step by its position rather than its id.
   </Step>
   <Step title="Executing Steps" icon="list-check">
-    As mentioned above each step contains an array of one or more items. These
-    items need to be iterated and completed depending on the kind of step
-    ([signature](#signature-step) or [transaction](#transaction-step)).
+    Each step carries its own `status`, `data`, and `check`. Complete it
+    according to its kind ([signature](#signature-step) or
+    [transaction](#transaction-step)).
   </Step>
   <Step title="Checking the fill status" icon="bars-progress">
     After a step is signed or submitted you should check on the progress of the
@@ -52,7 +52,7 @@ A message that needs to be signed. Every signature comes with sign data and post
 // Creating an `EIP-191` signature involves signing a message.
 // When you receive a `signatureKind: "eip191"` from the API, you will sign the value associated with the `message` property.
 // In the case below, the message `Sign in to Blur...` will be signed, and later posted to the API.
-// The step item also contains a `post` object detailing the endpoint to post the signed message to.
+// The step data also contains a `post` object detailing the endpoint to post the signed message to.
 const message = {
   signatureKind: "eip191",
   message:
@@ -214,23 +214,23 @@ const data = {
 
 **Posting the data**
 
-After the message is signed the second action is to submit the `post` body to the `endpoint` provided in the `post` data. You'll also need to provide the signature that was generated from the sign data as a query parameter. If the request is successful we can mark the step item as complete locally.
+After the message is signed the second action is to submit the `post` body to the `endpoint` provided in the `post` data. You'll also need to provide the signature that was generated from the sign data as a query parameter. If the request is successful we can mark the step as complete locally. Always post to the step's own `data.post.endpoint`: permit signatures from `/quote/v3` point to [`/execute/permits/v2`](/references/api/execute-permits-v2), while other signatures, such as Hyperliquid nonce mappings, use their own endpoint. When a `/execute/permits/v2` response includes `steps`, run those transaction steps before the remaining quote steps.
 
 The design pattern of this API is completely generic, allowing for automatic support of new types of liquidity without needing to update the app. This data can be fed directly into an Ethereum library such as viem, making it easy to sign and submit the exact data that is needed.
 
-**Multiple items**
+**Consecutive signature steps**
 
-A signature step can hold more than one item. Sign and post the items in the order they appear: a later item can be refused until the earlier one is posted. Not every item has a `check`; for example, the `MulticallAuthorization` item of an [ERC-3009 permit](/features/gasless-swaps#erc-3009-permits-with-multicallauthorization) has none.
+A quote can return more than one signature step in a row, with the same id. Sign and post them in the order they appear: a later signature can be refused until the earlier one is posted. Not every step has a `check`; for example, the `MulticallAuthorization` step of an [ERC-3009 permit](/features/gasless-swaps#erc-3009-permits-with-multicallauthorization) has none.
 
 ### Transaction Step
 
-A transaction that needs to be submitted onchain. After the transaction is submitted onchain you can poll the step items `check` endpoint. The endpoint will return a status which when successful will return 'success'. The step item can then be successfully marked as complete. _`Note that the transaction step item contains a chainId for which the transaction should be submitted on.`_
+A transaction that needs to be submitted onchain. After the transaction is submitted onchain you can poll the step's `check` endpoint. The endpoint will return a status which when successful will return 'success'. The step can then be successfully marked as complete. Submit the transaction on the chain given by the step's **`data.chainId`**.
 
 ---
 
 ## Step IDs
 
-Each step has a unique `id` that identifies the type of action required. Understanding these step IDs helps you build better UX and handle each step appropriately.
+Each step has an `id` that identifies the type of action required. Ids can repeat within one quote, for example two `approve` steps when a token needs its allowance reset first. Understanding these step IDs helps you build better UX and handle each step appropriately.
 
 ### Transaction Steps
 
@@ -238,7 +238,6 @@ Each step has a unique `id` that identifies the type of action required. Underst
 | ------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | [`deposit`](#deposit)     | Submit the quoted deposit for cross-chain execution   | Used for cross-chain swaps and bridges.                                             |
 | [`approve`](#approve)     | Approve the transfer of an ERC20 token                 | Used before `deposit` or `swap` when the quoted flow requires a token allowance. |
-| `approval`                | Approve token for deposit                              | Token approval for deposit operations.                                              |
 | `swap`                    | Execute a same-chain token swap                        | For same-chain swaps. May require an approval step first for EVM swaps.             |
 | [`send`](#send)           | Send funds to the recipient                            | When sending the same asset on the same chain to a different recipient.             |
 
@@ -246,9 +245,7 @@ Each step has a unique `id` that identifies the type of action required. Underst
 
 | Step ID                       | Description                                | When Used                                                                                                                                                                                                      |
 | ----------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`authorize`](#authorize)     | Sign authorization for specific operations | Used for: (1) Claiming [app fees](/features/app-fees) - EIP-191 signature to verify wallet ownership, (2) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits - nonce-mapping signature. |
-| [`authorize1`](#authorize1)   | Sign to approve swap of tokens             | Main flow for cross-chain permits Permit/Permit2.                                                                                                                                                              |
-| [`authorize2`](#authorize2)   | Sign to approve transfer of tokens         | Same-chain ERC-20 → native swap permits (Permit2). Same-chain ERC-20 → ERC-20 swaps return `approve` → `swap` transactions instead; see [Gasless Swaps](/features/gasless-swaps#permit-based-gasless). |
+| [`authorize`](#authorize)     | Sign an authorization or permit            | Used for: (1) [cross-chain permits](#cross-chain-permit) with Permit2 or EIP-3009, (2) [same-chain ERC-20 → native permits](#same-chain-permit) with Permit2, (3) [Hyperliquid](/references/api/api_guides/hyperliquid-support) v2 deposits, a nonce-mapping signature, (4) claiming [app fees](/features/app-fees), an EIP-191 signature to verify wallet ownership. Same-chain ERC-20 → ERC-20 swaps return `approve` → `swap` transactions instead; see [Gasless Swaps](/features/gasless-swaps#permit-based-gasless). |
 
 ### Common Step Flows
 
@@ -260,7 +257,7 @@ Depending on the action and tokens involved, Relay chains steps together. Here a
 | `swap`                                              | Single step for same-chain swaps                |
 | [`approve`](#approve) → [`deposit`](#deposit)       | Approval needed before deposit for ERC20 tokens |
 | [`approve`](#approve) → `swap`                      | Same-chain swap requiring approval              |
-| [`authorize1`](#authorize1)                         | Cross-chain permit-based transfer (gasless)     |
+| [`authorize`](#cross-chain-permit)                  | Cross-chain permit-based transfer (gasless)     |
 
 ---
 
@@ -278,25 +275,21 @@ Submit the deposit transaction returned in the quote. A solver uses its own liqu
   "action": "Confirm transaction in your wallet",
   "description": "Depositing funds to the depository contract",
   "kind": "transaction",
-  "items": [
-    {
-      "status": "incomplete",
-      "data": {
-        "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
-        "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-        "data": "0x58109c",
-        "value": "995010715204139091",
-        "maxFeePerGas": "18044119466",
-        "maxPriorityFeePerGas": "2060264926",
-        "chainId": 1,
-        "gas": 21064
-      },
-      "check": {
-        "endpoint": "/intents/status/v3?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
-        "method": "GET"
-      }
-    }
-  ]
+  "status": "incomplete",
+  "data": {
+    "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+    "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+    "data": "0x58109c",
+    "value": "995010715204139091",
+    "maxFeePerGas": "18044119466",
+    "maxPriorityFeePerGas": "2060264926",
+    "chainId": 1,
+    "gas": 21064
+  },
+  "check": {
+    "endpoint": "/intents/status/v3?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
+    "method": "GET"
+  }
 }
 ```
 
@@ -310,24 +303,20 @@ An approval transaction to approve the transfer of an ERC20 token. Always follow
   "action": "Confirm transaction in your wallet",
   "description": "Sign an approval for USDC",
   "kind": "transaction",
-  "items": [
-    {
-      "status": "incomplete",
-      "data": {
-        "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
-        "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-        "data": "0x095ea7b3...",
-        "value": "0",
-        "chainId": 8453,
-        "maxFeePerGas": "5937131",
-        "maxPriorityFeePerGas": "1009381"
-      },
-      "check": {
-        "endpoint": "/intents/status/v3?requestId=0x...",
-        "method": "GET"
-      }
-    }
-  ]
+  "status": "incomplete",
+  "data": {
+    "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+    "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "data": "0x095ea7b3...",
+    "value": "0",
+    "chainId": 8453,
+    "maxFeePerGas": "5937131",
+    "maxPriorityFeePerGas": "1009381"
+  },
+  "check": {
+    "endpoint": "/intents/status/v3?requestId=0x...",
+    "method": "GET"
+  }
 }
 ```
 
@@ -341,25 +330,20 @@ Send funds to a recipient on the same chain.
   "action": "Confirm transaction in your wallet",
   "description": "Send funds to the recipient",
   "kind": "transaction",
-  "items": [
-    {
-      "status": "incomplete",
-      "data": {
-        "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
-        "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-        "data": "0xa9059cbb00000000000000000000000036329d1ff4b31ec85280a86e7cf58fca7c005ed000000000000000000000000000000000000000000000000000000002540be400",
-        "value": "0",
-        "chainId": 8453,
-        "maxFeePerGas": "5937131",
-        "maxPriorityFeePerGas": "1009381"
-      },
-      "check": {
-        "endpoint": "/intents/status/v3?requestId=0xec7244ebc6c9ce3a344f9eeb6c84df921b55e0c06b6cb25a49c167fbeafb7e1b",
-        "method": "GET"
-      }
-    }
-  ],
-  "requestId": "0xec7244ebc6c9ce3a344f9eeb6c84df921b55e0c06b6cb25a49c167fbeafb7e1b"
+  "status": "incomplete",
+  "data": {
+    "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+    "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "data": "0xa9059cbb00000000000000000000000036329d1ff4b31ec85280a86e7cf58fca7c005ed000000000000000000000000000000000000000000000000000000002540be400",
+    "value": "0",
+    "chainId": 8453,
+    "maxFeePerGas": "5937131",
+    "maxPriorityFeePerGas": "1009381"
+  },
+  "check": {
+    "endpoint": "/intents/status/v3?requestId=0xec7244ebc6c9ce3a344f9eeb6c84df921b55e0c06b6cb25a49c167fbeafb7e1b",
+    "method": "GET"
+  }
 }
 ```
 
@@ -367,8 +351,11 @@ Send funds to a recipient on the same chain.
 
 Sign authorization for specific operations. This step is used in two scenarios:
 
-1. **Claiming App Fees**: Signs an EIP-191 message to verify wallet ownership before claiming accrued app fees.
+1. **Permits**: Signs a Permit2 or EIP-3009 authorization for a gasless deposit or same-chain swap. See the examples below.
 2. **Hyperliquid Deposits**: Signs a nonce-mapping signature for v2 Hyperliquid deposits.
+3. **Claiming App Fees**: Signs an EIP-191 message to verify wallet ownership before claiming accrued app fees.
+
+The [app fee claim API](/references/api/claim-app-fees) still returns its signature in a step's `items` array and posts it to `/execute/permits`:
 
 ```json expandable App Fee Claim Example
 {
@@ -398,176 +385,192 @@ Sign authorization for specific operations. This step is used in two scenarios:
 }
 ```
 
-### authorize1
+### Cross-chain permit
 
-The main flow for cross-chain permits. Uses Permit2 or TransferWithAuthorization (EIP-3009).
-
-  ```json expandable
-  {
-    id: "authorize1",
-    action: "Sign authorization",
-    description: "Sign to approve swap of USDC for ETH",
-    kind: "signature",
-    items: [
-      {
-        status: "incomplete",
-        data: {
-          sign: {
-            signatureKind: "eip712",
-            types: {
-              TransferWithAuthorization: [
-                {
-                  name: "from",
-                  type: "address",
-                },
-                {
-                  name: "to",
-                  type: "address",
-                },
-                {
-                  name: "value",
-                  type: "uint256",
-                },
-                {
-                  name: "validAfter",
-                  type: "uint256",
-                },
-                {
-                  name: "validBefore",
-                  type: "uint256",
-                },
-                {
-                  name: "nonce",
-                  type: "bytes32",
-                },
-              ],
-            },
-            domain: {
-              name: "USD Coin",
-              version: "2",
-              chainId: 8453,
-              verifyingContract: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-            },
-            primaryType: "TransferWithAuthorization",
-            value: {
-              from: "0x03508bb71268bba25ecacc8f620e01866650532c",
-              to: "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-              value: "1000000",
-              validAfter: 0,
-              validBefore: 1764948419,
-              nonce:
-                "0xc1333d553004054a9c9a45ceedfae13040c7f064736c29b5c7ebc1c6b11a0a71",
-            },
-          },
-          post: {
-            endpoint: "/execute/permits",
-            method: "POST",
-            body: {
-              kind: "eip3009",
-              requestId:
-                "0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
-              api: "swap",
-            },
-          },
-        },
-        check: {
-          endpoint:
-            "/intents/status/v3?requestId=0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
-          method: "GET",
-        },
-      },
-    ],
-  }
-  ```
-
-### authorize2
-
-Sign authorization for same-chain ERC-20 → native swap permits using PermitBatchWitnessTransferFrom. Same-chain ERC-20 → ERC-20 swaps do not use this step; they return `approve` and `swap` transaction steps even when **`usePermit: true`** is set.
+The `authorize` step for cross-chain permits. Uses Permit2 or TransferWithAuthorization (EIP-3009).
 
 ```json expandable
 {
-  "id": "authorize2",
+  "id": "authorize",
+  "action": "Sign authorization",
+  "description": "Sign to approve swap of USDC for ETH",
+  "kind": "signature",
+  "status": "incomplete",
+  "data": {
+    "sign": {
+      "signatureKind": "eip712",
+      "types": {
+        "TransferWithAuthorization": [
+          { "name": "from", "type": "address" },
+          { "name": "to", "type": "address" },
+          { "name": "value", "type": "uint256" },
+          { "name": "validAfter", "type": "uint256" },
+          { "name": "validBefore", "type": "uint256" },
+          { "name": "nonce", "type": "bytes32" }
+        ]
+      },
+      "domain": {
+        "name": "USD Coin",
+        "version": "2",
+        "chainId": 8453,
+        "verifyingContract": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+      },
+      "primaryType": "TransferWithAuthorization",
+      "value": {
+        "from": "0x03508bb71268bba25ecacc8f620e01866650532c",
+        "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+        "value": "1000000",
+        "validAfter": 0,
+        "validBefore": 1764948419,
+        "nonce": "0xc1333d553004054a9c9a45ceedfae13040c7f064736c29b5c7ebc1c6b11a0a71"
+      }
+    },
+    "post": {
+      "endpoint": "/execute/permits/v2",
+      "method": "POST",
+      "body": {
+        "kind": "eip3009",
+        "requestId": "0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
+        "api": "swap"
+      }
+    }
+  },
+  "check": {
+    "endpoint": "/intents/status/v3?requestId=0xfadc232794fbef5794f1e28b780c3d4ffd19df3f0f42f1e3b8f873abf11e79b2",
+    "method": "GET"
+  }
+}
+```
+
+### Same-chain permit
+
+The `authorize` step that signs authorization for same-chain ERC-20 → native swap permits using PermitBatchWitnessTransferFrom. Same-chain ERC-20 → ERC-20 swaps do not use this step; they return `approve` and `swap` transaction steps even when **`usePermit: true`** is set.
+
+```json expandable
+{
+  "id": "authorize",
   "action": "Sign authorization",
   "description": "Sign to approve transfer of USDC",
   "kind": "signature",
-  "items": [
-    {
-      "status": "incomplete",
-      "data": {
-        "sign": {
-          "signatureKind": "eip712",
-          "domain": {
-            "name": "Permit2",
-            "chainId": 8453,
-            "verifyingContract": "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+  "status": "incomplete",
+  "data": {
+    "sign": {
+      "signatureKind": "eip712",
+      "domain": {
+        "name": "Permit2",
+        "chainId": 8453,
+        "verifyingContract": "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+      },
+      "types": {
+        "PermitBatchWitnessTransferFrom": [
+          {
+            "name": "permitted",
+            "type": "TokenPermissions[]"
           },
-          "types": {
-            "PermitBatchWitnessTransferFrom": [
-              { "name": "permitted", "type": "TokenPermissions[]" },
-              { "name": "spender", "type": "address" },
-              { "name": "nonce", "type": "uint256" },
-              { "name": "deadline", "type": "uint256" },
-              { "name": "witness", "type": "RelayerWitness" }
-            ],
-            "TokenPermissions": [
-              { "name": "token", "type": "address" },
-              { "name": "amount", "type": "uint256" }
-            ],
-            "RelayerWitness": [
-              { "name": "relayer", "type": "address" },
-              { "name": "refundTo", "type": "address" },
-              { "name": "nftRecipient", "type": "address" },
-              { "name": "call3Values", "type": "Call3Value[]" }
-            ],
-            "Call3Value": [
-              { "name": "target", "type": "address" },
-              { "name": "allowFailure", "type": "bool" },
-              { "name": "value", "type": "uint256" },
-              { "name": "callData", "type": "bytes" }
-            ]
+          {
+            "name": "spender",
+            "type": "address"
           },
-          "value": {
-            "permitted": [
-              {
-                "token": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-                "amount": "1000000"
-              }
-            ],
-            "nonce": "3073764008035",
-            "deadline": 1764948471,
-            "spender": "0xbbbfd134e9b44bfb5123898ba36b01de7ab93d98",
-            "witness": {
-              "relayer": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-              "refundTo": "0x03508bb71268bba25ecacc8f620e01866650532c",
-              "nftRecipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
-              "call3Values": [
-                {
-                  "target": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-                  "allowFailure": false,
-                  "value": "0",
-                  "callData": "0x095ea7b3..."
-                }
-              ]
-            }
+          {
+            "name": "nonce",
+            "type": "uint256"
           },
-          "primaryType": "PermitBatchWitnessTransferFrom"
-        },
-        "post": {
-          "endpoint": "/execute/permits",
-          "method": "POST",
-          "body": {
-            "kind": "permit2",
-            "requestId": "0x4d1756eae7d23122047cbe2f11a749ca8275983e4d8757a8b44af9d1b829df39",
-            "api": "user-swap"
+          {
+            "name": "deadline",
+            "type": "uint256"
+          },
+          {
+            "name": "witness",
+            "type": "RelayerWitness"
           }
+        ],
+        "TokenPermissions": [
+          {
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "RelayerWitness": [
+          {
+            "name": "relayer",
+            "type": "address"
+          },
+          {
+            "name": "refundTo",
+            "type": "address"
+          },
+          {
+            "name": "nftRecipient",
+            "type": "address"
+          },
+          {
+            "name": "call3Values",
+            "type": "Call3Value[]"
+          }
+        ],
+        "Call3Value": [
+          {
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "name": "allowFailure",
+            "type": "bool"
+          },
+          {
+            "name": "value",
+            "type": "uint256"
+          },
+          {
+            "name": "callData",
+            "type": "bytes"
+          }
+        ]
+      },
+      "value": {
+        "permitted": [
+          {
+            "token": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "amount": "1000000"
+          }
+        ],
+        "nonce": "3073764008035",
+        "deadline": 1764948471,
+        "spender": "0xbbbfd134e9b44bfb5123898ba36b01de7ab93d98",
+        "witness": {
+          "relayer": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+          "refundTo": "0x03508bb71268bba25ecacc8f620e01866650532c",
+          "nftRecipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
+          "call3Values": [
+            {
+              "target": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+              "allowFailure": false,
+              "value": "0",
+              "callData": "0x095ea7b3..."
+            }
+          ]
         }
       },
-      "check": {
-        "endpoint": "/intents/status/v3?requestId=0x4d1756eae7d23122047cbe2f11a749ca8275983e4d8757a8b44af9d1b829df39",
-        "method": "GET"
+      "primaryType": "PermitBatchWitnessTransferFrom"
+    },
+    "post": {
+      "endpoint": "/execute/permits/v2",
+      "method": "POST",
+      "body": {
+        "kind": "permit2",
+        "requestId": "0x4d1756eae7d23122047cbe2f11a749ca8275983e4d8757a8b44af9d1b829df39",
+        "api": "user-swap"
       }
     }
-  ]
+  },
+  "check": {
+    "endpoint": "/intents/status/v3?requestId=0x4d1756eae7d23122047cbe2f11a749ca8275983e4d8757a8b44af9d1b829df39",
+    "method": "GET"
+  }
 }
 ```
 
@@ -577,53 +580,58 @@ Sign authorization for same-chain ERC-20 → native swap permits using PermitBat
 
 ```json expandable
 {
+  "requestId": "0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
   "steps": [
     {
       "id": "deposit",
       "action": "Confirm transaction in your wallet",
       "description": "Deposit funds for executing the calls",
       "kind": "transaction",
-      "items": [
-        {
-          "status": "incomplete",
-          "data": {
-            "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
-            "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
-            "data": "0x58109c",
-            "value": "995010715204139091",
-            "maxFeePerGas": "18044119466",
-            "maxPriorityFeePerGas": "2060264926",
-            "chainId": 1,
-            "gas": 21064
-          },
-          "check": {
-            "endpoint": "/intents/status/v3?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
-            "method": "GET"
-          }
-        }
-      ]
+      "status": "incomplete",
+      "data": {
+        "from": "0x03508bB71268BBA25ECaCC8F620e01866650532c",
+        "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+        "data": "0x58109c",
+        "value": "995010715204139091",
+        "maxFeePerGas": "18044119466",
+        "maxPriorityFeePerGas": "2060264926",
+        "chainId": 1,
+        "gas": 21064
+      },
+      "check": {
+        "endpoint": "/intents/status/v3?requestId=0x341b28c6467bfbffb72ad78ec5ddf1f77b8f9c79be134223e3248a7d4fcd43b6",
+        "method": "GET"
+      }
     }
   ],
   "fees": {
-    "gas": "384398515652800",
-    "gasCurrency": "eth",
-    "relayer": "-4989478842712964",
-    "relayerGas": "521157287036",
-    "relayerService": "-4990000000000000",
-    "relayerCurrency": "eth"
+    "execution": { "usd": "-0.02", "amount": "5000000000000", "amountFormatted": "0.000005" },
+    "swap": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+    "platform": { "usd": "-0.03", "amount": "10000000000000", "amountFormatted": "0.00001" },
+    "app": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+    "sponsored": { "usd": "0", "amount": "0", "amountFormatted": "0" },
+    "currency": { "chainId": 1, "address": "0x0000000000000000000000000000000000000000", "symbol": "ETH", "name": "Ether", "decimals": 18 }
   },
-  "breakdown": {
-    "value": "1000000000000000000",
-    "timeEstimate": 10
+  "originGas": {
+    "currency": { "chainId": 1, "address": "0x0000000000000000000000000000000000000000", "symbol": "ETH", "name": "Ether", "decimals": 18 },
+    "amount": "384398515652800",
+    "amountFormatted": "0.0003843985156528",
+    "amountUsd": "1.27"
   },
-  "balances": {
-    "userBalance": "54764083517303347",
-    "requiredToSolve": "995010521157287036"
+  "details": {
+    "operation": "bridge",
+    "sender": "0x03508bb71268bba25ecacc8f620e01866650532c",
+    "recipient": "0x03508bb71268bba25ecacc8f620e01866650532c",
+    "currencyIn": { "currency": { "chainId": 1, "symbol": "ETH", "decimals": 18 }, "amount": "995010715204139091", "amountFormatted": "0.995010715204139091", "amountUsd": "3283.54" },
+    "currencyOut": { "currency": { "chainId": 8453, "symbol": "ETH", "decimals": 18 }, "amount": "990000000000000000", "amountFormatted": "0.99", "amountUsd": "3266.99" },
+    "rate": "0.9949",
+    "timeEstimate": 10,
+    "userBalance": "54764083517303347"
   }
 }
 ```
 
-Along with the steps you'll see that the following objects are returned: `fees`, `breakdown` and `balances`. Information about fees is detailed [here](/references/api/api_core_concepts/fees). `breakdown` pertains to time estimation for the execution, broken down by value. The `balances` object is in regards to the user and how much they require to solve for the execution.
+Along with the steps, the response returns `fees`, `originGas`, and `details`. `fees` breaks the quote's cost into execution, swap, platform, app, and sponsored components, and `originGas` is the estimated gas the wallet pays on the origin chain; see [Fees](/references/api/api_core_concepts/fees). `details` holds the input and output amounts, the rate, the time estimate in seconds, and the user's balance. Values in this example are illustrative.
 
 ### Checking the fill status
 

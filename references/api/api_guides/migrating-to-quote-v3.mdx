@@ -499,15 +499,35 @@ Poll [`GET /intents/status/v3`](/references/api/get-intents-status-v3) with the 
 
 If you call `/quote` today, your steps point to `GET /intents/status`. If you call `/intents/status` or `/intents/status/v2` yourself, switch to `/intents/status/v3`; both are retiring (see the [sunset timeline](#sunset-timeline)).
 
+The request is unchanged: pass `requestId` as a query parameter. The response changes:
+
+| v3 field | What changed |
+| --- | --- |
+| `status` | Adds `submitted` to the v2 values (`waiting`, `depositing`, `pending`, `success`, `failure`, `refund`). The v1 values `received` and `fallback` no longer exist. |
+| `updatedAt` | Renamed from `time` in v1 and v2. |
+| `quoteCreatedAt` | Returned since v2; not in v1. |
+| `failReason` | New. Why a fill failed, such as `SLIPPAGE` or `TTL_EXPIRED`; `"N/A"` when nothing failed. |
+| `refundFailReason` | New. Why a refund failed, such as `AMOUNT_TOO_LOW_TO_REFUND` or `REFUND_RECIPIENT_IS_BLOCKED`; `"N/A"` (or `null`) when no refund failed. |
+| `revertReason` | New. The sanitized onchain revert reason, for debugging only. |
+
+`details`, `inTxHashes`, `txHashes`, `originChainId`, and `destinationChainId` are unchanged.
+
+- **Moving from `/intents/status`:** `received` and `fallback` no longer exist. Handle the v3 statuses listed on [Get Status](/references/api/get-intents-status-v3) instead. Only `success` and `refund` are final; a `failure` can still be retried or refunded, unless `refundFailReason` holds a real reason rather than `"N/A"` or `null`.
+- **Moving from `/intents/status/v2`:** read `updatedAt` instead of `time`, and treat `submitted` like `pending`: the fill is on its way but not final.
+
+See [Handling Execution Errors](/references/api/api_core_concepts/execution-errors) for every `failReason` and `refundFailReason` value.
+
 ## Upgrading RelayKit
 
-RelayKit quotes with `/quote/v3` starting with these releases, published on November 24, 2026. Earlier versions call `/quote/v2`, so upgrade before it retires.
+Upgrade to these releases, published on November 24, 2026, before the old endpoints retire:
 
 | Package | Version |
 | --- | --- |
 | `@relayprotocol/relay-sdk` | 9.0.0 |
-| `@relayprotocol/relay-kit-hooks` | 7.0.0 |
-| `@relayprotocol/relay-kit-ui` | 13.0.0 |
+| `@relayprotocol/relay-kit-hooks` | 7.1.0 |
+| `@relayprotocol/relay-kit-ui` | 13.0.1 |
+
+RelayKit quotes with `/quote/v3` from SDK 9.0.0, hooks 7.0.0, and UI kit 13.0.0; earlier versions call `/quote/v2`. Hooks 7.0.0 and UI kit 13.0.0 still poll the retiring `/intents/status/v2` in `useExecutionStatus`, so use hooks 7.1.0 and UI kit 13.0.1, which poll `/intents/status/v3`.
 
 `executeSteps` in `@relayprotocol/relay-sdk` 8.1.0 and later already runs flat v3 steps, so step execution keeps working if you fetch `/quote/v3` yourself before upgrading.
 
@@ -516,7 +536,7 @@ RelayKit quotes with `/quote/v3` starting with these releases, published on Nove
 `/quote/v3` requires an API key, so every RelayKit setup needs one:
 
 - **Server side:** pass `apiKey` to `createClient`. `getQuote` and `useQuote` send it when `baseApiUrl` is the Relay API.
-- **Browser:** point `baseApiUrl` at a proxy on your backend that adds `x-api-key`, as the UI kit already requires for `GET /requests/v3`. Make sure the proxy forwards `/quote/v3` and `/execute/permits/v2`.
+- **Browser:** point `baseApiUrl` at a proxy on your backend that adds `x-api-key`, as the UI kit already requires for `GET /requests/v3`. Make sure the proxy forwards `/quote/v3`, `/execute/permits/v2`, and `/intents/status/v3`.
 
 Without a key, quotes fail with `401` and `errorCode: "UNAUTHORIZED_QUOTE"`. The SDK's `APIError.statusCode` now reports that `401`.
 
@@ -529,7 +549,9 @@ Without a key, quotes fail with `401` and `errorCode: "UNAUTHORIZED_QUOTE"`. The
 
 ### Hooks
 
-`useQuote` and `queryQuote` call `/quote/v3`, and `QuoteResponse` is now `Quote`, with the flat steps described above. `executeQuote` works as before. The other hooks are unchanged.
+`useQuote` and `queryQuote` call `/quote/v3`, and `QuoteResponse` is now `Quote`, with the flat steps described above. `executeQuote` works as before.
+
+From hooks 7.1.0, `useExecutionStatus` and `queryExecutionStatus` call `GET /intents/status/v3` instead of `/intents/status/v2`. The response field `time` is renamed `updatedAt`, `status` can also be `submitted`, and failed requests include a `failReason`. The other hooks are unchanged.
 
 ### UI kit
 

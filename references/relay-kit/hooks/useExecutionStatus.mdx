@@ -16,6 +16,8 @@ sidebarTitle: useExecutionStatus
 
 The hook returns an object with the base [Tanstack Query response](https://tanstack.com/query/v5/docs/framework/react/reference/useQuery). The data property maps to the object returned in the aforementioned [execution status api](/references/api/get-intents-status-v3).
 
+From `@relayprotocol/relay-kit-hooks` 7.1.0, the hook calls `GET /intents/status/v3`; earlier versions call the retiring `/intents/status/v2`. Read `updatedAt` instead of the old `time` field, expect `submitted` as an additional `status`, and read `failReason` on failed requests.
+
 ## Usage
 
 <CodeGroup>
@@ -27,7 +29,7 @@ const { data, isLoading, error } = useExecutionStatus(
   { requestId: '0x6a6cab2695f2dc4a67539d971760764edac9e52b0a2219a5fbb3faf2f04ac7c2' }
 )
 
-const { status, details, inTxHashes, txHashes, time, originChainId, destinationChainId } = data ?? {}
+const { status, details, inTxHashes, txHashes, updatedAt, failReason, originChainId, destinationChainId } = data ?? {}
 
 ```
 </CodeGroup>
