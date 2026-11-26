@@ -68,7 +68,7 @@ How Relay handles each kind of deposit:
 | More than quoted | Fills the full amount at the current rate | Fills the quoted output and refunds the surplus |
 | Less than quoted | Fills the smaller amount at the current rate. Refunds it if it's too small to cover fees | Refunds the full deposit. The address still accepts a correct deposit |
 | Different supported token | Requotes in the token received and fills | Refunds the full deposit |
-| Unsupported token | Not processed. See [Supported Currencies](#supported-currencies) | Not processed |
+| Unsupported token | Not processed. The funds may not be recoverable. See [Supported Currencies](#supported-currencies) | Not processed. The funds may not be recoverable |
 | Same address, different EVM chain | Fills from the chain the funds landed on, if that chain and token are supported | Not processed automatically. Contact [Support](/resources/support) |
 | Same address, different VM (Hyperliquid and EVM) | Not processed. The funds may not be recoverable | Not processed. The funds may not be recoverable |
 | Later deposit to the same address | Open: fills as a new order. Strict: refunded | Refunded |
@@ -757,7 +757,9 @@ Relay refunds automatically in these cases:
 - **An `EXACT_OUTPUT` deposit doesn't match the quote.** An underpayment or a different supported token is refunded in full, and an overpayment's surplus is refunded.
 - **A strict address receives another deposit.** Every deposit after the first is refunded.
 
-Relay can't refund a deposit that is too small to cover the refund's gas. It also doesn't return [unsupported tokens](#supported-currencies), deposits to an `EXACT_OUTPUT` address on the wrong chain, or deposits on a different VM than the address was created for. Contact [Support](/resources/support) with the deposit transaction for these.
+Relay can't refund a deposit that is too small to cover the refund's gas. It also doesn't return [unsupported tokens](#supported-currencies), deposits to an `EXACT_OUTPUT` address on the wrong chain, or deposits on a different VM than the address was created for.
+
+Contact [Support](/resources/support) with the deposit transaction for these. Unsupported tokens and deposits on a different VM may not be recoverable.
 
 If Relay can't send a refund, for example because the refund address is blocked, the funds stay in the Relay Depository. The depositor recorded for the order can [withdraw](/references/protocol/guides/withdrawals) them. That depositor is the `refundTo` or `recoveryAddress` you set on the quote.
 
@@ -1368,7 +1370,7 @@ The table below is loaded live from the [chains API](/references/api/get-chains)
 <SolverCurrencies id="solverCurrencies" />
 
 <Warning>
-Relay doesn't process unsupported tokens or NFTs sent to a deposit address, and doesn't return them automatically. Check that the token is supported before depositing. To recover an unsupported token, contact [Support](/resources/support) with the deposit transaction.
+Relay doesn't process or return unsupported tokens or NFTs sent to a deposit address, and they may not be recoverable. Check that the token is supported before depositing. If you already sent an unsupported token, contact [Support](/resources/support) with the deposit transaction.
 </Warning>
 
 ### Chain-Specific Notes
