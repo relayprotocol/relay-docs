@@ -53,8 +53,12 @@ Relay switches to the v3.2 Router and ApprovalProxy on Monday, October 26, 2026 
 
 ### Mainnet Contracts
 
+This table loads in the browser from [Get Chains](/references/api/get-chains) (`GET https://api.relay.link/chains`). Each chain's `contracts` object holds its `relayReceiver`, `erc20Router`, and `approvalProxy` addresses.
+
 <Contracts id="mainnetContracts" env="mainnets" />
 
 ### Testnet Contracts
+
+This table loads in the browser from `GET https://api.testnets.relay.link/chains`, using the same `contracts` fields.
 
 <Contracts id="testnetContracts" env="testnets" />

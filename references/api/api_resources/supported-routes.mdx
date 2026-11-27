@@ -7,6 +7,8 @@ import { SupportedRoutes } from "/snippets/SupportedRoutes.mdx";
 
 ## Solver Currencies and Swap Support
 
+This table loads in the browser from [Get Chains](/references/api/get-chains) (`GET https://api.relay.link/chains`). Each chain's `solverCurrencies` array lists its solver currencies, and `tokenSupport` set to `"All"` means swaps are supported. Agents and scripts can call that endpoint directly or use the [Relay MCP server](/resources/developing-with-ai#relay-mcp-server).
+
 <SupportedRoutes id="supportedRoutes" />
 
 ## How to check if a route is supported?
